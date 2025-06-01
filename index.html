@@ -7,49 +7,38 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>🎵 Musikraten – Das Spiel</h1>
+  <div id="app">
+    <h1>🎵 Musikraten</h1>
 
- <div id="genre-selection">
-  <button onclick="selectGenre('https://open.spotify.com/playlist/2si7ChS6Y0hPBt4FsobXpg')">
-    Die größten Hits aller Zeiten
-  </button>
-  <button onclick="selectGenre('https://open.spotify.com/playlist/6mtYuOxzl58vSGnEDtZ9uB')">
-    Pop Hits 2000–2025
-  </button>
-  <button onclick="selectGenre('https://open.spotify.com/playlist/39sVxPTg7BKwrf2MfgrtcD')">
-    Punkrock 90 & 00
-  </button>
-</div>
-
-  <!-- Spielmodus-Auswahl -->
-  <div id="mode-container" class="hidden">
-    <h2>Wähle einen Modus:</h2>
-    <button class="mode-button" data-mode="CLASSIC">CLASSIC (30 Sek. Hörprobe)</button>
-    <button class="mode-button" data-mode="CRACK">CRACK (3 Sek. Hörprobe)</button>
-  </div>
-
-  <!-- Start-Button -->
-  <div id="start-button" class="hidden">
-    <button>🎬 START</button>
-  </div>
-
-  <!-- Spielbereich -->
-  <div id="game-area" class="hidden">
-    <h2>🎧 Song läuft – errate ihn!</h2>
-    <button id="play-button">▶ Abspielen</button>
-    <button id="repeat-button">⟲ Wiederholen</button>
-    <button id="reveal-button">❓ Auflösung anzeigen</button>
-
-    <!-- Bewertung -->
-    <div id="feedback-buttons" class="hidden">
-      <p>Hattest du es richtig?</p>
-      <button id="correct-button">✅ Richtig</button>
-      <button id="wrong-button">❌ Falsch</button>
+    <div id="genre-selection">
+      <h2>Wähle ein Genre:</h2>
+      <button data-playlist="2si7ChS6Y0hPBt4FsobXpg">Die größten Hits aller Zeiten</button>
+      <button data-playlist="6mtYuOxzl58vSGnEDtZ9uB">Pop Hits 2000–2025</button>
+      <button data-playlist="39sVxPTg7BKwrf2MfgrtcD">Punkrock 90 & 00</button>
     </div>
 
-    <p id="score-display">Punkte: 0</p>
+    <div id="mode-selection" class="hidden">
+      <h2>Wähle den Spielmodus:</h2>
+      <button data-mode="normal">🎧 Normal (30 Sek)</button>
+      <button data-mode="hard">🔥 Hart (10 Sek)</button>
+      <button data-mode="crack">🤯 Crack (3 Sek)</button>
+    </div>
+
+    <div id="game-ui" class="hidden">
+      <button id="start-button">Start</button>
+      <div id="controls" class="hidden">
+        <button id="play-preview">▶️ Abspielen</button>
+        <button id="repeat-preview">🔁 Wiederholen</button>
+        <button id="show-solution">❓ Auflösen</button>
+        <div id="solution-buttons" class="hidden">
+          <button id="correct" class="green">✅ Richtig</button>
+          <button id="wrong" class="red">❌ Falsch</button>
+        </div>
+        <p id="points">Punkte: 0</p>
+      </div>
+    </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
