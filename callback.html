@@ -2,14 +2,30 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Musikraten - Callback</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spotify Callback</title>
 </head>
 <body>
-  <div id="app">
-    <!-- Content wird per script.js gesteuert -->
-  </div>
-  <script src="script.js"></script>
+  <p>🔁 Anmeldung wird verarbeitet ...</p>
+
+  <script>
+    // Access-Token aus URL-Hash extrahieren
+    const hash = window.location.hash;
+    if (hash) {
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get("access_token");
+
+      if (accessToken) {
+        // Token im LocalStorage speichern
+        localStorage.setItem("spotifyAccessToken", accessToken);
+        // Weiterleitung zurück zur Startseite
+        window.location.href = "index.html";
+      } else {
+        document.body.innerHTML = "<p>❌ Zugriffstoken fehlt!</p>";
+      }
+    } else {
+      document.body.innerHTML = "<p>❌ Kein Redirect-Hash gefunden.</p>";
+    }
+  </script>
 </body>
 </html>
