@@ -2,30 +2,21 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spotify Callback</title>
-</head>
-<body>
-  <p>🔁 Anmeldung wird verarbeitet ...</p>
-
+  <title>Spotify Redirect</title>
   <script>
-    // Access-Token aus URL-Hash extrahieren
-    const hash = window.location.hash;
-    if (hash) {
-      const params = new URLSearchParams(hash.substring(1));
-      const accessToken = params.get("access_token");
-
-      if (accessToken) {
-        // Token im LocalStorage speichern
-        localStorage.setItem("spotifyAccessToken", accessToken);
-        // Weiterleitung zurück zur Startseite
+    window.onload = () => {
+      const hash = window.location.hash;
+      if (hash.includes("access_token")) {
+        const token = hash.match(/access_token=([^&]*)/)[1];
+        localStorage.setItem("spotify_access_token", token);
         window.location.href = "index.html";
       } else {
-        document.body.innerHTML = "<p>❌ Zugriffstoken fehlt!</p>";
+        document.body.innerHTML = "<h2>Zugriffstoken fehlt.</h2><p>Bitte erneut einloggen.</p>";
       }
-    } else {
-      document.body.innerHTML = "<p>❌ Kein Redirect-Hash gefunden.</p>";
-    }
+    };
   </script>
+</head>
+<body>
+  <h2>Warte auf Weiterleitung…</h2>
 </body>
 </html>
