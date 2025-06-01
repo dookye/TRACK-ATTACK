@@ -1,119 +1,119 @@
-// Deine Spotify-Daten
 const clientId = "3f4b3acc3bad4e0d98e77409ffc62e48";
 const redirectUri = "https://dookye.github.io/musik-raten/callback.html";
-const scopes = [
-  "user-read-private",
-  "playlist-read-private",
-  "playlist-read-collaborative"
-];
+let token = localStorage.getItem("spotify_access_token");
+let playlistId = null;
+let mode = null;
+let trackList = [];
+let currentTrack = null;
+let currentPoints = 5;
+let totalPoints = 0;
+let repeatCount = 0;
 
-let accessToken = null;
-let selectedGenre = null;
-let selectedMode = null;
-let selectedPlaylist = null;
-
-// Genres mit Spotify-Playlist-URLs
-const genres = {
-  "Die größten Hits aller Zeiten": "https://open.spotify.com/playlist/2si7ChS6Y0hPBt4FsobXpg",
-  "Pop Hits 2000–2025": "https://open.spotify.com/playlist/6mtYuOxzl58vSGnEDtZ9uB",
-  "Punkrock 90 & 00": "https://open.spotify.com/playlist/39sVxPTg7BKwrf2MfgrtcD"
-};
-
-// Spielmodi in Sekunden
-const modes = {
-  "Normal (10 Sek)": 10,
-  "Hart (5 Sek)": 5,
-  "Crack (3 Sek)": 3
-};
-
-// Starte Spotify Login
-function loginWithSpotify() {
-  const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes.join(" "))}`;
-  window.location.href = authUrl;
+function authorizeSpotify() {
+  const scopes = "playlist-read-private";
+  const url = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}`;
+  window.location.href = url;
 }
 
-// Zeige Genre-Auswahl
-function showGenreSelection() {
-  const container = document.getElementById("main");
-  container.innerHTML = `<h2>1. Genre wählen</h2>`;
-  Object.keys(genres).forEach(genre => {
-    const btn = document.createElement("button");
-    btn.textContent = genre;
-    btn.onclick = () => {
-      selectedGenre = genre;
-      showModeSelection();
-    };
-    container.appendChild(btn);
+if (!token) {
+  authorizeSpotify();
+}
+
+// Element-Zuweisungen
+const genreSelection = document.getElementById("genre-selection");
+const modeSelection = document.getElementById("mode-selection");
+const gameUI = document.getElementById("game-ui");
+const startButton = document.getElementById("start-button");
+const controls = document.getElementById("controls");
+const playBtn = document.getElementById("play-preview");
+const repeatBtn = document.getElementById("repeat-preview");
+const showSolutionBtn = document.getElementById("show-solution");
+const solutionBtns = document.getElementById("solution-buttons");
+const correctBtn = document.getElementById("correct");
+const wrongBtn = document.getElementById("wrong");
+const pointsDisplay = document.getElementById("points");
+
+// Genre-Auswahl
+genreSelection.querySelectorAll("button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    playlistId = btn.dataset.playlist;
+    genreSelection.classList.add("hidden");
+    modeSelection.classList.remove("hidden");
   });
-}
+});
 
-function selectGenre(playlistUrl) {
-  selectedPlaylist = playlistUrl;
-  console.log("Genre gewählt:", playlistUrl);
-
-  document.getElementById("genre-selection").style.display = "none";
-  document.getElementById("mode-selection").style.display = "block";
-}
-
-// Zeige Spielmodus-Auswahl
-function showModeSelection() {
-  const container = document.getElementById("main");
-  container.innerHTML = `<h2>2. Spielmodus wählen</h2>`;
-  Object.keys(modes).forEach(mode => {
-    const btn = document.createElement("button");
-    btn.textContent = mode;
-    btn.onclick = () => {
-      selectedMode = mode;
-      showStartButton();
-    };
-    container.appendChild(btn);
+// Modus-Auswahl
+modeSelection.querySelectorAll("button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    mode = btn.dataset.mode;
+    modeSelection.classList.add("hidden");
+    gameUI.classList.remove("hidden");
   });
+});
+
+// Start
+startButton.addEventListener("click", async () => {
+  controls.classList.remove("hidden");
+  await loadPlaylistTracks();
+  nextTrack();
+});
+
+// Lade Tracks
+async function loadPlaylistTracks() {
+  const res = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+  const data = await res.json();
+  trackList = data.items.map(item => item.track).filter(track => track.preview_url);
 }
 
-// Zeige Start-Button
-function showStartButton() {
-  const container = document.getElementById("main");
-  container.innerHTML = `
-    <h2>Bereit?</h2>
-    <p>Genre: <strong>${selectedGenre}</strong></p>
-    <p>Modus: <strong>${selectedMode}</strong></p>
-    <button onclick="startGame()">🎵 START 🎵</button>
-  `;
+// Nächster Track
+function nextTrack() {
+  repeatCount = 0;
+  currentPoints = 5;
+  solutionBtns.classList.add("hidden");
+  currentTrack = trackList[Math.floor(Math.random() * trackList.length)];
+  playPreview();
 }
 
-// Starte Spiel (Platzhalter – Inhalte folgen)
-function startGame() {
-  const container = document.getElementById("main");
-  container.innerHTML = `
-    <h2>Song wird geladen...</h2>
-    <p>(Hier wird das Abspielsystem eingebaut)</p>
-  `;
-  // Hier folgen dann: Audio, Punkteanzeige, Buttons usw.
+// Preview abspielen
+function playPreview() {
+  const audio = new Audio(currentTrack.preview_url);
+  const durations = { normal: 30, hard: 10, crack: 3 };
+  const duration = durations[mode] * 1000;
+
+  audio.play();
+  setTimeout(() => audio.pause(), duration);
 }
 
-// Wenn Token übergeben wurde (z.B. in callback.html), speichern
-function setAccessTokenFromHash() {
-  const hash = window.location.hash;
-  if (hash) {
-    const tokenMatch = hash.match(/access_token=([^&]*)/);
-    if (tokenMatch) {
-      accessToken = tokenMatch[1];
-      localStorage.setItem("spotify_access_token", accessToken);
-      window.location.href = "index.html"; // zurück zur Startseite
-    }
+// Wiederholen
+repeatBtn.addEventListener("click", () => {
+  repeatCount++;
+  if (repeatCount <= 4) {
+    currentPoints = Math.max(1, currentPoints - 1);
+    playPreview();
   } else {
-    // Falls Token gespeichert ist
-    accessToken = localStorage.getItem("spotify_access_token");
-    if (accessToken) {
-      showGenreSelection();
-    } else {
-      document.getElementById("main").innerHTML = `
-        <h2>🔐 Spotify Login benötigt</h2>
-        <button onclick="loginWithSpotify()">Login mit Spotify</button>
-      `;
-    }
+    solutionBtns.classList.remove("hidden");
   }
-}
+});
 
-// Initialisierung
-window.onload = setAccessTokenFromHash;
+// Auflösen
+showSolutionBtn.addEventListener("click", () => {
+  solutionBtns.classList.remove("hidden");
+});
+
+// Richtig/Falsch
+correctBtn.addEventListener("click", () => {
+  totalPoints += currentPoints;
+  updatePoints();
+  nextTrack();
+});
+
+wrongBtn.addEventListener("click", () => {
+  updatePoints();
+  nextTrack();
+});
+
+function updatePoints() {
+  pointsDisplay.textContent = `Punkte: ${totalPoints}`;
+}
