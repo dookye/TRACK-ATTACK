@@ -1,21 +1,23 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Spotify Callback</title>
-</head>
-<body>
+  <meta charset="UTF-8" />
+  <title>Authentifizierung</title>
   <script>
+    // Token aus der URL extrahieren
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
-    const accessToken = params.get("access_token");
+    const token = params.get("access_token");
 
-    if (accessToken) {
-      localStorage.setItem("spotify_access_token", accessToken);
+    if (token) {
+      localStorage.setItem("spotify_access_token", token);
       window.location.href = "index.html";
     } else {
       document.body.innerText = "Fehler: Kein Zugriffstoken erhalten.";
     }
   </script>
+</head>
+<body>
+  <p>Verarbeite Login...</p>
 </body>
 </html>
