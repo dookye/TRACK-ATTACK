@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Musikratespiel</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="screen-genre" class="screen">
+      <h1>Wähle ein Genre</h1>
+      <button onclick="selectGenre('hits')">Die größten Hits aller Zeiten</button>
+      <button onclick="selectGenre('pop')">Pop Hits 2000–2025</button>
+      <button onclick="selectGenre('punk')">Punkrock 90 & 00</button>
+    </div>
+
+    <div id="screen-mode" class="screen hidden">
+      <h1>Wähle den Spielmodus</h1>
+      <button onclick="selectMode('normal')">NORMAL (30s)</button>
+      <button onclick="selectMode('hard')">HART (10s)</button>
+      <button onclick="selectMode('crack')">CRACK (3s)</button>
+    </div>
+
+    <div id="screen-game" class="screen hidden">
+      <h1 id="rundeLabel">Runde 1 / 20</h1>
+      <p id="teamLabel">Team Rot ist dran</p>
+      <button id="playButton" onclick="playPreview()">▶️ Abspielen</button>
+      <button id="replayButton" onclick="replay()" disabled>Nochmal hören</button>
+      <div id="guessButtons" class="hidden">
+        <button class="correct" onclick="guess(true)">✅ Richtig</button>
+        <button class="wrong" onclick="guess(false)">❌ Falsch</button>
+      </div>
+      <p id="punkteStand">Team Rot: 0 Punkte | Team Grün: 0 Punkte</p>
+    </div>
+
+    <div id="screen-end" class="screen hidden">
+      <h1>Spiel beendet!</h1>
+      <p id="finalScore"></p>
+      <button onclick="restartGame()">🔁 Neu starten</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
