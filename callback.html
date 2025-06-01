@@ -1,22 +1,21 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>Spotify Redirect</title>
-  <script>
-    window.onload = () => {
-      const hash = window.location.hash;
-      if (hash.includes("access_token")) {
-        const token = hash.match(/access_token=([^&]*)/)[1];
-        localStorage.setItem("spotify_access_token", token);
-        window.location.href = "index.html";
-      } else {
-        document.body.innerHTML = "<h2>Zugriffstoken fehlt.</h2><p>Bitte erneut einloggen.</p>";
-      }
-    };
-  </script>
+  <meta charset="UTF-8">
+  <title>Spotify Callback</title>
 </head>
 <body>
-  <h2>Warte auf Weiterleitung…</h2>
+  <script>
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get("access_token");
+
+    if (accessToken) {
+      localStorage.setItem("spotify_access_token", accessToken);
+      window.location.href = "index.html";
+    } else {
+      document.body.innerText = "Fehler: Kein Zugriffstoken erhalten.";
+    }
+  </script>
 </body>
 </html>
