@@ -1,6 +1,6 @@
 // WICHTIG: Spotify-Zugangsdaten (ersetze ggf. durch Umgebungsvariablen oder sichere Methode)
 const clientId = '3f4b3acc3bad4e0d98e77409ffc62e48';
-const redirectUri = 'https://dookye.github.io/musik-raten/'; // Domain deiner GitHub Page
+const redirectUri = 'https://dookye.github.io/musik-raten/callback'; // Domain deiner GitHub Page
 
 let accessToken = '';
 let selectedGenre = '';
