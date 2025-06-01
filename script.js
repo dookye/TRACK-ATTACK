@@ -1,5 +1,6 @@
 const clientId = "3f4b3acc3bad4e0d98e77409ffc62e48";
 const redirectUri = "https://dookye.github.io/musik-raten/callback.html";
+const token = localStorage.getItem("spotify_access_token");
 let token = localStorage.getItem("spotify_access_token");
 let playlistId = null;
 let mode = null;
@@ -9,10 +10,26 @@ let currentPoints = 5;
 let totalPoints = 0;
 let repeatCount = 0;
 
+function loginWithSpotify() {
+  const clientId = "3f4b3acc3bad4e0d98e77409ffc62e48";
+  const redirectUri = "https://dookye.github.io/musik-raten/callback.html";
+  const scopes = "playlist-read-private";
+
+  const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+
+  window.location.href = authUrl;
+}
+
 function authorizeSpotify() {
   const scopes = "playlist-read-private";
   const url = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}`;
   window.location.href = url;
+}
+
+if (!token) {
+  document.getElementById("app").innerHTML = "<p>Fehler: Kein Zugriffstoken erhalten.</p>";
+  // Optional: automatisch Login starten
+  // loginWithSpotify();
 }
 
 if (!token) {
