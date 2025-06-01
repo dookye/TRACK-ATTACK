@@ -10,6 +10,7 @@ const scopes = [
 let accessToken = null;
 let selectedGenre = null;
 let selectedMode = null;
+let selectedPlaylist = null;
 
 // Genres mit Spotify-Playlist-URLs
 const genres = {
@@ -44,6 +45,14 @@ function showGenreSelection() {
     };
     container.appendChild(btn);
   });
+}
+
+function selectGenre(playlistUrl) {
+  selectedPlaylist = playlistUrl;
+  console.log("Genre gewählt:", playlistUrl);
+
+  document.getElementById("genre-selection").style.display = "none";
+  document.getElementById("mode-selection").style.display = "block";
 }
 
 // Zeige Spielmodus-Auswahl
