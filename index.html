@@ -3,42 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Musikratespiel</title>
+  <title>Musikraten</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
-    <div id="screen-genre" class="screen">
-      <h1>Wähle ein Genre</h1>
-      <button onclick="selectGenre('hits')">Die größten Hits aller Zeiten</button>
-      <button onclick="selectGenre('pop')">Pop Hits 2000–2025</button>
-      <button onclick="selectGenre('punk')">Punkrock 90 & 00</button>
+  <h1>🎵 Musikraten – Das Spiel</h1>
+
+  <!-- Genre-Auswahl -->
+  <div id="genre-container">
+    <h2>Wähle ein Genre:</h2>
+    <button class="genre-button" data-genre="Die größten Hits aller Zeiten">Die größten Hits aller Zeiten</button>
+    <button class="genre-button" data-genre="Pop Hits 2000–2025">Pop Hits 2000–2025</button>
+    <button class="genre-button" data-genre="Punkrock 90 & 00">Punkrock 90 & 00</button>
+  </div>
+
+  <!-- Spielmodus-Auswahl -->
+  <div id="mode-container" class="hidden">
+    <h2>Wähle einen Modus:</h2>
+    <button class="mode-button" data-mode="CLASSIC">CLASSIC (30 Sek. Hörprobe)</button>
+    <button class="mode-button" data-mode="CRACK">CRACK (3 Sek. Hörprobe)</button>
+  </div>
+
+  <!-- Start-Button -->
+  <div id="start-button" class="hidden">
+    <button>🎬 START</button>
+  </div>
+
+  <!-- Spielbereich -->
+  <div id="game-area" class="hidden">
+    <h2>🎧 Song läuft – errate ihn!</h2>
+    <button id="play-button">▶ Abspielen</button>
+    <button id="repeat-button">⟲ Wiederholen</button>
+    <button id="reveal-button">❓ Auflösung anzeigen</button>
+
+    <!-- Bewertung -->
+    <div id="feedback-buttons" class="hidden">
+      <p>Hattest du es richtig?</p>
+      <button id="correct-button">✅ Richtig</button>
+      <button id="wrong-button">❌ Falsch</button>
     </div>
 
-    <div id="screen-mode" class="screen hidden">
-      <h1>Wähle den Spielmodus</h1>
-      <button onclick="selectMode('normal')">NORMAL (30s)</button>
-      <button onclick="selectMode('hard')">HART (10s)</button>
-      <button onclick="selectMode('crack')">CRACK (3s)</button>
-    </div>
-
-    <div id="screen-game" class="screen hidden">
-      <h1 id="rundeLabel">Runde 1 / 20</h1>
-      <p id="teamLabel">Team Rot ist dran</p>
-      <button id="playButton" onclick="playPreview()">▶️ Abspielen</button>
-      <button id="replayButton" onclick="replay()" disabled>Nochmal hören</button>
-      <div id="guessButtons" class="hidden">
-        <button class="correct" onclick="guess(true)">✅ Richtig</button>
-        <button class="wrong" onclick="guess(false)">❌ Falsch</button>
-      </div>
-      <p id="punkteStand">Team Rot: 0 Punkte | Team Grün: 0 Punkte</p>
-    </div>
-
-    <div id="screen-end" class="screen hidden">
-      <h1>Spiel beendet!</h1>
-      <p id="finalScore"></p>
-      <button onclick="restartGame()">🔁 Neu starten</button>
-    </div>
+    <p id="score-display">Punkte: 0</p>
   </div>
 
   <script src="script.js"></script>
