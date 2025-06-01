@@ -9,13 +9,17 @@
 <body>
   <h1>🎵 Musikraten – Das Spiel</h1>
 
-  <!-- Genre-Auswahl -->
-  <div id="genre-container">
-    <h2>Wähle ein Genre:</h2>
-    <button class="genre-button" data-genre="Die größten Hits aller Zeiten">Die größten Hits aller Zeiten</button>
-    <button class="genre-button" data-genre="Pop Hits 2000–2025">Pop Hits 2000–2025</button>
-    <button class="genre-button" data-genre="Punkrock 90 & 00">Punkrock 90 & 00</button>
-  </div>
+ <div id="genre-selection">
+  <button onclick="selectGenre('https://open.spotify.com/playlist/2si7ChS6Y0hPBt4FsobXpg')">
+    Die größten Hits aller Zeiten
+  </button>
+  <button onclick="selectGenre('https://open.spotify.com/playlist/6mtYuOxzl58vSGnEDtZ9uB')">
+    Pop Hits 2000–2025
+  </button>
+  <button onclick="selectGenre('https://open.spotify.com/playlist/39sVxPTg7BKwrf2MfgrtcD')">
+    Punkrock 90 & 00
+  </button>
+</div>
 
   <!-- Spielmodus-Auswahl -->
   <div id="mode-container" class="hidden">
