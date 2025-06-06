@@ -1,8 +1,5 @@
-// Deine neue Client-ID
 const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
-// Redirect URI - muss exakt so auch im Spotify Developer Dashboard eingetragen sein
 const redirectUri = 'https://dookye.github.io/musik-raten/callback.html';
-// Playlist-ID "Punkrock 90 & 00"
 const playlistId = '39sVxPTg7BKwrf2MfgrtcD';
 
 let accessToken = null;
@@ -12,18 +9,17 @@ let deviceId = null;
 const loginBtn = document.getElementById('login-btn');
 const startBtn = document.getElementById('start-btn');
 const status = document.getElementById('status');
+const trackInfo = document.getElementById('track-info');
 
 function generateRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
 
-// Hilfsfunktion: Zugriffstoken aus URL holen
 function getAccessTokenFromUrl() {
   const params = new URLSearchParams(window.location.hash.replace('#', '?'));
   return params.get('access_token');
 }
 
-// Login Link bauen und Login Button anzeigen
 function showLogin() {
   loginBtn.style.display = 'inline-block';
   status.textContent = 'Bitte bei Spotify einloggen, um das Spiel zu starten.';
@@ -34,26 +30,26 @@ function showLogin() {
   };
 }
 
-// Initialisierung Spotify Web Playback SDK
 window.onSpotifyWebPlaybackSDKReady = () => {
   const token = accessToken;
   player = new Spotify.Player({
     name: 'Musikraten Test Player',
-    getOAuthToken: cb => { cb(token); }
+    getOAuthToken: cb => cb(token)
   });
 
-  // Fehler-Handling
-  player.addListener('initialization_error', ({ message }) => { status.textContent = 'Init Error: ' + message; });
-  player.addListener('authentication_error', ({ message }) => { status.textContent = 'Auth Error: ' + message; });
-  player.addListener('account_error', ({ message }) => { status.textContent = 'Account Error: ' + message; });
-  player.addListener('playback_error', ({ message }) => { status.textContent = 'Playback Error: ' + message; });
-
-  // Player-Status
-  player.addListener('player_state_changed', state => {
-    // Kann man hier nutzen, wenn nötig
+  player.addListener('initialization_error', ({ message }) => {
+    status.textContent = 'Init Error: ' + message;
+  });
+  player.addListener('authentication_error', ({ message }) => {
+    status.textContent = 'Auth Error: ' + message;
+  });
+  player.addListener('account_error', ({ message }) => {
+    status.textContent = 'Account Error: ' + message;
+  });
+  player.addListener('playback_error', ({ message }) => {
+    status.textContent = 'Playback Error: ' + message;
   });
 
-  // Gerät bereit
   player.addListener('ready', ({ device_id }) => {
     deviceId = device_id;
     status.textContent = 'Spotify Player ist bereit! Du kannst jetzt starten.';
@@ -64,7 +60,6 @@ window.onSpotifyWebPlaybackSDKReady = () => {
   player.connect();
 };
 
-// Song an zufälliger Stelle für 3 Sekunden spielen
 async function playRandomSong() {
   if (!deviceId) {
     status.textContent = 'Spotify Player ist nicht bereit.';
@@ -72,7 +67,6 @@ async function playRandomSong() {
   }
 
   try {
-    // Playlist-Tracks holen
     const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`, {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
@@ -83,17 +77,17 @@ async function playRandomSong() {
       return;
     }
 
-    // Zufälligen Song auswählen
     const randomIndex = generateRandomInt(tracks.length);
     const track = tracks[randomIndex].track;
 
-    // Song-Länge in ms
     const durationMs = track.duration_ms;
-    // Zufällige Startposition, so dass mindestens 3 Sekunden übrig bleiben
     const maxStart = durationMs - 3000;
     const startPosition = maxStart > 0 ? generateRandomInt(maxStart) : 0;
 
-    // Song starten
+    // NICHT anzeigen – wird erst für die spätere "Auflösung" gebraucht
+    trackInfo.textContent = `${track.name} – ${track.artists.map(a => a.name).join(', ')}`;
+    document.getElementById('solution').style.display = 'none';
+
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
       method: 'PUT',
       body: JSON.stringify({
@@ -106,8 +100,7 @@ async function playRandomSong() {
       }
     });
 
-    status.textContent = 'Spiele...';
-    // Nach 3 Sekunden stoppen
+    status.textContent = 'Spiele Song…';
     setTimeout(() => {
       player.pause();
       status.textContent = 'Song wurde 3 Sekunden gespielt. Drücke Start für nächsten Song.';
@@ -117,12 +110,8 @@ async function playRandomSong() {
   }
 }
 
-// Start-Button Klick
-startBtn.addEventListener('click', () => {
-  playRandomSong();
-});
+startBtn.addEventListener('click', playRandomSong);
 
-// Main Funktion zum Starten
 function main() {
   accessToken = getAccessTokenFromUrl();
 
@@ -130,7 +119,6 @@ function main() {
     showLogin();
   } else {
     status.textContent = 'Spotify Player wird geladen...';
-    // SDK laden (spotify-player.js von Spotify)  
     const script = document.createElement('script');
     script.src = 'https://sdk.scdn.co/spotify-player.js';
     document.body.appendChild(script);
