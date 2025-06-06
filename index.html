@@ -1,17 +1,69 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>Musikratespiel</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <meta charset="UTF-T">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musikratespiel</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="content">
-    <div id="status">Spotify Player wird geladen...</div>
-    <button id="loginBtn">Login bei Spotify</button>
-  </div>
+    <div id="login-container">
+        <h1>Musikratespiel</h1>
+        <button id="login-button">Mit Spotify einloggen</button>
+    </div>
 
-  <script src="script.js"></script>
+    <div id="setup-container" class="hidden">
+        <h2>Spiel einrichten</h2>
+        <div>
+            <label for="genre-select">Genre:</label>
+            <select id="genre-select">
+                <option value="punk">PUNK</option>
+                </select>
+        </div>
+        <div>
+            <label for="mode-select">Modus:</label>
+            <select id="mode-select">
+                <option value="pro">Pro (2 Sek. Snippet)</option>
+                </select>
+        </div>
+        <button id="start-game-button">Spiel starten</button>
+    </div>
+
+    <div id="game-container" class="hidden">
+        <div id="player-info">
+            <p>Spieler <span id="current-player">1</span> ist dran</p>
+            <p>Punkte Spieler 1: <span id="score-player1">0</span></p>
+            <p>Punkte Spieler 2: <span id="score-player2">0</span></p>
+            <p>Runde <span id="current-round">1</span> / 10</p>
+        </div>
+
+        <div id="song-player-area">
+            <p>Höre genau hin...</p>
+            <audio id="audio-player" style="display: none;"></audio>
+        </div>
+
+        <div id="controls">
+            <button id="replay-button">Nochmal hören (<span id="replays-left">5</span>)</button>
+            <button id="guess-correct-button">Richtig!</button>
+            <button id="guess-incorrect-button">Falsch / Weiter</button>
+        </div>
+        <div id="song-reveal-area" class="hidden">
+            <p>Der Song war: <strong id="song-title"></strong> von <strong id="song-artist"></strong></p>
+            <img id="album-cover" src="" alt="Album Cover" style="width: 100px; height: 100px;">
+        </div>
+        <button id="next-song-button" class="hidden">Nächster Song</button>
+    </div>
+
+    <div id="game-over-container" class="hidden">
+        <h2>Spiel vorbei!</h2>
+        <p>Endstand:</p>
+        <p>Spieler 1: <span id="final-score-player1">0</span> Punkte</p>
+        <p>Spieler 2: <span id="final-score-player2">0</span> Punkte</p>
+        <button id="play-again-button">Neues Spiel</button>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="spotify.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
