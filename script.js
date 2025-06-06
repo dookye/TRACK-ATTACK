@@ -113,7 +113,7 @@ async function playRandomSong() {
 startBtn.addEventListener('click', playRandomSong);
 
 function main() {
-  accessToken = getAccessTokenFromUrl();
+  accessToken = localStorage.getItem('spotifyAccessToken');
 
   if (!accessToken) {
     showLogin();
