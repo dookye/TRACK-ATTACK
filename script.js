@@ -1,5 +1,5 @@
 const clientId = '3f4b3acc3bad4e0d98e77409ffc62e48';
-const redirectUri = window.location.origin + '/callback.html';
+const redirectUri = window.location.origin + 'https://dookye.github.io/musik-raten/callback.html';
 const loginBtn = document.getElementById('loginBtn');
 const statusEl = document.getElementById('status');
 
