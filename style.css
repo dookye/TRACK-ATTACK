@@ -1,4 +1,4 @@
-/* RESET + Basis */
+/* Allgemeine Einstellungen */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -8,79 +8,76 @@
 html, body {
   height: 100%;
   font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(to right, #121212, #1e1e1e);
-  color: #f0f0f0;
-  overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
+  background: #121212;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  text-align: center;
+  overscroll-behavior-y: none;
 }
 
-/* App-Wrapper */
-#app {
+body {
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 1.5rem;
-  height: 100%;
-  text-align: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* Headings */
+main {
+  width: 100%;
+  max-width: 600px;
+  padding: 2rem;
+}
+
+/* Headline */
 h1 {
   font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #1db954;
+  margin-bottom: 1.5rem;
 }
 
-h2 {
-  font-size: 1.3rem;
-  margin-bottom: 0.8rem;
-  color: #ffffff;
+/* Status-Text */
+#status {
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  color: #bbbbbb;
 }
 
-/* Buttons */
+/* Button-Styling */
 button {
+  font-size: 1.2rem;
+  padding: 1rem 2rem;
   background: #1db954;
   color: white;
   border: none;
   border-radius: 12px;
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
-  margin: 0.5rem;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.3s ease, transform 0.2s ease;
 }
 
-button:hover {
-  background: #1ed760;
+button:disabled {
+  background: #444;
+  cursor: not-allowed;
 }
 
-button.green {
-  background: #28a745;
-}
-button.red {
-  background: #dc3545;
+button:hover:not(:disabled) {
+  background: #17a44b;
+  transform: scale(1.05);
 }
 
-/* Layout verstecken */
-.hidden {
-  display: none !important;
-}
-
-/* Punkteanzeige */
-#points {
-  margin-top: 1rem;
-  font-size: 1.2rem;
-}
-
-/* Mobile-Optimierung */
+/* Mobile: Vollbild-Feeling */
 @media (max-width: 600px) {
+  body {
+    padding: 1rem;
+  }
+
+  main {
+    padding: 1rem;
+  }
+
   h1 {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
   }
 
   button {
-    font-size: 0.95rem;
-    padding: 0.6rem 1.2rem;
+    width: 100%;
   }
 }
