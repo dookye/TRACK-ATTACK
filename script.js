@@ -1,297 +1,216 @@
-// DOM Elemente
-const setupContainer = document.getElementById('setup-container');
-const gameContainer = document.getElementById('game-container');
-const gameOverContainer = document.getElementById('game-over-container');
+const clientId = '53257f6a1c144d3f929a60d691a0c6f6'; // Ihre Spotify Developer ID
+const redirectUri = 'https://dookye.github.io/musik-raten/'; // Ihre GitHub Pages URL
+const playlistId = '39sVxPTg7BKwrf2MfgrtcD'; // Ihre Spotify Playlist ID (nur die ID, nicht die ganze URL)
 
-const genreSelect = document.getElementById('genre-select');
-const modeSelect = document.getElementById('mode-select');
-const startGameButton = document.getElementById('start-game-button');
+let accessToken = '';
+let player = null;
+let deviceId = '';
+let tracks = [];
+let currentTrackUri = null;
+let currentTrackTimeout = null;
 
-const currentPlayerDisplay = document.getElementById('current-player');
-const scorePlayer1Display = document.getElementById('score-player1');
-const scorePlayer2Display = document.getElementById('score-player2');
-const currentRoundDisplay = document.getElementById('current-round');
+const startButton = document.getElementById('startButton');
+const messageElement = document.getElementById('message');
 
-const audioPlayer = document.getElementById('audio-player');
-const replayButton = document.getElementById('replay-button');
-const replaysLeftDisplay = document.getElementById('replays-left');
-const guessCorrectButton = document.getElementById('guess-correct-button');
-const guessIncorrectButton = document.getElementById('guess-incorrect-button');
+// --- Authentifizierung ---
+function getAccessToken() {
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const token = params.get('access_token');
 
-const songRevealArea = document.getElementById('song-reveal-area');
-const songTitleDisplay = document.getElementById('song-title');
-const songArtistDisplay = document.getElementById('song-artist');
-const albumCoverDisplay = document.getElementById('album-cover');
-const nextSongButton = document.getElementById('next-song-button');
+    if (token) {
+        accessToken = token;
+        // Speichern Sie den Token, um ihn nicht bei jedem Neuladen abrufen zu müssen (für diese Testversion optional, aber gut zu wissen)
+        // localStorage.setItem('spotify_access_token', token);
+        // localStorage.setItem('spotify_token_expires_in', Date.now() + params.get('expires_in') * 1000);
+        window.history.replaceState({}, document.title, window.location.pathname); // Entfernt den Token aus der URL
+        console.log("Access Token erhalten:", accessToken);
+        return true;
+    }
+    return false;
+}
 
-const finalScorePlayer1Display = document.getElementById('final-score-player1');
-const finalScorePlayer2Display = document.getElementById('final-score-player2');
-const playAgainButton = document.getElementById('play-again-button');
+function redirectToAuthCodeFlow() {
+    const scope = 'user-read-private user-read-email streaming user-modify-playback-state';
+    const authUrl = `https://accounts.spotify.com/authorize?response_type=token&client_id=${clientId}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    window.location.href = authUrl;
+}
 
-// Spielstatus
-let gameState = {
-    currentPlayer: 1,
-    scores: { 1: 0, 2: 0 },
-    currentRound: 0, // Zählt Song-Paare (10 Runden = 20 Songs)
-    songsPlayedThisGame: 0, // Zählt individuelle Songs
-    maxRounds: 10,
-    selectedGenre: '',
-    selectedMode: '',
-    currentTrack: null,
-    replaysLeft: 5,
-    maxReplays: 5,
-    currentPointsForSong: 5,
-    playedTrackIds: new Set() // Um Song-Wiederholungen im selben Spiel zu vermeiden
+// --- Spotify Web Playback SDK Initialisierung ---
+window.onSpotifyWebPlaybackSDKReady = () => {
+    if (!getAccessToken()) {
+        messageElement.textContent = 'Bitte klicken Sie auf "Start", um sich bei Spotify anzumelden.';
+        startButton.disabled = false; // Start-Button aktivieren, um den Auth-Flow zu starten
+        startButton.onclick = redirectToAuthCodeFlow;
+        return;
+    }
+
+    messageElement.textContent = 'Initialisiere Spotify Player...';
+    startButton.disabled = true;
+
+    player = new Spotify.Player({
+        name: 'Musik-Raten Web Player',
+        getOAuthToken: cb => { cb(accessToken); },
+        volume: 0.5
+    });
+
+    // Ereignis-Listener
+    player.addListener('ready', ({ device_id }) => {
+        deviceId = device_id;
+        console.log('Bereit auf Gerät mit ID', deviceId);
+        messageElement.textContent = 'Player bereit. Lade Playlist...';
+        loadPlaylistTracks();
+    });
+
+    player.addListener('not_ready', ({ device_id }) => {
+        console.log('Gerät mit ID ist offline', device_id);
+        messageElement.textContent = 'Gerät ist offline. Bitte stellen Sie sicher, dass Spotify geöffnet ist.';
+        startButton.disabled = true;
+    });
+
+    player.addListener('initialization_error', ({ message }) => {
+        console.error('Fehler bei der Initialisierung:', message);
+        messageElement.textContent = `Fehler beim Initialisieren des Players: ${message}. Stellen Sie sicher, dass Sie Premium haben.`;
+        startButton.disabled = true;
+    });
+
+    player.addListener('authentication_error', ({ message }) => {
+        console.error('Authentifizierungsfehler:', message);
+        messageElement.textContent = `Authentifizierungsfehler: ${message}. Bitte versuchen Sie es erneut.`;
+        startButton.disabled = false; // Ermöglicht erneute Anmeldung
+        startButton.onclick = redirectToAuthCodeFlow; // Setzt den Klick-Handler zurück
+    });
+
+    player.addListener('account_error', ({ message }) => {
+        console.error('Account-Fehler:', message);
+        messageElement.textContent = `Account-Fehler: ${message}. Benötigt Spotify Premium.`;
+        startButton.disabled = true;
+    });
+
+    player.connect();
 };
 
-// --- Spielablauf Funktionen ---
-async function initGame() {
-    if (!accessToken || !isTokenValid()) {
-        alert("Bitte zuerst mit Spotify einloggen.");
-        document.getElementById('login-container').classList.remove('hidden');
-        setupContainer.classList.add('hidden');
-        return;
-    }
-    gameState.selectedGenre = genreSelect.value;
-    gameState.selectedMode = modeSelect.value;
-
-    // Zeige Ladeanzeige (optional)
-    startGameButton.disabled = true;
-    startGameButton.textContent = "Lade Songs...";
-
-    const tracksLoaded = await loadTracksForGenre(gameState.selectedGenre);
-    if (!tracksLoaded || allTracksForGame.length < gameState.maxRounds * 2) {
-        alert(`Nicht genügend Songs für ein volles Spiel im Genre "${gameState.selectedGenre}" gefunden (mind. ${gameState.maxRounds*2} benötigt). Bitte andere Playlists in spotify.js eintragen oder ein anderes Genre wählen.`);
-        startGameButton.disabled = false;
-        startGameButton.textContent = "Spiel starten";
-        return;
-    }
-    startGameButton.disabled = false;
-    startGameButton.textContent = "Spiel starten";
-
-    resetGameState();
-    setupContainer.classList.add('hidden');
-    gameContainer.classList.remove('hidden');
-    gameOverContainer.classList.add('hidden');
-    nextTurn();
-}
-
-function resetGameState() {
-    gameState.currentPlayer = 1;
-    gameState.scores = { 1: 0, 2: 0 };
-    gameState.currentRound = 0;
-    gameState.songsPlayedThisGame = 0;
-    gameState.playedTrackIds.clear();
-    updateScoreDisplay();
-}
-
-function nextTurn() {
-    audioPlayer.pause();
-    audioPlayer.src = ''; // Wichtig, um alten Song zu entladen
-
-    songRevealArea.classList.add('hidden');
-    nextSongButton.classList.add('hidden');
-    enableGuessingButtons(false); // Erst nach dem Abspielen aktivieren
-
-    if (gameState.songsPlayedThisGame % 2 === 0) { // Nach jedem zweiten Song (also für jeden Spieler einmal)
-        gameState.currentRound++;
-    }
-
-    if (gameState.currentRound > gameState.maxRounds) {
-        endGame();
-        return;
-    }
-
-    gameState.currentPlayer = (gameState.songsPlayedThisGame % 2) + 1;
-    gameState.songsPlayedThisGame++;
-
-    updatePlayerAndRoundDisplay();
-
-    gameState.currentTrack = getUniqueRandomTrack();
-    if (!gameState.currentTrack) {
-        alert("Keine einzigartigen Songs mehr verfügbar. Spiel endet.");
-        endGame();
-        return;
-    }
-    gameState.playedTrackIds.add(gameState.currentTrack.id); // Markiere als gespielt
-
-    console.log("Nächster Song:", gameState.currentTrack.name, "Preview:", gameState.currentTrack.preview_url);
-
-    gameState.replaysLeft = gameState.maxReplays;
-    gameState.currentPointsForSong = 5;
-    replaysLeftDisplay.textContent = gameState.replaysLeft;
-    replayButton.disabled = false;
-
-    playCurrentSongSnippet();
-}
-
-function getUniqueRandomTrack() {
-    if (allTracksForGame.length === gameState.playedTrackIds.size) {
-        return null; // Keine einzigartigen Tracks mehr
-    }
-    let track;
-    let attempts = 0;
-    const maxAttempts = allTracksForGame.length * 2; // Sicherheitsnetz gegen Endlosschleife
-    do {
-        track = getRandomTrack();
-        attempts++;
-    } while (track && gameState.playedTrackIds.has(track.id) && attempts < maxAttempts);
-
-    if (attempts >= maxAttempts && track && gameState.playedTrackIds.has(track.id)) {
-      console.warn("Konnte nach vielen Versuchen keinen einzigartigen Track finden. Möglicherweise sind alle schon gespielt.");
-      return null;
-    }
-    return track;
-}
-
-
-function playCurrentSongSnippet() {
-    if (!gameState.currentTrack) return;
-
-    const track = gameState.currentTrack;
-    // Wichtig: Die Spotify API gibt meist nur 'preview_url', die 30s vom Anfang sind.
-    // Echte zufällige Startpunkte + kurze Dauer sind ohne Web Playback SDK schwer.
-    // Simulation für "Pro" Modus (2 Sekunden):
-    if (track.preview_url) {
-        audioPlayer.src = track.preview_url;
-        let randomStartTime = 0; // Standardmäßig vom Anfang des Previews
-
-        // Für "Pro" Modus: Wenn wir den vollen Song hätten (nicht nur preview_url),
-        // könnten wir hier eine zufällige Startzeit innerhalb des Songs wählen.
-        // Da wir meist nur preview_url (30s) haben, ist ein zufälliger Start innerhalb dieser 30s
-        // und dann nur 2s abspielen eine Option. Oder einfach die ersten 2s des Previews.
-        // Für die Anforderung "zufällige Stelle":
-        if (gameState.selectedMode === 'pro' && track.duration_ms) { // Falls wir die volle Dauer kennen (nicht immer bei Preview)
-             // duration_ms ist für den vollen Song. preview_url ist nur 30s.
-             // Wir nehmen an, preview_url ist immer 30s lang.
-            const maxPreviewStartTime = 30 - 2; // 2s Snippet
-            randomStartTime = Math.random() * maxPreviewStartTime;
-        } else if (gameState.selectedMode === 'pro') {
-            // Wenn nur Preview URL, nehmen wir an 30s. Spielen 2s von zufälligem Start im Preview.
-            const maxPreviewStartTime = 28; // Max start for a 2s clip in a 30s preview
-            randomStartTime = Math.floor(Math.random() * maxPreviewStartTime);
-        }
-
-        audioPlayer.currentTime = randomStartTime; // Setzt die Startzeit
-
-        // Stoppe nach 2 Sekunden für "Pro" Modus
-        const playDuration = (gameState.selectedMode === 'pro') ? 2000 : 5000; // 2s für Pro, sonst 5s (Beispiel)
-
-        audioPlayer.play().then(() => {
-            console.log(`Spiele Snippet von ${track.name} ab Sekunde ${randomStartTime.toFixed(2)} für ${playDuration/1000}s.`);
-            enableGuessingButtons(true); // Buttons aktivieren, sobald Musik spielt
-            setTimeout(() => {
-                audioPlayer.pause();
-                // Man könnte hier die Buttons auch wieder deaktivieren, bis "Nochmal hören" oder geraten wird
-            }, playDuration);
-        }).catch(error => {
-            console.error("Fehler beim Abspielen:", error);
-            // Fallback oder Fehlermeldung anzeigen
-            alert("Song konnte nicht abgespielt werden. Versuche nächsten Song.");
-            // Hier könnte man direkt zum nächsten Song springen oder dem User eine Option geben.
-            // Fürs Erste einfach die Buttons trotzdem aktivieren, damit das Spiel weitergehen kann.
-            enableGuessingButtons(true);
+// --- Playlist Tracks abrufen ---
+async function loadPlaylistTracks() {
+    try {
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`, { // Max 100 Tracks pro Request
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
         });
 
-    } else {
-        console.warn("Keine preview_url für Track:", track.name);
-        alert("Dieser Song hat keinen verfügbaren Audio-Schnipsel. Überspringe...");
-        // Hier direkt zum nächsten Song/Turn springen oder eine bessere Fehlerbehandlung.
-        // Wir simulieren einen "falschen" Rateversuch, um im Fluss zu bleiben.
-        handleGuess(false); // Oder eine andere Logik
-    }
-}
-
-
-function handleReplay() {
-    if (gameState.replaysLeft > 0) {
-        gameState.replaysLeft--;
-        if (gameState.currentPointsForSong > 1) { // Punkte können nicht unter 1 fallen (oder 0, je nach Regel)
-            gameState.currentPointsForSong--;
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('AccessToken abgelaufen oder ungültig. Erneute Authentifizierung erforderlich.');
+                messageElement.textContent = 'Session abgelaufen. Bitte klicken Sie auf "Start", um sich erneut anzumelden.';
+                startButton.disabled = false;
+                startButton.onclick = redirectToAuthCodeFlow;
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        replaysLeftDisplay.textContent = gameState.replaysLeft;
-        playCurrentSongSnippet();
-        if (gameState.replaysLeft === 0) {
-            replayButton.disabled = true;
+
+        const data = await response.json();
+        tracks = data.items
+            .filter(item => item.track && item.track.preview_url === null) // Nur Tracks ohne Preview-URL, da wir das volle Lied nutzen
+            .map(item => ({
+                uri: item.track.uri,
+                duration_ms: item.track.duration_ms
+            }));
+
+        if (tracks.length === 0) {
+            messageElement.textContent = 'Keine spielbaren Tracks in der Playlist gefunden. Stellen Sie sicher, dass die Tracks nicht ausgegraut sind oder DRM-Einschränkungen haben.';
+            startButton.disabled = true;
+            return;
         }
+
+        console.log('Tracks geladen:', tracks.length);
+        messageElement.textContent = 'Bereit! Klicken Sie auf Start.';
+        startButton.disabled = false;
+        startButton.onclick = playRandomSong; // Setzt den Klick-Handler auf die Spiellogik
+    } catch (error) {
+        console.error('Fehler beim Laden der Playlist-Tracks:', error);
+        messageElement.textContent = `Fehler beim Laden der Playlist: ${error.message}`;
+        startButton.disabled = true;
     }
 }
 
-function handleGuess(isCorrect) {
-    audioPlayer.pause();
-    enableGuessingButtons(false); // Buttons deaktivieren nach dem Raten
-    replayButton.disabled = true; // Auch Replay deaktivieren
-
-    if (isCorrect) {
-        gameState.scores[gameState.currentPlayer] += gameState.currentPointsForSong;
-        // Hier könnte man Feedback geben "Richtig! +X Punkte"
-    } else {
-        // Feedback "Leider falsch" oder einfach nur Song enthüllen
+// --- Spiellogik ---
+async function playRandomSong() {
+    if (!player || !deviceId || !accessToken || tracks.length === 0) {
+        messageElement.textContent = 'Player nicht bereit oder keine Tracks geladen.';
+        return;
     }
-    updateScoreDisplay();
-    revealSong();
-    nextSongButton.classList.remove('hidden'); // Button für nächsten Song anzeigen
-}
 
-function revealSong() {
-    if (gameState.currentTrack) {
-        songTitleDisplay.textContent = gameState.currentTrack.name;
-        songArtistDisplay.textContent = gameState.currentTrack.artists.map(a => a.name).join(', ');
-        albumCoverDisplay.src = gameState.currentTrack.album.images.length > 0 ? gameState.currentTrack.album.images[0].url : 'placeholder.png'; // Placeholder falls kein Bild
-        songRevealArea.classList.remove('hidden');
+    startButton.disabled = true;
+    messageElement.textContent = 'Spiele Song ab...';
+
+    // Wenn ein Timeout läuft, löschen
+    if (currentTrackTimeout) {
+        clearTimeout(currentTrackTimeout);
+    }
+
+    let randomTrack;
+    do {
+        randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+    } while (randomTrack.uri === currentTrackUri && tracks.length > 1); // Sicherstellen, dass ein anderer Song gespielt wird, wenn möglich
+
+    currentTrackUri = randomTrack.uri;
+
+    // Zufällige Startposition (mindestens 1 Sekunde vor Ende des 3-Sekunden-Snippets)
+    const playbackDuration = 3000; // 3 Sekunden
+    const maxStartTime = randomTrack.duration_ms - playbackDuration - 1000; // max 1 Sekunde vor Ende
+    const startPosition = Math.max(0, Math.floor(Math.random() * maxStartTime));
+
+    console.log(`Spiele: ${randomTrack.uri} ab ${startPosition}ms`);
+
+    try {
+        await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                uris: [randomTrack.uri],
+                position_ms: startPosition
+            })
+        });
+
+        currentTrackTimeout = setTimeout(async () => {
+            try {
+                await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                console.log('Song pausiert.');
+                messageElement.textContent = 'Song beendet. Klicke erneut auf Start für den nächsten Song.';
+                startButton.disabled = false;
+            } catch (pauseError) {
+                console.error('Fehler beim Pausieren des Songs:', pauseError);
+                messageElement.textContent = 'Fehler beim Pausieren des Songs.';
+                startButton.disabled = false;
+            }
+        }, playbackDuration); // Nach 3 Sekunden pausieren
+
+    } catch (error) {
+        console.error('Fehler beim Abspielen des Songs:', error);
+        messageElement.textContent = `Fehler beim Abspielen: ${error.message}`;
+        startButton.disabled = false;
     }
 }
 
-function updateScoreDisplay() {
-    scorePlayer1Display.textContent = gameState.scores[1];
-    scorePlayer2Display.textContent = gameState.scores[2];
+// Initialer Check, ob Access Token vorhanden ist
+// (Dies wird ausgeführt, wenn die Seite geladen wird oder nach der Umleitung von Spotify)
+if (getAccessToken()) {
+    // Wenn Token vorhanden, wird onSpotifyWebPlaybackSDKReady den Player initialisieren und die Playlist laden.
+    messageElement.textContent = 'Access Token erhalten. Warte auf Spotify SDK...';
+    startButton.disabled = true;
+} else {
+    // Wenn kein Token vorhanden ist, wird der Benutzer aufgefordert, sich anzumelden, sobald der Button geklickt wird.
+    messageElement.textContent = 'Bitte klicken Sie auf "Start", um sich bei Spotify anzumelden.';
+    startButton.disabled = false;
+    startButton.onclick = redirectToAuthCodeFlow;
 }
-
-function updatePlayerAndRoundDisplay() {
-    currentPlayerDisplay.textContent = gameState.currentPlayer;
-    currentRoundDisplay.textContent = gameState.currentRound > gameState.maxRounds ? gameState.maxRounds : gameState.currentRound;
-}
-
-function enableGuessingButtons(enable) {
-    guessCorrectButton.disabled = !enable;
-    guessIncorrectButton.disabled = !enable;
-    // Replay Button nur aktivieren, wenn noch replays da sind und Buttons aktiv sind
-    replayButton.disabled = !(enable && gameState.replaysLeft > 0);
-}
-
-
-function endGame() {
-    gameContainer.classList.add('hidden');
-    gameOverContainer.classList.remove('hidden');
-    finalScorePlayer1Display.textContent = gameState.scores[1];
-    finalScorePlayer2Display.textContent = gameState.scores[2];
-    console.log("Spiel beendet. Endstand:", gameState.scores);
-}
-
-// Event Listener
-startGameButton.addEventListener('click', initGame);
-replayButton.addEventListener('click', handleReplay);
-guessCorrectButton.addEventListener('click', () => handleGuess(true));
-guessIncorrectButton.addEventListener('click', () => handleGuess(false));
-nextSongButton.addEventListener('click', nextTurn);
-playAgainButton.addEventListener('click', () => {
-    // Zurück zum Setup, Token sollte noch gültig sein
-    gameOverContainer.classList.add('hidden');
-    setupContainer.classList.remove('hidden');
-    // Wichtig: allTracksForGame nicht leeren, wenn Genre gleich bleibt
-    // gameState wird in initGame() zurückgesetzt
-});
-
-// Initiale UI Anpassung (wird von auth.js überschrieben, wenn Token da ist)
-document.addEventListener('DOMContentLoaded', () => {
-    if (!accessToken || !isTokenValid()) {
-        document.getElementById('login-container').classList.remove('hidden');
-        setupContainer.classList.add('hidden');
-    } else {
-        document.getElementById('login-container').classList.add('hidden');
-        setupContainer.classList.remove('hidden');
-    }
-    gameContainer.classList.add('hidden');
-    gameOverContainer.classList.add('hidden');
-});
 
