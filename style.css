@@ -1,83 +1,35 @@
-/* Allgemeine Einstellungen */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html, body {
-  height: 100%;
-  font-family: 'Segoe UI', sans-serif;
-  background: #121212;
-  color: #fff;
-  -webkit-font-smoothing: antialiased;
-  text-align: center;
-  overscroll-behavior-y: none;
-}
-
 body {
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: #eee;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  height: 100vh;
+  margin: 0;
 }
 
-main {
-  width: 100%;
-  max-width: 600px;
-  padding: 2rem;
+#content {
+  text-align: center;
 }
 
-/* Headline */
-h1 {
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-}
-
-/* Status-Text */
-#status {
-  margin-bottom: 2rem;
-  font-size: 1.1rem;
-  color: #bbbbbb;
-}
-
-/* Button-Styling */
 button {
-  font-size: 1.2rem;
-  padding: 1rem 2rem;
+  padding: 12px 24px;
+  font-size: 1.2em;
   background: #1db954;
-  color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 30px;
+  color: white;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  margin-top: 20px;
+  transition: background 0.3s ease;
 }
 
-button:disabled {
-  background: #444;
-  cursor: not-allowed;
+button:hover {
+  background: #1ed760;
 }
 
-button:hover:not(:disabled) {
-  background: #17a44b;
-  transform: scale(1.05);
-}
-
-/* Mobile: Vollbild-Feeling */
-@media (max-width: 600px) {
-  body {
-    padding: 1rem;
-  }
-
-  main {
-    padding: 1rem;
-  }
-
-  h1 {
-    font-size: 1.6rem;
-  }
-
-  button {
-    width: 100%;
-  }
+#status {
+  margin-bottom: 20px;
+  font-size: 1em;
 }
