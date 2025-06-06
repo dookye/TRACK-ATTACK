@@ -2,22 +2,16 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Musikraten Test</title>
+  <title>Musikratespiel</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://sdk.scdn.co/spotify-player.js"></script> <!-- Spotify SDK -->
-  <script src="script.js" defer></script>
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
   <div id="content">
-    <h1>Musikraten Test</h1>
-    <p id="status">Bitte warten, Spotify Player wird geladen...</p>
-    <button id="login-btn" style="display:none;">Login bei Spotify</button>
-    <button id="start-btn" style="display:none;">Start</button>
-    <!-- Für später: Auflösung -->
-    <div id="solution" style="display:none;">
-      <p id="track-info"></p>
-    </div>
+    <div id="status">Spotify Player wird geladen...</div>
+    <button id="loginBtn">Login bei Spotify</button>
   </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
