@@ -1,44 +1,17 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Musikraten</title>
+  <title>Spotify Testplayer</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
-    <h1>🎵 Musikraten</h1>
-
-    <div id="genre-selection">
-      <h2>Wähle ein Genre:</h2>
-      <button data-playlist="2si7ChS6Y0hPBt4FsobXpg">Die größten Hits aller Zeiten</button>
-      <button data-playlist="6mtYuOxzl58vSGnEDtZ9uB">Pop Hits 2000–2025</button>
-      <button data-playlist="39sVxPTg7BKwrf2MfgrtcD">Punkrock 90 & 00</button>
-    </div>
-
-    <div id="mode-selection" class="hidden">
-      <h2>Wähle den Spielmodus:</h2>
-      <button data-mode="normal">🎧 Normal (30 Sek)</button>
-      <button data-mode="hard">🔥 Hart (10 Sek)</button>
-      <button data-mode="crack">🤯 Crack (3 Sek)</button>
-    </div>
-
-    <div id="game-ui" class="hidden">
-      <button id="start-button">Start</button>
-      <div id="controls" class="hidden">
-        <button id="play-preview">▶️ Abspielen</button>
-        <button id="repeat-preview">🔁 Wiederholen</button>
-        <button id="show-solution">❓ Auflösen</button>
-        <div id="solution-buttons" class="hidden">
-          <button id="correct" class="green">✅ Richtig</button>
-          <button id="wrong" class="red">❌ Falsch</button>
-        </div>
-        <p id="points">Punkte: 0</p>
-      </div>
-    </div>
+  <div class="container">
+    <h1>🎵 Punkrock 90 & 00 – Testplayer</h1>
+    <button id="startBtn">Start</button>
+    <p id="statusText"></p>
   </div>
-
   <script src="script.js" defer></script>
 </body>
 </html>
