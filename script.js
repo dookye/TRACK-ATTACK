@@ -1,136 +1,131 @@
+// Spotify App-Konfiguration
 const clientId = "3f4b3acc3bad4e0d98e77409ffc62e48";
 const redirectUri = "https://dookye.github.io/musik-raten/callback.html";
-const token = localStorage.getItem("spotify_access_token");
-let token = localStorage.getItem("spotify_access_token");
-let playlistId = null;
-let mode = null;
-let trackList = [];
-let currentTrack = null;
-let currentPoints = 5;
-let totalPoints = 0;
-let repeatCount = 0;
+const playlistId = "39sVxPTg7BKwrf2MfgrtcD";
+const scopes = ["streaming", "user-read-email", "user-read-private"];
 
-function loginWithSpotify() {
-  const clientId = "3f4b3acc3bad4e0d98e77409ffc62e48";
-  const redirectUri = "https://dookye.github.io/musik-raten/callback.html";
-  const scopes = "playlist-read-private";
+// Elemente
+const startBtn = document.getElementById("start-btn");
+const statusBox = document.getElementById("status");
 
-  const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+// Spotify-Player-Objekt
+let player;
+let deviceId = null;
 
+// Login-Flow
+function authorize() {
+  const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+    redirectUri
+  )}&scope=${encodeURIComponent(scopes.join(" "))}&response_type=token`;
   window.location.href = authUrl;
 }
 
-function authorizeSpotify() {
-  const scopes = "playlist-read-private";
-  const url = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}`;
-  window.location.href = url;
+// Zugriffstoken prüfen
+const accessToken = localStorage.getItem("spotify_access_token");
+if (!accessToken) {
+  authorize(); // Weiterleitung zur Spotify-Anmeldung
+} else {
+  setupPlayer(); // Wenn Token da: Player einrichten
 }
 
-if (!token) {
-  document.getElementById("app").innerHTML = "<p>Fehler: Kein Zugriffstoken erhalten.</p>";
-  // Optional: automatisch Login starten
-  // loginWithSpotify();
-}
-
-if (!token) {
-  authorizeSpotify();
-}
-
-// Element-Zuweisungen
-const genreSelection = document.getElementById("genre-selection");
-const modeSelection = document.getElementById("mode-selection");
-const gameUI = document.getElementById("game-ui");
-const startButton = document.getElementById("start-button");
-const controls = document.getElementById("controls");
-const playBtn = document.getElementById("play-preview");
-const repeatBtn = document.getElementById("repeat-preview");
-const showSolutionBtn = document.getElementById("show-solution");
-const solutionBtns = document.getElementById("solution-buttons");
-const correctBtn = document.getElementById("correct");
-const wrongBtn = document.getElementById("wrong");
-const pointsDisplay = document.getElementById("points");
-
-// Genre-Auswahl
-genreSelection.querySelectorAll("button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    playlistId = btn.dataset.playlist;
-    genreSelection.classList.add("hidden");
-    modeSelection.classList.remove("hidden");
+// Spotify Web Playback SDK laden
+window.onSpotifyWebPlaybackSDKReady = () => {
+  player = new Spotify.Player({
+    name: "Musikraten Player",
+    getOAuthToken: cb => {
+      cb(localStorage.getItem("spotify_access_token"));
+    },
+    volume: 0.8,
   });
-});
 
-// Modus-Auswahl
-modeSelection.querySelectorAll("button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    mode = btn.dataset.mode;
-    modeSelection.classList.add("hidden");
-    gameUI.classList.remove("hidden");
+  player.addListener("ready", ({ device_id }) => {
+    deviceId = device_id;
+    statusBox.innerText = "Bereit zum Start 🎵";
+    startBtn.disabled = false;
   });
-});
 
-// Start
-startButton.addEventListener("click", async () => {
-  controls.classList.remove("hidden");
-  await loadPlaylistTracks();
-  nextTrack();
-});
-
-// Lade Tracks
-async function loadPlaylistTracks() {
-  const res = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`, {
-    headers: { Authorization: "Bearer " + token }
+  player.addListener("initialization_error", ({ message }) => {
+    console.error(message);
   });
-  const data = await res.json();
-  trackList = data.items.map(item => item.track).filter(track => track.preview_url);
+
+  player.addListener("authentication_error", ({ message }) => {
+    console.error(message);
+    localStorage.removeItem("spotify_access_token");
+    authorize();
+  });
+
+  player.addListener("account_error", ({ message }) => {
+    console.error(message);
+  });
+
+  player.connect();
+};
+
+// Player initialisieren
+function setupPlayer() {
+  const script = document.createElement("script");
+  script.src = "https://sdk.scdn.co/spotify-player.js";
+  document.head.appendChild(script);
 }
 
-// Nächster Track
-function nextTrack() {
-  repeatCount = 0;
-  currentPoints = 5;
-  solutionBtns.classList.add("hidden");
-  currentTrack = trackList[Math.floor(Math.random() * trackList.length)];
-  playPreview();
-}
+// Start-Button-Logik
+startBtn.addEventListener("click", async () => {
+  startBtn.disabled = true;
+  statusBox.innerText = "Lade Song...";
 
-// Preview abspielen
-function playPreview() {
-  const audio = new Audio(currentTrack.preview_url);
-  const durations = { normal: 30, hard: 10, crack: 3 };
-  const duration = durations[mode] * 1000;
+  try {
+    const tracks = await fetchPlaylistTracks(playlistId);
+    if (tracks.length === 0) {
+      statusBox.innerText = "Keine Songs gefunden!";
+      startBtn.disabled = false;
+      return;
+    }
 
-  audio.play();
-  setTimeout(() => audio.pause(), duration);
-}
+    const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+    const trackUri = randomTrack.track.uri;
+    const durationMs = randomTrack.track.duration_ms;
+    const maxStart = durationMs - 3000;
+    const startPosition = Math.floor(Math.random() * (maxStart > 0 ? maxStart : 0));
 
-// Wiederholen
-repeatBtn.addEventListener("click", () => {
-  repeatCount++;
-  if (repeatCount <= 4) {
-    currentPoints = Math.max(1, currentPoints - 1);
-    playPreview();
-  } else {
-    solutionBtns.classList.remove("hidden");
+    await playTrack(trackUri, startPosition);
+    statusBox.innerText = "🎶 Rate den Song...";
+    setTimeout(() => {
+      player.pause();
+      statusBox.innerText = "⏸️ Stopp – nächster Versuch?";
+      startBtn.disabled = false;
+    }, 3000);
+  } catch (error) {
+    console.error(error);
+    statusBox.innerText = "Fehler beim Laden des Songs.";
+    startBtn.disabled = false;
   }
 });
 
-// Auflösen
-showSolutionBtn.addEventListener("click", () => {
-  solutionBtns.classList.remove("hidden");
-});
+// Playlist-Titel abrufen
+async function fetchPlaylistTracks(playlistId) {
+  const response = await fetch(
+    `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+  const data = await response.json();
+  return data.items || [];
+}
 
-// Richtig/Falsch
-correctBtn.addEventListener("click", () => {
-  totalPoints += currentPoints;
-  updatePoints();
-  nextTrack();
-});
-
-wrongBtn.addEventListener("click", () => {
-  updatePoints();
-  nextTrack();
-});
-
-function updatePoints() {
-  pointsDisplay.textContent = `Punkte: ${totalPoints}`;
+// Song abspielen
+async function playTrack(uri, positionMs = 0) {
+  await fetch("https://api.spotify.com/v1/me/player/play?device_id=" + deviceId, {
+    method: "PUT",
+    body: JSON.stringify({
+      uris: [uri],
+      position_ms: positionMs,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 }
