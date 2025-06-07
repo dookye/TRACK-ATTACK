@@ -10,48 +10,68 @@ const SCOPES = [
   "playlist-read-private"
 ];
 const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
-const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 
-// --- State Variables ---
+// --- State ---
 let accessToken = null;
-let refreshToken = null;
 let player = null;
 let deviceId = null;
-let expiresAt = 0;
 
-let playlists = {
-  "39sVxPTg7BKwrf2MfgrtcD": null, // Punk Rock (90's & 00')
-  "6mtYuOxzl58vSGnEDtZ9uB": null, // Pop Hits 2000-2025
-  "2si7ChS6Y0hPBt4FsobXpg": null,  // Die größten Hits aller Zeiten
-};
-
-let selectedMode = null; // seconds (30, 10, 2)
+let selectedMode = null; // Spielmodus (Sekunden)
+let selectedPlaylistId = null;
+let nochmalHörenLeft = 4;
+let currentRound = 0;
+const roundsPerTeam = 10;
 let currentTeam = 0;
 let scores = [0, 0];
+
+let tracksCache = {};
+
 let currentTrack = null;
-let nochmalHörenLeft = 4;
-let roundsPerTeam = 10;
-let currentRound = 0;
-let tracksCache = {}; // playlistId => array of tracks
 
-// --- UI Elements ---
+// --- DOM Elemente ---
 let loginScreen, btnLogin, modeScreen, modeButtons, gameScreen,
-    team1ScoreElem, team2ScoreElem,
-    genreButtons, gamePhaseText,
-    playbackControls, btnTrackAttack, btnNochmalHoeren, btnAufloesen,
-    answerControls, btnRichtig, btnFalsch,
-    songInfo, artistNameElem, trackNameElem,
-    endScreen, finalScoreElem, btnNochmalSpielen;
+  genreButtons, gamePhaseText,
+  playbackControls, btnTrackAttack, btnNochmalHoeren, btnAufloesen,
+  answerControls, btnRichtig, btnFalsch,
+  songInfo, artistNameElem, trackNameElem,
+  team1ScoreElem, team2ScoreElem,
+  endScreen, finalScoreElem, btnNochmalSpielen;
 
+// --- Spotify Web Playback SDK READY Funktion (global!) ---
+window.onSpotifyWebPlaybackSDKReady = () => {
+  if (!accessToken) return;
+
+  player = new Spotify.Player({
+    name: 'TRACK ATTACK Player',
+    getOAuthToken: cb => { cb(accessToken); },
+    volume: 0.5
+  });
+
+  player.addListener('ready', ({ device_id }) => {
+    deviceId = device_id;
+    console.log('Spotify Player ready with Device ID', device_id);
+  });
+
+  player.addListener('not_ready', ({ device_id }) => {
+    console.log('Spotify Player device went offline', device_id);
+  });
+
+  player.addListener('initialization_error', ({ message }) => { console.error(message); });
+  player.addListener('authentication_error', ({ message }) => { console.error(message); alert("Authentifizierungsfehler! Bitte neu einloggen."); });
+  player.addListener('account_error', ({ message }) => { console.error(message); alert("Account Problem: " + message); });
+  player.addListener('playback_error', ({ message }) => { console.error(message); });
+
+  player.connect();
+};
+
+// --- Nach DOM laden ---
 document.addEventListener("DOMContentLoaded", () => {
-  // jetzt DOM-Elemente referenzieren
+  // DOM Referenzen
   loginScreen = document.getElementById("login-screen");
   btnLogin = document.getElementById("btn-login");
   modeScreen = document.getElementById("mode-screen");
   modeButtons = modeScreen.querySelectorAll("#mode-buttons button");
   gameScreen = document.getElementById("game-screen");
-  team1ScoreElem = document.getElementById("team1-score");
-  team2ScoreElem = document.getElementById("team2-score");
   genreButtons = document.querySelectorAll("#genre-buttons button");
   gamePhaseText = document.getElementById("game-phase-text");
 
@@ -68,11 +88,14 @@ document.addEventListener("DOMContentLoaded", () => {
   artistNameElem = document.getElementById("artist-name");
   trackNameElem = document.getElementById("track-name");
 
+  team1ScoreElem = document.getElementById("team1-score");
+  team2ScoreElem = document.getElementById("team2-score");
+
   endScreen = document.getElementById("end-screen");
   finalScoreElem = document.getElementById("final-score");
   btnNochmalSpielen = document.getElementById("btn-nochmal-spielen");
 
-  // Event Listeners
+  // Event Listener
   btnLogin.addEventListener("click", spotifyLogin);
 
   modeButtons.forEach(btn => {
@@ -97,21 +120,20 @@ document.addEventListener("DOMContentLoaded", () => {
   btnFalsch.addEventListener("click", () => answer(false));
   btnNochmalSpielen.addEventListener("click", resetGame);
 
-  // Prüfen ob wir mit access_token zurückkommen
+  // Token aus URL prüfen
   checkForTokenInUrl();
 });
 
-// --- Helper: Show one screen, hide alle anderen ---
+// --- Funktionen ---
+
 function showScreen(screen) {
   document.querySelectorAll("section.screen").forEach(s => s.classList.remove("active"));
   screen.classList.add("active");
 }
 
-// --- Spotify Login ---
 function spotifyLogin() {
-  // PKCE oder Implicit Flow - hier simpler Implicit Flow
-  const authUrl = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES.join(" "))}&response_type=token&show_dialog=true`;
-  window.location = authUrl;
+  const authUrl = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent("streaming user-read-email user-read-private playlist-read-private")}&response_type=token&show_dialog=true`;
+  window.location.href = authUrl;
 }
 
 function checkForTokenInUrl() {
@@ -121,17 +143,17 @@ function checkForTokenInUrl() {
     const token = params.get("access_token");
     if (token) {
       accessToken = token;
-      // Token in Session speichern
       sessionStorage.setItem("spotify_access_token", accessToken);
-      window.history.replaceState({}, document.title, REDIRECT_URI); // clean URL
+      window.history.replaceState({}, document.title, REDIRECT_URI);
       afterLogin();
     }
   } else {
-    // Versuch, Token aus Session zu lesen
     const saved = sessionStorage.getItem("spotify_access_token");
     if (saved) {
       accessToken = saved;
       afterLogin();
+    } else {
+      showScreen(loginScreen);
     }
   }
 }
@@ -141,34 +163,11 @@ function afterLogin() {
   setupSpotifyPlayer();
 }
 
-// --- Spotify Web Playback SDK Setup ---
-window.onSpotifyWebPlaybackSDKReady = () => {
-  if (!accessToken) return; // erst nach Login
-
-  player = new Spotify.Player({
-    name: 'TRACK ATTACK Player',
-    getOAuthToken: cb => { cb(accessToken); },
-    volume: 0.5
-  });
-
-  player.addListener('ready', ({ device_id }) => {
-    deviceId = device_id;
-    console.log('Spotify Player ready with Device ID', device_id);
-  });
-
-  player.addListener('not_ready', ({ device_id }) => {
-    console.log('Spotify Player device went offline', device_id);
-  });
-
-  player.addListener('initialization_error', ({ message }) => { console.error(message); });
-  player.addListener('authentication_error', ({ message }) => { console.error(message); alert("Authentifizierungsfehler! Bitte neu einloggen."); });
-  player.addListener('account_error', ({ message }) => { console.error(message); alert("Account Problem: " + message); });
-  player.addListener('playback_error', ({ message }) => { console.error(message); });
-
-  player.connect();
+function setupSpotifyPlayer() {
+  // Die SDK lädt sich selbst und ruft dann window.onSpotifyWebPlaybackSDKReady
+  // Hier kein weiterer Code nötig
+  // Aber Zugriff auf Token wird in window.onSpotifyWebPlaybackSDKReady benötigt
 }
-
-// --- Spiel-Logik ---
 
 function showGenreSelection() {
   gamePhaseText.textContent = "Wähle dein Genre";
@@ -194,7 +193,6 @@ async function startGame(playlistId) {
   songInfo.classList.add("hidden");
   endScreen.classList.add("hidden");
 
-  // Tracks laden (cachen)
   if (!tracksCache[playlistId]) {
     tracksCache[playlistId] = await fetchPlaylistTracks(playlistId);
   }
@@ -222,7 +220,6 @@ async function fetchPlaylistTracks(playlistId) {
     return [];
   }
   const data = await res.json();
-  // Filter nur Tracks mit Preview URL oder Spotify URI
   return data.items
     .map(i => i.track)
     .filter(t => t && t.uri && !t.is_local);
@@ -234,49 +231,145 @@ function updateScores() {
 }
 
 async function playNewTrack() {
+  if (!deviceId) {
+    alert("Spotify Player noch nicht bereit. Bitte warten.");
+    return;
+  }
   if (!selectedPlaylistId) return;
 
-  currentRound++;
+  const tracks = tracksCache[selectedPlaylistId];
+  if (!tracks || tracks.length === 0) {
+    alert("Keine Songs in der Playlist.");
+    return;
+  }
+
+  // Zufälliger Song aus Playlist
+  const track = tracks[Math.floor(Math.random() * tracks.length)];
+  currentTrack = track;
+
+  // Zufällige Startposition (max 60 Sekunden)
+  const startPosMs = Math.floor(Math.random() * 60000);
+
   nochmalHörenLeft = 4;
-
-  if (currentRound > roundsPerTeam * 2) {
-    gameOver();
-    return;
-  }
-
-  // Track wählen, random aus Playlist
-  let playlistTracks = tracksCache[selectedPlaylistId];
-  if (!playlistTracks || playlistTracks.length === 0) {
-    alert("Keine Tracks gefunden.");
-    return;
-  }
-  currentTrack = playlistTracks[Math.floor(Math.random() * playlistTracks.length)];
-
-  btnTrackAttack.disabled = true;
   btnNochmalHoeren.disabled = false;
   btnAufloesen.disabled = false;
-  btnRichtig.disabled = true;
-  btnFalsch.disabled = true;
+  btnTrackAttack.disabled = true;
+
   btnNochmalHoeren.textContent = `NOCHMAL HÖREN (${nochmalHörenLeft})`;
 
-  songInfo.classList.add("hidden");
-  answerControls.classList.add("hidden");
-
-  await playSpotifyTrack(currentTrack.uri, selectedMode);
-
-  gamePhaseText.textContent = `Runde ${currentRound} | Team ${currentTeam + 1} dran`;
+  try {
+    await playSpotifyTrack(track.uri, startPosMs);
+    gamePhaseText.textContent = `Song läuft... (Team ${currentTeam + 1})`;
+  } catch (e) {
+    alert("Fehler beim Abspielen: " + e.message);
+  }
 }
 
 async function playCurrentTrackAgain() {
-  if (nochmalHörenLeft <= 0) return;
+  if (!deviceId || !currentTrack) return;
+
+  if (nochmalHörenLeft <= 0) {
+    btnNochmalHoeren.disabled = true;
+    return;
+  }
 
   nochmalHörenLeft--;
   btnNochmalHoeren.textContent = `NOCHMAL HÖREN (${nochmalHörenLeft})`;
 
-  btnRichtig.disabled = true;
-  btnFalsch.disabled = true;
+  if (nochmalHörenLeft === 0) {
+    btnNochmalHoeren.disabled = true;
+  }
 
-  await playSpotifyTrack(currentTrack.uri, selectedMode);
+  try {
+    await playSpotifyTrack(currentTrack.uri, 0);
+  } catch (e) {
+    alert("Fehler beim Abspielen: " + e.message);
+  }
 }
 
-async function play
+async function playSpotifyTrack(uri, positionMs) {
+  const url = `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`;
+  const body = {
+    uris: [uri],
+    position_ms: positionMs
+  };
+
+  const res = await fetch(url, {
+    method: "PUT",
+    body: JSON.stringify(body),
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (!res.ok) {
+    throw new Error("Fehler beim Starten des Songs: " + res.statusText);
+  }
+}
+
+function showTrackInfo() {
+  if (!currentTrack) return;
+
+  artistNameElem.textContent = currentTrack.artists.map(a => a.name).join(", ");
+  trackNameElem.textContent = currentTrack.name;
+  songInfo.classList.remove("hidden");
+
+  answerControls.classList.remove("hidden");
+  btnAufloesen.disabled = true;
+  btnNochmalHoeren.disabled = true;
+  btnTrackAttack.disabled = true;
+  gamePhaseText.textContent = "Rate: Richtig oder Falsch?";
+}
+
+function answer(isCorrect) {
+  if (isCorrect) {
+    const points = 1 + nochmalHörenLeft; // Je weniger NOCHMAL HÖREN benutzt, desto mehr Punkte
+    scores[currentTeam] += points;
+    alert(`Richtig! +${points} Punkte für Team ${currentTeam + 1}`);
+  } else {
+    alert("Falsch!");
+  }
+
+  currentRound++;
+  currentTeam = (currentTeam + 1) % 2;
+
+  updateScores();
+
+  if (currentRound >= roundsPerTeam) {
+    endGame();
+  } else {
+    resetForNextRound();
+  }
+}
+
+function resetForNextRound() {
+  songInfo.classList.add("hidden");
+  answerControls.classList.add("hidden");
+
+  btnTrackAttack.disabled = false;
+  btnAufloesen.disabled = true;
+  btnNochmalHoeren.disabled = true;
+  nochmalHörenLeft = 4;
+  btnNochmalHoeren.textContent = `NOCHMAL HÖREN (${nochmalHörenLeft})`;
+
+  gamePhaseText.textContent = `Nächster Zug: Team ${currentTeam + 1}`;
+}
+
+function endGame() {
+  gameScreen.classList.remove("active");
+  endScreen.classList.add("active");
+  finalScoreElem.textContent = `Team 1: ${scores[0]} Punkte, Team 2: ${scores[1]} Punkte`;
+
+  gamePhaseText.textContent = "Spiel beendet!";
+}
+
+function resetGame() {
+  scores = [0, 0];
+  currentRound = 0;
+  currentTeam = 0;
+  nochmalHörenLeft = 4;
+  currentTrack = null;
+  selectedPlaylistId = null;
+  showScreen(modeScreen);
+}
