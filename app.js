@@ -1,11 +1,35 @@
-// --- PKCE Helferfunktionen ---
-function generateCodeVerifier(length = 128) {
+// --- Spotify PKCE Authorization Code Flow Setup ---
+
+const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
+const redirectUri = 'https://dookye.github.io/musik-raten/';
+const scopes = [
+  'user-read-private',
+  'user-read-email',
+  'streaming',
+  'user-modify-playback-state'
+].join(' ');
+
+const authEndpoint = 'https://accounts.spotify.com/authorize';
+const tokenEndpoint = 'https://accounts.spotify.com/api/token';
+
+const loginButton = document.getElementById('login-button');
+const loginError = document.getElementById('login-error');
+const loginArea = document.getElementById('login-area');
+const gameModeSelection = document.getElementById('game-mode-selection');
+const startGameButton = document.getElementById('start-game-button');
+const messageEl = document.getElementById('message');
+
+let selectedPlaylistId = null;
+let selectedGameMode = null;
+
+// --- PKCE Helper Functions ---
+function generateRandomString(length = 128) {
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  let codeVerifier = '';
+  let text = '';
   for (let i = 0; i < length; i++) {
-    codeVerifier += possible.charAt(Math.floor(Math.random() * possible.length));
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
-  return codeVerifier;
+  return text;
 }
 
 async function generateCodeChallenge(codeVerifier) {
@@ -22,69 +46,66 @@ function base64UrlEncode(array) {
     .replace(/=+$/, '');
 }
 
-// --- Konfiguration ---
-const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
-const redirectUri = 'https://dookye.github.io/musik-raten/';
-const scopes = 'user-read-private user-read-email streaming user-modify-playback-state';
-const authEndpoint = 'https://accounts.spotify.com/authorize';
-const tokenEndpoint = 'https://accounts.spotify.com/api/token';
-
-// --- Login Button ---
-const loginButton = document.getElementById('login-button');
-
+// --- Login Button Click ---
 loginButton.addEventListener('click', async () => {
-  const codeVerifier = generateCodeVerifier();
-  const codeChallenge = await generateCodeChallenge(codeVerifier);
+  loginError.style.display = 'none';
+  try {
+    const codeVerifier = generateRandomString(128);
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
+    sessionStorage.setItem('code_verifier', codeVerifier);
 
-  // Speichere den codeVerifier im sessionStorage (für den Token-Request später)
-  sessionStorage.setItem('code_verifier', codeVerifier);
+    const state = generateRandomString(16);
+    sessionStorage.setItem('pkce_state', state);
 
-  const state = generateRandomString(16);
-  sessionStorage.setItem('pkce_state', state);
+    const url =
+      `${authEndpoint}?response_type=code` +
+      `&client_id=${encodeURIComponent(clientId)}` +
+      `&scope=${encodeURIComponent(scopes)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&state=${encodeURIComponent(state)}` +
+      `&code_challenge_method=S256` +
+      `&code_challenge=${encodeURIComponent(codeChallenge)}`;
 
-  const url =
-    `${authEndpoint}?response_type=code` +
-    `&client_id=${encodeURIComponent(clientId)}` +
-    `&scope=${encodeURIComponent(scopes)}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&state=${encodeURIComponent(state)}` +
-    `&code_challenge_method=S256` +
-    `&code_challenge=${encodeURIComponent(codeChallenge)}`;
-
-  window.location = url;
+    window.location.href = url;
+  } catch (e) {
+    loginError.textContent = 'Fehler beim Start des Logins.';
+    loginError.style.display = 'block';
+  }
 });
 
-// --- Hilfsfunktion für State ---
-function generateRandomString(length) {
-  let text = '';
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
-}
-
-// --- Nach Redirect: Code aus URL holen und Token anfordern ---
+// --- After Redirect: Handle Authorization Code and Request Token ---
 async function handleRedirect() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const state = params.get('state');
-  const storedState = sessionStorage.getItem('pkce_state');
-  if (!code) return false; // Kein Code in URL, nichts zu tun
-  if (state !== storedState) {
-    alert('Ungültiger State-Wert, Login abgebrochen!');
+  const error = params.get('error');
+
+  if (error) {
+    loginError.textContent = `Spotify Login Fehler: ${error}`;
+    loginError.style.display = 'block';
     return false;
   }
 
+  if (!code) {
+    return false; // Kein Code in URL
+  }
+
+  const storedState = sessionStorage.getItem('pkce_state');
+  if (state !== storedState) {
+    loginError.textContent = 'Ungültiger State - Login abgebrochen!';
+    loginError.style.display = 'block';
+    return false;
+  }
   sessionStorage.removeItem('pkce_state');
 
   const codeVerifier = sessionStorage.getItem('code_verifier');
   if (!codeVerifier) {
-    alert('Code Verifier nicht gefunden!');
+    loginError.textContent = 'Code Verifier nicht gefunden!';
+    loginError.style.display = 'block';
     return false;
   }
 
-  // Token anfordern
+  // Request Access Token
   const body = new URLSearchParams({
     client_id: clientId,
     grant_type: 'authorization_code',
@@ -99,60 +120,81 @@ async function handleRedirect() {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: body.toString()
+      body: body.toString(),
     });
 
     if (!response.ok) {
-      alert('Fehler beim Token-Austausch');
-      console.error(await response.text());
+      const text = await response.text();
+      loginError.textContent = 'Token-Anforderung fehlgeschlagen: ' + text;
+      loginError.style.display = 'block';
       return false;
     }
 
     const data = await response.json();
-    // Access Token speichern (lokal/session)
     sessionStorage.setItem('access_token', data.access_token);
     sessionStorage.setItem('refresh_token', data.refresh_token);
     sessionStorage.setItem('token_expiry', (Date.now() + data.expires_in * 1000).toString());
 
-    // URL bereinigen, Code & State entfernen
+    // URL bereinigen, Code und State entfernen
     window.history.replaceState({}, document.title, redirectUri);
 
-    // Hier kannst du jetzt deine App starten
+    // Starte Spiel
     onLoginSuccess(data.access_token);
 
     return true;
-
-  } catch (error) {
-    console.error('Token request failed:', error);
-    alert('Token-Anforderung fehlgeschlagen');
+  } catch (err) {
+    loginError.textContent = 'Token-Anforderung fehlgeschlagen.';
+    loginError.style.display = 'block';
+    console.error(err);
     return false;
   }
 }
 
-// --- Beispiel-Funktion, wenn Login erfolgreich ---
-function onLoginSuccess(accessToken) {
-  console.log('Spotify Access Token erhalten:', accessToken);
-  // TODO: Deine bestehende Logik starten, z.B. UI updaten
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('game-mode-screen').style.display = 'block';
-  // Weitere Initialisierung...
+// --- Check if token is valid ---
+function isTokenValid() {
+  const token = sessionStorage.getItem('access_token');
+  const expiry = sessionStorage.getItem('token_expiry');
+  if (!token || !expiry) return false;
+  return Date.now() < parseInt(expiry);
 }
 
-// --- Prüfen ob wir gerade von Spotify mit Code zurückgekommen sind ---
-window.addEventListener('load', async () => {
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('code')) {
-    await handleRedirect();
-  } else {
-    // Prüfe ob Token schon vorhanden und gültig
-    const token = sessionStorage.getItem('access_token');
-    const expiry = sessionStorage.getItem('token_expiry');
-    if (token && expiry && Date.now() < parseInt(expiry)) {
-      onLoginSuccess(token);
-    } else {
-      // Zeige Login-Screen
-      document.getElementById('login-screen').style.display = 'block';
-      document.getElementById('game-mode-screen').style.display = 'none';
+// --- On successful login ---
+function onLoginSuccess(accessToken) {
+  loginArea.style.display = 'none';
+  gameModeSelection.style.display = 'block';
+  messageEl.textContent = 'Erfolgreich eingeloggt. Wähle Genre und Spielmodus.';
+  setupGameSelection();
+}
+
+// --- Setup game mode and genre button logic ---
+function setupGameSelection() {
+  const genreButtons = document.querySelectorAll('.genre-button');
+  const modeButtons = document.querySelectorAll('.mode-button');
+
+  genreButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      genreButtons.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedPlaylistId = btn.getAttribute('data-playlist');
+      checkStartReady();
+    });
+  });
+
+  modeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      modeButtons.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedGameMode = btn.getAttribute('data-mode');
+      checkStartReady();
+    });
+  });
+
+  startGameButton.addEventListener('click', () => {
+    if (selectedPlaylistId && selectedGameMode) {
+      startGame(selectedPlaylistId, selectedGameMode);
     }
-  }
-});
+  });
+}
+
+function checkStartReady() {
+  if (selectedPlaylistId &&
