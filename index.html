@@ -52,9 +52,9 @@
 
   <div id="genreSelection" class="hidden">
     <h2>Wähle ein Genre:</h2>
-    <button data-playlist="39sVxPTg7BKwrf2MfgrtcD">Punk Rock (90's & 00's)</button>
-    <button data-playlist="6mtYuOxzl58vSGnEDtZ9uB">Pop Hits (2000–2025)</button>
-    <button data-playlist="2si7ChS6Y0hPBt4FsobXpg">Die größten Hits aller Zeiten</button>
+    <button data-genre="punk">Punk Rock (90's & 00's)</button>
+    <button data-genre="pop">Pop Hits (2000–2025)</button>
+    <button data-genre="hits">Die größten Hits aller Zeiten</button>
   </div>
 
   <div id="modeSelection" class="hidden">
@@ -78,6 +78,26 @@
   <script>
     const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
     const redirectUri = 'https://dookye.github.io/musik-raten/';
+
+    // Mehrere Playlists pro Genre (Platzhalter - kannst du später erweitern)
+    const playlistsByGenre = {
+      punk: [
+        '39sVxPTg7BKwrf2MfgrtcD', // Punk Rock 90s & 00s
+        // 'Playlist-ID 2 für Punk hier einfügen',
+        // 'Playlist-ID 3 für Punk hier einfügen',
+      ],
+      pop: [
+        '6mtYuOxzl58vSGnEDtZ9uB', // Pop Hits 2000–2025
+        // 'Playlist-ID 2 für Pop hier einfügen',
+        // 'Playlist-ID 3 für Pop hier einfügen',
+      ],
+      hits: [
+        '2si7ChS6Y0hPBt4FsobXpg', // Die größten Hits aller Zeiten
+        // 'Playlist-ID 2 für Hits hier einfügen',
+        // 'Playlist-ID 3 für Hits hier einfügen',
+      ]
+    };
+
     let accessToken = null;
     let selectedPlaylist = '';
     let playDuration = 3;
@@ -85,6 +105,13 @@
     let replayCount = 4;
     let scores = [0, 0];
     let currentPlayer = 0;
+
+    function getRandomPlaylist(genre) {
+      const playlists = playlistsByGenre[genre];
+      if (!playlists || playlists.length === 0) return null;
+      const index = Math.floor(Math.random() * playlists.length);
+      return playlists[index];
+    }
 
     document.getElementById('loginBtn').onclick = () => {
       const scopes = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state';
@@ -104,7 +131,12 @@
 
     document.querySelectorAll('#genreSelection button').forEach(btn => {
       btn.onclick = () => {
-        selectedPlaylist = btn.dataset.playlist;
+        const genre = btn.dataset.genre;
+        selectedPlaylist = getRandomPlaylist(genre);
+        if (!selectedPlaylist) {
+          alert('Keine Playlists für dieses Genre gefunden!');
+          return;
+        }
         document.getElementById('genreSelection').classList.add('hidden');
         document.getElementById('modeSelection').classList.remove('hidden');
       };
@@ -120,7 +152,8 @@
 
     document.getElementById('startGame').onclick = async () => {
       await playRandomTrack();
-      document.getElementById('replayBtn').textContent = 'NOCHMAL HÖREN (4)';
+      replayCount = 4;
+      document.getElementById('replayBtn').textContent = `NOCHMAL HÖREN (${replayCount})`;
       document.getElementById('replayBtn').classList.remove('hidden');
       document.getElementById('revealBtn').classList.remove('hidden');
     };
@@ -130,34 +163,50 @@
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const data = await response.json();
-      const tracks = data.items.filter(item => item.track && item.track.preview_url === null);
+
+      // Filter Tracks, die eine preview_url haben (sonst spielt Spotify nichts)
+      const tracks = data.items.filter(item => item.track && item.track.preview_url);
+      if (tracks.length === 0) {
+        alert('Keine Tracks mit Vorschau in dieser Playlist gefunden.');
+        return;
+      }
       currentTrack = tracks[Math.floor(Math.random() * tracks.length)].track;
 
-      const durationMs = currentTrack.duration_ms;
-      const startMs = Math.floor(Math.random() * (durationMs - playDuration * 1000));
+      // Preview-URL abspielen - da API keinen direkten Player bietet
+      playPreview(currentTrack.preview_url);
 
-      await fetch(`https://api.spotify.com/v1/me/player/play`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({
-          uris: [`spotify:track:${currentTrack.id}`],
-          position_ms: startMs
-        })
-      });
-
+      // Preview dauert max 30 Sek., aber wir schneiden ab je nach Modus
       setTimeout(() => {
-        fetch(`https://api.spotify.com/v1/me/player/pause`, {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+        stopPreview();
       }, playDuration * 1000);
+    }
+
+    let audio = null;
+
+    function playPreview(url) {
+      if (audio) {
+        audio.pause();
+        audio = null;
+      }
+      audio = new Audio(url);
+      audio.play();
+    }
+
+    function stopPreview() {
+      if (audio) {
+        audio.pause();
+        audio = null;
+      }
     }
 
     document.getElementById('replayBtn').onclick = async () => {
       if (replayCount > 1) {
         replayCount--;
         document.getElementById('replayBtn').textContent = `NOCHMAL HÖREN (${replayCount})`;
-        await playRandomTrack();
+        playPreview(currentTrack.preview_url);
+        setTimeout(() => {
+          stopPreview();
+        }, playDuration * 1000);
       } else {
         document.getElementById('replayBtn').classList.add('hidden');
       }
@@ -181,18 +230,4 @@
     };
 
     function updateScore() {
-      document.getElementById('score1').textContent = scores[0];
-      document.getElementById('score2').textContent = scores[1];
-    }
-
-    function nextTurn() {
-      replayCount = 4;
-      document.getElementById('replayBtn').classList.add('hidden');
-      document.getElementById('revealBtn').classList.add('hidden');
-      document.getElementById('revealInfo').classList.add('hidden');
-      currentPlayer = 1 - currentPlayer;
-      alert(`Spieler ${currentPlayer + 1} ist dran!`);
-    }
-  </script>
-</body>
-</html>
+      document.get
