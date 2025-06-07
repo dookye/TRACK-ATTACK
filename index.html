@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Musik Raten</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      justify-content: center;
+    }
+    #container {
+      width: 90vw;
+      max-width: 480px;
+      background: #222;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 20px #1db954;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    button {
+      background-color: #1db954;
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 1.2rem;
+      padding: 0.75rem 2rem;
+      border-radius: 30px;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #1ed760;
+    }
+    #game-mode-selection, #game-start-area, #playback-area {
+      margin-top: 2rem;
+      display: none;
+    }
+    .genre-button, .mode-button {
+      display: inline-block;
+      margin: 0.5rem 0.5rem 0 0.5rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: 20px;
+      border: 2px solid #1db954;
+      background: transparent;
+      color: #1db954;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .genre-button.selected, .mode-button.selected {
+      background: #1db954;
+      color: #121212;
+    }
+    #message {
+      margin-top: 1rem;
+      font-style: italic;
+      color: #bbb;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Login Screen -->
+    <div id="login-area">
+      <h1>Musik Raten</h1>
+      <p>Bitte logge dich mit deinem Spotify Premium Account ein, um zu starten.</p>
+      <button id="login-button">Spotify Login</button>
+      <p id="login-error" style="color: #f44336; display:none;"></p>
+    </div>
+
+    <!-- Game Mode Selection -->
+    <div id="game-mode-selection">
+      <h2>Wähle ein Genre</h2>
+      <div>
+        <button class="genre-button" data-playlist="39sVxPTg7BKwrf2MfgrtcD">Punk Rock (90's & 00's)</button>
+        <button class="genre-button" data-playlist="6mtYuOxzl58vSGnEDtZ9uB">Pop (2015–today)</button>
+        <button class="genre-button" data-playlist="2si7ChS6Y0hPBt4FsobXpg">Greatest Hits</button>
+      </div>
+      <h2>Wähle einen Spielmodus</h2>
+      <div>
+        <button class="mode-button" data-mode="NORMAL">Normal (30 Sek.)</button>
+        <button class="mode-button" data-mode="PROFI">Profi (10 Sek.)</button>
+        <button class="mode-button" data-mode="CRACK">Crack (2 Sek.)</button>
+      </div>
+      <button id="start-game-button" disabled>Spiel starten</button>
+      <p id="message"></p>
+    </div>
+
+    <!-- Game Start Area (optional für spätere Nutzung) -->
+    <div id="game-start-area">
+      <!-- Hier kann später Spielablauf eingebunden werden -->
+    </div>
+
+    <!-- Playback Area (optional für Spotify Playback SDK) -->
+    <div id="playback-area"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
