@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Track Attack</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #191414;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    button {
+      background-color: #1db954;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      margin: 0.5rem;
+    }
+    .hidden {
+      display: none;
+    }
+    .scoreboard {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="scoreboard">Spieler 1: <span id="score1">0</span> | Spieler 2: <span id="score2">0</span></div>
+
+  <h1>Bereit für <strong>Track Attack</strong>?</h1>
+  <p>Logge dich mit deinem Spotify Premium-Account ein, um loszulegen!</p>
+
+  <button id="loginBtn">Bei Spotify einloggen</button>
+
+  <div id="genreSelection" class="hidden">
+    <h2>Wähle ein Genre:</h2>
+    <button data-playlist="39sVxPTg7BKwrf2MfgrtcD">Punk Rock (90's & 00's)</button>
+    <button data-playlist="6mtYuOxzl58vSGnEDtZ9uB">Pop Hits (2000–2025)</button>
+    <button data-playlist="2si7ChS6Y0hPBt4FsobXpg">Die größten Hits aller Zeiten</button>
+  </div>
+
+  <div id="modeSelection" class="hidden">
+    <h2>Wähle den Spielmodus:</h2>
+    <button data-duration="30">Normal (30 Sek.)</button>
+    <button data-duration="10">Profi (10 Sek.)</button>
+    <button data-duration="2">Crack (2 Sek.)</button>
+  </div>
+
+  <button id="startGame" class="hidden">Track Attack!</button>
+  <button id="replayBtn" class="hidden">NOCHMAL HÖREN (4)</button>
+  <button id="revealBtn" class="hidden">AUFLÖSEN</button>
+
+  <div id="revealInfo" class="hidden">
+    <p><strong>Song:</strong> <span id="trackName"></span><br />
+    <strong>Interpret:</strong> <span id="artistName"></span></p>
+    <button id="correctBtn">RICHTIG</button>
+    <button id="wrongBtn">FALSCH</button>
+  </div>
+
+  <script>
+    const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
+    const redirectUri = 'https://dookye.github.io/musik-raten/';
+    let accessToken = null;
+    let selectedPlaylist = '';
+    let playDuration = 3;
+    let currentTrack = null;
+    let replayCount = 4;
+    let scores = [0, 0];
+    let currentPlayer = 0;
+
+    document.getElementById('loginBtn').onclick = () => {
+      const scopes = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state';
+      window.location = `https://accounts.spotify.com/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&response_type=token&show_dialog=true`;
+    };
+
+    window.onload = () => {
+      if (window.location.hash) {
+        const params = new URLSearchParams(window.location.hash.substring(1));
+        accessToken = params.get('access_token');
+        if (accessToken) {
+          document.getElementById('loginBtn').classList.add('hidden');
+          document.getElementById('genreSelection').classList.remove('hidden');
+        }
+      }
+    };
+
+    document.querySelectorAll('#genreSelection button').forEach(btn => {
+      btn.onclick = () => {
+        selectedPlaylist = btn.dataset.playlist;
+        document.getElementById('genreSelection').classList.add('hidden');
+        document.getElementById('modeSelection').classList.remove('hidden');
+      };
+    });
+
+    document.querySelectorAll('#modeSelection button').forEach(btn => {
+      btn.onclick = () => {
+        playDuration = parseInt(btn.dataset.duration);
+        document.getElementById('modeSelection').classList.add('hidden');
+        document.getElementById('startGame').classList.remove('hidden');
+      };
+    });
+
+    document.getElementById('startGame').onclick = async () => {
+      await playRandomTrack();
+      document.getElementById('replayBtn').textContent = 'NOCHMAL HÖREN (4)';
+      document.getElementById('replayBtn').classList.remove('hidden');
+      document.getElementById('revealBtn').classList.remove('hidden');
+    };
+
+    async function playRandomTrack() {
+      const response = await fetch(`https://api.spotify.com/v1/playlists/${selectedPlaylist}/tracks?limit=100`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await response.json();
+      const tracks = data.items.filter(item => item.track && item.track.preview_url === null);
+      currentTrack = tracks[Math.floor(Math.random() * tracks.length)].track;
+
+      const durationMs = currentTrack.duration_ms;
+      const startMs = Math.floor(Math.random() * (durationMs - playDuration * 1000));
+
+      await fetch(`https://api.spotify.com/v1/me/player/play`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({
+          uris: [`spotify:track:${currentTrack.id}`],
+          position_ms: startMs
+        })
+      });
+
+      setTimeout(() => {
+        fetch(`https://api.spotify.com/v1/me/player/pause`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      }, playDuration * 1000);
+    }
+
+    document.getElementById('replayBtn').onclick = async () => {
+      if (replayCount > 1) {
+        replayCount--;
+        document.getElementById('replayBtn').textContent = `NOCHMAL HÖREN (${replayCount})`;
+        await playRandomTrack();
+      } else {
+        document.getElementById('replayBtn').classList.add('hidden');
+      }
+    };
+
+    document.getElementById('revealBtn').onclick = () => {
+      document.getElementById('trackName').textContent = currentTrack.name;
+      document.getElementById('artistName').textContent = currentTrack.artists.map(a => a.name).join(', ');
+      document.getElementById('revealInfo').classList.remove('hidden');
+    };
+
+    document.getElementById('correctBtn').onclick = () => {
+      const points = 5 - (4 - replayCount);
+      scores[currentPlayer] += points;
+      updateScore();
+      nextTurn();
+    };
+
+    document.getElementById('wrongBtn').onclick = () => {
+      nextTurn();
+    };
+
+    function updateScore() {
+      document.getElementById('score1').textContent = scores[0];
+      document.getElementById('score2').textContent = scores[1];
+    }
+
+    function nextTurn() {
+      replayCount = 4;
+      document.getElementById('replayBtn').classList.add('hidden');
+      document.getElementById('revealBtn').classList.add('hidden');
+      document.getElementById('revealInfo').classList.add('hidden');
+      currentPlayer = 1 - currentPlayer;
+      alert(`Spieler ${currentPlayer + 1} ist dran!`);
+    }
+  </script>
+</body>
+</html>
