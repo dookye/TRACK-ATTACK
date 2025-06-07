@@ -84,9 +84,19 @@
   <!-- Start Button -->
   <button id="startButton" class="hidden" disabled>START</button>
 
+  <!-- Nochmal Hören Button -->
+  <button id="repeatButton" class="hidden" disabled>NOCHMAL HÖREN</button>
+
+  <!-- Auflösen Button -->
+  <button id="revealButton" class="hidden" disabled>AUFLÖSEN</button>
+
   <!-- Punkte Anzeige -->
   <p id="pointsDisplay">Punkte: 0</p>
 
+  <!-- Anzeige Interpret + Titel -->
+  <p id="songInfo" style="font-weight:bold; font-size:1.3rem; min-height: 2rem;"></p>
+
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <script>
     // --- Config ---
     const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
@@ -104,19 +114,35 @@
       hits: 'PLACEHOLDER_HITS_PLAYLIST_ID'
     };
 
+    const modeDurations = {
+      normal: 30,
+      profi: 10,
+      crack: 2
+    };
+
     // --- UI Elements ---
     const loginButton = document.getElementById('loginButton');
     const infoText = document.getElementById('infoText');
     const genreSelection = document.getElementById('genreSelection');
     const modeSelection = document.getElementById('modeSelection');
     const startButton = document.getElementById('startButton');
+    const repeatButton = document.getElementById('repeatButton');
+    const revealButton = document.getElementById('revealButton');
     const pointsDisplay = document.getElementById('pointsDisplay');
+    const songInfo = document.getElementById('songInfo');
 
     // --- State ---
     let accessToken = null;
     let selectedGenre = null;
     let selectedMode = null;
     let points = 0;
+
+    let player = null;
+    let deviceId = null;
+    let currentTrack = null; // Track-Objekt (Titel, Interpret, Dauer)
+    let repeatCount = 0;
+    const maxRepeats = 4;
+    let playTimeout = null;
 
     // --- Helferfunktionen ---
     function generateRandomString(length) {
@@ -192,6 +218,8 @@
         genreSelection.classList.add('hidden');
         modeSelection.classList.add('hidden');
         startButton.classList.add('hidden');
+        repeatButton.classList.add('hidden');
+        revealButton.classList.add('hidden');
         startButton.disabled = true;
         infoText.textContent = 'Bitte mit Spotify Premium einloggen.';
         return;
@@ -210,102 +238,4 @@
           infoText.textContent = 'Spotify Premium erforderlich.';
           loginButton.style.display = 'inline-block';
           genreSelection.classList.add('hidden');
-          modeSelection.classList.add('hidden');
-          startButton.classList.add('hidden');
-          startButton.disabled = true;
-          return;
-        }
-
-        // Eingeloggt & Premium
-        loginButton.style.display = 'none';
-        infoText.textContent = '';
-        genreSelection.classList.remove('hidden');
-        modeSelection.classList.add('hidden'); // Erst nach Genrewahl sichtbar
-        startButton.classList.add('hidden');
-        startButton.disabled = true;
-
-      } catch (err) {
-        console.error(err);
-        localStorage.removeItem('access_token');
-        loginButton.style.display = 'inline-block';
-        genreSelection.classList.add('hidden');
-        modeSelection.classList.add('hidden');
-        startButton.classList.add('hidden');
-        startButton.disabled = true;
-        infoText.textContent = 'Bitte mit Spotify Premium einloggen.';
-      }
-    }
-
-    // Auswahl-Handler: Genre
-    genreSelection.addEventListener('click', (e) => {
-      if (e.target.tagName !== 'BUTTON') return;
-
-      // Markiere den ausgewählten Button, deaktiviere andere visuell
-      Array.from(genreSelection.children).forEach(btn => btn.style.backgroundColor = '#1DB954');
-      e.target.style.backgroundColor = '#1ed760';
-
-      selectedGenre = e.target.dataset.genre;
-
-      // Nach Genrewahl wird der Modus sichtbar
-      modeSelection.classList.remove('hidden');
-
-      // Reset Modus und Start-Button
-      selectedMode = null;
-      Array.from(modeSelection.children).forEach(btn => btn.style.backgroundColor = '#1DB954');
-      startButton.disabled = true;
-      startButton.classList.add('hidden');
-    });
-
-    // Auswahl-Handler: Spielmodus
-    modeSelection.addEventListener('click', (e) => {
-      if (e.target.tagName !== 'BUTTON') return;
-
-      // Markiere den ausgewählten Button, deaktiviere andere visuell
-      Array.from(modeSelection.children).forEach(btn => btn.style.backgroundColor = '#1DB954');
-      e.target.style.backgroundColor = '#1ed760';
-
-      selectedMode = e.target.dataset.mode;
-
-      // Start-Button aktivieren
-      if (selectedGenre && selectedMode) {
-        startButton.disabled = false;
-        startButton.classList.remove('hidden');
-      }
-    });
-
-    // Login-Button Klick
-    loginButton.addEventListener('click', () => {
-      redirectToSpotifyAuth();
-    });
-
-    // Start-Button Klick (Platzhalter)
-    startButton.addEventListener('click', () => {
-      // Starte hier das Spiel, z.B. durch Aufruf von playRandomTrack() mit gewählter Playlist
-      infoText.textContent = `Spiel gestartet! Genre: ${selectedGenre}, Modus: ${selectedMode}`;
-      points = 0;
-      updatePoints(0);
-
-      // TODO: hier Spielstart-Logik einbauen
-    });
-
-    function updatePoints(newPoints) {
-      points = newPoints;
-      pointsDisplay.textContent = `Punkte: ${points}`;
-    }
-
-    // Prüfe bei Laden, ob Code in URL ist (von Spotify-Login)
-    async function handleRedirect() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      if (code) {
-        await fetchAccessToken(code);
-        // URL ohne Code zurücksetzen
-        history.replaceState(null, null, redirectUri);
-      }
-      await checkUserAndSetup();
-    }
-
-    handleRedirect();
-  </script>
-</body>
-</html>
+          modeSelection.class
