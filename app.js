@@ -1,170 +1,190 @@
-// app.js
+// Einfacher Simulations-Code für Spotify Login und Spielablauf
 
-const clientId = "3f4b3acc3bad4e0d98e77409ffc62e48";
-const redirectUri = window.location.origin + window.location.pathname;
-const scopes = ["user-read-private", "user-read-email", "streaming", "user-modify-playback-state"];
+// --- Globale Variablen ---
+let isLoggedIn = false;
+let selectedModeDuration = 30;
+let activePlayer = 1;
+let score = {1: 0, 2: 0};
+let maxSongsPerPlayer = 10;
+let songsLeft = maxSongsPerPlayer;
+let maxRetries = 4;
+let retriesLeft = maxRetries;
+let currentPlaylist = '39sVxPTg7BKwrf2MfgrtcD';
+let currentSong = null;
+let currentStartTime = 0;
 
-let accessToken = null;
-let selectedGenre = null;
-let selectedMode = null;
-let currentPlayer = 1;
-let scores = { 1: 0, 2: 0 };
-let currentTrack = null;
-let playCount = 0;
-let songDuration = 30;
-let currentSongIndex = 0;
+// Seiten IDs
+const pages = ['welcome-screen', 'mode-selection', 'game-screen', 'end-screen'];
 
-const genrePlaylists = {
-  punk: "39sVxPTg7BKwrf2MfgrtcD",
-  pop: "6mtYuOxzl58vSGnEDtZ9uB",
-  hits: "2si7ChS6Y0hPBt4FsobXpg"
-};
-
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  document.getElementById(id).style.display = 'flex';
-}
-
-function getHashParams() {
-  const hash = window.location.hash.substring(1);
-  const params = {};
-  hash.split('&').forEach(param => {
-    const [key, value] = param.split('=');
-    params[key] = decodeURIComponent(value);
+function showPage(pageId) {
+  pages.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (id === pageId) ? 'flex' : 'none';
   });
-  return params;
 }
 
-function login() {
-  const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
-    redirectUri
-  )}&scope=${encodeURIComponent(scopes.join(" "))}&response_type=token&show_dialog=true`;
-  window.location = authUrl;
+function updateScoreboard() {
+  document.getElementById('score-player1').textContent = score[1];
+  document.getElementById('score-player2').textContent = score[2];
+  document.getElementById('active-player').textContent = activePlayer;
+  document.getElementById('songs-left').textContent = songsLeft;
 }
 
-function chooseMode(mode) {
-  selectedMode = mode;
-  songDuration = mode === 'normal' ? 30000 : mode === 'pro' ? 10000 : 2000;
-  showPage('genre-selection');
-}
-
-function chooseGenre(genre) {
-  selectedGenre = genre;
-  showPage('game-screen');
-  updateScoreDisplay();
-  startRound();
-}
-
-function updateScoreDisplay() {
-  document.getElementById('scoreboard').innerHTML =
-    `Spieler 1: ${scores[1]} Punkte<br>Spieler 2: ${scores[2]} Punkte<br>Am Zug: Spieler ${currentPlayer}`;
-}
-
-async function fetchPlaylistTracks(playlistId) {
-  const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-  const data = await response.json();
-  return data.items.map(item => item.track);
-}
-
-let playlistTracks = [];
-
-async function startRound() {
-  playlistTracks = await fetchPlaylistTracks(genrePlaylists[selectedGenre]);
-  playNextSong();
-}
-
-function playNextSong() {
-  if (currentSongIndex >= 20) {
-    showPage('end-screen');
-    document.getElementById('final-scores').innerText = `Spiel beendet!\nSpieler 1: ${scores[1]} Punkte\nSpieler 2: ${scores[2]} Punkte`;
-    return;
-  }
-  currentTrack = playlistTracks[Math.floor(Math.random() * playlistTracks.length)];
-  const previewUrl = currentTrack.preview_url;
-  if (!previewUrl) {
-    return playNextSong();
-  }
-  playCount = 0;
-  playClip(previewUrl);
-  document.getElementById('play-button').style.display = 'none';
-  document.getElementById('replay-button').style.display = 'inline-block';
-  document.getElementById('replay-button').innerText = `Nochmal hören (4)`;
-  document.getElementById('reveal-button').style.display = 'inline-block';
-}
-
-function playClip(url) {
-  const audio = new Audio(url);
-  audio.currentTime = Math.floor(Math.random() * 15);
-  audio.play();
-  setTimeout(() => {
-    audio.pause();
-  }, songDuration);
-}
-
-function replayClip() {
-  if (playCount >= 4) return;
-  playCount++;
-  const remaining = 4 - playCount;
-  document.getElementById('replay-button').innerText = `Nochmal hören (${remaining})`;
-  playClip(currentTrack.preview_url);
-}
-
-function revealAnswer() {
-  document.getElementById('song-info').innerText = `${currentTrack.artists[0].name} – ${currentTrack.name}`;
-  document.getElementById('correct-button').style.display = 'inline-block';
-  document.getElementById('wrong-button').style.display = 'inline-block';
-}
-
-function handleAnswer(correct) {
-  if (correct) {
-    const points = 5 - playCount;
-    scores[currentPlayer] += points;
-  }
-  currentPlayer = currentPlayer === 1 ? 2 : 1;
-  currentSongIndex++;
-  updateScoreDisplay();
-  resetUIForNextSong();
-  playNextSong();
-}
-
-function resetUIForNextSong() {
-  document.getElementById('song-info').innerText = '';
-  document.getElementById('correct-button').style.display = 'none';
-  document.getElementById('wrong-button').style.display = 'none';
-}
-
-function restartGame() {
-  scores = { 1: 0, 2: 0 };
-  currentPlayer = 1;
-  currentSongIndex = 0;
-  updateScoreDisplay();
+function simulateSpotifyLogin() {
+  // Hier würdest du den echten Spotify Login integrieren
+  // Für Demo einfach Login "erfolgreich"
+  isLoggedIn = true;
+  alert('Spotify Login erfolgreich!');
   showPage('mode-selection');
 }
 
-// Startup
-window.onload = () => {
-  const params = getHashParams();
-  accessToken = params.access_token;
-  if (accessToken) {
-    showPage('mode-selection');
-  } else {
-    showPage('login-screen');
+function resetGame() {
+  score = {1: 0, 2: 0};
+  activePlayer = 1;
+  songsLeft = maxSongsPerPlayer;
+  retriesLeft = maxRetries;
+  currentSong = null;
+  currentStartTime = 0;
+  updateScoreboard();
+  document.getElementById('song-info').textContent = '';
+  document.getElementById('answer-buttons').classList.add('hidden');
+  document.getElementById('start-btn').textContent = 'TRACK ATTACK START';
+  document.getElementById('start-btn').disabled = false;
+}
+
+function pickRandomSong() {
+  // Hier würdest du mit Spotify API echte Songs aus der Playlist holen
+  // Für Demo: Fake Song-Objekt
+  return {
+    artist: 'Demo Artist',
+    title: 'Demo Song',
+    duration_ms: 180000, // 3 min
+    spotify_url: 'https://open.spotify.com/track/xyz',
+  };
+}
+
+function startPlayingSong() {
+  if (!currentSong) {
+    currentSong = pickRandomSong();
   }
+  retriesLeft = maxRetries;
 
-  document.getElementById('login-button').addEventListener('click', login);
-  document.getElementById('mode-normal').addEventListener('click', () => chooseMode('normal'));
-  document.getElementById('mode-pro').addEventListener('click', () => chooseMode('pro'));
-  document.getElementById('mode-crack').addEventListener('click', () => chooseMode('crack'));
+  // Zufälliger Start (im echten Code mit duration)
+  currentStartTime = Math.floor(Math.random() * (currentSong.duration_ms - selectedModeDuration * 1000));
 
-  document.getElementById('genre-punk').addEventListener('click', () => chooseGenre('punk'));
-  document.getElementById('genre-pop').addEventListener('click', () => chooseGenre('pop'));
-  document.getElementById('genre-hits').addEventListener('click', () => chooseGenre('hits'));
+  document.getElementById('song-info').textContent = `Spiele Song für ${selectedModeDuration} Sekunden an zufälliger Stelle...`;
+  document.getElementById('answer-buttons').classList.add('hidden');
+  updateStartButton();
+}
 
-  document.getElementById('replay-button').addEventListener('click', replayClip);
-  document.getElementById('reveal-button').addEventListener('click', revealAnswer);
-  document.getElementById('correct-button').addEventListener('click', () => handleAnswer(true));
-  document.getElementById('wrong-button').addEventListener('click', () => handleAnswer(false));
-  document.getElementById('restart-button').addEventListener('click', restartGame);
-};
+function updateStartButton() {
+  if (retriesLeft === maxRetries) {
+    document.getElementById('start-btn').textContent = 'TRACK ATTACK START';
+  } else if (retriesLeft > 0) {
+    document.getElementById('start-btn').textContent = `NOCHMAL HÖREN (${retriesLeft}x)`;
+  } else {
+    document.getElementById('start-btn').textContent = 'AUFLÖSEN';
+  }
+}
+
+function onStartButtonClick() {
+  if (retriesLeft === 0) {
+    // Auflösen - Interpret und Titel zeigen
+    document.getElementById('song-info').textContent = `Interpret: ${currentSong.artist} | Titel: ${currentSong.title}`;
+    document.getElementById('answer-buttons').classList.remove('hidden');
+    document.getElementById('start-btn').disabled = true;
+  } else {
+    // Song abspielen oder nochmal hören
+    if (retriesLeft === maxRetries) {
+      // Erstes Abspielen = volle Punkte möglich
+    } else {
+      // Pro nochmal hören 1 Punkt abziehen
+      score[activePlayer] = Math.max(0, score[activePlayer] - 1);
+      updateScoreboard();
+    }
+    retriesLeft--;
+    startPlayingSong();
+  }
+}
+
+function onCorrectClick() {
+  // Punkte je nach verbleibenden retries (max 5, minus abgespielte nochmal-hören)
+  const pointsEarned = 5 - (maxRetries - retriesLeft - 1);
+  score[activePlayer] += pointsEarned;
+  nextTurn();
+}
+
+function onWrongClick() {
+  // Keine Punkte
+  nextTurn();
+}
+
+function nextTurn() {
+  // Reset für nächsten Song
+  retriesLeft = maxRetries;
+  currentSong = null;
+  currentStartTime = 0;
+
+  songsLeft--;
+  if (songsLeft === 0) {
+    // Spielende
+    showFinalScore();
+    return;
+  }
+  // Spieler wechseln
+  activePlayer = activePlayer === 1 ? 2 : 1;
+
+  updateScoreboard();
+  document.getElementById('song-info').textContent = '';
+  document.getElementById('answer-buttons').classList.add('hidden');
+  document.getElementById('start-btn').textContent = 'TRACK ATTACK START';
+  document.getElementById('start-btn').disabled = false;
+}
+
+function showFinalScore() {
+  showPage('end-screen');
+  const finalScore = `Spieler 1: ${score[1]} Punkte<br>Spieler 2: ${score[2]} Punkte`;
+  document.getElementById('final-score').innerHTML = finalScore;
+}
+
+// --- Event-Handler ---
+
+window.addEventListener('DOMContentLoaded', () => {
+  showPage('welcome-screen');
+
+  document.getElementById('login-btn').addEventListener('click', () => {
+    simulateSpotifyLogin();
+  });
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      selectedModeDuration = Number(e.target.dataset.duration);
+      showPage('game-screen');
+      resetGame();
+    });
+  });
+
+  document.querySelectorAll('.genre-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      currentPlaylist = e.target.dataset.playlist;
+      alert(`Genre gewählt! Playlist-ID: ${currentPlaylist}`);
+      // Optional: In echtem Code hier Playlist mit Spotify API laden
+    });
+  });
+
+  document.getElementById('start-btn').addEventListener('click', () => {
+    onStartButtonClick();
+  });
+
+  document.getElementById('btn-correct').addEventListener('click', () => {
+    onCorrectClick();
+  });
+
+  document.getElementById('btn-wrong').addEventListener('click', () => {
+    onWrongClick();
+  });
+
+  document.getElementById('play-again-btn').addEventListener('click', () => {
+    showPage('mode-selection');
+  });
+});
