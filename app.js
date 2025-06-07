@@ -1,137 +1,68 @@
-// app.js
+// Platzhalter für vollständigen PKCE Authorization Code Flow
+// Zugangsdaten (ersetze ggf. durch deine eigene Client-ID)
+const client_id = '53257f6a1c144d3f929a60d691a0c6f6';
+const redirect_uri = 'https://dookye.github.io/musik-raten/';
 
-const clientId = "53257f6a1c144d3f929a60d691a0c6f6";
-const redirectUri = "https://dookye.github.io/musik-raten/";
-const scopes = [
-  "streaming",
-  "user-read-email",
-  "user-read-private",
-  "user-modify-playback-state",
-  "user-read-playback-state"
-];
-
-let codeVerifier;
-let accessToken = null;
-let player = null;
-
-// 1. Start OAuth login with PKCE
-async function redirectToSpotifyAuth() {
-  codeVerifier = generateCodeVerifier(128);
-  const codeChallenge = await generateCodeChallenge(codeVerifier);
-  localStorage.setItem("code_verifier", codeVerifier);
-
-  const authUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(
-    scopes.join(" ")
-  )}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge_method=S256&code_challenge=${codeChallenge}`;
-
-  window.location = authUrl;
-}
-
-// 2. Exchange Authorization Code for Access Token
-async function handleRedirect() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get("code");
-
-  if (!code) return;
-
-  codeVerifier = localStorage.getItem("code_verifier");
-  const body = new URLSearchParams({
-    grant_type: "authorization_code",
-    code,
-    redirect_uri: redirectUri,
-    client_id: clientId,
-    code_verifier: codeVerifier,
-  });
-
-  const response = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
-
-  const data = await response.json();
-  accessToken = data.access_token;
-  localStorage.setItem("access_token", accessToken);
-
-  history.replaceState({}, document.title, "/musik-raten/");
-  onLoginSuccess();
-}
-
-// 3. Spotify Web Playback SDK ready
-window.onSpotifyWebPlaybackSDKReady = () => {
-  const token = getAccessToken();
-  if (!token) {
-    console.error("Kein Access Token, Player nicht initialisiert");
-    return;
-  }
-
-  player = new Spotify.Player({
-    name: "TRACK ATTACK PLAYER",
-    getOAuthToken: cb => cb(token),
-    volume: 0.8,
-  });
-
-  player.addListener("ready", ({ device_id }) => {
-    console.log("Player ready with device ID", device_id);
-    localStorage.setItem("device_id", device_id);
-  });
-
-  player.addListener("not_ready", ({ device_id }) => {
-    console.warn("Player not ready", device_id);
-  });
-
-  player.addListener("initialization_error", ({ message }) => {
-    console.error("Init error:", message);
-  });
-
-  player.addListener("authentication_error", ({ message }) => {
-    console.error("Auth error:", message);
-  });
-
-  player.connect();
-};
-
-// 4. On login success, show game screen
-function onLoginSuccess() {
-  document.getElementById("login-screen").style.display = "none";
-  document.getElementById("game-mode-screen").style.display = "block";
-}
-
-// 5. Helper functions
-function generateCodeVerifier(length) {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
+// PKCE Helper-Funktionen
+function generateCodeVerifier(length = 128) {
+  const array = new Uint32Array(length);
+  window.crypto.getRandomValues(array);
+  return Array.from(array, dec => ('0' + (dec % 36).toString(36)).slice(-1)).join('');
 }
 
 async function generateCodeChallenge(codeVerifier) {
-  const data = new TextEncoder().encode(codeVerifier);
-  const digest = await window.crypto.subtle.digest("SHA-256", data);
+  const encoder = new TextEncoder();
+  const data = encoder.encode(codeVerifier);
+  const digest = await window.crypto.subtle.digest('SHA-256', data);
   return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-function getAccessToken() {
-  if (accessToken) return accessToken;
-  accessToken = localStorage.getItem("access_token");
-  return accessToken;
+// Initial Login
+async function redirectToSpotifyLogin() {
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = await generateCodeChallenge(codeVerifier);
+  localStorage.setItem('code_verifier', codeVerifier);
+
+  const scope = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state';
+  const args = new URLSearchParams({
+    response_type: 'code',
+    client_id,
+    scope,
+    redirect_uri,
+    code_challenge_method: 'S256',
+    code_challenge: codeChallenge,
+  });
+
+  window.location = 'https://accounts.spotify.com/authorize?' + args;
 }
 
-// 6. Event listeners
-window.addEventListener("DOMContentLoaded", () => {
-  handleRedirect();
+// Wenn wir mit Code zurückkommen → Token holen
+async function handleRedirectCallback() {
+  const code = new URLSearchParams(window.location.search).get('code');
+  if (!code) return;
 
-  const loginBtn = document.getElementById("spotify-login-btn");
-  if (loginBtn) {
-    loginBtn.addEventListener("click", () => {
-      redirectToSpotifyAuth();
-    });
-  }
-});
+  const codeVerifier = localStorage.getItem('code_verifier');
+  const body = new URLSearchParams({
+    grant_type: 'authorization_code',
+    code,
+    redirect_uri,
+    client_id,
+    code_verifier: codeVerifier
+  });
+
+  const response = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body
+  });
+
+  const data = await response.json();
+  localStorage.setItem('access_token', data.access_token);
+  window.history.replaceState({}, document.title, '/'); // Clean URL
+  location.reload();
+}
+
+// Main
+document.getElementById('login-button').addEventListener('click', redirectToSpotifyLogin);
+handleRedirectCallback();
