@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TRACK ATTACK</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #121212;
+    color: white;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
+  #welcome-screen, #mode-selection, #game-screen, #end-screen {
+    display: none;
+    padding: 20px;
+  }
+  h1 {
+    font-size: 3em;
+    margin: 20px 0 10px;
+  }
+  button {
+    font-size: 1.2em;
+    margin: 10px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+  }
+  button#login-btn {
+    background: #1db954;
+    color: black;
+    font-weight: bold;
+  }
+  button.mode-btn {
+    background: #2c7;
+    color: black;
+    font-weight: bold;
+  }
+  button.genre-btn {
+    background: #09f;
+  }
+  button#start-btn {
+    background: #e91e63;
+    color: white;
+    font-weight: bold;
+  }
+  button#repeat-btn {
+    background: #f57c00;
+    color: white;
+    font-weight: bold;
+  }
+  button#reveal-btn {
+    background: #2196f3;
+    color: white;
+    font-weight: bold;
+  }
+  button#correct-btn {
+    background: #4caf50;
+    color: white;
+    font-weight: bold;
+  }
+  button#wrong-btn {
+    background: #f44336;
+    color: white;
+    font-weight: bold;
+  }
+  #scoreboard {
+    margin-top: 15px;
+    font-size: 1.2em;
+  }
+  #song-info {
+    margin-top: 20px;
+    font-size: 1.3em;
+  }
+  #player-indicator {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+  #end-score {
+    font-size: 2em;
+    margin: 30px 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<section id="welcome-screen">
+  <h1>Ready for <span style="color:#e91e63;">TRACK ATTACK</span>?</h1>
+  <!-- Hier könnte später ein Logo-Bild -->
+  <p>Zum Spielen benötigst du einen Spotify Premium Account.</p>
+  <button id="login-btn">Mit Spotify Premium einloggen</button>
+</section>
+
+<!-- MODUS AUSWAHL -->
+<section id="mode-selection">
+  <h2>Wähle deinen Spielmodus</h2>
+  <button class="mode-btn" data-mode="normalo">Normalo (30 Sek.)</button>
+  <button class="mode-btn" data-mode="pro">Like a Pro (10 Sek.)</button>
+  <button class="mode-btn" data-mode="crack">I'm the Crack (2 Sek.)</button>
+</section>
+
+<!-- SPIELBILDSCHIRM -->
+<section id="game-screen">
+  <div id="player-indicator">Spieler 1 ist dran</div>
+  
+  <div>
+    <h3>Wähle ein Genre</h3>
+    <button class="genre-btn" data-genre="punkrock">Punk Rock (90's & 00's)</button>
+    <button class="genre-btn" data-genre="pop">Pop Hits 2000–2025</button>
+    <button class="genre-btn" data-genre="greatest">Die größten Hits aller Zeiten</button>
+  </div>
+
+  <div style="margin-top:20px;">
+    <button id="start-btn">TRACK ATTACK STARTEN</button>
+    <button id="repeat-btn" style="display:none;"></button>
+    <button id="reveal-btn" style="display:none;">AUFLÖSEN</button>
+  </div>
+
+  <div id="song-info"></div>
+
+  <div style="margin-top:20px;">
+    <button
