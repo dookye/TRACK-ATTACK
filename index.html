@@ -1,440 +1,72 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Musik Raten - Spotify PKCE Login</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background:#121212; color:#eee; }
-  button { padding: 10px 20px; margin: 10px 5px; font-size: 1rem; cursor: pointer; }
-  .hidden { display: none; }
-  select { font-size: 1rem; padding: 5px; margin: 10px 0; }
-  #player-status { margin: 15px 0; }
-  #info { margin-top: 20px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TRACK ATTACK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
-
-<h1>Musik Raten</h1>
-
-<div id="login-section">
-  <button id="login-btn">Mit Spotify einloggen</button>
-</div>
-
-<div id="game-section" class="hidden">
-
-  <label for="genre-select">Genre auswählen:</label>
-  <select id="genre-select">
-    <option value="39sVxPTg7BKwrf2MfgrtcD">Punk Rock (90's & 00's)</option>
-    <option value="6mtYuOxzl58vSGnEDtZ9uB">Pop Hits 2000-2025</option>
-    <option value="2si7ChS6Y0hPBt4FsobXpg">Die größten Hits aller Zeiten</option>
-  </select>
-
-  <label for="mode-select">Spielmodus auswählen:</label>
-  <select id="mode-select">
-    <option value="30">Normal (30 Sek.)</option>
-    <option value="10">Profi (10 Sek.)</option>
-    <option value="2">Crack (2 Sek.)</option>
-  </select>
-
-  <br />
-  <button id="start-btn">Musik Raten Starten</button>
-
-  <div id="player-status"></div>
-  <div id="info"></div>
-
-  <div id="controls" class="hidden">
-    <button id="repeat-btn">Nochmal hören</button>
-    <button id="reveal-btn">Auflösen</button>
-  </div>
-
-  <div id="answer-buttons" class="hidden">
-    <button id="correct-btn">Richtig</button>
-    <button id="wrong-btn">Falsch</button>
-  </div>
-
-  <div id="score">Punkte: 0</div>
-
-</div>
-
-<script>
-const client_id = '53257f6a1c144d3f929a60d691a0c6f6';
-const redirect_uri = 'https://dookye.github.io/musik-raten/';
-
-// --- PKCE Helfer ---
-function generateRandomString(length) {
-  let text = '';
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for(let i=0; i<length; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
-}
-
-async function sha256(plain) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(plain);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return new Uint8Array(hash);
-}
-
-function base64urlencode(a) {
-  let str = '';
-  for(let i=0; i<a.length; i++) {
-    str += String.fromCharCode(a[i]);
-  }
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-async function generateCodeChallenge(code_verifier) {
-  const hashed = await sha256(code_verifier);
-  return base64urlencode(hashed);
-}
-
-// --- Login & Token Handling ---
-
-function getUrlParams() {
-  const params = {};
-  window.location.search.substr(1).split('&').forEach(part => {
-    if(part){
-      const [key, value] = part.split('=');
-      params[key] = decodeURIComponent(value);
-    }
-  });
-  return params;
-}
-
-function setLocalStorage(key, value) {
-  localStorage.setItem(key, value);
-}
-function getLocalStorage(key) {
-  return localStorage.getItem(key);
-}
-function removeLocalStorage(key) {
-  localStorage.removeItem(key);
-}
-
-async function spotifyLogin() {
-  const code_verifier = generateRandomString(128);
-  setLocalStorage('code_verifier', code_verifier);
-  const code_challenge = await generateCodeChallenge(code_verifier);
-  const state = generateRandomString(16);
-  setLocalStorage('state', state);
-
-  const scope = 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state playlist-read-private';
-
-  const args = new URLSearchParams({
-    response_type: 'code',
-    client_id,
-    scope,
-    redirect_uri,
-    state,
-    code_challenge_method: 'S256',
-    code_challenge,
-  });
-
-  window.location = 'https://accounts.spotify.com/authorize?' + args;
-}
-
-async function fetchAccessToken(code) {
-  const code_verifier = getLocalStorage('code_verifier');
-
-  const body = new URLSearchParams({
-    client_id,
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri,
-    code_verifier,
-  });
-
-  const response = await fetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {'Content-Type':'application/x-www-form-urlencoded'},
-    body: body.toString(),
-  });
-
-  if(!response.ok) {
-    throw new Error('Token request failed');
-  }
-  const data = await response.json();
-  return data;
-}
-
-// --- API Calls ---
-
-let access_token = null;
-let refresh_token = null;
-
-async function refreshAccessToken() {
-  if(!refresh_token) return;
-  const body = new URLSearchParams({
-    grant_type: 'refresh_token',
-    refresh_token,
-    client_id,
-  });
-  const response = await fetch('https://accounts.spotify.com/api/token', {
-    method:'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: body.toString(),
-  });
-  if(response.ok){
-    const data = await response.json();
-    access_token = data.access_token;
-    localStorage.setItem('access_token', access_token);
-    return access_token;
-  } else {
-    console.warn('Could not refresh token');
-  }
-}
-
-async function getUserProfile() {
-  const res = await fetch('https://api.spotify.com/v1/me', {
-    headers: { Authorization: 'Bearer ' + access_token }
-  });
-  return await res.json();
-}
-
-async function getPlaylistTracks(playlistId) {
-  let tracks = [];
-  let url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100`;
-  while(url) {
-    const res = await fetch(url, {headers: {Authorization: 'Bearer ' + access_token}});
-    if(!res.ok) throw new Error('Fehler beim Abrufen der Playlist-Tracks');
-    const data = await res.json();
-    tracks = tracks.concat(data.items);
-    url = data.next;
-  }
-  return tracks;
-}
-
-// --- Web Playback SDK ---
-
-let player;
-let device_id;
-
-function loadSpotifySDK() {
-  return new Promise(resolve => {
-    if(window.Spotify) resolve();
-    else {
-      const script = document.createElement('script');
-      script.src = 'https://sdk.scdn.co/spotify-player.js';
-      document.head.appendChild(script);
-      window.onSpotifyWebPlaybackSDKReady = () => resolve();
-    }
-  });
-}
-
-async function initPlayer() {
-  await loadSpotifySDK();
-  player = new Spotify.Player({
-    name: 'Musik Raten Player',
-    getOAuthToken: cb => { cb(access_token); }
-  });
-
-  player.addListener('ready', ({device_id: id}) => {
-    device_id = id;
-    console.log('Player is ready with device ID', id);
-    document.getElementById('player-status').textContent = 'Player bereit.';
-  });
-
-  player.addListener('not_ready', ({device_id: id}) => {
-    console.log('Player not ready:', id);
-    document.getElementById('player-status').textContent = 'Player nicht bereit.';
-  });
-
-  player.addListener('player_state_changed', state => {
-    if(!state) return;
-    console.log('Player state changed', state);
-  });
-
-  player.connect();
-}
-
-async function playTrack(trackUri, positionMs = 0, durationSec = 30) {
-  if(!device_id) {
-    alert('Player ist noch nicht bereit.');
-    return;
-  }
-
-  // Start playback via Spotify API
-  await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      uris: [trackUri],
-      position_ms: positionMs,
-    }),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + access_token,
-    },
-  });
-
-  document.getElementById('player-status').textContent = `Spiele Track...`;
-
-  // Stop playback after durationSec seconds
-  setTimeout(async () => {
-    // Pause playback
-    await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${device_id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer ' + access_token,
-      },
-    });
-    document.getElementById('player-status').textContent = 'Playback gestoppt.';
-  }, durationSec * 1000);
-}
-
-// --- Spiel-Logik ---
-
-let currentPlaylistTracks = [];
-let currentTrack = null;
-let currentTrackIndex = 0;
-let playCount = 0;
-let maxRepeats = 4;
-let maxSongs = 10;
-let score = 0;
-let guessesLeft = maxRepeats;
-
-const loginBtn = document.getElementById('login-btn');
-const loginSection = document.getElementById('login-section');
-const gameSection = document.getElementById('game-section');
-const startBtn = document.getElementById('start-btn');
-const repeatBtn = document.getElementById('repeat-btn');
-const revealBtn = document.getElementById('reveal-btn');
-const correctBtn = document.getElementById('correct-btn');
-const wrongBtn = document.getElementById('wrong-btn');
-const controlsDiv = document.getElementById('controls');
-const answerButtons = document.getElementById('answer-buttons');
-const infoDiv = document.getElementById('info');
-const scoreDiv = document.getElementById('score');
-const genreSelect = document.getElementById('genre-select');
-const modeSelect = document.getElementById('mode-select');
-
-loginBtn.addEventListener('click', () => spotifyLogin());
-
-startBtn.addEventListener('click', async () => {
-  startBtn.disabled = true;
-  answerButtons.classList.add('hidden');
-  controlsDiv.classList.remove('hidden');
-  infoDiv.textContent = '';
-  playCount = 0;
-  guessesLeft = maxRepeats;
-  score = 0;
-  updateScore();
-
-  // Hole Playlist
-  try {
-    const playlistId = genreSelect.value;
-    currentPlaylistTracks = await getPlaylistTracks(playlistId);
-    if(currentPlaylistTracks.length === 0) {
-      alert('Playlist ist leer!');
-      return;
-    }
-    await initPlayer();
-    await playRandomTrack();
-  } catch(e) {
-    alert('Fehler: ' + e.message);
-  }
-  startBtn.disabled = false;
-});
-
-repeatBtn.addEventListener('click', () => {
-  if(guessesLeft > 0) {
-    guessesLeft--;
-    playCount++;
-    playRandomTrack(currentTrack.track.uri, currentTrack.track.duration_ms);
-    updateScore();
-  } else {
-    alert('Keine Wiederholungen mehr möglich.');
-  }
-});
-
-revealBtn.addEventListener('click', () => {
-  infoDiv.textContent = `Interpret: ${currentTrack.track.artists.map(a => a.name).join(', ')} | Titel: ${currentTrack.track.name}`;
-  answerButtons.classList.remove('hidden');
-  controlsDiv.classList.add('hidden');
-});
-
-correctBtn.addEventListener('click', () => {
-  score += Math.max(1, 5 - playCount);
-  nextRound();
-});
-
-wrongBtn.addEventListener('click', () => {
-  nextRound();
-});
-
-function updateScore() {
-  scoreDiv.textContent = `Punkte: ${score}`;
-}
-
-async function playRandomTrack(existingUri, durationMs) {
-  if(!existingUri) {
-    // Random track aus Playlist holen
-    currentTrackIndex = Math.floor(Math.random() * currentPlaylistTracks.length);
-    currentTrack = currentPlaylistTracks[currentTrackIndex];
-  }
-
-  const track = currentTrack.track;
-  const duration = durationMs ?? track.duration_ms;
-  // Zufällige Startposition im Track, maximal Trackdauer - Spielmodus Zeit
-  const playTimeSec = parseInt(modeSelect.value, 10);
-  let maxStartMs = duration - playTimeSec * 1000;
-  if(maxStartMs < 0) maxStartMs = 0;
-  const startMs = Math.floor(Math.random() * maxStartMs);
-
-  await playTrack(track.uri, startMs, playTimeSec);
-}
-
-function nextRound() {
-  playCount = 0;
-  guessesLeft = maxRepeats;
-  answerButtons.classList.add('hidden');
-  controlsDiv.classList.remove('hidden');
-  infoDiv.textContent = '';
-  updateScore();
-}
-
-// --- Main ---
-
-(async () => {
-  // Check if redirected back with code
-  const params = getUrlParams();
-  if(params.code) {
-    // Check state
-    const storedState = getLocalStorage('state');
-    if(params.state !== storedState) {
-      alert('State stimmt nicht überein.');
-      return;
-    }
-    // Hole Token
-    try {
-      const tokenData = await fetchAccessToken(params.code);
-      access_token = tokenData.access_token;
-      refresh_token = tokenData.refresh_token;
-      setLocalStorage('access_token', access_token);
-      setLocalStorage('refresh_token', refresh_token);
-
-      // Remove code & state from URL (clean URL)
-      window.history.replaceState({}, document.title, redirect_uri);
-
-      loginSection.classList.add('hidden');
-      gameSection.classList.remove('hidden');
-    } catch(e) {
-      alert('Fehler beim Token holen: ' + e.message);
-    }
-  } else {
-    // Prüfe ob Token schon im localStorage
-    access_token = getLocalStorage('access_token');
-    refresh_token = getLocalStorage('refresh_token');
-    if(access_token) {
-      loginSection.classList.add('hidden');
-      gameSection.classList.remove('hidden');
-      // Optionally init player here or later
-    }
-  }
-})();
-</script>
-
+  <main id="app">
+
+    <!-- LOGIN SCREEN -->
+    <section id="login-screen" class="screen active">
+      <h1>Bist du bereit für <span class="highlight">TRACK ATTACK</span>?</h1>
+      <p>...dann melde dich jetzt mit deinem Premium-Spotify Account an</p>
+      <button id="btn-login" class="spotify-btn">Mit Spotify anmelden</button>
+    </section>
+
+    <!-- MODUS AUSWAHL -->
+    <section id="mode-screen" class="screen">
+      <h2>Spielmodus wählen</h2>
+      <div id="mode-buttons" class="button-group">
+        <button data-mode="30">Normalo (30 Sek.)</button>
+        <button data-mode="10">like a Pro (10 Sek.)</button>
+        <button data-mode="2">bin ich geil oder was! (2 Sek.)</button>
+      </div>
+    </section>
+
+    <!-- GENRE AUSWAHL + SPIEL -->
+    <section id="game-screen" class="screen">
+      <header>
+        <div class="team-score" id="team1-score">Team 1: 0</div>
+        <div class="team-score" id="team2-score">Team 2: 0</div>
+      </header>
+
+      <h2 id="game-phase-text">Wähle dein Genre</h2>
+      <div id="genre-buttons" class="button-group">
+        <button data-playlists='["39sVxPTg7BKwrf2MfgrtcD"]'>Punk Rock (90's & 00')</button>
+        <button data-playlists='["6mtYuOxzl58vSGnEDtZ9uB"]'>Pop Hits 2000-2025</button>
+        <button data-playlists='["2si7ChS6Y0hPBt4FsobXpg"]'>Die größten Hits aller Zeiten</button>
+      </div>
+
+      <div id="playback-controls" class="button-group hidden">
+        <button id="btn-track-attack" class="primary">TRACK ATTACK</button>
+        <button id="btn-nochmal-hoeren" disabled>NOCHMAL HÖREN (4)</button>
+        <button id="btn-aufloesen" disabled>AUFLÖSEN</button>
+      </div>
+
+      <div id="answer-controls" class="button-group hidden">
+        <button id="btn-richtig" class="correct" disabled>RICHTIG</button>
+        <button id="btn-falsch" class="wrong" disabled>FALSCH</button>
+      </div>
+
+      <div id="song-info" class="hidden">
+        <p><strong>Interpret:</strong> <span id="artist-name"></span></p>
+        <p><strong>Titel:</strong> <span id="track-name"></span></p>
+      </div>
+
+      <div id="end-screen" class="hidden">
+        <h2>Spiel beendet!</h2>
+        <p id="final-score"></p>
+        <button id="btn-nochmal-spielen" class="primary">NOCHMAL SPIELEN</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
 </body>
 </html>
