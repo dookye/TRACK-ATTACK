@@ -1,179 +1,233 @@
-// --- PKCE Authorization Code Flow Setup ---
-
-const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
-const redirectUri = 'https://dookye.github.io/musik-raten/';
-const scopes = [
-  'user-read-private',
-  'user-read-email',
-  'streaming',
-  'user-modify-playback-state'
-].join(' ');
-
-const authEndpoint = 'https://accounts.spotify.com/authorize';
-const tokenEndpoint = 'https://accounts.spotify.com/api/token';
-
-const loginButton = document.getElementById('login-button');
-const loginError = document.getElementById('login-error');
-const loginArea = document.getElementById('login-area');
-const gameModeSelection = document.getElementById('game-mode-selection');
-const startGameButton = document.getElementById('start-game-button');
-const messageEl = document.getElementById('message');
-
+// app.js
+let accessToken = null;
+let player = null;
+let currentTrack = null;
+let currentDeviceId = null;
 let selectedPlaylistId = null;
-let selectedGameMode = null;
+let previewDuration = 30;
+let currentTeam = 1;
+let scores = { 1: 0, 2: 0 };
+let replayCount = 0;
 
-// PKCE Helpers
-function generateRandomString(len = 128) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  return Array.from({length:len}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
-}
+// Screens
+const screens = {
+  welcome: document.getElementById('welcome-screen'),
+  mode: document.getElementById('mode-screen'),
+  genre: document.getElementById('genre-screen'),
+  game: document.getElementById('game-screen'),
+  end: document.getElementById('end-screen')
+};
 
-async function generateCodeChallenge(verifier) {
-  const buffer = new TextEncoder().encode(verifier);
-  const digest = await crypto.subtle.digest('SHA-256', buffer);
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
+// Buttons
+const loginButton = document.getElementById('login-button');
+const playButton = document.getElementById('play-button');
+const replayButton = document.getElementById('replay-button');
+const revealButton = document.getElementById('reveal-button');
+const correctButton = document.getElementById('correct-button');
+const wrongButton = document.getElementById('wrong-button');
+const restartButton = document.getElementById('restart-button');
 
-// Start Spotify Login
-loginButton.addEventListener('click', async () => {
-  loginError.style.display = 'none';
-  try {
-    const codeVerifier = generateRandomString();
-    const codeChallenge = await generateCodeChallenge(codeVerifier);
-    sessionStorage.setItem('code_verifier', codeVerifier);
-    const state = generateRandomString(16);
-    sessionStorage.setItem('pkce_state', state);
+// Others
+const score1 = document.getElementById('score1');
+const score2 = document.getElementById('score2');
+const finalScore1 = document.getElementById('final-score1');
+const finalScore2 = document.getElementById('final-score2');
+const songInfo = document.getElementById('song-info');
+const gameMessage = document.getElementById('game-message');
 
-    const url = `${authEndpoint}?response_type=code`
-      + `&client_id=${encodeURIComponent(clientId)}`
-      + `&scope=${encodeURIComponent(scopes)}`
-      + `&redirect_uri=${encodeURIComponent(redirectUri)}`
-      + `&state=${encodeURIComponent(state)}`
-      + `&code_challenge_method=S256`
-      + `&code_challenge=${encodeURIComponent(codeChallenge)}`;
+// Step 1: Auth
+loginButton.addEventListener('click', () => {
+  const clientId = 'e8597a264caa4c7a93c36f917d1211d5';
+  const redirectUri = window.location.origin + window.location.pathname;
+  const codeVerifier = generateRandomString(64);
 
-    window.location.href = url;
-  } catch (e) {
-    loginError.textContent = 'Fehler beim Login-Versuch';
-    loginError.style.display = 'block';
-  }
+  generateCodeChallenge(codeVerifier).then(codeChallenge => {
+    localStorage.setItem('verifier', codeVerifier);
+    const args = new URLSearchParams({
+      response_type: 'code',
+      client_id: clientId,
+      scope: 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state',
+      redirect_uri: redirectUri,
+      code_challenge_method: 'S256',
+      code_challenge: codeChallenge
+    });
+
+    window.location = `https://accounts.spotify.com/authorize?${args.toString()}`;
+  });
 });
 
-// After Spotify Redirect
 async function handleRedirect() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  const error = params.get('error');
-  const state = params.get('state');
+  const code = new URLSearchParams(window.location.search).get('code');
+  if (!code) return;
 
-  if (error) {
-    loginError.textContent = 'Spotify-Fehler: ' + error;
-    loginError.style.display = 'block';
-    return false;
-  }
-  if (!code) return false;
-
-  if (state !== sessionStorage.getItem('pkce_state')) {
-    loginError.textContent = 'Ungültiger State, Login abgebrochen.';
-    loginError.style.display = 'block';
-    return false;
-  }
-  sessionStorage.removeItem('pkce_state');
-
-  const codeVerifier = sessionStorage.getItem('code_verifier');
-  if (!codeVerifier) {
-    loginError.textContent = 'Code-Verifier fehlt!';
-    loginError.style.display = 'block';
-    return false;
-  }
-
+  const codeVerifier = localStorage.getItem('verifier');
   const body = new URLSearchParams({
-    client_id: clientId,
     grant_type: 'authorization_code',
-    code,
-    redirect_uri: redirectUri,
+    code: code,
+    redirect_uri: window.location.origin + window.location.pathname,
+    client_id: 'e8597a264caa4c7a93c36f917d1211d5',
     code_verifier: codeVerifier
   });
 
-  try {
-    const res = await fetch(tokenEndpoint, {
-      method: 'POST',
-      headers: {'Content-Type':'application/x-www-form-urlencoded'},
-      body: body.toString()
-    });
-    if (!res.ok) {
-      const txt = await res.text();
-      loginError.textContent = 'Token-Austausch fehlgeschlagen: ' + txt;
-      loginError.style.display = 'block';
-      return false;
-    }
-    const data = await res.json();
-    sessionStorage.setItem('access_token', data.access_token);
-    sessionStorage.setItem('token_expiry', (Date.now() + data.expires_in * 1000).toString());
-    window.history.replaceState({}, document.title, redirectUri);
-    onLoginSuccess(data.access_token);
-    return true;
-  } catch (e) {
-    loginError.textContent = 'Login fehlgeschlagen.';
-    loginError.style.display = 'block';
-    console.error(e);
-    return false;
-  }
-}
-
-// Check Token
-function isTokenValid() {
-  const t = sessionStorage.getItem('access_token');
-  const exp = sessionStorage.getItem('token_expiry');
-  return t && exp && Date.now() < parseInt(exp);
-}
-
-// After successful login
-function onLoginSuccess(token) {
-  loginArea.style.display = 'none';
-  gameModeSelection.style.display = 'block';
-  messageEl.textContent = 'Erfolgreich eingeloggt – wähle Genre & Modus';
-  setupSelection();
-}
-
-// Setup UI interactions
-function setupSelection() {
-  document.querySelectorAll('.genre-button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.genre-button').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedPlaylistId = btn.dataset.playlist;
-      updateStartButton();
-    });
+  const response = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body
   });
-  document.querySelectorAll('.mode-button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.mode-button').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedGameMode = btn.dataset.mode;
-      updateStartButton();
-    });
+
+  const data = await response.json();
+  accessToken = data.access_token;
+  localStorage.setItem('access_token', accessToken);
+
+  window.history.replaceState({}, document.title, '/');
+  nextScreen('mode');
+}
+
+handleRedirect();
+
+// Step 2: Spielmodus wählen
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    previewDuration = parseInt(btn.dataset.seconds);
+    nextScreen('genre');
   });
-  startGameButton.addEventListener('click', () => {
-    startGame(selectedPlaylistId, selectedGameMode);
+});
+
+// Step 3: Genre/Playlist wählen
+document.querySelectorAll('.genre-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedPlaylistId = btn.dataset.playlist;
+    nextScreen('game');
+    connectToSpotify();
   });
-}
+});
 
-function updateStartButton() {
-  startGameButton.disabled = !(selectedPlaylistId && selectedGameMode);
-}
+// Spotify Web Playback SDK
+window.onSpotifyWebPlaybackSDKReady = () => {
+  player = new Spotify.Player({
+    name: 'TRACK ATTACK Player',
+    getOAuthToken: cb => cb(accessToken),
+    volume: 0.8
+  });
 
-// Placeholder for your game logic
-function startGame(playlistId, mode) {
-  messageEl.textContent = `Starte Spiel mit Playlist ${playlistId} und Modus ${mode}`;
-  // Hier kommt deine bestehende Spielmechanik rein
-}
+  player.addListener('ready', ({ device_id }) => {
+    currentDeviceId = device_id;
+    console.log('Ready with Device ID', device_id);
+  });
 
-// On load
-window.addEventListener('load', async () => {
-  if (await handleRedirect()) return;
-  if (isTokenValid()) {
-    onLoginSuccess(sessionStorage.getItem('access_token'));
+  player.connect();
+};
+
+// Spielsteuerung
+playButton.addEventListener('click', startTrack);
+replayButton.addEventListener('click', () => {
+  if (replayCount > 0) {
+    playPreview(currentTrack.preview_url);
+    replayCount--;
+    replayButton.textContent = `NOCHMAL HÖREN (${replayCount})`;
+    if (replayCount === 0) replayButton.disabled = true;
   }
 });
+
+revealButton.addEventListener('click', () => {
+  if (currentTrack) {
+    songInfo.classList.remove('hidden');
+    songInfo.innerHTML = `${currentTrack.name} – ${currentTrack.artists.map(a => a.name).join(', ')}`;
+    correctButton.disabled = false;
+    wrongButton.disabled = false;
+  }
+});
+
+correctButton.addEventListener('click', () => {
+  scores[currentTeam]++;
+  updateScores();
+  nextTurn();
+});
+
+wrongButton.addEventListener('click', () => {
+  nextTurn();
+});
+
+restartButton.addEventListener('click', () => {
+  scores = { 1: 0, 2: 0 };
+  currentTeam = 1;
+  updateScores();
+  songInfo.textContent = '';
+  nextScreen('mode');
+});
+
+// Funktionen
+function nextScreen(screen) {
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  screens[screen].classList.add('active');
+}
+
+function updateScores() {
+  score1.textContent = scores[1];
+  score2.textContent = scores[2];
+  finalScore1.textContent = scores[1];
+  finalScore2.textContent = scores[2];
+}
+
+async function startTrack() {
+  songInfo.classList.add('hidden');
+  replayCount = 4;
+  replayButton.disabled = false;
+  replayButton.textContent = `NOCHMAL HÖREN (${replayCount})`;
+  correctButton.disabled = true;
+  wrongButton.disabled = true;
+  revealButton.disabled = false;
+
+  const track = await getRandomTrackFromPlaylist();
+  currentTrack = track;
+  playPreview(track.preview_url);
+}
+
+function playPreview(previewUrl) {
+  const audio = new Audio(previewUrl);
+  audio.play();
+  setTimeout(() => {
+    audio.pause();
+  }, previewDuration * 1000);
+}
+
+function nextTurn() {
+  currentTeam = currentTeam === 1 ? 2 : 1;
+  gameMessage.textContent = `Team ${currentTeam} – TRACK ATTACK!`;
+  songInfo.classList.add('hidden');
+  replayButton.disabled = true;
+  revealButton.disabled = true;
+  correctButton.disabled = true;
+  wrongButton.disabled = true;
+  currentTrack = null;
+}
+
+// Helper: Playlist abrufen
+async function getRandomTrackFromPlaylist() {
+  const response = await fetch(`https://api.spotify.com/v1/playlists/${selectedPlaylistId}/tracks?limit=100`, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+
+  const data = await response.json();
+  const validTracks = data.items
+    .map(item => item.track)
+    .filter(track => track.preview_url);
+
+  const randomIndex = Math.floor(Math.random() * validTracks.length);
+  return validTracks[randomIndex];
+}
+
+// Helper: Code Challenge
+function generateRandomString(length) {
+  let text = '';
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < length; i++) text += possible.charAt(Math.floor(Math.random() * possible.length));
+  return text;
+}
+
+async function generateCodeChallenge(codeVerifier) {
+  const data = new TextEncoder().encode(codeVerifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
