@@ -2,113 +2,67 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Musik Raten</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #121212;
-      color: #eee;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      justify-content: center;
-    }
-    #container {
-      width: 90vw;
-      max-width: 480px;
-      background: #222;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 20px #1db954;
-      text-align: center;
-    }
-    h1 {
-      margin-bottom: 1rem;
-      font-weight: 700;
-    }
-    button {
-      background-color: #1db954;
-      border: none;
-      color: white;
-      font-weight: 600;
-      font-size: 1.2rem;
-      padding: 0.75rem 2rem;
-      border-radius: 30px;
-      cursor: pointer;
-      margin-top: 1rem;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #1ed760;
-    }
-    #game-mode-selection, #game-start-area, #playback-area {
-      margin-top: 2rem;
-      display: none;
-    }
-    .genre-button, .mode-button {
-      display: inline-block;
-      margin: 0.5rem 0.5rem 0 0.5rem;
-      padding: 0.6rem 1.2rem;
-      border-radius: 20px;
-      border: 2px solid #1db954;
-      background: transparent;
-      color: #1db954;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .genre-button.selected, .mode-button.selected {
-      background: #1db954;
-      color: #121212;
-    }
-    #message {
-      margin-top: 1rem;
-      font-style: italic;
-      color: #bbb;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRACK ATTACK</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="container">
-    <!-- Login Screen -->
-    <div id="login-area">
-      <h1>Musik Raten</h1>
-      <p>Bitte logge dich mit deinem Spotify Premium Account ein, um zu starten.</p>
-      <button id="login-button">Spotify Login</button>
-      <p id="login-error" style="color: #f44336; display:none;"></p>
+  <div id="app">
+    <!-- Begrüßung -->
+    <div id="welcome-screen" class="screen active">
+      <h1>Bist du bereit für <span class="highlight">TRACK ATTACK</span>?</h1>
+      <p>...dann melde dich jetzt mit deinem Premium-Spotify Account an</p>
+      <button id="login-button" class="spotify-btn">Login mit Spotify</button>
     </div>
 
-    <!-- Game Mode Selection -->
-    <div id="game-mode-selection">
-      <h2>Wähle ein Genre</h2>
-      <div>
-        <button class="genre-button" data-playlist="39sVxPTg7BKwrf2MfgrtcD">Punk Rock (90's & 00's)</button>
-        <button class="genre-button" data-playlist="6mtYuOxzl58vSGnEDtZ9uB">Pop (2015–today)</button>
-        <button class="genre-button" data-playlist="2si7ChS6Y0hPBt4FsobXpg">Greatest Hits</button>
+    <!-- Spielmodus wählen -->
+    <div id="mode-screen" class="screen">
+      <h2>Spielmodus wählen</h2>
+      <div class="button-group">
+        <button class="mode-btn" data-seconds="30">Normalo</button>
+        <button class="mode-btn" data-seconds="10">Like a Pro</button>
+        <button class="mode-btn" data-seconds="2">Bin ich geil oder was!</button>
       </div>
-      <h2>Wähle einen Spielmodus</h2>
-      <div>
-        <button class="mode-button" data-mode="NORMAL">Normal (30 Sek.)</button>
-        <button class="mode-button" data-mode="PROFI">Profi (10 Sek.)</button>
-        <button class="mode-button" data-mode="CRACK">Crack (2 Sek.)</button>
+    </div>
+
+    <!-- Genre wählen -->
+    <div id="genre-screen" class="screen">
+      <h2>Wähle dein Genre</h2>
+      <div class="button-group">
+        <button class="genre-btn" data-playlist="39sVxPTg7BKwrf2MfgrtcD">Punk Rock (90s & 00s)</button>
+        <button class="genre-btn" data-playlist="6mtYuOxzl58vSGnEDtZ9uB">Pop Hits 2000–2025</button>
+        <button class="genre-btn" data-playlist="2si7ChS6Y0hPBt4FsobXpg">Größte Hits aller Zeiten</button>
       </div>
-      <button id="start-game-button" disabled>Spiel starten</button>
-      <p id="message"></p>
     </div>
 
-    <!-- Game Start Area (optional für spätere Nutzung) -->
-    <div id="game-start-area">
-      <!-- Hier kann später Spielablauf eingebunden werden -->
+    <!-- Spiel läuft -->
+    <div id="game-screen" class="screen">
+      <div id="scoreboard">
+        <span>Team 1: <span id="score1">0</span></span>
+        <span>Team 2: <span id="score2">0</span></span>
+      </div>
+      <h2 id="game-message">TRACK ATTACK!</h2>
+      <button id="play-button" class="action-btn">TRACK ATTACK</button>
+      <div id="guess-controls">
+        <button id="replay-button" disabled>NOCHMAL HÖREN (4)</button>
+        <button id="reveal-button" disabled>AUFLÖSEN</button>
+        <button id="correct-button" disabled>RICHTIG</button>
+        <button id="wrong-button" disabled>FALSCH</button>
+      </div>
+      <p id="song-info" class="hidden"></p>
     </div>
 
-    <!-- Playback Area (optional für Spotify Playback SDK) -->
-    <div id="playback-area"></div>
+    <!-- Endbildschirm -->
+    <div id="end-screen" class="screen">
+      <h2>Spiel beendet!</h2>
+      <p>Endstand:</p>
+      <p>Team 1: <span id="final-score1">0</span> Punkte</p>
+      <p>Team 2: <span id="final-score2">0</span> Punkte</p>
+      <button id="restart-button" class="action-btn">NOCHMAL SPIELEN</button>
+    </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="https://sdk.scdn.co/spotify-player.js"></script>
+  <script src="app.js" type="module"></script>
 </body>
 </html>
