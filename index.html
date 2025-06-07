@@ -111,8 +111,8 @@
   <div>
     <h3>Wähle ein Genre</h3>
     <button class="genre-btn" data-genre="punkrock">Punk Rock (90's & 00's)</button>
-    <button class="genre-btn" data-genre="pop">Pop Hits 2000–2025</button>
-    <button class="genre-btn" data-genre="greatest">Die größten Hits aller Zeiten</button>
+    <button class="genre-btn" data-genre="pop">Pop (2015–today)</button>
+    <button class="genre-btn" data-genre="greatest">Greatest Hits</button>
   </div>
 
   <div style="margin-top:20px;">
@@ -124,4 +124,25 @@
   <div id="song-info"></div>
 
   <div style="margin-top:20px;">
-    <button
+    <button id="correct-btn" style="display:none;">RICHTIG</button>
+    <button id="wrong-btn" style="display:none;">FALSCH</button>
+  </div>
+
+  <div id="scoreboard">
+    <p>Spieler 1 Punkte: <span id="score-player1">0</span></p>
+    <p>Spieler 2 Punkte: <span id="score-player2">0</span></p>
+    <p>Runde: <span id="round-count">0</span> / 20</p>
+  </div>
+</section>
+
+<!-- END SCREEN -->
+<section id="end-screen">
+  <h2>Spiel beendet!</h2>
+  <div id="end-score"></div>
+  <button id="restart-btn">Nochmal spielen</button>
+</section>
+
+<script src="app.js"></script>
+
+</body>
+</html>
