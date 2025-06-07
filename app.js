@@ -3,9 +3,21 @@
 const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
 const redirectUri = 'https://dookye.github.io/musik-raten/';
 const playlistId = '39sVxPTg7BKwrf2MfgrtcD';
-let accessToken = null;
 
-// --- Hilfsfunktionen für PKCE ---
+let accessToken = null;
+let tracks = [];
+let currentTrack = null;
+let currentRound = 0;
+const totalRounds = 10;
+let score = 0;
+let guessTimeout = null;
+
+const startButton = document.getElementById('startButton');
+const guessInput = document.getElementById('guessInput');
+const statusDiv = document.getElementById('status');
+const scoreDiv = document.getElementById('score');
+
+// --- PKCE Hilfsfunktionen ---
 
 function generateRandomString(length) {
   let text = '';
@@ -26,7 +38,7 @@ async function sha256(plain) {
     .replace(/=+$/, '');
 }
 
-// --- Spotify Login ---
+// --- Spotify Auth & Token ---
 
 async function redirectToSpotifyAuth() {
   const codeVerifier = generateRandomString(64);
@@ -71,7 +83,7 @@ async function fetchAccessToken(code) {
   localStorage.setItem('access_token', accessToken);
 }
 
-// --- Spotify Gameplay-Logik ---
+// --- Spotify API Funktionen ---
 
 async function getPlaylistTracks() {
   const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
@@ -82,79 +94,179 @@ async function getPlaylistTracks() {
   return data.items.map(item => item.track);
 }
 
-async function playRandomTrack() {
-  const tracks = await getPlaylistTracks();
-  if (tracks.length === 0) {
-    alert('Playlist ist leer.');
-    return;
-  }
-  const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
-
-  // Geräte abfragen
+async function getActiveDevice() {
   const deviceResponse = await fetch('https://api.spotify.com/v1/me/player/devices', {
     headers: { Authorization: `Bearer ${accessToken}` }
   });
   if (!deviceResponse.ok) throw new Error('Failed to fetch devices');
   const deviceData = await deviceResponse.json();
-  const activeDevice = deviceData.devices.find(d => d.is_active);
+  return deviceData.devices.find(d => d.is_active);
+}
 
-  if (!activeDevice) {
-    alert('Bitte starte zuerst in der Spotify-App die Wiedergabe, um ein aktives Gerät zu aktivieren.');
-    return;
-  }
-
-  // Startposition zufällig wählen, max Trackdauer - 5 Sekunden
-  const maxStart = Math.max(0, randomTrack.duration_ms - 5000);
+async function playTrack(track, deviceId) {
+  const maxStart = Math.max(0, track.duration_ms - 5000);
   const startMs = Math.floor(Math.random() * maxStart);
 
-  // Track abspielen
-  await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${activeDevice.id}`, {
+  await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      uris: [randomTrack.uri],
+      uris: [track.uri],
       position_ms: startMs
     })
   });
-
-  // Nach 3 Sekunden pausieren
-  setTimeout(async () => {
-    await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${activeDevice.id}`, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-  }, 3000);
 }
 
-// --- Hauptfunktion für den Start-Button ---
+async function pauseTrack(deviceId) {
+  await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+}
 
-async function onStartButtonClick() {
+// --- Spiel-Logik ---
+
+function updateScoreDisplay() {
+  scoreDiv.textContent = `Punkte: ${score} | Runde: ${currentRound} / ${totalRounds}`;
+}
+
+function updateStatus(message) {
+  statusDiv.textContent = message;
+}
+
+function resetGame() {
+  currentRound = 0;
+  score = 0;
+  tracks = [];
+  currentTrack = null;
+  guessInput.value = '';
+  guessInput.disabled = true;
+  updateScoreDisplay();
+  updateStatus('Drücke TRACK ATTACK zum Starten');
+  clearTimeout(guessTimeout);
+}
+
+async function startGame() {
+  updateStatus('Lade Playlist...');
   try {
-    if (!accessToken) {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.has('code')) {
-        const code = urlParams.get('code');
-        await fetchAccessToken(code);
-        // URL säubern, damit der Code nicht nochmal verwendet wird
-        history.replaceState(null, null, redirectUri);
-      } else {
-        await redirectToSpotifyAuth();
-        return; // nach Redirect nicht weiter ausführen
-      }
+    tracks = await getPlaylistTracks();
+    if (tracks.length === 0) {
+      updateStatus('Playlist ist leer.');
+      return;
     }
-    await playRandomTrack();
+    currentRound = 0;
+    score = 0;
+    updateScoreDisplay();
+    guessInput.disabled = false;
+    await nextRound();
   } catch (error) {
-    alert('Fehler: ' + error.message);
+    updateStatus('Fehler beim Laden der Playlist.');
     console.error(error);
   }
 }
 
-// --- Initialisierung ---
+async function nextRound() {
+  clearTimeout(guessTimeout);
+  guessInput.value = '';
+  if (currentRound >= totalRounds) {
+    updateStatus(`Spiel beendet! Deine Punkte: ${score}`);
+    guessInput.disabled = true;
+    return;
+  }
+  currentRound++;
+  updateScoreDisplay();
 
-document.getElementById('startButton').addEventListener('click', onStartButtonClick);
+  // Zufälligen Track wählen, der noch nicht gespielt wurde
+  if (tracks.length === 0) {
+    updateStatus('Keine Tracks mehr.');
+    guessInput.disabled = true;
+    return;
+  }
+  currentTrack = tracks.splice(Math.floor(Math.random() * tracks.length), 1)[0];
 
-// Versuche Access Token aus localStorage zu laden (wenn schon vorhanden)
-accessToken = localStorage.getItem('access_token');
+  const activeDevice = await getActiveDevice();
+  if (!activeDevice) {
+    updateStatus('Starte in der Spotify-App einen Song, um ein Gerät zu aktivieren.');
+    guessInput.disabled = true;
+    return;
+  }
+
+  try {
+    await playTrack(currentTrack, activeDevice.id);
+    updateStatus(`Runde ${currentRound}: Hör gut zu und rate!`);
+    // Timer für 10 Sekunden, dann nächste Runde
+    guessTimeout = setTimeout(() => {
+      updateStatus(`Zeit vorbei! Richtige Antwort: "${currentTrack.name}" von ${currentTrack.artists.map(a => a.name).join(', ')}`);
+      nextRound();
+    }, 10000);
+  } catch (error) {
+    updateStatus('Fehler beim Abspielen.');
+    console.error(error);
+  }
+}
+
+function checkGuess() {
+  const guess = guessInput.value.trim().toLowerCase();
+  if (!guess || !currentTrack) return;
+
+  const trackName = currentTrack.name.toLowerCase();
+  // Einfacher Check, ob der Trackname den Tipp enthält oder umgekehrt
+  if (trackName.includes(guess) || guess.includes(trackName)) {
+    score++;
+    updateStatus('Richtig! +1 Punkt.');
+    updateScoreDisplay();
+    clearTimeout(guessTimeout);
+    nextRound();
+  } else {
+    updateStatus('Falsch, probier es nochmal!');
+  }
+}
+
+// --- Init & EventListener ---
+
+async function init() {
+  // Prüfen ob access_token in URL (Code Flow)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('code') && !localStorage.getItem('access_token')) {
+    const code = urlParams.get('code');
+    try {
+      await fetchAccessToken(code);
+      // URL ohne Code neu laden
+      window.history.replaceState({}, document.title, redirectUri);
+      accessToken = localStorage.getItem('access_token');
+      updateStatus('Eingeloggt. Drücke TRACK ATTACK, um zu starten.');
+    } catch (error) {
+      updateStatus('Login fehlgeschlagen.');
+      console.error(error);
+    }
+  } else {
+    accessToken = localStorage.getItem('access_token');
+    if (accessToken) {
+      updateStatus('Eingeloggt. Drücke TRACK ATTACK, um zu starten.');
+    } else {
+      updateStatus('Bitte zuerst einloggen.');
+    }
+  }
+}
+
+startButton.addEventListener('click', () => {
+  if (!accessToken) {
+    redirectToSpotifyAuth();
+  } else {
+    startGame();
+  }
+});
+
+guessInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    checkGuess();
+  }
+});
+
+window.addEventListener('load', () => {
+  resetGame();
+  init();
+});
