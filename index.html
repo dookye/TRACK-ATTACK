@@ -1,148 +1,128 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TRACK ATTACK</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #121212;
-    color: white;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-  }
-  #welcome-screen, #mode-selection, #game-screen, #end-screen {
-    display: none;
-    padding: 20px;
-  }
-  h1 {
-    font-size: 3em;
-    margin: 20px 0 10px;
-  }
-  button {
-    font-size: 1.2em;
-    margin: 10px;
-    padding: 10px 20px;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-  }
-  button#login-btn {
-    background: #1db954;
-    color: black;
-    font-weight: bold;
-  }
-  button.mode-btn {
-    background: #2c7;
-    color: black;
-    font-weight: bold;
-  }
-  button.genre-btn {
-    background: #09f;
-  }
-  button#start-btn {
-    background: #e91e63;
-    color: white;
-    font-weight: bold;
-  }
-  button#repeat-btn {
-    background: #f57c00;
-    color: white;
-    font-weight: bold;
-  }
-  button#reveal-btn {
-    background: #2196f3;
-    color: white;
-    font-weight: bold;
-  }
-  button#correct-btn {
-    background: #4caf50;
-    color: white;
-    font-weight: bold;
-  }
-  button#wrong-btn {
-    background: #f44336;
-    color: white;
-    font-weight: bold;
-  }
-  #scoreboard {
-    margin-top: 15px;
-    font-size: 1.2em;
-  }
-  #song-info {
-    margin-top: 20px;
-    font-size: 1.3em;
-  }
-  #player-indicator {
-    margin-top: 10px;
-    font-weight: bold;
-    font-size: 1.2em;
-  }
-  #end-score {
-    font-size: 2em;
-    margin: 30px 0;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TRACK ATTACK</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    .page {
+      display: none;
+      padding: 20px;
+    }
+    #welcome-screen, #mode-selection, #game-screen, #end-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    button {
+      background-color: #1db954;
+      border: none;
+      color: white;
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      border-radius: 30px;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #1ed760;
+    }
+    .btn-red {
+      background-color: #d9534f;
+    }
+    .btn-green {
+      background-color: #5cb85c;
+    }
+    .btn-red:hover {
+      background-color: #c9302c;
+    }
+    .btn-green:hover {
+      background-color: #4cae4c;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 0.2em;
+    }
+    .points {
+      font-size: 1.5rem;
+      margin: 10px 0;
+    }
+    #scoreboard {
+      font-size: 1.3rem;
+      margin-top: 15px;
+      color: #1db954;
+    }
+    #start-btn {
+      font-weight: bold;
+      font-size: 1.4rem;
+    }
+    .hidden {
+      display: none !important;
+    }
+  </style>
 </head>
 <body>
 
-<!-- WELCOME -->
-<section id="welcome-screen">
-  <h1>Ready for <span style="color:#e91e63;">TRACK ATTACK</span>?</h1>
-  <!-- Hier könnte später ein Logo-Bild -->
-  <p>Zum Spielen benötigst du einen Spotify Premium Account.</p>
-  <button id="login-btn">Mit Spotify Premium einloggen</button>
+<!-- Welcome / Login -->
+<section id="welcome-screen" class="page" style="display:block;">
+  <h1>Ready for TRACK ATTACK?</h1>
+  <p><em>(Spotify Premium Account required)</em></p>
+  <button id="login-btn">Spotify Login</button>
 </section>
 
-<!-- MODUS AUSWAHL -->
-<section id="mode-selection">
+<!-- Spielmodus Auswahl -->
+<section id="mode-selection" class="page">
   <h2>Wähle deinen Spielmodus</h2>
-  <button class="mode-btn" data-mode="normalo">Normalo (30 Sek.)</button>
-  <button class="mode-btn" data-mode="pro">Like a Pro (10 Sek.)</button>
-  <button class="mode-btn" data-mode="crack">I'm the Crack (2 Sek.)</button>
+  <button class="mode-btn" data-duration="30">Normalo (30 Sek.)</button>
+  <button class="mode-btn" data-duration="10">Like a Pro (10 Sek.)</button>
+  <button class="mode-btn" data-duration="2">I'm the Crack (2 Sek.)</button>
 </section>
 
-<!-- SPIELBILDSCHIRM -->
-<section id="game-screen">
-  <div id="player-indicator">Spieler 1 ist dran</div>
-  
-  <div>
-    <h3>Wähle ein Genre</h3>
-    <button class="genre-btn" data-genre="punkrock">Punk Rock (90's & 00's)</button>
-    <button class="genre-btn" data-genre="pop">Pop (2015–today)</button>
-    <button class="genre-btn" data-genre="greatest">Greatest Hits</button>
-  </div>
-
-  <div style="margin-top:20px;">
-    <button id="start-btn">TRACK ATTACK STARTEN</button>
-    <button id="repeat-btn" style="display:none;"></button>
-    <button id="reveal-btn" style="display:none;">AUFLÖSEN</button>
-  </div>
-
-  <div id="song-info"></div>
-
-  <div style="margin-top:20px;">
-    <button id="correct-btn" style="display:none;">RICHTIG</button>
-    <button id="wrong-btn" style="display:none;">FALSCH</button>
-  </div>
-
+<!-- Spiel Bildschirm -->
+<section id="game-screen" class="page">
+  <h2>TRACK ATTACK</h2>
   <div id="scoreboard">
-    <p>Spieler 1 Punkte: <span id="score-player1">0</span></p>
-    <p>Spieler 2 Punkte: <span id="score-player2">0</span></p>
-    <p>Runde: <span id="round-count">0</span> / 20</p>
+    Spieler 1 Punkte: <span id="score-player1">0</span> |  
+    Spieler 2 Punkte: <span id="score-player2">0</span><br />
+    Aktiver Spieler: <span id="active-player">1</span><br />
+    Verbleibende Songs pro Spieler: <span id="songs-left">10</span>
+  </div>
+
+  <h3>Wähle ein Genre</h3>
+  <button class="genre-btn" data-playlist="39sVxPTg7BKwrf2MfgrtcD">Punk Rock 90 & 00</button>
+  <button class="genre-btn" data-playlist="6mtYuOxzl58vSGnEDtZ9uB">Pop 2015–today</button>
+  <button class="genre-btn" data-playlist="2si7ChS6Y0hPBt4FsobXpg">Greatest Hits</button>
+
+  <br /><br />
+
+  <button id="start-btn">TRACK ATTACK START</button>
+
+  <div id="song-info" style="margin-top:20px;"></div>
+
+  <div id="answer-buttons" class="hidden" style="margin-top: 20px;">
+    <button id="btn-correct" class="btn-green">RICHTIG</button>
+    <button id="btn-wrong" class="btn-red">FALSCH</button>
   </div>
 </section>
 
-<!-- END SCREEN -->
-<section id="end-screen">
+<!-- End Bildschirm -->
+<section id="end-screen" class="page">
   <h2>Spiel beendet!</h2>
-  <div id="end-score"></div>
-  <button id="restart-btn">Nochmal spielen</button>
+  <div id="final-score"></div>
+  <button id="play-again-btn">Nochmal Spielen</button>
 </section>
 
 <script src="app.js"></script>
-
 </body>
 </html>
