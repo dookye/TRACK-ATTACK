@@ -100,7 +100,8 @@ async function redirectToSpotifyAuth() {
     const args = new URLSearchParams({
         response_type: 'code',
         client_id: clientId,
-        scope: 'user-read-playback-state user-modify-playback-state streaming user-read-email user-read-private', // Erforderliche Scopes für Web Playback SDK
+        // Erforderliche Scopes für Web Playback SDK und Benutzerinfos
+        scope: 'user-read-playback-state user-modify-playback-state streaming user-read-email user-read-private',
         redirect_uri: redirectUri,
         code_challenge_method: 'S256',
         code_challenge: codeChallenge
@@ -132,6 +133,7 @@ async function fetchAccessToken(code) {
         const errorData = await response.json();
         console.error('Fehler beim Abrufen des Access Tokens:', errorData);
         alert('Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+        showScreen(welcomeScreen); // Zurück zum Login-Bildschirm
         return;
     }
 
@@ -144,10 +146,13 @@ async function fetchAccessToken(code) {
     initSpotifyPlayer(); // Spotify Player nach erfolgreichem Login initialisieren
 }
 
-// Funktion zum Auffrischen des Tokens (optional, aber empfohlen für längere Sessions)
+// Funktion zum Auffrischen des Tokens
 async function refreshAccessToken() {
     const refreshToken = localStorage.getItem('refresh_token');
-    if (!refreshToken) return false;
+    if (!refreshToken) {
+        console.warn('Kein Refresh Token verfügbar.');
+        return false;
+    }
 
     const body = new URLSearchParams({
         grant_type: 'refresh_token',
@@ -193,14 +198,20 @@ async function initSpotifyPlayer() {
         return;
     }
 
-    // Prüfen, ob der Token noch gültig ist, ggf. auffrischen
+    // Prüfen, ob der Token bald abläuft, ggf. auffrischen
     const expiresIn = localStorage.getItem('expires_in');
     if (expiresIn && Date.now() >= parseInt(expiresIn) - (60 * 1000)) { // 1 Minute vor Ablauf auffrischen
+        console.log('Access Token läuft bald ab, versuche Refresh.');
         const refreshed = await refreshAccessToken();
         if (!refreshed) {
             console.error("Token-Refresh fehlgeschlagen, kann Player nicht initialisieren.");
             return;
         }
+    }
+
+    // Wenn der Player bereits existiert, trennen und neu verbinden
+    if (spotifyPlayer) {
+        spotifyPlayer.disconnect();
     }
 
     spotifyPlayer = new Spotify.Player({
@@ -212,8 +223,7 @@ async function initSpotifyPlayer() {
     // Ready
     spotifyPlayer.addListener('ready', ({ device_id }) => {
         console.log('Ready with Device ID', device_id);
-        // Optional: Automatisch das Gerät aktivieren, wenn der Player bereit ist
-        transferPlaybackToDevice(device_id);
+        transferPlaybackToDevice(device_id); // Wiedergabe auf dieses Gerät übertragen
     });
 
     // Not Ready
@@ -225,11 +235,11 @@ async function initSpotifyPlayer() {
     spotifyPlayer.addListener('initialization_error', ({ message }) => { console.error('Initialization Error:', message); });
     spotifyPlayer.addListener('authentication_error', async ({ message }) => {
         console.error('Authentication Error:', message);
-        // Bei Authentifizierungsfehler versuchen, Token aufzufrischen oder neu anmelden
+        // Bei Authentifizierungsfehler versuchen, Token aufzufrischen
         const refreshed = await refreshAccessToken();
         if (refreshed) {
             console.log("Token erneuert, Player neu initialisieren...");
-            initSpotifyPlayer();
+            initSpotifyPlayer(); // Erneute Initialisierung nach erfolgreichem Refresh
         } else {
             alert('Ihre Spotify-Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
             showScreen(welcomeScreen);
@@ -246,7 +256,7 @@ async function transferPlaybackToDevice(deviceId) {
     if (!accessToken) return;
 
     try {
-        await fetch('https://api.spotify.com/v1/me/player', {
+        const response = await fetch('https://api.spotify.com/v1/me/player', {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -257,9 +267,18 @@ async function transferPlaybackToDevice(deviceId) {
                 play: false // Nicht automatisch abspielen, nur Gerät aktivieren
             })
         });
-        console.log('Playback transferred to new device:', deviceId);
+        if (response.ok) {
+            console.log('Playback transferred to new device:', deviceId);
+        } else {
+            const errorData = await response.json();
+            console.error('Fehler beim Übertragen der Wiedergabe auf Gerät:', errorData);
+            // Zusätzlicher Hinweis für den Benutzer, wenn die Übertragung fehlschlägt
+            alert('Achtung: Der Spotify Player konnte nicht automatisch aktiviert werden. Bitte stellen Sie sicher, dass Ihr Spotify Premium-Konto aktiv ist und Spotify (App oder Web) im Hintergrund läuft, damit das Web Playback SDK funktioniert.');
+        }
+
     } catch (error) {
-        console.error('Fehler beim Übertragen der Wiedergabe auf Gerät:', error);
+        console.error('Fehler beim Übertragen der Wiedergabe auf Gerät (Catch Block):', error);
+        alert('Ein unerwarteter Fehler ist beim Aktivieren des Spotify Players aufgetreten. Bitte versuchen Sie es erneut.');
     }
 }
 
@@ -297,23 +316,21 @@ async function fetchPlaylistTracks(playlistId) {
         return [];
     }
     try {
-        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?market=DE`, {
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?market=DE&limit=100`, { // Limit auf 100 Tracks setzen, falls Playlists sehr groß sind
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         if (!response.ok) {
             if (response.status === 401) {
-                 // Token expired, try to refresh
-                 const refreshed = await refreshAccessToken();
-                 if (refreshed) {
-                     return fetchPlaylistTracks(playlistId); // Retry after refresh
-                 }
+                console.warn('Token abgelaufen oder ungültig beim Abrufen von Tracks. Versuche Refresh.');
+                const refreshed = await refreshAccessToken();
+                if (refreshed) {
+                    return fetchPlaylistTracks(playlistId); // Retry after refresh
+                }
             }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        // Filtern, um nur Tracks mit Vorschau-URL (preview_url) zu erhalten, falls nötig
-        // Das Web Playback SDK kann jedoch auch vollständige Tracks spielen, wenn Premium-User angemeldet ist.
-        // Wir verlassen uns hier auf das SDK für die Wiedergabe des vollen Tracks.
+        // Filtern, um nur Tracks mit URI zu erhalten, die für die Wiedergabe über das SDK erforderlich sind
         return data.items.filter(item => item.track && item.track.uri).map(item => item.track);
     } catch (error) {
         console.error('Fehler beim Abrufen der Playlist-Tracks:', error);
@@ -324,6 +341,13 @@ async function fetchPlaylistTracks(playlistId) {
 async function playRandomSong() {
     if (!spotifyPlayer || !accessToken) {
         alert('Spotify Player ist nicht bereit oder Sie sind nicht angemeldet.');
+        return;
+    }
+
+    const deviceId = spotifyPlayer._options.id;
+    if (!deviceId) {
+        alert('Spotify Player-Gerät nicht gefunden. Stellen Sie sicher, dass Spotify geöffnet ist und Ihr Premium-Konto aktiv ist.');
+        console.error('Spotify Player-Gerät ID nicht verfügbar.');
         return;
     }
 
@@ -352,17 +376,16 @@ async function playRandomSong() {
         return;
     }
 
-    const deviceId = spotifyPlayer._options.id;
-    if (!deviceId) {
-        alert('Spotify Player-Gerät nicht gefunden. Stellen Sie sicher, dass Spotify geöffnet ist.');
-        console.error('Spotify Player-Gerät ID nicht verfügbar.');
-        return;
-    }
-
     let startMs = 0;
     if (currentTrack.duration_ms) {
-        // Start an zufälliger Stelle, aber mindestens 5 Sekunden vor Ende
-        startMs = Math.floor(Math.random() * (currentTrack.duration_ms - Math.min(5000, currentTrack.duration_ms - 1000)));
+        // Start an zufälliger Stelle, aber mindestens so lang wie die Spieldauer vor dem Ende
+        const minDurationRemaining = currentPlaybackDuration + 2000; // Etwas Puffer
+        if (currentTrack.duration_ms > minDurationRemaining) {
+            startMs = Math.floor(Math.random() * (currentTrack.duration_ms - minDurationRemaining));
+        } else {
+            // Wenn der Song kürzer als die gewünschte Abspieldauer ist, von Anfang an spielen
+            startMs = 0;
+        }
         if (startMs < 0) startMs = 0; // Sicherstellen, dass startMs nicht negativ ist
     }
 
@@ -401,7 +424,12 @@ async function listenAgain() {
     // Neue zufällige Startposition
     let startMs = 0;
     if (currentTrack.duration_ms) {
-        startMs = Math.floor(Math.random() * (currentTrack.duration_ms - Math.min(5000, currentTrack.duration_ms - 1000)));
+        const minDurationRemaining = currentPlaybackDuration + 2000;
+        if (currentTrack.duration_ms > minDurationRemaining) {
+            startMs = Math.floor(Math.random() * (currentTrack.duration_ms - minDurationRemaining));
+        } else {
+            startMs = 0;
+        }
         if (startMs < 0) startMs = 0;
     }
 
@@ -455,6 +483,7 @@ function finishTurn() {
         showEndScreen();
     } else {
         // Nächster Spieler wählt Genre
+        updatePlayerInfo(); // Spielerinfo aktualisieren
         showScreen(genreScreen);
     }
 }
@@ -478,6 +507,10 @@ function resetGameButtons() {
 }
 
 function showEndScreen() {
+    // Spotify Player pausieren, falls noch aktiv
+    if (spotifyPlayer) {
+        spotifyPlayer.pause();
+    }
     finalScoreTeam1.textContent = scoreTeam1;
     finalScoreTeam2.textContent = scoreTeam2;
     showScreen(endScreen);
@@ -488,6 +521,7 @@ function restartGame() {
     scoreTeam2 = 0;
     currentPlayer = 1;
     songsPlayedInRound = 0;
+    gameStarted = false; // Spielstatus zurücksetzen
     resetGameButtons();
     showScreen(gameModeScreen);
 }
@@ -509,54 +543,4 @@ modeProButton.addEventListener('click', () => {
     updatePlayerInfo();
 });
 
-modeGeilButton.addEventListener('click', () => {
-    currentPlaybackDuration = 2000;
-    showScreen(genreScreen);
-    gameStarted = true;
-    updatePlayerInfo();
-});
-
-genrePunkRockButton.addEventListener('click', () => {
-    currentGenrePlaylists = playlists['punk-rock'];
-    currentGenreDisplay.textContent = 'Genre: Punk Rock (90\'s & 00\')';
-    showScreen(gameScreen);
-});
-
-genrePopHitsButton.addEventListener('click', () => {
-    currentGenrePlaylists = playlists['pop-hits'];
-    currentGenreDisplay.textContent = 'Genre: Pop Hits 2000-2025';
-    showScreen(gameScreen);
-});
-
-genreAllTimeHitsButton.addEventListener('click', () => {
-    currentGenrePlaylists = playlists['all-time-hits'];
-    currentGenreDisplay.textContent = 'Genre: Die größten Hits aller Zeiten';
-    showScreen(gameScreen);
-});
-
-
-trackAttackButton.addEventListener('click', async () => {
-    trackAttackButton.disabled = true;
-    listenAgainButton.classList.remove('hidden');
-    listenAgainButton.disabled = false;
-    revealButton.classList.remove('hidden');
-    revealButton.disabled = false; // "AUFLÖSEN" nach dem ersten Abspielen aktivieren
-    await playRandomSong();
-    trackAttackButton.textContent = 'NOCHMAL HÖREN'; // Ändert sich nach dem ersten Klick
-});
-
-listenAgainButton.addEventListener('click', listenAgain);
-revealButton.addEventListener('click', revealSongInfo);
-
-correctButton.addEventListener('click', () => {
-    if (currentPlayer === 1) {
-        scoreTeam1 += pointsPerGuess;
-    } else {
-        scoreTeam2 += pointsPerGuess;
-    }
-    updateScoreDisplays();
-    finishTurn();
-});
-
-wrongButton.addEventListener('click', () => {
-    // Falsch geraten gibt 0 Punkte, 
+modeG
