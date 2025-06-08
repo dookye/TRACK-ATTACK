@@ -543,4 +543,103 @@ modeProButton.addEventListener('click', () => {
     updatePlayerInfo();
 });
 
-modeG
+modeGeilButton.addEventListener('click', () => {
+    currentPlaybackDuration = 2000;
+    showScreen(genreScreen);
+    gameStarted = true;
+    updatePlayerInfo();
+});
+
+genrePunkRockButton.addEventListener('click', () => {
+    currentGenrePlaylists = playlists['punk-rock'];
+    currentGenreDisplay.textContent = 'Genre: Punk Rock (90\'s & 00\')';
+    showScreen(gameScreen);
+});
+
+genrePopHitsButton.addEventListener('click', () => {
+    currentGenrePlaylists = playlists['pop-hits'];
+    currentGenreDisplay.textContent = 'Genre: Pop Hits 2000-2025';
+    showScreen(gameScreen);
+});
+
+genreAllTimeHitsButton.addEventListener('click', () => {
+    currentGenrePlaylists = playlists['all-time-hits'];
+    currentGenreDisplay.textContent = 'Genre: Die größten Hits aller Zeiten';
+    showScreen(gameScreen);
+});
+
+
+trackAttackButton.addEventListener('click', async () => {
+    trackAttackButton.disabled = true;
+    listenAgainButton.classList.remove('hidden');
+    listenAgainButton.disabled = false;
+    revealButton.classList.remove('hidden');
+    revealButton.disabled = false;
+    await playRandomSong();
+});
+
+listenAgainButton.addEventListener('click', listenAgain);
+revealButton.addEventListener('click', revealSongInfo);
+
+correctButton.addEventListener('click', () => {
+    if (currentPlayer === 1) {
+        scoreTeam1 += pointsPerGuess;
+    } else {
+        scoreTeam2 += pointsPerGuess;
+    }
+    updateScoreDisplays();
+    finishTurn();
+});
+
+wrongButton.addEventListener('click', () => {
+    // Falsch geraten gibt 0 Punkte, aber der Zug endet
+    finishTurn();
+});
+
+playAgainButton.addEventListener('click', restartGame);
+// --- Initialisierung beim Laden der Seite ---
+document.addEventListener('DOMContentLoaded', async () => {
+    // Spotify SDK Script dynamisch laden
+    const spotifySdkScript = document.createElement('script');
+    spotifySdkScript.src = 'https://sdk.scdn.co/spotify-player.js';
+    // Fügen Sie das Attribut 'async' hinzu, damit das Laden nicht blockiert
+    spotifySdkScript.async = true;
+    // Fügen Sie das Attribut 'defer' hinzu, um die Ausführung bis nach dem HTML-Parsing zu verzögern
+    spotifySdkScript.defer = true;
+    document.head.appendChild(spotifySdkScript);
+
+    // Versuche, Access Token aus dem localStorage zu laden
+    accessToken = localStorage.getItem('access_token');
+    const expiresIn = localStorage.getItem('expires_in');
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+
+    if (code) {
+        // Wenn ein Autorisierungscode in der URL ist (Rückkehr von Spotify Login)
+        console.log('Autorisierungscode in URL gefunden. Fordere Access Token an...');
+        await fetchAccessToken(code);
+        // URL von den Parametern bereinigen, um erneute Code-Verwendung zu vermeiden
+        history.replaceState(null, null, redirectUri);
+        showScreen(gameModeScreen);
+    } else if (accessToken && expiresIn && Date.now() < parseInt(expiresIn) - (5 * 60 * 1000)) { // Token ist noch mind. 5 Minuten gültig
+        console.log('Gültiger Access Token aus localStorage geladen. Initialisiere Player und zeige Spielmodus.');
+        initSpotifyPlayer();
+        showScreen(gameModeScreen);
+    } else if (accessToken && expiresIn && Date.now() >= parseInt(expiresIn) - (5 * 60 * 1000)) { // Token ist bald abgelaufen, versuchen zu aktualisieren
+        console.log('Access Token läuft bald ab, versuche Refresh.');
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+            console.log('Token erfolgreich aufgefrischt. Initialisiere Player und zeige Spielmodus.');
+            initSpotifyPlayer();
+            showScreen(gameModeScreen);
+        } else {
+            console.log('Token Refresh fehlgeschlagen, zurück zum Login.');
+            showScreen(welcomeScreen);
+        }
+    } else {
+        // Kein Token oder abgelaufen, zeige Login-Bildschirm
+        console.log('Kein gültiger Access Token. Zeige Begrüßungsbildschirm.');
+        showScreen(welcomeScreen);
+    }
+});
+
