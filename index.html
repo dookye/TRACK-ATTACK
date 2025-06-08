@@ -3,70 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK</title>
+    <title>Spotify Player Test</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <main id="app">
+        <h1>Spotify Player Test</h1>
+
         <section id="welcome-screen" class="screen active">
-            <h1>Bist du bereit für <span class="highlight">TRACK ATTACK</span>?</h1>
-            <p>...dann melde dich jetzt mit deinem Premium-Spotify Account an.</p>
+            <p>Zum Testen der Spotify Player-Funktionalität anmelden.</p>
             <button id="login-button" class="spotify-btn">Mit Spotify anmelden</button>
         </section>
 
-        <section id="game-mode-screen" class="screen">
-            <h2>Spielmodus wählen</h2>
-            <div class="button-group">
-                <button id="mode-normalo">Normalo (30 Sekunden)</button>
-                <button id="mode-pro">Like a Pro (10 Sekunden)</button>
-                <button id="mode-geil">Bin ich geil oder was! (2 Sekunden)</button>
-            </div>
-        </section>
-
-        <section id="genre-screen" class="screen">
-            <header>
-                <div class="team-score">Team 1: <span id="score-team1">0</span></div>
-                <div class="team-score">Team 2: <span id="score-team2">0</span></div>
-            </header>
-            <h2>Wähle dein Genre</h2>
-            <div class="button-group">
-                <button id="genre-punk-rock">Punk Rock (90's & 00')</button>
-                <button id="genre-pop-hits">Pop Hits 2000-2025</button>
-                <button id="genre-all-time-hits">Die größten Hits aller Zeiten</button>
-            </div>
-            <p id="current-player-info"></p>
-        </section>
-
-        <section id="game-screen" class="screen">
-            <header>
-                <div class="team-score">Team 1: <span id="score-team1-game">0</span></div>
-                <div class="team-score">Team 2: <span id="score-team2-game">0</span></div>
-            </header>
-            <h2 id="current-genre-display"></h2>
-            <div class="button-group">
-                <button id="track-attack-button">TRACK ATTACK</button>
-                <button id="listen-again-button" class="hidden" disabled>NOCHMAL HÖREN (4)</button>
-            </div>
-            <div class="button-group">
-                <button id="reveal-button" class="hidden" disabled>AUFLÖSEN</button>
-            </div>
-            <div class="button-group">
-                <button id="correct-button" class="correct hidden" disabled>RICHTIG</button>
-                <button id="wrong-button" class="wrong hidden" disabled>FALSCH</button>
-            </div>
+        <section id="player-test-screen" class="screen">
+            <p>Klicke auf den Button, um einen zufälligen Punk Rock Song abzuspielen.</p>
+            <button id="play-song-button">ZUFÄLLIGEN SONG ABspielen</button>
             <div id="song-info" class="hidden">
                 <p>Interpret: <span id="song-artist"></span></p>
                 <p>Titel: <span id="song-title"></span></p>
             </div>
-        </section>
-
-        <section id="end-screen" class="screen">
-            <h1>Spiel beendet!</h1>
-            <h2>Endstand:</h2>
-            <p>Team 1: <span id="final-score-team1">0</span> Punkte</p>
-            <p>Team 2: <span id="final-score-team2">0</span> Punkte</p>
-            <button id="play-again-button">NOCHMAL SPIELEN</button>
         </section>
     </main>
 
