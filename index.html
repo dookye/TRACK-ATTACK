@@ -2,76 +2,66 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TRACK ATTACK</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://sdk.scdn.co/spotify-player.js"></script>
+  <script defer src="https://sdk.scdn.co/spotify-player.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
-  <div id="app">
-
-    <!-- 1. Begrüßungsbildschirm -->
+  <main id="app">
+    <!-- Begrüßungsbildschirm -->
     <section id="welcome-screen" class="screen active">
-      <h1>TRACK ATTACK</h1>
-      <p>Bist du bereit für TRACK ATTACK?</p>
-      <p>...dann melde dich jetzt mit deinem Premium-Spotify Account an.</p>
-      <button id="login-button" class="btn spotify-btn">MIT SPOTIFY ANMELDEN</button>
+      <h1>Bist du bereit für <span class="highlight">TRACK ATTACK</span>?</h1>
+      <p>...dann melde dich jetzt mit deinem Premium-Spotify Account an</p>
+      <button id="login-button" class="btn spotify-green">Login mit Spotify</button>
     </section>
 
-    <!-- 2. Spielmodus-Auswahl -->
-    <section id="mode-screen" class="screen">
+    <!-- Spielmodus-Auswahl -->
+    <section id="mode-screen" class="screen hidden">
       <h2>Spielmodus wählen</h2>
       <div class="mode-buttons">
-        <button class="btn mode-btn" data-time="30000">Normalo (30 Sek.)</button>
-        <button class="btn mode-btn" data-time="10000">like a Pro (10 Sek.)</button>
-        <button class="btn mode-btn" data-time="2000">bin ich geil oder was! (2 Sek.)</button>
+        <button class="mode-btn" data-duration="30000">Normalo</button>
+        <button class="mode-btn" data-duration="10000">Like a Pro</button>
+        <button class="mode-btn" data-duration="2000">Bin ich geil oder was!</button>
       </div>
     </section>
 
-    <!-- 3./4. Genre-Auswahl mit Spielstand -->
-    <section id="genre-screen" class="screen">
-      <header>
-        <div class="scoreboard">
-          <div>Team 1: <span id="score-team1">0</span></div>
-          <div>Team 2: <span id="score-team2">0</span></div>
-        </div>
-        <h2>Wähle dein Genre</h2>
-        <div id="current-player">Spieler: <span id="player-turn">1</span></div>
-      </header>
-
+    <!-- Genre-Auswahl -->
+    <section id="genre-screen" class="screen hidden">
+      <h2>Wähle dein Genre</h2>
       <div class="genre-buttons">
-        <button class="btn genre-btn" data-playlists="39sVxPTg7BKwrf2MfgrtcD">Punk Rock (90's & 00')</button>
-        <button class="btn genre-btn" data-playlists="6mtYuOxzl58vSGnEDtZ9uB">Pop Hits 2000-2025</button>
-        <button class="btn genre-btn" data-playlists="2si7ChS6Y0hPBt4FsobXpg">Die größten Hits aller Zeiten</button>
+        <button class="genre-btn" data-genre="punk">Punk Rock (90's & 00')</button>
+        <button class="genre-btn" data-genre="pop">Pop Hits 2000-2025</button>
+        <button class="genre-btn" data-genre="hits">Die größten Hits aller Zeiten</button>
       </div>
-
-      <div class="game-controls" style="display:none;">
-        <button id="track-attack-btn" class="btn primary-btn">TRACK ATTACK</button>
-        <button id="again-btn" class="btn" disabled>NOCHMAL HÖREN (4)</button>
-        <button id="reveal-btn" class="btn" disabled>AUFLÖSEN</button>
-        <button id="right-btn" class="btn green" disabled>RICHTIG</button>
-        <button id="wrong-btn" class="btn red" disabled>FALSCH</button>
-      </div>
-
-      <div id="song-info" class="song-info"></div>
     </section>
 
-    <!-- 7. Endbildschirm -->
-    <section id="end-screen" class="screen">
-      <h2>Spiel vorbei!</h2>
-      <p>Endpunktestand:</p>
-      <p>Team 1: <span id="final-score-team1">0</span></p>
-      <p>Team 2: <span id="final-score-team2">0</span></p>
-      <button id="restart-btn" class="btn primary-btn">NOCHMAL SPIELEN</button>
+    <!-- Spielbildschirm -->
+    <section id="game-screen" class="screen hidden">
+      <div class="score-board">
+        <span>Team 1: <span id="score1">0</span></span>
+        <span>Team 2: <span id="score2">0</span></span>
+      </div>
+      <div class="controls">
+        <button id="play-button" class="btn">TRACK ATTACK</button>
+        <button id="replay-button" class="btn hidden">NOCHMAL HÖREN (4)</button>
+        <div class="answer-buttons hidden">
+          <button id="correct-button" class="btn green">RICHTIG</button>
+          <button id="wrong-button" class="btn red">FALSCH</button>
+        </div>
+        <button id="reveal-button" class="btn hidden">AUFLÖSEN</button>
+      </div>
+      <div id="solution" class="solution hidden"></div>
     </section>
 
-  </div>
-
-  <div id="login-section" style="display: none;">
-  <button onclick="login()">Mit Spotify einloggen</button>
-</div>
-
-
-  <script src="app.js"></script>
+    <!-- Endbildschirm -->
+    <section id="end-screen" class="screen hidden">
+      <h2>Spiel beendet!</h2>
+      <p>Team 1: <span id="final-score1"></span> Punkte</p>
+      <p>Team 2: <span id="final-score2"></span> Punkte</p>
+      <button id="restart-button" class="btn">NOCHMAL SPIELEN</button>
+    </section>
+  </main>
 </body>
 </html>
