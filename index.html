@@ -2,66 +2,32 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TRACK ATTACK</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TRACK ATTACK - Musik-Rate-Spiel</title>
   <link rel="stylesheet" href="style.css" />
-  <script defer src="https://sdk.scdn.co/spotify-player.js"></script>
-  <script defer src="app.js"></script>
 </head>
 <body>
-  <main id="app">
-    <!-- Begrüßungsbildschirm -->
-    <section id="welcome-screen" class="screen active">
-      <h1>Bist du bereit für <span class="highlight">TRACK ATTACK</span>?</h1>
-      <p>...dann melde dich jetzt mit deinem Premium-Spotify Account an</p>
-      <button id="login-button" class="btn spotify-green">Login mit Spotify</button>
+  <header>
+    <h1>TRACK ATTACK</h1>
+    <p>Musik-Rate-Spiel mit Spotify-Integration</p>
+  </header>
+
+  <main>
+    <section id="login-section">
+      <button id="login-btn">Mit Spotify anmelden</button>
     </section>
 
-    <!-- Spielmodus-Auswahl -->
-    <section id="mode-screen" class="screen hidden">
-      <h2>Spielmodus wählen</h2>
-      <div class="mode-buttons">
-        <button class="mode-btn" data-duration="30000">Normalo</button>
-        <button class="mode-btn" data-duration="10000">Like a Pro</button>
-        <button class="mode-btn" data-duration="2000">Bin ich geil oder was!</button>
+    <section id="game-section" style="display:none;">
+      <div id="player"></div>
+      <div id="question-container">
+        <p id="question-text"></p>
+        <div id="answers"></div>
       </div>
-    </section>
-
-    <!-- Genre-Auswahl -->
-    <section id="genre-screen" class="screen hidden">
-      <h2>Wähle dein Genre</h2>
-      <div class="genre-buttons">
-        <button class="genre-btn" data-genre="punk">Punk Rock (90's & 00')</button>
-        <button class="genre-btn" data-genre="pop">Pop Hits 2000-2025</button>
-        <button class="genre-btn" data-genre="hits">Die größten Hits aller Zeiten</button>
-      </div>
-    </section>
-
-    <!-- Spielbildschirm -->
-    <section id="game-screen" class="screen hidden">
-      <div class="score-board">
-        <span>Team 1: <span id="score1">0</span></span>
-        <span>Team 2: <span id="score2">0</span></span>
-      </div>
-      <div class="controls">
-        <button id="play-button" class="btn">TRACK ATTACK</button>
-        <button id="replay-button" class="btn hidden">NOCHMAL HÖREN (4)</button>
-        <div class="answer-buttons hidden">
-          <button id="correct-button" class="btn green">RICHTIG</button>
-          <button id="wrong-button" class="btn red">FALSCH</button>
-        </div>
-        <button id="reveal-button" class="btn hidden">AUFLÖSEN</button>
-      </div>
-      <div id="solution" class="solution hidden"></div>
-    </section>
-
-    <!-- Endbildschirm -->
-    <section id="end-screen" class="screen hidden">
-      <h2>Spiel beendet!</h2>
-      <p>Team 1: <span id="final-score1"></span> Punkte</p>
-      <p>Team 2: <span id="final-score2"></span> Punkte</p>
-      <button id="restart-button" class="btn">NOCHMAL SPIELEN</button>
+      <button id="next-btn" style="display:none;">Nächster Track</button>
+      <div id="score">Punkte: 0</div>
     </section>
   </main>
+
+  <script src="app.js"></script>
 </body>
 </html>
