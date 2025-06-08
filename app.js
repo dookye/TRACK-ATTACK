@@ -69,8 +69,10 @@ async function redirectToSpotifyAuth() {
         code_challenge: codeChallenge
     });
 
-    // Korrekter Spotify Authorize URL
-    window.location = 'http://accounts.spotify.com/authorize?' + args.toString();
+    // *******************************************************************
+    // * KORREKTE SPOTIFY AUTHORIZE URL - DIESE MUSS VERWENDET WERDEN! *
+    // *******************************************************************
+    window.location = 'https://accounts.spotify.com/authorize?' + args.toString();
 }
 
 /**
@@ -89,8 +91,10 @@ async function fetchAccessToken(code) {
     });
 
     try {
-        // Korrekter Spotify Token URL
-        const response = await fetch('http://accounts.spotify.com/api/token', {
+        // ***************************************************************
+        // * KORREKTE SPOTIFY TOKEN URL - DIESE MUSS VERWENDET WERDEN! *
+        // ***************************************************************
+        const response = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -108,7 +112,6 @@ async function fetchAccessToken(code) {
 
         const data = await response.json();
         accessToken = data.access_token;
-        // Speichern von Access Token, Refresh Token und Ablaufzeit
         localStorage.setItem('access_token', accessToken);
         localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('expires_in', Date.now() + data.expires_in * 1000);
@@ -138,8 +141,10 @@ async function refreshAccessToken() {
     });
 
     try {
-        // Korrekter Spotify Token URL
-        const response = await fetch('http://accounts.spotify.com/api/token', {
+        // ***************************************************************
+        // * KORREKTE SPOTIFY TOKEN URL - DIESE MUSS VERWENDET WERDEN! *
+        // ***************************************************************
+        const response = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -160,7 +165,7 @@ async function refreshAccessToken() {
         const data = await response.json();
         accessToken = data.access_token;
         localStorage.setItem('access_token', accessToken);
-        if (data.refresh_token) { // Spotify sendet nicht immer einen neuen Refresh Token
+        if (data.refresh_token) {
             localStorage.setItem('refresh_token', data.refresh_token);
         }
         localStorage.setItem('expires_in', Date.now() + data.expires_in * 1000);
@@ -265,8 +270,10 @@ async function transferPlaybackToDevice(deviceId) {
     if (!accessToken) return;
 
     try {
-        // Korrekter Spotify API Endpunkt für die Geräteübertragung
-        const response = await fetch('https://accounts.spotify.com/api/token8', {
+        // *****************************************************************
+        // * KORREKTER SPOTIFY API ENDPUNKT FÜR GERÄTEÜBERTRAGUNG *
+        // *****************************************************************
+        const response = await fetch(`https://api.spotify.com/v1/me/player`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -318,8 +325,10 @@ async function fetchPlaylistTracks(pId) {
         return [];
     }
     try {
-        // Korrekter Spotify API Endpunkt für Playlists
-        const response = await fetch(`https://accounts.spotify.com/api/token9${pId}/tracks?market=DE&limit=50`, {
+        // ***************************************************************
+        // * KORREKTER SPOTIFY API ENDPUNKT FÜR PLAYLIST-TRACKS *
+        // ***************************************************************
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${pId}/tracks?market=DE&limit=50`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         if (!response.ok) {
