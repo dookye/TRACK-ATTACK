@@ -1,137 +1,141 @@
-/* Reset & Basics */
-* {
-    box-sizing: border-box;
-}
-
-body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    font-family: 'Montserrat', sans-serif;
-    background: #121212; /* Dunkler Hintergrund wie Spotify */
-    color: #eee; /* Helle Textfarbe */
+/* Globale Stile und Basis-Typografie */
+body {
+    font-family: 'Inter', sans-serif; /* Moderner Font */
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    overflow: hidden;
-}
-
-main#app {
-    max-width: 600px;
-    width: 90vw;
+    margin: 0;
     padding: 20px;
-    background: #181818;
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(29, 185, 84, 0.6);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 50vh;
-}
-
-/* Bildschirmeinstellungen */
-.screen {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    width: 100%;
-    flex-grow: 1;
-    justify-content: center;
-}
-
-.screen.active {
-    display: flex;
-}
-
-h1 {
-    margin: 0.2em 0 1em;
-    font-weight: 700;
-    color: #fff;
-    font-size: 2.5em; /* Etwas größer für den Titel */
-}
-
-p {
-    font-weight: 400;
-    margin-bottom: 2em;
-    line-height: 1.5;
-}
-
-/* Allgemeine Button-Stile */
-button {
-    background: #1DB954;
-    border: none;
-    border-radius: 30px;
+    box-sizing: border-box;
     color: white;
-    padding: 12px 25px;
-    font-weight: 700;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-    user-select: none;
-    flex-grow: 1;
-    max-width: 250px;
-    margin-bottom: 20px; /* Abstand nach unten */
+    text-align: center;
+    /* Hintergrund mit einem sanften Gradienten */
+    background: linear-gradient(135deg, #1DB954, #1ed760); /* Spotify Grün mit Verlauf */
+    overflow: hidden; /* Verhindert Scrollbalken bei kleinen Animationen */
 }
 
-button:hover:not(:disabled) {
-    background: #17a44d;
-    transform: translateY(-2px);
+/* Container-Stile */
+.container {
+    background-color: rgba(25, 20, 20, 0.9); /* Dunkler, leicht transparenter Hintergrund */
+    padding: 50px 70px;
+    border-radius: 20px; /* Stärkere Abrundung */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Tieferer Schatten */
+    max-width: 650px;
+    width: 100%;
+    backdrop-filter: blur(5px); /* Leichter Blur-Effekt für den Hintergrund */
+    -webkit-backdrop-filter: blur(5px); /* Safari Kompatibilität */
+    animation: fadeIn 1s ease-out; /* Fade-In Animation beim Laden */
+}
+
+/* Titel des Spiels */
+h1 {
+    font-size: 3.5em; /* Größerer Titel */
+    margin-bottom: 25px;
+    color: #1DB954; /* Spotify Grün */
+    text-transform: uppercase;
+    letter-spacing: 3px; /* Mehr Abstand zwischen den Buchstaben */
+    font-weight: 900; /* Extra Fett */
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); /* Textschatten */
+}
+
+/* Absatztexte */
+p {
+    font-size: 1.3em;
+    margin-bottom: 40px; /* Mehr Abstand zum Button */
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+/* Button-Stile */
+button {
+    background-color: #1DB954;
+    color: white;
+    border: none;
+    padding: 18px 40px; /* Größerer Button */
+    font-size: 1.4em; /* Größere Schrift */
+    border-radius: 50px; /* Pillenform */
+    cursor: pointer;
+    transition: all 0.3s ease; /* Sanftere Übergänge für alle Eigenschaften */
+    outline: none;
+    font-weight: 700; /* Fetterer Text */
+    letter-spacing: 1px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* Leichter Schatten */
+}
+
+button:hover {
+    background-color: #1ed760; /* Helleres Grün beim Hover */
+    transform: translateY(-5px) scale(1.02); /* Leichter Sprung und Skalierung */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Stärkerer Schatten beim Hover */
+}
+
+button:active {
+    transform: translateY(0) scale(0.98); /* Kleiner Druck-Effekt */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Weniger Schatten beim Active */
 }
 
 button:disabled {
-    opacity: 0.4;
-    cursor: default;
+    background-color: #555;
+    cursor: not-allowed;
+    box-shadow: none;
     transform: none;
 }
 
-/* Spotify Style Button (speziell für Login) */
-.spotify-btn {
-    background: #1DB954;
-    box-shadow: 0 4px 14px 0 rgba(29, 185, 84, 0.4);
-    font-size: 1.2rem;
-    padding: 15px 40px;
-    border-radius: 50px;
-    min-width: 250px;
+/* Statusnachrichten */
+.status-message {
+    margin-top: 30px;
+    font-size: 1em;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
 }
 
-/* Versteckte Elemente */
-.hidden {
-    display: none !important;
-}
-
-/* Song Info Styling */
-#song-info {
-    margin-top: 1.5em;
-    background: #282828;
-    padding: 15px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 350px;
-}
-
-#song-info p {
-    margin: 0.3em 0;
-    font-size: 1rem;
-    color: #ccc;
-}
-
-/* Responsive Anpassungen für kleinere Bildschirme */
-@media (max-width: 480px) {
-    main#app {
-        padding: 15px;
+/* Responsive Anpassungen */
+@media (max-width: 768px) {
+    .container {
+        padding: 30px 40px;
+        border-radius: 15px;
     }
     h1 {
-        font-size: 1.8em;
+        font-size: 2.5em;
+        letter-spacing: 2px;
+    }
+    p {
+        font-size: 1.1em;
+        margin-bottom: 25px;
     }
     button {
-        padding: 10px 20px;
-        font-size: 0.9rem;
+        padding: 15px 30px;
+        font-size: 1.2em;
     }
-    .spotify-btn {
-        padding: 12px 30px;
-        font-size: 1rem;
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 20px 25px;
+        border-radius: 10px;
+    }
+    h1 {
+        font-size: 2em;
+        letter-spacing: 1.5px;
+    }
+    p {
+        font-size: 1em;
+        margin-bottom: 20px;
+    }
+    button {
+        padding: 12px 25px;
+        font-size: 1.1em;
+    }
+}
+
+/* Keyframe Animation für Fade-In */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
