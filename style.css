@@ -13,47 +13,44 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh; /* Mindestens volle Viewport-Höhe */
-    overflow: hidden; /* Verhindert Scrollen, um Vollbildgefühl zu verstärken */
+    min-height: 100vh;
+    overflow: hidden;
 }
 
 main#app {
-    max-width: 600px; /* Maximale Breite des Spielbereichs */
-    width: 90vw; /* Responsiv: 90% der Viewport-Breite */
+    max-width: 600px;
+    width: 90vw;
     padding: 20px;
-    background: #181818; /* Etwas hellerer Hintergrund für den Container */
+    background: #181818;
     border-radius: 12px;
-    box-shadow: 0 0 20px rgba(29, 185, 84, 0.6); /* Grüner Spotify-ähnlicher Schatten */
-    display: flex; /* Für interne Flexbox-Anordnung der Screens */
+    box-shadow: 0 0 20px rgba(29, 185, 84, 0.6);
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 50vh; /* Mindesthöhe für den App-Container */
+    min-height: 50vh;
 }
 
 /* Bildschirmeinstellungen */
 .screen {
-    display: none; /* Standardmäßig alle Bildschirme versteckt */
+    display: none;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    width: 100%; /* Bildschirme füllen den Haupt-Container */
-    flex-grow: 1; /* Nehmen verfügbaren Platz ein */
+    width: 100%;
+    flex-grow: 1;
     justify-content: center;
 }
 
 .screen.active {
-    display: flex; /* Aktiven Bildschirm anzeigen */
+    display: flex;
 }
 
-h1, h2 {
+h1 {
     margin: 0.2em 0 1em;
     font-weight: 700;
-    color: #fff; /* Klare Überschriften */
-}
-
-.highlight {
-    color: #1DB954; /* Spotify Grün */
+    color: #fff;
+    font-size: 2.5em; /* Etwas größer für den Titel */
 }
 
 p {
@@ -62,41 +59,32 @@ p {
     line-height: 1.5;
 }
 
-/* Button-Gruppen */
-.button-group {
-    display: flex;
-    gap: 15px; /* Abstand zwischen Buttons */
-    flex-wrap: wrap; /* Buttons umbrechen, wenn nicht genug Platz */
-    justify-content: center;
-    margin-bottom: 2em;
-    width: 100%; /* Nimmt volle Breite ein */
-}
-
 /* Allgemeine Button-Stile */
 button {
-    background: #1DB954; /* Spotify Grün */
+    background: #1DB954;
     border: none;
-    border-radius: 30px; /* Abgerundete Ecken */
+    border-radius: 30px;
     color: white;
     padding: 12px 25px;
     font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease; /* Sanfte Übergänge */
-    user-select: none; /* Text nicht auswählbar */
-    flex-grow: 1; /* Buttons füllen den verfügbaren Platz in der Gruppe */
-    max-width: 250px; /* Max. Breite für einzelne Buttons */
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    user-select: none;
+    flex-grow: 1;
+    max-width: 250px;
+    margin-bottom: 20px; /* Abstand nach unten */
 }
 
 button:hover:not(:disabled) {
-    background: #17a44d; /* Dunkleres Grün beim Hover */
-    transform: translateY(-2px); /* Leichter Schwebe-Effekt */
+    background: #17a44d;
+    transform: translateY(-2px);
 }
 
 button:disabled {
     opacity: 0.4;
     cursor: default;
-    transform: none; /* Kein Hover-Effekt bei Deaktivierung */
+    transform: none;
 }
 
 /* Spotify Style Button (speziell für Login) */
@@ -105,51 +93,19 @@ button:disabled {
     box-shadow: 0 4px 14px 0 rgba(29, 185, 84, 0.4);
     font-size: 1.2rem;
     padding: 15px 40px;
-    border-radius: 50px; /* Stark abgerundet */
-    min-width: 250px; /* Mindestbreite für Login-Button */
-}
-
-/* Spezielle Button-Farben */
-.correct {
-    background-color: #28a745; /* Grünton für "RICHTIG" */
-}
-
-.correct:hover:not(:disabled) {
-    background-color: #218838;
-}
-
-.wrong {
-    background-color: #dc3545; /* Rotton für "FALSCH" */
-}
-
-.wrong:hover:not(:disabled) {
-    background-color: #b02a37;
-}
-
-/* Punktestandsanzeige */
-header {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1em;
-    padding: 0 10px; /* Etwas Abstand vom Rand */
-}
-
-.team-score {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: #1DB954;
+    border-radius: 50px;
+    min-width: 250px;
 }
 
 /* Versteckte Elemente */
 .hidden {
-    display: none !important; /* Wichtig, um Überschreiben zu verhindern */
+    display: none !important;
 }
 
 /* Song Info Styling */
 #song-info {
     margin-top: 1.5em;
-    background: #282828; /* Dunklerer Hintergrund für Info-Box */
+    background: #282828;
     padding: 15px;
     border-radius: 8px;
     width: 90%;
@@ -167,26 +123,15 @@ header {
     main#app {
         padding: 15px;
     }
-
     h1 {
         font-size: 1.8em;
     }
-
-    h2 {
-        font-size: 1.4em;
-    }
-
     button {
         padding: 10px 20px;
         font-size: 0.9rem;
     }
-
     .spotify-btn {
         padding: 12px 30px;
         font-size: 1rem;
-    }
-
-    .button-group {
-        gap: 10px;
     }
 }
