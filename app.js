@@ -167,6 +167,7 @@ async function exchangeCodeForToken(code) {
 
 /**
  * Spielt einen zufälligen Track aus der vordefinierten Spotify-Playlist für 2 Sekunden ab.
+ * Benötigt einen Premium-Account, um ganze Tracks abzuspielen.
  */
 async function playRandomTrackFromPlaylist() {
     if (!accessToken) {
@@ -201,13 +202,12 @@ async function playRandomTrackFromPlaylist() {
         }
 
         const playlistData = await playlistResponse.json();
-        // Filtere Tracks, die eine 'preview_url' haben, da diese leichter abzuspielen sind
-        // und die 30-Sekunden-Vorschau direkt unterstützen.
-        // Die volle Wiedergabe würde den Web Playback SDK erfordern.
-        const tracks = playlistData.items.filter(item => item.track && item.track.preview_url);
+        // Hier wurde der Filter nach 'preview_url' entfernt, um ganze Tracks zu verwenden.
+        // Es wird nur geprüft, ob es sich um einen Track (nicht z.B. eine Episode) handelt.
+        const tracks = playlistData.items.filter(item => item.track);
 
         if (tracks.length === 0) {
-            playerStatus.textContent = "Keine abspielbaren Tracks (mit Preview-URL) in der Playlist gefunden.";
+            playerStatus.textContent = "Keine Tracks in der Playlist gefunden. Stelle sicher, dass die Playlist Lieder enthält.";
             authButton.disabled = false;
             return;
         }
@@ -265,8 +265,10 @@ async function playRandomTrackFromPlaylist() {
             },
             body: JSON.stringify({
                 uris: [trackUri],
-                // Starte an einer zufälligen Position innerhalb der ersten 30 Sekunden des Tracks
-                position_ms: Math.floor(Math.random() * Math.min(30000, randomTrack.duration_ms || 30000))
+                // Starte an einer zufälligen Position im Song.
+                // max(1) um sicherzustellen, dass die Position mindestens 1ms ist,
+                // min() um nicht über die Songlänge hinaus zu gehen.
+                position_ms: Math.floor(Math.random() * Math.max(1, (randomTrack.duration_ms || 30000) - 2000))
             })
         });
 
@@ -292,7 +294,7 @@ async function playRandomTrackFromPlaylist() {
 
     } catch (error) {
         console.error('Fehler beim Abspielen des Songs:', error);
-        playerStatus.textContent = `Fehler beim Abspielen: ${error.message}. Ist dein Spotify-Client aktiv und Premium-Account?`;
+        playerStatus.textContent = `Fehler beim Abspielen: ${error.message}. Dies erfordert einen aktiven Spotify-Client (Desktop/Mobil/Web-Player) und einen Premium-Account.`;
         authButton.disabled = false;
     }
 }
