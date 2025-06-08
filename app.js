@@ -171,12 +171,18 @@ function playSong(uri, offsetSeconds, durationSeconds) {
 
 // ... weitere Funktionen wie UI, Spielmechanik, Button-Events etc. unverändert.
 
+
+function showLoginScreen() {
+  document.getElementById('login-section').style.display = 'block';
+  document.getElementById('mode-selection').style.display = 'none';
+  document.getElementById('game-area').style.display = 'none';
+}
+
 window.onload = () => {
   handleRedirect();
   if (!accessToken) {
     showLoginScreen();
   } else {
     showGameModeSelection();
-    // Player-Init ist in onSpotifyWebPlaybackSDKReady
   }
 };
