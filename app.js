@@ -7,14 +7,14 @@ let currentTrack = null;
 const playbackDuration = 10000; // 10 Sekunden Wiedergabezeit
 const playlistId = '39sVxPTg7BKwrf2MfgrtcD'; // Punk Rock (90's & 00')
 
-// --- DOM Elemente ---
-const welcomeScreen = document.getElementById('welcome-screen');
-const playerTestScreen = document.getElementById('player-test-screen');
-const loginButton = document.getElementById('login-button');
-const playSongButton = document.getElementById('play-song-button');
-const songInfoDiv = document.getElementById('song-info');
-const songArtistSpan = document.getElementById('song-artist');
-const songTitleSpan = document.getElementById('song-title');
+// --- DOM Elemente (Hier werden sie nur deklariert, die Zuweisung erfolgt später in DOMContentLoaded) ---
+let welcomeScreen;
+let playerTestScreen;
+let loginButton;
+let playSongButton;
+let songInfoDiv;
+let songArtistSpan;
+let songTitleSpan;
 
 // --- Spotify PKCE Login Flow Funktionen (aus deinem Anhang übernommen und korrigiert) ---
 
@@ -68,6 +68,12 @@ async function redirectToSpotifyAuth() {
         code_challenge: codeChallenge
     });
 
+    // ACHTUNG: Die folgenden URLs sind Platzhalter und müssen durch die tatsächlichen Spotify API URLs ersetzt werden.
+    // Falls du die Authentifizierung auf deinem Server laufen lässt, müssen diese URLs zu deinem Server-Endpunkt zeigen.
+    // Die echten Spotify-Endpunkte wären:
+    // Authorize: https://accounts.spotify.com/authorize
+    // Token: https://accounts.spotify.com/api/token
+    // Hier verwenden wir deine ursprünglichen Platzhalter URLs. Wenn diese nicht funktionieren, liegt es an der Umleitung.
     window.location = 'https://accounts.spotify.com/authorize?' + args.toString();
 }
 
@@ -87,6 +93,8 @@ async function fetchAccessToken(code) {
     });
 
     try {
+        // ACHTUNG: Auch hier der Hinweis, dass dies die Platzhalter-URL aus deiner früheren Version ist.
+        // Die echte Spotify Token URL ist: https://accounts.spotify.com/api/token
         const response = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
             headers: {
@@ -138,6 +146,8 @@ async function refreshAccessToken() {
     });
 
     try {
+        // ACHTUNG: Auch hier der Hinweis, dass dies die Platzhalter-URL aus deiner früheren Version ist.
+        // Die echte Spotify Token URL ist: https://accounts.spotify.com/api/token
         const response = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
             headers: {
@@ -268,7 +278,10 @@ async function transferPlaybackToDevice(deviceId) {
     if (!accessToken) return;
 
     try {
-        const response = await fetch('https://api.spotify.com/v1/me/player', { // Korrekte Spotify API Endpunkt
+        // ACHTUNG: Auch hier der Hinweis, dass dies die Platzhalter-URL aus deiner früheren Version ist.
+        // Die echte Spotify API URL für Playback Transfer ist: https://api.spotify.com/v1/me/player
+        // In deinem Kontext: 'https://api.spotify.com/v1/me/player'
+        const response = await fetch('https://api.spotify.com/v1/me/player', {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -320,7 +333,10 @@ async function fetchPlaylistTracks(pId) {
         return [];
     }
     try {
-        const response = await fetch(`https://api.spotify.com/v1/playlists/${pId}/tracks?market=DE&limit=50`, { // Korrekter Spotify API Endpunkt
+        // ACHTUNG: Auch hier der Hinweis, dass dies die Platzhalter-URL aus deiner früheren Version ist.
+        // Die echte Spotify API URL für Playlists: https://api.spotify.com/v1/playlists/{playlist_id}/tracks
+        // In deinem Kontext: 'https://api.spotify.com/v1/playlists/${pId}/tracks'
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${pId}/tracks?market=DE&limit=50`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         if (!response.ok) {
@@ -426,12 +442,21 @@ function revealSongInfo() {
 }
 
 
-// --- Event Listeners ---
-loginButton.addEventListener('click', redirectToSpotifyAuth);
-playSongButton.addEventListener('click', playRandomSong);
-
 // --- Initialisierung beim Laden der Seite ---
 document.addEventListener('DOMContentLoaded', async () => {
+    // DOM-Elemente sicher abrufen, nachdem das DOM geladen ist
+    welcomeScreen = document.getElementById('welcome-screen');
+    playerTestScreen = document.getElementById('player-test-screen');
+    loginButton = document.getElementById('login-button');
+    playSongButton = document.getElementById('play-song-button');
+    songInfoDiv = document.getElementById('song-info');
+    songArtistSpan = document.getElementById('song-artist');
+    songTitleSpan = document.getElementById('song-title');
+
+    // Event Listener HIER hinzufügen
+    loginButton.addEventListener('click', redirectToSpotifyAuth);
+    playSongButton.addEventListener('click', playRandomSong);
+
     // Spotify SDK Script dynamisch laden
     const spotifySdkScript = document.createElement('script');
     spotifySdkScript.src = 'https://sdk.scdn.co/spotify-player.js';
