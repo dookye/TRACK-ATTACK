@@ -1,6 +1,6 @@
 // --- Grundlegende Daten und Spotify Konfiguration ---
 const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
-// ACHTUNG: Stelle sicher, dass DIESE URL exakt in deinem Spotify Developer Dashboard registriert ist!
+// ACHTUNG: Diese URL muss EXAKT mit deiner registrierten Redirect URI im Spotify Developer Dashboard übereinstimmen!
 const redirectUri = 'https://dookye.github.io/musik-raten/';
 let accessToken = null;
 let spotifyPlayer = null;
@@ -62,7 +62,6 @@ async function redirectToSpotifyAuth() {
     const args = new URLSearchParams({
         response_type: 'code',
         client_id: clientId,
-        // Erforderliche Scopes für den Web Playback SDK Player und den Zugriff auf Playlists
         scope: 'user-read-playback-state user-modify-playback-state streaming user-read-email user-read-private playlist-read-private playlist-read-collaborative',
         redirect_uri: redirectUri,
         code_challenge_method: 'S256',
@@ -70,7 +69,7 @@ async function redirectToSpotifyAuth() {
     });
 
     // *******************************************************************
-    // * KORREKTE SPOTIFY AUTHORIZE URL - DIESE MUSS VERWENDET WERDEN! *
+    // * KORREKTE OFFIZIELLE SPOTIFY AUTHORIZE URL - DIESE MUSS VERWENDET WERDEN! *
     // *******************************************************************
     window.location = 'https://accounts.spotify.com/authorize?' + args.toString();
 }
@@ -92,7 +91,7 @@ async function fetchAccessToken(code) {
 
     try {
         // ***************************************************************
-        // * KORREKTE SPOTIFY TOKEN URL - DIESE MUSS VERWENDET WERDEN! *
+        // * KORREKTE OFFIZIELLE SPOTIFY TOKEN URL - DIESE MUSS VERWENDET WERDEN! *
         // ***************************************************************
         const response = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
@@ -142,7 +141,7 @@ async function refreshAccessToken() {
 
     try {
         // ***************************************************************
-        // * KORREKTE SPOTIFY TOKEN URL - DIESE MUSS VERWENDET WERDEN! *
+        // * KORREKTE OFFIZIELLE SPOTIFY TOKEN URL - DIESE MUSS VERWENDET WERDEN! *
         // ***************************************************************
         const response = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
@@ -177,8 +176,7 @@ async function refreshAccessToken() {
         showScreen(welcomeScreen);
         return false;
     }
-}
-// --- Spotify Web Playback SDK Initialisierung ---
+}// --- Spotify Web Playback SDK Initialisierung ---
 /**
  * Diese Funktion wird vom Spotify SDK aufgerufen, sobald es vollständig geladen und bereit ist.
  * Hier initialisieren wir unseren Spotify Player.
@@ -271,7 +269,7 @@ async function transferPlaybackToDevice(deviceId) {
 
     try {
         // *****************************************************************
-        // * KORREKTER SPOTIFY API ENDPUNKT FÜR GERÄTEÜBERTRAGUNG *
+        // * KORREKTER OFFIZIELLER SPOTIFY API ENDPUNKT FÜR GERÄTEÜBERTRAGUNG *
         // *****************************************************************
         const response = await fetch(`https://api.spotify.com/v1/me/player`, {
             method: 'PUT',
@@ -326,7 +324,7 @@ async function fetchPlaylistTracks(pId) {
     }
     try {
         // ***************************************************************
-        // * KORREKTER SPOTIFY API ENDPUNKT FÜR PLAYLIST-TRACKS *
+        // * KORREKTER OFFIZIELLER SPOTIFY API ENDPUNKT FÜR PLAYLIST-TRACKS *
         // ***************************************************************
         const response = await fetch(`https://api.spotify.com/v1/playlists/${pId}/tracks?market=DE&limit=50`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
