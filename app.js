@@ -167,7 +167,7 @@ async function exchangeCodeForToken(code) {
 
 /**
  * Spielt einen zufälligen Track aus der vordefinierten Spotify-Playlist für 2 Sekunden ab.
- * Benötigt einen Premium-Account, um ganze Tracks abzuspielen.
+ * Benötigt einen Premium-Account und einen aktiven Spotify-Client, um ganze Tracks abzuspielen.
  */
 async function playRandomTrackFromPlaylist() {
     if (!accessToken) {
@@ -202,8 +202,7 @@ async function playRandomTrackFromPlaylist() {
         }
 
         const playlistData = await playlistResponse.json();
-        // Hier wurde der Filter nach 'preview_url' entfernt, um ganze Tracks zu verwenden.
-        // Es wird nur geprüft, ob es sich um einen Track (nicht z.B. eine Episode) handelt.
+        // Filtern nach validen Tracks, die nicht null sind
         const tracks = playlistData.items.filter(item => item.track);
 
         if (tracks.length === 0) {
@@ -220,7 +219,7 @@ async function playRandomTrackFromPlaylist() {
         console.log("Ausgewählter Track:", randomTrack.name, "von", randomTrack.artists.map(a => a.name).join(', '));
         console.log("Track URI:", trackUri);
 
-        // 2. Verfügbare Geräte des Benutzers abrufen (nur für Premium-Nutzer relevant)
+        // 2. Verfügbare Geräte des Benutzers abrufen
         const devicesResponse = await fetch('https://api.spotify.com/v1/me/player/devices', {
             headers: {
                 'Authorization': `Bearer ${accessToken}`
@@ -239,17 +238,28 @@ async function playRandomTrackFromPlaylist() {
         }
 
         const devicesData = await devicesResponse.json();
-        // Finde ein aktives Gerät oder das erste verfügbare Gerät
-        const activeDevice = devicesData.devices.find(device => device.is_active);
-        let deviceId = activeDevice ? activeDevice.id : null;
+        
+        let deviceId = null;
 
-        if (!deviceId && devicesData.devices.length > 0) {
-            deviceId = devicesData.devices[0].id;
-            console.warn("Kein aktives Gerät gefunden, verwende erstes verfügbares Gerät:", devicesData.devices[0].name);
+        // Priorisiere ein aktives Gerät
+        const activeDevice = devicesData.devices.find(device => device.is_active);
+        if (activeDevice) {
+            deviceId = activeDevice.id;
+            console.log("Aktives Gerät gefunden:", activeDevice.name);
+        } else if (devicesData.devices.length > 0) {
+            // Wenn kein aktives Gerät, wähle das erste verfügbare Gerät, das nicht in einer privaten Sitzung ist (wenn möglich)
+            const nonPrivateDevice = devicesData.devices.find(device => !device.is_private_session);
+            if (nonPrivateDevice) {
+                deviceId = nonPrivateDevice.id;
+                console.warn("Kein aktives Gerät gefunden, verwende erstes verfügbares nicht-privates Gerät:", nonPrivateDevice.name);
+            } else {
+                deviceId = devicesData.devices[0].id; // Fallback zum ersten Gerät
+                console.warn("Kein aktives oder nicht-privates Gerät gefunden, verwende erstes verfügbares Gerät:", devicesData.devices[0].name);
+            }
         }
 
         if (!deviceId) {
-            playerStatus.textContent = "Kein aktives Spotify-Gerät gefunden. Bitte öffne Spotify auf einem Gerät und versuche es erneut.";
+            playerStatus.textContent = "Kein steuerbares Spotify-Gerät gefunden. Bitte öffne die Spotify-App (Desktop/Mobil) oder den Spotify Web-Player, melde dich an und versuche es erneut.";
             authButton.disabled = false;
             return;
         }
@@ -266,8 +276,8 @@ async function playRandomTrackFromPlaylist() {
             body: JSON.stringify({
                 uris: [trackUri],
                 // Starte an einer zufälligen Position im Song.
-                // max(1) um sicherzustellen, dass die Position mindestens 1ms ist,
-                // min() um nicht über die Songlänge hinaus zu gehen.
+                // Stelle sicher, dass die Position mindestens 1ms ist und nicht über die Songlänge hinausgeht,
+                // abzüglich der 2 Sekunden, die abgespielt werden sollen.
                 position_ms: Math.floor(Math.random() * Math.max(1, (randomTrack.duration_ms || 30000) - 2000))
             })
         });
@@ -294,7 +304,8 @@ async function playRandomTrackFromPlaylist() {
 
     } catch (error) {
         console.error('Fehler beim Abspielen des Songs:', error);
-        playerStatus.textContent = `Fehler beim Abspielen: ${error.message}. Dies erfordert einen aktiven Spotify-Client (Desktop/Mobil/Web-Player) und einen Premium-Account.`;
+        // Verbesserte Fehlermeldung für den Benutzer
+        playerStatus.textContent = `Fehler beim Abspielen: ${error.message}. Dies erfordert einen Premium-Account und einen aktiven Spotify-Client (Desktop/Mobil/Web-Player), der geöffnet und angemeldet ist. Bitte starte Spotify und versuche es erneut.`;
         authButton.disabled = false;
     }
 }
