@@ -1,29 +1,29 @@
-// --- Grundlegende Daten und Spotify Konfiguration ---
-const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
-// ACHTUNG: Diese URL muss EXAKT mit deiner registrierten Redirect URI im Spotify Developer Dashboard übereinstimmen!
-const redirectUri = 'https://dookye.github.io/musik-raten/';
+// app.js
+
+// Deine Spotify Developer ID (Client ID)
+const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
+// Deine Redirect URI (Muss exakt so im Spotify Dashboard hinterlegt sein!)
+const REDIRECT_URI = 'https://dookye.github.io/musik-raten/';
+// Die Scopes, die wir benötigen
+const SCOPES = 'user-read-private user-read-email playlist-read-private user-modify-playback-state user-read-playback-state';
+const PLAYLIST_ID = '39sVxPTg7BKwrf2MfgrtcD'; // Punk Rock (90's & 00's)
+const AUTH_URL = 'https://accounts.spotify.com/authorize';
+const TOKEN_URL = 'https://accounts.spotify.com/api/token';
+
+// DOM-Elemente
+const authButton = document.getElementById('spotify-auth-button');
+const playerStatus = document.getElementById('player-status');
+
+// Variablen zur Speicherung der Token
 let accessToken = null;
-let spotifyPlayer = null;
-let currentTrack = null;
-const playbackDuration = 10000; // 10 Sekunden Wiedergabezeit
-const playlistId = '39sVxPTg7BKwrf2MfgrtcD'; // Punk Rock (90's & 00')
+let refreshToken = null;
+let tokenExpiresIn = 0; // In Sekunden
 
-// --- DOM Elemente (Hier werden sie nur deklariert, die Zuweisung erfolgt später in DOMContentLoaded) ---
-let welcomeScreen;
-let playerTestScreen;
-let loginButton;
-let playSongButton;
-let songInfoDiv;
-let songArtistSpan;
-let songTitleSpan;
-
-// --- Spotify PKCE Login Flow Funktionen ---
-
+// --- PKCE Helferfunktionen ---
 /**
- * Generiert eine zufällige Zeichenkette der angegebenen Länge.
- * Wird für den Code Verifier im PKCE-Flow verwendet.
- * @param {number} length Die Länge der zu generierenden Zeichenkette.
- * @returns {string} Die zufällig generierte Zeichenkette.
+ * Generiert einen zufälligen String für den code_verifier oder state.
+ * @param {number} length - Die Länge des zu generierenden Strings.
+ * @returns {string} Ein zufälliger String.
  */
 function generateRandomString(length) {
     let text = '';
@@ -35,443 +35,298 @@ function generateRandomString(length) {
 }
 
 /**
- * Erstellt einen SHA256-Hash einer Zeichenkette und encodiert ihn Base64URL.
- * Wird für den Code Challenge im PKCE-Flow verwendet.
- * @param {string} plain Die unverschlüsselte Zeichenkette.
- * @returns {Promise<string>} Ein Promise, das den Base64URL-encodierten Hash zurückgibt.
+ * Codiert einen ArrayBuffer in das Base64Url-Format.
+ * @param {ArrayBuffer} buffer - Der zu kodierende Buffer.
+ * @returns {string} Der Base64Url-kodierte String.
  */
-async function sha256(plain) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(plain);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    return btoa(String.fromCharCode(...new Uint8Array(hash)))
+function base64urlencode(buffer) {
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(buffer)))
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');
 }
 
 /**
- * Leitet den Benutzer zur Spotify-Autorisierungsseite um, um den PKCE-Flow zu starten.
+ * Berechnet den SHA256-Hash eines gegebenen Strings.
+ * @param {string} plain - Der zu hashende String.
+ * @returns {Promise<ArrayBuffer>} Ein Promise, das den ArrayBuffer des gehashten Strings zurückgibt.
  */
-async function redirectToSpotifyAuth() {
-    const codeVerifier = generateRandomString(128); // Standardlänge für PKCE
-    const codeChallenge = await sha256(codeVerifier);
-
-    localStorage.setItem('code_verifier', codeVerifier); // Speichern für späteren Token-Austausch
-
-    const args = new URLSearchParams({
-        response_type: 'code',
-        client_id: clientId,
-        scope: 'user-read-playback-state user-modify-playback-state streaming user-read-email user-read-private playlist-read-private playlist-read-collaborative',
-        redirect_uri: redirectUri,
-        code_challenge_method: 'S256',
-        code_challenge: codeChallenge
-    });
-
-    // *******************************************************************
-    // * KORREKTE OFFIZIELLE SPOTIFY AUTHORIZE URL - DIESE MUSS VERWENDET WERDEN! *
-    // *******************************************************************
-    window.location = 'https://accounts.spotify.com/authorize?' + args.toString();
+async function sha256(plain) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(plain);
+    return window.crypto.subtle.digest('SHA-256', data);
 }
 
 /**
- * Holt den Access Token von Spotify, nachdem der Benutzer die Autorisierung erteilt hat.
- * @param {string} code Der Autorisierungscode von Spotify.
+ * Generiert den code_challenge aus einem code_verifier.
+ * @param {string} verifier - Der code_verifier.
+ * @returns {Promise<string>} Ein Promise, das den Base64Url-kodierten SHA256-Hash des verifiers zurückgibt.
  */
-async function fetchAccessToken(code) {
-    const codeVerifier = localStorage.getItem('code_verifier');
+async function generateCodeChallenge(verifier) {
+    const hashed = await sha256(verifier);
+    return base64urlencode(hashed);
+}
 
-    const body = new URLSearchParams({
+// --- Spotify Authentifizierung ---
+/**
+ * Startet den Spotify OAuth 2.0 Authorization Code Flow mit PKCE.
+ * Leitet den Benutzer zur Spotify-Login-Seite weiter.
+ */
+async function handleSpotifyAuth() {
+    // Generiere und speichere code_verifier und code_challenge
+    const codeVerifier = generateRandomString(128);
+    localStorage.setItem('code_verifier', codeVerifier); // Persistenter speichern
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+    // Generiere und speichere den state-Parameter für CSRF-Schutz
+    const state = generateRandomString(16);
+    localStorage.setItem('spotify_auth_state', state); // Persistenter speichern
+
+    // Erstelle die URL-Parameter für den Autorisierungs-Request
+    const params = new URLSearchParams({
+        response_type: 'code',
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        redirect_uri: REDIRECT_URI,
+        state: state,
+        code_challenge_method: 'S256', // PKCE Methode
+        code_challenge: codeChallenge
+    });
+
+    // Leite den Benutzer zu Spotify weiter
+    window.location.href = `${AUTH_URL}?${params.toString()}`;
+}
+
+/**
+ * Tauscht den erhaltenen Authorization Code gegen ein Access Token und Refresh Token.
+ * @param {string} code - Der von Spotify erhaltene Authorization Code.
+ */
+async function exchangeCodeForToken(code) {
+    const storedState = localStorage.getItem('spotify_auth_state');
+    const storedCodeVerifier = localStorage.getItem('code_verifier');
+
+    // Prüfe, ob state und code_verifier vorhanden sind
+    if (!storedState || !storedCodeVerifier) {
+        console.error("Fehler: Zustand oder Code Verifier nicht gefunden. Authentifizierung möglicherweise unsicher oder nicht abgeschlossen.");
+        playerStatus.textContent = "Authentifizierungsfehler: Bitte versuche es erneut.";
+        return;
+    }
+
+    // Entferne die gespeicherten Werte, da sie nun verwendet wurden
+    localStorage.removeItem('spotify_auth_state');
+    localStorage.removeItem('code_verifier');
+
+    // Erstelle die Parameter für den Token-Austausch
+    const params = new URLSearchParams({
         grant_type: 'authorization_code',
         code: code,
-        redirect_uri: redirectUri,
-        client_id: clientId,
-        code_verifier: codeVerifier
+        redirect_uri: REDIRECT_URI,
+        client_id: CLIENT_ID,
+        code_verifier: storedCodeVerifier // Hier wird der Verifier gesendet
     });
 
     try {
-        // ***************************************************************
-        // * KORREKTE OFFIZIELLE SPOTIFY TOKEN URL - DIESE MUSS VERWENDET WERDEN! *
-        // ***************************************************************
-        const response = await fetch('https://accounts.spotify.com/api/token', {
+        const response = await fetch(TOKEN_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },
-            body: body.toString()
+            body: params.toString()
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('Fehler beim Abrufen des Access Tokens:', errorData);
-            alert('Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
-            showScreen(welcomeScreen);
-            return;
+            throw new Error(`Fehler beim Abrufen des Tokens: ${response.status} ${response.statusText} - ${errorData.error_description || JSON.stringify(errorData)}`);
         }
 
         const data = await response.json();
         accessToken = data.access_token;
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', data.refresh_token);
-        localStorage.setItem('expires_in', Date.now() + data.expires_in * 1000);
+        refreshToken = data.refresh_token; // Speichern für spätere Nutzung (z.B. Token-Erneuerung)
+        tokenExpiresIn = data.expires_in; // Ablaufzeit des Tokens
+
+        // Speichern der Token im Local Storage für Persistenz
+        localStorage.setItem('spotify_access_token', accessToken);
+        localStorage.setItem('spotify_refresh_token', refreshToken);
+        // Speichern der exakten Ablaufzeit (aktuelle Zeit + expires_in in ms)
+        localStorage.setItem('spotify_token_expires_at', Date.now() + (tokenExpiresIn * 1000));
+
         console.log('Access Token erhalten:', accessToken);
+        // Aktualisiere den Button und Status nach erfolgreichem Login
+        authButton.textContent = 'TRACK ATTACK starten!';
+        authButton.onclick = playRandomTrackFromPlaylist; // Button-Funktion ändern
+        playerStatus.textContent = "Du bist angemeldet! Klicke 'TRACK ATTACK starten!' um ein Lied zu spielen.";
+
     } catch (error) {
-        console.error('Netzwerkfehler beim Abrufen des Access Tokens:', error);
-        alert('Ein Netzwerkfehler ist bei der Anmeldung aufgetreten. Bitte versuchen Sie es erneut.');
-        showScreen(welcomeScreen);
+        console.error('Fehler beim Token-Austausch:', error);
+        playerStatus.textContent = `Authentifizierungsfehler: ${error.message}`;
+        // Fallback: Button auf Login zurücksetzen, falls etwas schief geht
+        authButton.textContent = 'Spotify Login';
+        authButton.onclick = handleSpotifyAuth;
     }
 }
 
 /**
- * Aktualisiert den Access Token mithilfe des Refresh Tokens.
- * @returns {Promise<boolean>} True, wenn der Token erfolgreich aktualisiert wurde, sonst False.
+ * Spielt einen zufälligen Track aus der vordefinierten Spotify-Playlist für 2 Sekunden ab.
  */
-async function refreshAccessToken() {
-    const refreshToken = localStorage.getItem('refresh_token');
-    if (!refreshToken) {
-        console.warn('Kein Refresh Token verfügbar.');
-        return false;
-    }
-
-    const body = new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-        client_id: clientId
-    });
-
-    try {
-        // ***************************************************************
-        // * KORREKTE OFFIZIELLE SPOTIFY TOKEN URL - DIESE MUSS VERWENDET WERDEN! *
-        // ***************************************************************
-        const response = await fetch('https://accounts.spotify.com/api/token', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: body.toString()
-        });
-
-        if (!response.ok) {
-            console.error('Fehler beim Auffrischen des Access Tokens:', await response.json());
-            accessToken = null;
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('expires_in');
-            showScreen(welcomeScreen);
-            return false;
-        }
-
-        const data = await response.json();
-        accessToken = data.access_token;
-        localStorage.setItem('access_token', accessToken);
-        if (data.refresh_token) {
-            localStorage.setItem('refresh_token', data.refresh_token);
-        }
-        localStorage.setItem('expires_in', Date.now() + data.expires_in * 1000);
-        console.log('Access Token erfolgreich aufgefrischt.');
-        return true;
-    } catch (error) {
-        console.error('Netzwerkfehler beim Auffrischen des Access Tokens:', error);
-        alert('Ein Netzwerkfehler ist beim Aktualisieren der Anmeldung aufgetreten. Bitte melden Sie sich erneut an.');
-        showScreen(welcomeScreen);
-        return false;
-    }
-}// --- Spotify Web Playback SDK Initialisierung ---
-/**
- * Diese Funktion wird vom Spotify SDK aufgerufen, sobald es vollständig geladen und bereit ist.
- * Hier initialisieren wir unseren Spotify Player.
- */
-window.onSpotifyWebPlaybackSDKReady = () => {
-    console.log("Spotify Web Playback SDK ist bereit!");
-    initSpotifyPlayer();
-};
-
-/**
- * Initialisiert den Spotify Web Playback SDK Player.
- * Stellt sicher, dass das SDK geladen und ein Access Token vorhanden ist.
- */
-async function initSpotifyPlayer() {
-    // Überprüfen, ob das Spotify-Objekt tatsächlich definiert ist und ein Access Token vorliegt
-    if (typeof Spotify === 'undefined' || !accessToken) {
-        console.warn("Spotify SDK nicht geladen oder Access Token fehlt. Kann Player nicht initialisieren.");
-        if (!accessToken) {
-             showScreen(welcomeScreen);
-        }
+async function playRandomTrackFromPlaylist() {
+    if (!accessToken) {
+        playerStatus.textContent = "Bitte melde dich zuerst bei Spotify an.";
         return;
     }
 
-    // Prüfen, ob der Token bald abläuft und ggf. auffrischen
-    const expiresIn = localStorage.getItem('expires_in');
-    if (expiresIn && Date.now() >= parseInt(expiresIn) - (60 * 1000)) { // 1 Minute vor Ablauf
-        console.log('Access Token läuft bald ab, versuche Refresh vor Player-Initialisierung.');
-        const refreshed = await refreshAccessToken();
-        if (!refreshed) {
-            console.error("Token-Refresh fehlgeschlagen, kann Player nicht initialisieren.");
-            return;
-        }
+    // Optional: Überprüfe die Gültigkeit des Tokens vor der Nutzung
+    const tokenExpiresAt = localStorage.getItem('spotify_token_expires_at');
+    if (tokenExpiresAt && Date.now() > parseInt(tokenExpiresAt, 10)) {
+        playerStatus.textContent = "Dein Spotify-Login ist abgelaufen. Bitte melde dich erneut an.";
+        authButton.textContent = 'Spotify Login';
+        authButton.onclick = handleSpotifyAuth;
+        accessToken = null; // Token ungültig machen
+        return;
     }
 
-    // Wenn der Player bereits existiert, trennen und neu verbinden, um Duplikate zu vermeiden
-    if (spotifyPlayer) {
-        console.log("Vorhandenen Spotify Player trennen...");
-        spotifyPlayer.disconnect();
-    }
-
-    spotifyPlayer = new Spotify.Player({
-        name: 'Spotify Player Test', // Name, der in der Spotify App angezeigt wird
-        getOAuthToken: cb => { cb(accessToken); }, // Callback für den Access Token
-        volume: 0.5 // Standardlautstärke
-    });
-
-    // Event Listener für den Player
-    spotifyPlayer.addListener('ready', ({ device_id }) => {
-        console.log('Ready with Device ID', device_id);
-        transferPlaybackToDevice(device_id); // Wiedergabe auf dieses Gerät übertragen
-        showScreen(playerTestScreen); // Wechsel zum Test-Bildschirm, wenn Player bereit ist
-    });
-
-    spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-        console.log('Device ID has gone offline', device_id);
-    });
-
-    spotifyPlayer.addListener('initialization_error', ({ message }) => { console.error('Initialization Error:', message); });
-    spotifyPlayer.addListener('authentication_error', async ({ message }) => {
-        console.error('Authentication Error:', message);
-        const refreshed = await refreshAccessToken();
-        if (refreshed) {
-            console.log("Token erneuert, Player neu initialisieren...");
-            initSpotifyPlayer(); // Erneute Initialisierung nach erfolgreichem Refresh
-        } else {
-            alert('Ihre Spotify-Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
-            showScreen(welcomeScreen);
-        }
-    });
-    spotifyPlayer.addListener('account_error', ({ message }) => {
-        console.error('Account Error (Premium-Konto erforderlich):', message);
-        alert('Für die Wiedergabe wird ein aktiver Spotify Premium-Account benötigt.');
-    });
-    spotifyPlayer.addListener('playback_error', ({ message }) => {
-        console.error('Playback Error:', message);
-        alert('Fehler bei der Wiedergabe. Stellen Sie sicher, dass Spotify geöffnet ist und kein anderes Gerät aktiv ist.');
-    });
-
-    // Mit dem Player verbinden
-    console.log("Verbinde Spotify Player...");
-    spotifyPlayer.connect();
-}
-
-/**
- * Überträgt die Spotify-Wiedergabe auf das Web Playback SDK Gerät.
- * @param {string} deviceId Die Geräte-ID des Web Playback SDK Players.
- */
-async function transferPlaybackToDevice(deviceId) {
-    if (!accessToken) return;
+    playerStatus.textContent = "Lade Playlist und spiele Lied...";
+    authButton.disabled = true; // Button während des Ladens deaktivieren
 
     try {
-        // *****************************************************************
-        // * KORREKTER OFFIZIELLER SPOTIFY API ENDPUNKT FÜR GERÄTEÜBERTRAGUNG *
-        // *****************************************************************
-        const response = await fetch(`https://api.spotify.com/v1/me/player`, {
+        // 1. Tracks der spezifischen Playlist abrufen
+        const playlistResponse = await fetch(`https://api.spotify.com/v1/playlists/${PLAYLIST_ID}/tracks?limit=100`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (!playlistResponse.ok) {
+            const errorData = await playlistResponse.json();
+            throw new Error(`Fehler beim Laden der Playlist: ${playlistResponse.status} ${playlistResponse.statusText} - ${errorData.error.message || JSON.stringify(errorData)}`);
+        }
+
+        const playlistData = await playlistResponse.json();
+        // Filtere Tracks, die eine 'preview_url' haben, da diese leichter abzuspielen sind
+        // und die 30-Sekunden-Vorschau direkt unterstützen.
+        // Die volle Wiedergabe würde den Web Playback SDK erfordern.
+        const tracks = playlistData.items.filter(item => item.track && item.track.preview_url);
+
+        if (tracks.length === 0) {
+            playerStatus.textContent = "Keine abspielbaren Tracks (mit Preview-URL) in der Playlist gefunden.";
+            authButton.disabled = false;
+            return;
+        }
+
+        // Zufälligen Track auswählen
+        const randomIndex = Math.floor(Math.random() * tracks.length);
+        const randomTrack = tracks[randomIndex].track;
+        const trackUri = randomTrack.uri; // z.B. "spotify:track:..."
+
+        console.log("Ausgewählter Track:", randomTrack.name, "von", randomTrack.artists.map(a => a.name).join(', '));
+        console.log("Track URI:", trackUri);
+
+        // 2. Verfügbare Geräte des Benutzers abrufen (nur für Premium-Nutzer relevant)
+        const devicesResponse = await fetch('https://api.spotify.com/v1/me/player/devices', {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (!devicesResponse.ok) {
+            const errorData = await devicesResponse.json();
+            // Spezifische Fehlerbehandlung für fehlenden Premium-Account
+            if (devicesResponse.status === 403 && errorData.error.message === "Premium required") {
+                playerStatus.textContent = "Dein Spotify-Account ist kein Premium-Account. Zum Abspielen von Liedern wird ein Premium-Account benötigt.";
+                authButton.disabled = false;
+                return;
+            }
+            throw new Error(`Fehler beim Abrufen der Geräte: ${devicesResponse.status} ${devicesResponse.statusText} - ${errorData.error.message || JSON.stringify(errorData)}`);
+        }
+
+        const devicesData = await devicesResponse.json();
+        // Finde ein aktives Gerät oder das erste verfügbare Gerät
+        const activeDevice = devicesData.devices.find(device => device.is_active);
+        let deviceId = activeDevice ? activeDevice.id : null;
+
+        if (!deviceId && devicesData.devices.length > 0) {
+            deviceId = devicesData.devices[0].id;
+            console.warn("Kein aktives Gerät gefunden, verwende erstes verfügbares Gerät:", devicesData.devices[0].name);
+        }
+
+        if (!deviceId) {
+            playerStatus.textContent = "Kein aktives Spotify-Gerät gefunden. Bitte öffne Spotify auf einem Gerät und versuche es erneut.";
+            authButton.disabled = false;
+            return;
+        }
+
+        // 3. Wiedergabe starten (an zufälliger Stelle für 2 Sekunden)
+        // Die Playback API erlaubt es, die Wiedergabe auf einem Gerät zu starten.
+        // Die 'position_ms' ist die Startposition im Song.
+        const playResponse = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                device_ids: [deviceId],
-                play: false // Nicht automatisch abspielen, nur Gerät aktivieren
+                uris: [trackUri],
+                // Starte an einer zufälligen Position innerhalb der ersten 30 Sekunden des Tracks
+                position_ms: Math.floor(Math.random() * Math.min(30000, randomTrack.duration_ms || 30000))
             })
         });
 
-        if (response.ok) {
-            console.log('Playback transferred to new device:', deviceId);
-        } else {
-            const errorData = await response.json();
-            console.error('Fehler beim Übertragen der Wiedergabe auf Gerät (API Response):', errorData);
-            alert('Achtung: Der Spotify Player konnte nicht automatisch aktiviert werden. Bitte stellen Sie sicher, dass Ihr Spotify Premium-Konto aktiv ist und Spotify (App oder Web) im Hintergrund läuft, damit das Web Playback SDK funktioniert.');
+        if (!playResponse.ok) {
+            const errorText = await playResponse.text();
+            throw new Error(`Fehler beim Starten der Wiedergabe: ${playResponse.status} ${playResponse.statusText} - ${errorText}`);
         }
 
-    } catch (error) {
-        console.error('Fehler beim Übertragen der Wiedergabe auf Gerät (Catch Block):', error);
-        alert('Ein unerwarteter Fehler ist beim Aktivieren des Spotify Players aufgetreten. Bitte versuchen Sie es erneut.');
-    }
-}
+        playerStatus.textContent = `Spiele ${randomTrack.name}...`;
 
-// --- UI Management ---
-/**
- * Zeigt den angegebenen Bildschirm an und versteckt alle anderen.
- * @param {HTMLElement} screenToShow Das HTML-Element des anzuzeigenden Bildschirms.
- */
-function showScreen(screenToShow) {
-    const screens = [welcomeScreen, playerTestScreen];
-    screens.forEach(screen => {
-        screen.classList.remove('active');
-    });
-    screenToShow.classList.add('active');
-}
-
-// --- Spotify Song Logik ---
-
-/**
- * Holt die Tracks einer bestimmten Spotify-Playlist.
- * @param {string} pId Die ID der Playlist.
- * @returns {Promise<Array>} Ein Array von Track-Objekten.
- */
-async function fetchPlaylistTracks(pId) {
-    if (!accessToken) {
-        console.error('Access Token nicht verfügbar.');
-        return [];
-    }
-    try {
-        // ***************************************************************
-        // * KORREKTER OFFIZIELLER SPOTIFY API ENDPUNKT FÜR PLAYLIST-TRACKS *
-        // ***************************************************************
-        const response = await fetch(`https://api.spotify.com/v1/playlists/${pId}/tracks?market=DE&limit=50`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        if (!response.ok) {
-            if (response.status === 401) {
-                console.warn('Token abgelaufen oder ungültig beim Abrufen von Tracks. Versuche Refresh.');
-                const refreshed = await refreshAccessToken();
-                if (refreshed) {
-                    return fetchPlaylistTracks(pId); // Erneuter Versuch nach erfolgreichem Refresh
-                }
-            }
-            const errorData = await response.json();
-            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error ? errorData.error.message : 'Unknown Error'}`);
-        }
-        const data = await response.json();
-        return data.items.filter(item => item.track && item.track.uri && item.track.is_playable).map(item => item.track);
-    } catch (error) {
-        console.error('Fehler beim Abrufen der Playlist-Tracks:', error);
-        alert(`Fehler beim Laden der Playlist-Tracks: ${error.message}.`);
-        return [];
-    }
-}
-
-/**
- * Spielt einen zufälligen Song aus der vordefinierten Playlist an einer zufälligen Position für 10 Sekunden ab.
- */
-async function playRandomSong() {
-    if (!spotifyPlayer || !accessToken) {
-        alert('Spotify Player ist nicht bereit oder Sie sind nicht angemeldet. Bitte versuchen Sie, die Seite neu zu laden oder sich erneut anzumelden.');
-        return;
-    }
-
-    const deviceId = spotifyPlayer._options.id;
-    if (!deviceId) {
-        alert('Spotify Player-Gerät nicht gefunden. Stellen Sie sicher, dass Spotify geöffnet ist und Ihr Premium-Konto aktiv ist.');
-        console.error('Spotify Player-Gerät ID nicht verfügbar.');
-        return;
-    }
-
-    const allTracks = await fetchPlaylistTracks(playlistId);
-
-    if (allTracks.length === 0) {
-        alert('Keine Songs in der Playlist gefunden oder Fehler beim Laden der Playlist. Versuchen Sie es später erneut.');
-        return;
-    }
-
-    const randomTrackIndex = Math.floor(Math.random() * allTracks.length);
-    currentTrack = allTracks[randomTrackIndex];
-
-    if (!currentTrack || !currentTrack.uri) {
-        console.error("Ausgewählter Track hat keine URI:", currentTrack);
-        alert("Fehler: Konnte keinen spielbaren Song finden. Versuchen Sie es erneut.");
-        return;
-    }
-
-    let startMs = 0;
-    if (currentTrack.duration_ms) {
-        const minDurationRemaining = playbackDuration + 2000;
-        if (currentTrack.duration_ms > minDurationRemaining) {
-            startMs = Math.floor(Math.random() * (currentTrack.duration_ms - minDurationRemaining));
-        } else {
-            startMs = 0;
-        }
-        if (startMs < 0) startMs = 0;
-    }
-
-    try {
-        await spotifyPlayer.play({
-            uris: [currentTrack.uri],
-            position_ms: startMs,
-            device_id: deviceId
-        });
-        console.log(`Playing: ${currentTrack.name} by ${currentTrack.artists[0].name} from ${startMs}ms`);
-
-        revealSongInfo();
-
+        // Nach 2 Sekunden pausieren
         setTimeout(async () => {
-            if (spotifyPlayer) {
-                await spotifyPlayer.pause();
-                console.log('Playback paused.');
-            }
-        }, playbackDuration);
+            await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            playerStatus.textContent = "Musik gespielt für 2 Sekunden. Rate den Song!";
+            authButton.disabled = false;
+            // Hier könntest du dann die Spielmechanik starten (Input-Feld, etc.)
+        }, 2000); // 2 Sekunden Pause
 
     } catch (error) {
-        console.error("Fehler beim Abspielen des Songs:", error);
-        alert("Fehler beim Abspielen des Songs. Stellen Sie sicher, dass Ihr Spotify Premium-Konto aktiv ist und Spotify geöffnet ist.");
+        console.error('Fehler beim Abspielen des Songs:', error);
+        playerStatus.textContent = `Fehler beim Abspielen: ${error.message}. Ist dein Spotify-Client aktiv und Premium-Account?`;
+        authButton.disabled = false;
     }
 }
-
-/**
- * Zeigt die Informationen des aktuell spielenden Songs an.
- */
-function revealSongInfo() {
-    if (currentTrack) {
-        songArtistSpan.textContent = currentTrack.artists.map(artist => artist.name).join(', ');
-        songTitleSpan.textContent = currentTrack.name;
-        songInfoDiv.classList.remove('hidden');
-    }
-}
-
 
 // --- Initialisierung beim Laden der Seite ---
-document.addEventListener('DOMContentLoaded', async () => {
-    // DOM-Elemente sicher abrufen, nachdem das DOM geladen ist
-    welcomeScreen = document.getElementById('welcome-screen');
-    playerTestScreen = document.getElementById('player-test-screen');
-    loginButton = document.getElementById('login-button');
-    playSongButton = document.getElementById('play-song-button');
-    songInfoDiv = document.getElementById('song-info');
-    songArtistSpan = document.getElementById('song-artist');
-    songTitleSpan = document.getElementById('song-title');
-
-    // Event Listener HIER hinzufügen
-    loginButton.addEventListener('click', redirectToSpotifyAuth);
-    playSongButton.addEventListener('click', playRandomSong);
-
-    // Spotify SDK Script dynamisch laden
-    const spotifySdkScript = document.createElement('script');
-    spotifySdkScript.src = 'https://sdk.scdn.co/spotify-player.js';
-    spotifySdkScript.async = true;
-    spotifySdkScript.defer = true;
-    document.head.appendChild(spotifySdkScript);
-
-    // Versuche, Access Token aus dem localStorage zu laden
-    accessToken = localStorage.getItem('access_token');
-    const expiresIn = localStorage.getItem('expires_in');
+document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    const storedState = localStorage.getItem('spotify_auth_state');
 
-    if (code) {
-        console.log('Autorisierungscode in URL gefunden. Fordere Access Token an...');
-        await fetchAccessToken(code);
-        history.replaceState(null, null, redirectUri);
-    } else if (accessToken && expiresIn && Date.now() < parseInt(expiresIn) - (5 * 60 * 1000)) {
-        console.log('Gültiger Access Token aus localStorage geladen.');
-    } else if (accessToken && expiresIn && Date.now() >= parseInt(expiresIn) - (5 * 60 * 1000)) {
-        console.log('Access Token läuft bald ab, versuche Refresh.');
-        const refreshed = await refreshAccessToken();
-        if (refreshed) {
-            console.log('Token erfolgreich aufgefrischt.');
-        } else {
-            console.log('Token Refresh fehlgeschlagen, zurück zum Login.');
-            showScreen(welcomeScreen);
-        }
+    // Prüfen, ob wir nach einem Spotify-Login von der Redirect-URI zurückkommen
+    if (code && state && state === storedState) {
+        playerStatus.textContent = "Authentifiziere mit Spotify...";
+        // Bereinige die URL, um den Code und State zu entfernen
+        history.replaceState({}, document.title, REDIRECT_URI);
+        exchangeCodeForToken(code);
     } else {
-        console.log('Kein gültiger Access Token. Zeige Begrüßungsbildschirm.');
-        showScreen(welcomeScreen);
+        // Seite wird normal geladen, prüfe auf bereits vorhandene gültige Token
+        const storedAccessToken = localStorage.getItem('spotify_access_token');
+        const storedTokenExpiresAt = localStorage.getItem('spotify_token_expires_at');
+
+        if (storedAccessToken && storedTokenExpiresAt && Date.now() < parseInt(storedTokenExpiresAt, 10)) {
+            // Gültiges Token gefunden, setze die Variablen und aktualisiere den Button
+            accessToken = storedAccessToken;
+            refreshToken = localStorage.getItem('spotify_refresh_token');
+            authButton.textContent = 'TRACK ATTACK starten!';
+            authButton.onclick = playRandomTrackFromPlaylist;
+            playerStatus.textContent = "Du bist bereits angemeldet! Klicke 'TRACK ATTACK starten!' um ein Lied zu spielen.";
+        } else {
+            // Kein gültiges Token gefunden, zeige den initialen Login-Button an
+            authButton.textContent = 'Spotify Login';
+            authButton.onclick = handleSpotifyAuth;
+            playerStatus.textContent = "Bitte melde dich an, um zu spielen.";
+        }
     }
 });
