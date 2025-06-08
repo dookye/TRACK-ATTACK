@@ -1,92 +1,106 @@
-/* style.css – TRACK ATTACK */
-
 body {
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: #eee;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(145deg, #1db954 0%, #191414 100%);
-  color: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: 100vh;
 }
 
-h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+header {
+  background: #1db954;
+  width: 100%;
+  padding: 1rem;
   text-align: center;
-  font-weight: bold;
-  text-shadow: 1px 1px 3px #000;
-}
-
-button {
-  background-color: #1db954;
-  border: none;
-  border-radius: 2rem;
-  padding: 0.8rem 2rem;
   color: white;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-button:hover {
-  background-color: #17a74a;
-  transform: scale(1.05);
+main {
+  max-width: 600px;
+  width: 100%;
+  padding: 1rem;
 }
 
 #login-btn {
-  margin-top: 2rem;
-}
-
-#game-ui {
-  display: none;
-  text-align: center;
-  padding: 2rem;
-  max-width: 600px;
-  background-color: rgba(25, 20, 20, 0.8);
-  border-radius: 2rem;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-}
-
-/* Weitere Styles für Spielfunktionen */
-.option-button {
-  display: block;
-  margin: 1rem auto;
-  width: 100%;
-  max-width: 300px;
-  background-color: #333;
-  color: white;
-  border: 2px solid #1db954;
-  border-radius: 1rem;
-  padding: 0.7rem 1rem;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.option-button:hover {
   background-color: #1db954;
-  color: #000;
+  border: none;
+  color: white;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 25px;
 }
 
-/* Score und Statusanzeige */
-#score-display, #question-display {
+#login-btn:hover {
+  background-color: #17a44d;
+}
+
+#player {
   margin: 1rem 0;
+  height: 80px;
+  background: #222;
+  border-radius: 10px;
+}
+
+#question-text {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+#answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.answer-btn {
+  background-color: #282828;
+  border: 1px solid #1db954;
+  color: #1db954;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  border-radius: 15px;
+  flex: 1 1 45%;
+  text-align: center;
+  user-select: none;
+}
+
+.answer-btn:hover {
+  background-color: #1db954;
+  color: black;
+}
+
+.answer-btn.correct {
+  background-color: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+.answer-btn.wrong {
+  background-color: #f44336;
+  color: white;
+  border-color: #f44336;
+}
+
+#next-btn {
+  margin-top: 1rem;
+  background-color: #1db954;
+  border: none;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 25px;
+}
+
+#next-btn:hover {
+  background-color: #17a44d;
+}
+
+#score {
+  margin-top: 1rem;
   font-size: 1.2rem;
   font-weight: bold;
-}
-
-/* Responsive */
-@media screen and (max-width: 600px) {
-  h1 {
-    font-size: 2rem;
-  }
-
-  button, .option-button {
-    font-size: 1rem;
-    padding: 0.6rem 1.2rem;
-  }
 }
