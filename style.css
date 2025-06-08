@@ -1,106 +1,192 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #121212;
-  color: #eee;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* Reset & Basics */
+* {
+    box-sizing: border-box;
 }
 
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Montserrat', sans-serif;
+    background: #121212; /* Dunkler Hintergrund wie Spotify */
+    color: #eee; /* Helle Textfarbe */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Mindestens volle Viewport-Höhe */
+    overflow: hidden; /* Verhindert Scrollen, um Vollbildgefühl zu verstärken */
+}
+
+main#app {
+    max-width: 600px; /* Maximale Breite des Spielbereichs */
+    width: 90vw; /* Responsiv: 90% der Viewport-Breite */
+    padding: 20px;
+    background: #181818; /* Etwas hellerer Hintergrund für den Container */
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(29, 185, 84, 0.6); /* Grüner Spotify-ähnlicher Schatten */
+    display: flex; /* Für interne Flexbox-Anordnung der Screens */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh; /* Mindesthöhe für den App-Container */
+}
+
+/* Bildschirmeinstellungen */
+.screen {
+    display: none; /* Standardmäßig alle Bildschirme versteckt */
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%; /* Bildschirme füllen den Haupt-Container */
+    flex-grow: 1; /* Nehmen verfügbaren Platz ein */
+    justify-content: center;
+}
+
+.screen.active {
+    display: flex; /* Aktiven Bildschirm anzeigen */
+}
+
+h1, h2 {
+    margin: 0.2em 0 1em;
+    font-weight: 700;
+    color: #fff; /* Klare Überschriften */
+}
+
+.highlight {
+    color: #1DB954; /* Spotify Grün */
+}
+
+p {
+    font-weight: 400;
+    margin-bottom: 2em;
+    line-height: 1.5;
+}
+
+/* Button-Gruppen */
+.button-group {
+    display: flex;
+    gap: 15px; /* Abstand zwischen Buttons */
+    flex-wrap: wrap; /* Buttons umbrechen, wenn nicht genug Platz */
+    justify-content: center;
+    margin-bottom: 2em;
+    width: 100%; /* Nimmt volle Breite ein */
+}
+
+/* Allgemeine Button-Stile */
+button {
+    background: #1DB954; /* Spotify Grün */
+    border: none;
+    border-radius: 30px; /* Abgerundete Ecken */
+    color: white;
+    padding: 12px 25px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease; /* Sanfte Übergänge */
+    user-select: none; /* Text nicht auswählbar */
+    flex-grow: 1; /* Buttons füllen den verfügbaren Platz in der Gruppe */
+    max-width: 250px; /* Max. Breite für einzelne Buttons */
+}
+
+button:hover:not(:disabled) {
+    background: #17a44d; /* Dunkleres Grün beim Hover */
+    transform: translateY(-2px); /* Leichter Schwebe-Effekt */
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: default;
+    transform: none; /* Kein Hover-Effekt bei Deaktivierung */
+}
+
+/* Spotify Style Button (speziell für Login) */
+.spotify-btn {
+    background: #1DB954;
+    box-shadow: 0 4px 14px 0 rgba(29, 185, 84, 0.4);
+    font-size: 1.2rem;
+    padding: 15px 40px;
+    border-radius: 50px; /* Stark abgerundet */
+    min-width: 250px; /* Mindestbreite für Login-Button */
+}
+
+/* Spezielle Button-Farben */
+.correct {
+    background-color: #28a745; /* Grünton für "RICHTIG" */
+}
+
+.correct:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.wrong {
+    background-color: #dc3545; /* Rotton für "FALSCH" */
+}
+
+.wrong:hover:not(:disabled) {
+    background-color: #b02a37;
+}
+
+/* Punktestandsanzeige */
 header {
-  background: #1db954;
-  width: 100%;
-  padding: 1rem;
-  text-align: center;
-  color: white;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1em;
+    padding: 0 10px; /* Etwas Abstand vom Rand */
 }
 
-main {
-  max-width: 600px;
-  width: 100%;
-  padding: 1rem;
+.team-score {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1DB954;
 }
 
-#login-btn {
-  background-color: #1db954;
-  border: none;
-  color: white;
-  padding: 1rem 2rem;
-  font-size: 1.2rem;
-  cursor: pointer;
-  border-radius: 25px;
+/* Versteckte Elemente */
+.hidden {
+    display: none !important; /* Wichtig, um Überschreiben zu verhindern */
 }
 
-#login-btn:hover {
-  background-color: #17a44d;
+/* Song Info Styling */
+#song-info {
+    margin-top: 1.5em;
+    background: #282828; /* Dunklerer Hintergrund für Info-Box */
+    padding: 15px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 350px;
 }
 
-#player {
-  margin: 1rem 0;
-  height: 80px;
-  background: #222;
-  border-radius: 10px;
+#song-info p {
+    margin: 0.3em 0;
+    font-size: 1rem;
+    color: #ccc;
 }
 
-#question-text {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-}
+/* Responsive Anpassungen für kleinere Bildschirme */
+@media (max-width: 480px) {
+    main#app {
+        padding: 15px;
+    }
 
-#answers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
+    h1 {
+        font-size: 1.8em;
+    }
 
-.answer-btn {
-  background-color: #282828;
-  border: 1px solid #1db954;
-  color: #1db954;
-  padding: 0.7rem 1rem;
-  cursor: pointer;
-  border-radius: 15px;
-  flex: 1 1 45%;
-  text-align: center;
-  user-select: none;
-}
+    h2 {
+        font-size: 1.4em;
+    }
 
-.answer-btn:hover {
-  background-color: #1db954;
-  color: black;
-}
+    button {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
 
-.answer-btn.correct {
-  background-color: #4caf50;
-  color: white;
-  border-color: #4caf50;
-}
+    .spotify-btn {
+        padding: 12px 30px;
+        font-size: 1rem;
+    }
 
-.answer-btn.wrong {
-  background-color: #f44336;
-  color: white;
-  border-color: #f44336;
-}
-
-#next-btn {
-  margin-top: 1rem;
-  background-color: #1db954;
-  border: none;
-  color: white;
-  padding: 0.8rem 1.5rem;
-  font-size: 1rem;
-  cursor: pointer;
-  border-radius: 25px;
-}
-
-#next-btn:hover {
-  background-color: #17a44d;
-}
-
-#score {
-  margin-top: 1rem;
-  font-size: 1.2rem;
-  font-weight: bold;
+    .button-group {
+        gap: 10px;
+    }
 }
