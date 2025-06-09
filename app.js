@@ -190,9 +190,8 @@ function startSpotifyPlayer() {
 /**
  * Initialisiert den Spotify Web Playback SDK Player.
  * Diese Funktion wird NUR aufgerufen, wenn das SDK geladen ist UND ein Access Token verfügbar ist.
- * JETZT ASYNC!
  */
-async function initializeSpotifyPlayer() { // Hier wurde 'async' hinzugefügt
+async function initializeSpotifyPlayer() { 
     // Überprüfe, ob das Access Token noch gültig ist, bevor der Player initialisiert wird
     const tokenExpiresAt = localStorage.getItem('spotify_token_expires_at');
     if (!accessToken || (tokenExpiresAt && Date.now() > parseInt(tokenExpiresAt, 10))) {
@@ -246,7 +245,7 @@ async function initializeSpotifyPlayer() { // Hier wurde 'async' hinzugefügt
             authButton.onclick = playRandomTrackFromPlaylist; // Button-Funktion zuweisen
         } catch (error) {
             console.error('Fehler bei der Player-Bereitschaft oder Geräteübertragung:', error);
-            playerStatus.textContent = `Fehler beim Starten des Players: ${error.message}. Bitte lade die Seite neu und versuche es erneut.`;
+            playerStatus.textContent = `Fehler beim Starten des Players: ${error.message}. Dies kann auf ein Problem mit deinem Premium-Account, dem Spotify-Dienst oder deiner Netzwerkverbindung hindeuten. Bitte lade die Seite neu und versuche es erneut.`;
             authButton.textContent = 'Fehler beim Starten des Players';
             authButton.disabled = false; // Button wieder aktivieren für möglichen Neuanlauf
             authButton.onclick = handleSpotifyAuth; // Fallback auf Re-Login
@@ -293,7 +292,6 @@ async function initializeSpotifyPlayer() { // Hier wurde 'async' hinzugefügt
     });
 
     // Verbinde den Player mit Spotify
-    // Hinzugefügt: await auf player.connect()
     try {
         await player.connect();
         console.log("Spotify Player erfolgreich verbunden.");
@@ -332,8 +330,8 @@ async function transferPlaybackToDevice(newDeviceId) {
         });
 
         if (!response.ok) {
-            const errorData = await response.text();
-            throw new Error(`Fehler beim Übertragen der Wiedergabe: ${response.status} ${response.statusText} - ${errorData}`);
+            const errorText = await response.text();
+            throw new Error(`Fehler beim Übertragen der Wiedergabe: ${response.status} ${response.statusText} - ${errorText}`);
         }
         console.log(`Wiedergabe erfolgreich auf Gerät ${newDeviceId} übertragen.`);
     } catch (error) {
@@ -408,10 +406,13 @@ async function playRandomTrackFromPlaylist() {
         const startPosition = Math.floor(Math.random() * maxStartPosition);
 
         // Wiedergabe über den Web Playback SDK Player starten
-        // KEIN 'device_id' Parameter hier! Der Player steuert sich selbst.
+        // Explizites .catch() am player.play() Promise für robustere Fehlerbehandlung.
         await player.play({
             uris: [trackUri],
             position_ms: startPosition
+        }).catch(playbackPlayError => {
+            console.error('Fehler beim player.play() Aufruf:', playbackPlayError);
+            throw playbackPlayError; // Werfe den Fehler weiter, damit der äußere try-catch ihn fängt
         });
 
         playerStatus.textContent = `Spiele ${randomTrack.name}...`;
@@ -425,9 +426,9 @@ async function playRandomTrackFromPlaylist() {
         }, 2000); // 2 Sekunden Pause
 
     } catch (error) {
-        console.error('Fehler beim Abspielen des Songs mit SDK:', error);
+        console.error('Fehler beim Abspielen des Songs mit SDK (im Haupt-Catch-Block):', error);
         // Verbesserte Fehlermeldung für den Benutzer
-        playerStatus.textContent = `Fehler beim Abspielen: ${error.message}. Dies erfordert einen Premium-Account und den erfolgreich verbundenen Spotify Player auf dieser Seite.`;
+        playerStatus.textContent = `Fehler beim Abspielen: ${error.message}. Dies erfordert einen Premium-Account und den erfolgreich verbundenen Spotify Player auf dieser Seite. Es könnte auch ein vorübergehendes Problem mit dem Streaming sein.`;
         authButton.disabled = false;
     }
 }
@@ -443,9 +444,6 @@ function handleSpotifySDKReady() {
     if (storedAccessToken && storedTokenExpiresAt && Date.now() < parseInt(storedTokenExpiresAt, 10)) {
         accessToken = storedAccessToken; // accessToken aktualisieren, falls noch nicht geschehen
         console.log("Access Token beim SDK-Ready gefunden. Initialisiere Player via Klick.");
-        // Der Button sollte bereits auf "Spotify Player starten" stehen
-        // und die Funktion startSpotifyPlayer zugewiesen haben.
-        // Der Benutzer muss jetzt manuell klicken, um den Player zu initialisieren.
         playerStatus.textContent = "Du bist angemeldet! Klicke auf den Button, um den Spotify-Player zu starten.";
         authButton.textContent = 'Spotify Player starten';
         authButton.disabled = false;
@@ -497,6 +495,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// WICHTIG: window.onSpotifyWebPlaybackSDKReady wird jetzt direkt in index.html definiert.
-// Diese Funktion wird vom SDK aufgerufen, sobald es geladen ist.
-// Sie ruft dann handleSpotifySDKReady in dieser Datei auf.
+// Füge einen globalen Event-Listener für unbehandelte Promise-Rejections hinzu
+// Dies fängt Fehler ab, die nicht durch spezifische try/catch-Blöcke gefangen werden.
+window.addEventListener('unhandledrejection', (event) => {
+    // Überprüfe, ob der Fehler vom Spotify SDK oder einem ähnlichen Kontext kommt
+    // und ob es sich spezifisch um einen CloudPlaybackClientError handelt.
+    if (event.reason && typeof event.reason === 'object' && event.reason.name === 'CloudPlaybackClientError') {
+        console.warn('Unerwarteter (aber abgefangener) Spotify SDK CloudPlaybackClientError:', event.reason);
+        // Da dieser Fehler oft Telemetrie betrifft und die Wiedergabe nicht immer verhindert,
+        // geben wir hier keine kritische Statusmeldung aus, sondern loggen nur.
+        // Falls die Wiedergabe NICHT funktioniert, wird playRandomTrackFromPlaylist() einen anderen Fehler fangen.
+        event.preventDefault(); // Verhindert, dass der Browser die Standard-Fehlermeldung ausgibt
+    } else {
+        // Für andere, unerwartete Fehler, die nicht direkt vom SDK kommen
+        console.error('Unerwarteter Fehler (Uncaught Promise Rejection):', event.reason);
+        // Optional: Hier könnte man eine allgemeinere Fehlermeldung anzeigen
+        // playerStatus.textContent = `Ein unerwarteter Fehler ist aufgetreten: ${event.reason.message || event.reason}.`;
+        event.preventDefault(); 
+    }
+});
