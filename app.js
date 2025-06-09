@@ -235,6 +235,10 @@ function initializeSpotifyPlayer() {
             // WICHTIG: Warte auf den Abschluss der Übertragung, bevor der Button aktiviert wird
             await transferPlaybackToDevice(deviceId); 
             console.log("Player und Gerät erfolgreich verbunden.");
+            
+            // Füge eine kleine Verzögerung hinzu, um dem Player Zeit zu geben, sich vollständig einzustellen
+            await new Promise(resolve => setTimeout(resolve, 500)); // 500ms Verzögerung hinzugefügt
+
             playerStatus.textContent = "Spotify-Player bereit! Klicke 'TRACK ATTACK starten!' um ein Lied zu spielen.";
             authButton.textContent = 'TRACK ATTACK starten!'; // Button-Text aktualisieren
             authButton.disabled = false; // Button aktivieren
@@ -288,7 +292,18 @@ function initializeSpotifyPlayer() {
     });
 
     // Verbinde den Player mit Spotify
-    player.connect();
+    // Hinzugefügt: await auf player.connect()
+    try {
+        await player.connect();
+        console.log("Spotify Player erfolgreich verbunden.");
+    } catch (connectError) {
+        console.error("Fehler beim Verbinden des Spotify Players:", connectError);
+        playerStatus.textContent = `Verbindungsfehler: ${connectError.message}. Bitte lade die Seite neu und versuche es erneut.`;
+        authButton.textContent = 'Fehler beim Player-Start';
+        authButton.disabled = false;
+        authButton.onclick = handleSpotifyAuth; // Fallback auf Re-Login
+        return; // Abbrechen, wenn Verbindung fehlschlägt
+    }
 }
 
 /**
