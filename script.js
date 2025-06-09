@@ -10,10 +10,9 @@ const SCOPES = [
     'user-modify-playback-state'
 ];
 
-// --- SPOTIFY API ENDPUNKTE (JETZT WIRKLICH KORRIGIERT!) ---
-const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // Direkter Autorisierungs-Endpunkt
-const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';      // Direkter Token-Endpunkt
-const SPOTIFY_API_BASE_URL = 'https://support.spotify.com/de/article/cannot-remember-login/';   // Basis für Web API calls (playlists, player control)
+// --- SPOTIFY API ENDPUNKTE (KORRIGIERT!) ---
+const SPOTIFY_ACCOUNTS_URL = 'https://community.spotify.com/t5/Android/Login-button-not-working/td-p/4404439';
+const SPOTIFY_API_URL = 'https://support.spotify.com/de/article/cannot-remember-login/';
 
 // --- UI-ELEMENTE ---
 const loginScreen = document.getElementById('login-screen');
@@ -29,7 +28,7 @@ let currentPlaylistTracks = [];
 let activeDeviceId = null;
 let isPlayerReady = false; // Flag, das auf true gesetzt wird, wenn der SDK-Player verbunden ist
 
-// --- PKCE HELPER-FUNKTIONEN ---
+// --- PKCE HELFER-FUNKTIONEN ---
 function generateRandomString(length) {
     let text = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -69,8 +68,8 @@ async function redirectToSpotifyAuthorize() {
         code_challenge: codeChallenge,
     });
 
-    // KORRIGIERTE Spotify Authorize-URL - Direkte Verwendung der Konstante
-    window.location.href = `${SPOTIFY_AUTHORIZE_URL}?${params.toString()}`;
+    // Korrekte Spotify Authorize-URL
+    window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
 }
 
 /**
@@ -96,8 +95,8 @@ async function exchangeCodeForTokens(code) {
     });
 
     try {
-        // KORRIGIERTE Spotify Token-URL
-        const response = await fetch(SPOTIFY_TOKEN_URL, {
+        // Korrekte Spotify Token-URL
+        const response = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -117,6 +116,9 @@ async function exchangeCodeForTokens(code) {
 
         console.log('Access Token erfolgreich erhalten.');
         localStorage.removeItem('code_verifier'); // Code Verifier ist jetzt nicht mehr nötig
+
+        // Token wurde erfolgreich erhalten. Wir überlassen es dem SDK, den Player zu initialisieren
+        // und den Screen zu wechseln, wenn es bereit ist.
 
     } catch (error) {
         console.error('Fehler beim Token-Austausch:', error);
@@ -218,8 +220,8 @@ window.onSpotifyWebPlaybackSDKReady = () => {
  */
 async function transferPlayback(deviceId) {
     try {
-        // KORRIGIERTE Spotify Player API-URL für Geräteübertragung
-        const response = await fetch(`${SPOTIFY_API_BASE_URL}/me/player`, {
+        // Korrekte Spotify Player API-URL für Geräteübertragung
+        const response = await fetch('https://api.spotify.com/v1/me/player', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -252,8 +254,8 @@ async function getPlaylistTracks() {
     }
     try {
         let allTracks = [];
-        // KORRIGIERTE Spotify Playlist API-URL
-        let nextUrl = `${SPOTIFY_API_BASE_URL}/playlists/${PLAYLIST_ID}/tracks?limit=100`;
+        // Korrekte Spotify Playlist API-URL
+        let nextUrl = `https://api.spotify.com/v1/playlists/${PLAYLIST_ID}/tracks?limit=100`;
 
         while (nextUrl) {
             const response = await fetch(nextUrl, {
@@ -321,8 +323,8 @@ async function playRandomSongFromPlaylist() {
         await player.activateElement();
 
         // Starten der Wiedergabe über die Web API mit dem Track URI
-        // KORRIGIERTE Spotify Player API-URL für Wiedergabe-Steuerung
-        const playResponse = await fetch(`${SPOTIFY_API_BASE_URL}/me/player/play`, {
+        // Korrekte Spotify Player API-URL für Wiedergabe-Steuerung
+        const playResponse = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${activeDeviceId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -336,7 +338,7 @@ async function playRandomSongFromPlaylist() {
 
         if (!playResponse.ok) {
             const errorData = await playResponse.json();
-            throw new Error(`Fehler beim Starten der Wiedergabe: ${playResponse.status} - ${errorData.error.message || playData.error.message || playResponse.statusText}`);
+            throw new Error(`Fehler beim Starten der Wiedergabe: ${playResponse.status} - ${errorData.error.message || playResponse.statusText}`);
         }
 
         playbackStatus.textContent = 'Spiele Song...';
@@ -375,7 +377,7 @@ function showGameScreen() {
 }
 
 // --- INITIALISIERUNG BEIM LADEN DER SEITE ---
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async () => { // Async, um bei Bedarf await nutzen zu können
     // Event Listener für Buttons hinzufügen
     if (spotifyLoginButton) {
         spotifyLoginButton.addEventListener('click', redirectToSpotifyAuthorize);
@@ -404,9 +406,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Bereits eingeloggt und Token gültig
         accessToken = localStorage.getItem('access_token');
         console.log('Vorhandenen Access Token aus localStorage geladen. Warte auf Spotify SDK.');
+        // Der Screen-Wechsel wird durch onSpotifyWebPlaybackSDKReady ausgelöst, wenn der Player bereit ist.
     } else {
         // Nicht eingeloggt oder Token abgelaufen
         console.log('Kein gültiger Access Token vorhanden. Zeige Login-Screen.');
         showLoginScreen();
     }
 });
+
+// WICHTIG: Die SDK-Skript-Referenz im HTML MUSS NACH dem body-Tag stehen,
+// aber das window.onSpotifyWebPlaybackSDKReady event wird ausgelöst,
+// sobald das SDK selbst geladen ist, unabhängig von DOMContentLoaded.
