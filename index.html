@@ -4,39 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRACK ATTACK - Musik Raten</title>
-    <!-- Link zu unserem externen Stylesheet -->
     <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts: Inter für eine moderne Typografie -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    
-    <!-- Spotify Web Playback SDK -->
-    <!-- WICHTIG: window.onSpotifyWebPlaybackSDKReady MUSS global definiert werden, bevor das SDK geladen wird -->
-    <script>
-        // Diese globale Funktion wird vom Spotify SDK aufgerufen, sobald es bereit ist.
-        // Wir leiten den Aufruf an eine Funktion in unserer app.js weiter.
-        window.onSpotifyWebPlaybackSDKReady = () => {
-            console.log('Spotify Web Playback SDK ist bereit (aus index.html).');
-            // Stelle sicher, dass die handleSpotifySDKReady-Funktion in app.js existiert.
-            // Die app.js wird mit 'defer' geladen, sodass sie nach diesem Skript verfügbar sein sollte.
-            if (typeof handleSpotifySDKReady === 'function') {
-                handleSpotifySDKReady();
-            } else {
-                console.error("handleSpotifySDKReady Funktion in app.js nicht gefunden. Timing-Problem?");
-            }
-        };
-    </script>
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>BEREIT FÜR TRACK ATTACK? 005</h1>
-        <p>Melde dich mit deinem Premium-Account bei Spotify an, um das Spiel zu starten!</p>
-        <button id="spotify-auth-button">Spotify Login</button>
-        <p id="player-status" class="status-message"></p>
+    <div id="login-screen" class="screen active">
+        <h1>TRACK ATTACK</h1>
+        <p>Melde dich mit deinem Premium-Account bei Spotify an.</p>
+        <button id="spotify-login-button">Mit Spotify anmelden</button>
     </div>
 
-    <!-- Link zu unserem externen JavaScript-Skript -->
-    <!-- 'defer' stellt sicher, dass das Skript ausgeführt wird, nachdem das HTML geladen ist -->
-    <script src="app.js" defer></script>
+    <div id="game-screen" class="screen">
+        <h2>Bereit zum Angreifen?</h2>
+        <button id="start-game-button">TRACK ATTACK</button>
+        <p id="playback-status"></p>
+        </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
