@@ -239,10 +239,15 @@ async function initializeSpotifyPlayer() {
             // Füge eine kleine Verzögerung hinzu, um dem Player Zeit zu geben, sich vollständig einzustellen
             await new Promise(resolve => setTimeout(resolve, 500)); // 500ms Verzögerung hinzugefügt
 
-            playerStatus.textContent = "Spotify-Player bereit! Klicke 'TRACK ATTACK starten!' um ein Lied zu spielen.";
-            authButton.textContent = 'TRACK ATTACK starten!'; // Button-Text aktualisieren
-            authButton.disabled = false; // Button aktivieren
-            authButton.onclick = playRandomTrackFromPlaylist; // Button-Funktion zuweisen
+            // UI-Aktualisierung in setTimeout(0) verpacken für bessere Rendering-Konsistenz
+            setTimeout(() => {
+                playerStatus.textContent = "Spotify-Player bereit! Klicke 'TRACK ATTACK starten!' um ein Lied zu spielen.";
+                authButton.textContent = 'TRACK ATTACK starten!'; // Button-Text aktualisieren
+                authButton.disabled = false; // Button aktivieren
+                authButton.onclick = playRandomTrackFromPlaylist; // Button-Funktion zuweisen
+                console.log("UI update for button completed. Button should now say 'TRACK ATTACK starten!'.");
+            }, 0); // Defer to next event loop tick
+            
         } catch (error) {
             console.error('Fehler bei der Player-Bereitschaft oder Geräteübertragung:', error);
             playerStatus.textContent = `Fehler beim Starten des Players: ${error.message}. Dies kann auf ein Problem mit deinem Premium-Account, dem Spotify-Dienst oder deiner Netzwerkverbindung hindeuten. Bitte lade die Seite neu und versuche es erneut.`;
