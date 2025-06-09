@@ -186,6 +186,20 @@ function initializeSpotifyPlayer() {
         return;
     }
 
+    // Zusätzlicher Check, ob das Spotify SDK (window.Spotify) geladen ist
+    if (typeof Spotify === 'undefined' || !Spotify.Player) {
+        console.error("Spotify Web Playback SDK nicht geladen. Überprüfe die Skript-URL in index.html und deine Browser-Erweiterungen.");
+        playerStatus.textContent = "Fehler: Spotify Player konnte nicht geladen werden. Aktiviere ihn, indem du deine Browser-Erweiterungen überprüfst oder die Seite neu lädst.";
+        // Setze einen Timeout, falls das SDK asynchron und verzögert geladen wird
+        setTimeout(() => {
+            if (typeof Spotify === 'undefined' || !Spotify.Player) {
+                playerStatus.textContent = "Konnte Spotify Player nicht laden. Ist die Internetverbindung stabil? Oder blockiert eine Browser-Erweiterung das SDK?";
+            }
+        }, 3000); // Warte 3 Sekunden
+        return;
+    }
+
+
     player = new Spotify.Player({
         name: 'TRACK ATTACK Web Player', // Name deines Players
         getOAuthToken: cb => { cb(accessToken); }, // Funktion, die das Access Token bereitstellt
@@ -279,7 +293,7 @@ async function transferPlaybackToDevice(newDeviceId) {
  */
 async function playRandomTrackFromPlaylist() {
     if (!accessToken || !player || !deviceId) {
-        playerStatus.textContent = "Spotify-Player ist noch nicht bereit oder du bist nicht angemeldet. Bitte warte oder logge dich erneut ein.";
+        playerStatus.textContent = "Spotify-Player ist noch nicht bereit oder du bist nicht angemeldet. Bitte warte, bis der Player initialisiert ist, oder logge dich erneut ein.";
         console.error("Player nicht bereit oder Device ID fehlt.");
         return;
     }
@@ -328,22 +342,24 @@ async function playRandomTrackFromPlaylist() {
         console.log("Ausgewählter Track (SDK):", randomTrack.name, "von", randomTrack.artists.map(a => a.name).join(', '));
         console.log("Track URI (SDK):", trackUri);
 
-        // Zufällige Startposition im Track (innerhalb der ersten 30 Sekunden oder Songlänge-2s)
-        const startPosition = Math.floor(Math.random() * Math.max(1, (randomTrack.duration_ms || 30000) - 2000));
-
+        // Zufällige Startposition im Track (innerhalb der Songlänge-2s)
+        // Sicherstellen, dass der Track lang genug ist, um 2 Sekunden abzuspielen
+        const trackDuration = randomTrack.duration_ms || 30000; // Fallback auf 30s, falls duration_ms fehlt
+        const maxStartPosition = Math.max(1, trackDuration - 2000); // Mindestens 1ms, maximal Songlänge - 2s
+        const startPosition = Math.floor(Math.random() * maxStartPosition);
 
         // Wiedergabe über den Web Playback SDK Player starten
-        player.play({
+        await player.play({ // await hier hinzugefügt, um auf den Abschluss von play zu warten
             uris: [trackUri],
             position_ms: startPosition,
-            deviceId: deviceId // Sicherstellen, dass es auf unserem SDK-Gerät abgespielt wird
+            device_id: deviceId // Sicherstellen, dass es auf unserem SDK-Gerät abgespielt wird
         });
 
         playerStatus.textContent = `Spiele ${randomTrack.name}...`;
 
         // Nach 2 Sekunden pausieren
         setTimeout(async () => {
-            player.pause();
+            await player.pause(); // await hier hinzugefügt
             playerStatus.textContent = "Musik gespielt für 2 Sekunden. Rate den Song!";
             authButton.disabled = false;
             // Hier könntest du dann die Spielmechanik starten (Input-Feld, etc.)
@@ -352,7 +368,7 @@ async function playRandomTrackFromPlaylist() {
     } catch (error) {
         console.error('Fehler beim Abspielen des Songs mit SDK:', error);
         // Verbesserte Fehlermeldung für den Benutzer
-        playerStatus.textContent = `Fehler beim Abspielen: ${error.message}. Dies erfordert einen Premium-Account und den erfolgreichen Start des Spotify Web Players auf dieser Seite.`;
+        playerStatus.textContent = `Fehler beim Abspielen: ${error.message}. Dies erfordert einen Premium-Account und den erfolgreich verbundenen Spotify Player auf dieser Seite.`;
         authButton.disabled = false;
     }
 }
@@ -394,9 +410,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Listener, der ausgelöst wird, sobald das Spotify Web Playback SDK geladen ist
+// ACHTUNG: Diese Funktion muss global sein (nicht in DOMContentLoaded-Scope)
 window.onSpotifyWebPlaybackSDKReady = () => {
     console.log('Spotify Web Playback SDK ist bereit.');
     // Wenn bereits ein Access Token vorhanden ist (z.B. bei Reload), initialisiere den Player hier
+    // da `initializeSpotifyPlayer` auch 'ready'-Events behandelt und den `deviceId` setzt.
     if (accessToken) {
         initializeSpotifyPlayer();
     }
