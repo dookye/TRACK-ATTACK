@@ -360,6 +360,7 @@ function showGameScreen() {
     currentSongNumberDisplay.textContent = (currentPlayer === 'blue' ? songsPlayedBlue : songsPlayedYellow) + 1;
     // Beim ersten Betreten des GameScreens, setze den Track Attack Button zurück
     resetGameRoundUI();
+    startSongRound();
 }
 
 function showGameEndScreen() {
