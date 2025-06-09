@@ -225,15 +225,27 @@ function initializeSpotifyPlayer() {
     });
 
     // Event-Listener für den Player
-    player.addListener('ready', ({ device_id }) => {
+    player.addListener('ready', async ({ device_id }) => { // Hinzugefügt: 'async' für await
         deviceId = device_id;
         console.log('Ready with Device ID', deviceId);
-        playerStatus.textContent = "Spotify-Player bereit! Klicke 'TRACK ATTACK starten!' um ein Lied zu spielen.";
-        authButton.textContent = 'TRACK ATTACK starten!'; // Button-Text aktualisieren
-        authButton.disabled = false; // Button aktivieren
-        authButton.onclick = playRandomTrackFromPlaylist; // Button-Funktion zuweisen
-        // Wiedergabe auf diesen Player übertragen, sobald er bereit ist
-        transferPlaybackToDevice(deviceId);
+        
+        playerStatus.textContent = "Spotify-Player initialisiert. Übertrage Wiedergabe...";
+        
+        try {
+            // WICHTIG: Warte auf den Abschluss der Übertragung, bevor der Button aktiviert wird
+            await transferPlaybackToDevice(deviceId); 
+            console.log("Player und Gerät erfolgreich verbunden.");
+            playerStatus.textContent = "Spotify-Player bereit! Klicke 'TRACK ATTACK starten!' um ein Lied zu spielen.";
+            authButton.textContent = 'TRACK ATTACK starten!'; // Button-Text aktualisieren
+            authButton.disabled = false; // Button aktivieren
+            authButton.onclick = playRandomTrackFromPlaylist; // Button-Funktion zuweisen
+        } catch (error) {
+            console.error('Fehler bei der Player-Bereitschaft oder Geräteübertragung:', error);
+            playerStatus.textContent = `Fehler beim Starten des Players: ${error.message}. Bitte lade die Seite neu und versuche es erneut.`;
+            authButton.textContent = 'Fehler beim Starten des Players';
+            authButton.disabled = false; // Button wieder aktivieren für möglichen Neuanlauf
+            authButton.onclick = handleSpotifyAuth; // Fallback auf Re-Login
+        }
     });
 
     player.addListener('not_ready', ({ device_id }) => {
@@ -287,7 +299,7 @@ function initializeSpotifyPlayer() {
 async function transferPlaybackToDevice(newDeviceId) {
     if (!accessToken) {
         console.error("Kein Access Token verfügbar, Wiedergabe kann nicht transferiert werden.");
-        return;
+        throw new Error("Nicht authentifiziert."); // Werfe Fehler, damit initializeSpotifyPlayer ihn fängt
     }
 
     try {
@@ -310,7 +322,8 @@ async function transferPlaybackToDevice(newDeviceId) {
         console.log(`Wiedergabe erfolgreich auf Gerät ${newDeviceId} übertragen.`);
     } catch (error) {
         console.error('Fehler beim Transferieren der Wiedergabe:', error);
-        playerStatus.textContent = `Fehler beim Aktivieren des Players: ${error.message}`;
+        // playerStatus.textContent wird vom aufrufenden initializeSpotifyPlayer() gesetzt
+        throw error; // Fehler weiterwerfen
     }
 }
 
@@ -320,7 +333,7 @@ async function transferPlaybackToDevice(newDeviceId) {
  * Nutzt den integrierten Spotify Web Playback SDK Player.
  */
 async function playRandomTrackFromPlaylist() {
-    // Zusätzliche Überprüfung, ob der Player wirklich bereit ist
+    // Zusätzliche Überprüfung, ob der Player wirklich bereit und die play-Funktion verfügbar ist
     if (!accessToken || !player || typeof player.play !== 'function' || !deviceId) {
         playerStatus.textContent = "Spotify-Player ist noch nicht bereit oder du bist nicht angemeldet. Bitte warte, bis der Player initialisiert ist, oder logge dich erneut ein.";
         console.error("Player nicht bereit oder play-Funktion fehlt.");
@@ -379,6 +392,7 @@ async function playRandomTrackFromPlaylist() {
         const startPosition = Math.floor(Math.random() * maxStartPosition);
 
         // Wiedergabe über den Web Playback SDK Player starten
+        // KEIN 'device_id' Parameter hier! Der Player steuert sich selbst.
         await player.play({
             uris: [trackUri],
             position_ms: startPosition
