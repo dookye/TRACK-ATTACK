@@ -112,9 +112,9 @@ async function exchangeCodeForTokens(code) {
         console.log('Access Token erfolgreich erhalten.');
         localStorage.removeItem('code_verifier'); // Code Verifier ist jetzt nicht mehr nötig
 
-        // Der Player wird jetzt automatisch initialisiert, sobald das SDK geladen ist
-        // (durch window.onSpotifyWebPlaybackSDKReady).
-        // Wir warten dort auf die Player-Bereitschaft, bevor wir den Screen wechseln.
+        // Nach Erhalt des Tokens: Jetzt kann der Spotify Player initialisiert werden
+        // (dies wird durch window.onSpotifyWebPlaybackSDKReady ausgelöst, wenn das SDK geladen ist)
+        // und dann der Bildschirm gewechselt, sobald der Player bereit ist.
 
     } catch (error) {
         console.error('Fehler beim Token-Austausch:', error);
@@ -130,17 +130,24 @@ async function exchangeCodeForTokens(code) {
 window.onSpotifyWebPlaybackSDKReady = () => {
     console.log('Spotify Web Playback SDK ist bereit.');
 
+    // Stelle sicher, dass der Access Token hier verfügbar ist
     if (!accessToken) {
-        // Falls der Token noch nicht gesetzt ist (z.B. bei direktem Seitenaufruf ohne aktiven Login)
-        // Sollte normalerweise nicht passieren, wenn der Initialisierungsfluss korrekt ist.
-        console.warn('Access Token fehlt bei SDK-Bereitschaft. Versuche, von localStorage zu laden.');
         accessToken = localStorage.getItem('access_token');
         if (!accessToken) {
+            console.warn('Access Token fehlt bei SDK-Bereitschaft. Kann Player nicht initialisieren.');
             playbackStatus.textContent = 'Fehler: Kein Spotify Access Token. Bitte neu anmelden.';
             showLoginScreen();
             return;
         }
+        // Überprüfe, ob der Token abgelaufen ist
+        if (localStorage.getItem('expires_in') < Date.now()) {
+            console.warn('Access Token abgelaufen bei SDK-Bereitschaft. Bitte neu anmelden.');
+            playbackStatus.textContent = 'Deine Spotify-Sitzung ist abgelaufen. Bitte neu anmelden.';
+            showLoginScreen();
+            return;
+        }
     }
+
 
     player = new Spotify.Player({
         name: 'TRACK ATTACK Player',
@@ -154,7 +161,9 @@ window.onSpotifyWebPlaybackSDKReady = () => {
         isPlayerReady = true;
         playbackStatus.textContent = 'Spotify Player verbunden!';
         transferPlayback(device_id); // Übertrage die Wiedergabe auf unseren Player
-        showGameScreen(); // Jetzt ist der Player bereit, den Spiel-Screen zu zeigen
+
+        // WICHTIG: Screen-Wechsel hier, wenn der Player bereit ist
+        showGameScreen();
     });
 
     player.addListener('not_ready', ({ device_id }) => {
@@ -167,6 +176,8 @@ window.onSpotifyWebPlaybackSDKReady = () => {
         console.error('Initialisierungsfehler des Spotify Players:', message);
         playbackStatus.textContent = `Fehler beim Initialisieren des Players: ${message}`;
         isPlayerReady = false;
+        alert('Fehler beim Initialisieren des Spotify Players. Versuche es erneut.');
+        showLoginScreen(); // Zurück zum Login
     });
 
     player.addListener('authentication_error', ({ message }) => {
@@ -354,8 +365,8 @@ async function playRandomSongFromPlaylist() {
     } catch (error) {
         console.error('Fehler beim Abspielen des zufälligen Songs:', error);
         playbackStatus.textContent = `Fehler beim Abspielen: ${error.message}`;
-        if (error.message.includes("Premium account")) {
-            alert('Für dieses Spiel ist ein Spotify Premium Account erforderlich.');
+        if (error.message.includes("Premium account") || error.message.includes("Player command failed: Restricted device")) {
+            alert('Für dieses Spiel ist ein Spotify Premium Account erforderlich oder dein Gerät ist nicht aktiv. Bitte überprüfe deine Spotify-Einstellungen.');
             showLoginScreen();
         }
     }
@@ -395,22 +406,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Wir kommen von Spotify zurück, tauschen den Code aus
         console.log('Authorization Code erhalten, tausche ihn gegen Access Token.');
         exchangeCodeForTokens(code); // Holt den Token
-        // WICHTIG: player-Initialisierung und Screen-Wechsel erfolgen,
-        // sobald das SDK durch window.onSpotifyWebPlaybackSDKReady fertig ist
+        // Der Screen-Wechsel und Player-Initialisierung passiert,
+        // sobald das SDK durch window.onSpotifyWebPlaybackSDKReady fertig ist und der Player ready meldet.
         history.replaceState({}, document.title, REDIRECT_URI); // Saubere URL
     } else if (localStorage.getItem('access_token') && localStorage.getItem('expires_in') > Date.now()) {
         // Bereits eingeloggt und Token gültig
         accessToken = localStorage.getItem('access_token');
-        console.log('Vorhandenen Access Token aus localStorage geladen.');
+        console.log('Vorhandenen Access Token aus localStorage geladen. Warte auf Spotify SDK.');
         // Player-Initialisierung und Screen-Wechsel warten auf SDK-Bereitschaft
+        // showGameScreen(); // NICHT HIER, da der Player noch nicht bereit ist. Das übernimmt onSpotifyWebPlaybackSDKReady
     } else {
         // Nicht eingeloggt oder Token abgelaufen
         console.log('Kein gültiger Access Token vorhanden. Zeige Login-Screen.');
         showLoginScreen();
     }
 });
-
-// WICHTIG: Die SDK-Initialisierung findet global statt,
-// sobald das Spotify Web Playback SDK in der HTML-Datei geladen ist.
-// Der Code in window.onSpotifyWebPlaybackSDKReady wird ausgeführt,
-// sobald das SDK bereit ist, was unabhängig von DOMContentLoaded sein kann.
