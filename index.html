@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK</title>
+    <title>TRACK ATTACK - Musik Raten</title>
     <!-- Link zu unserem externen Stylesheet -->
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts: Inter für eine moderne Typografie -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Spotify Web Playback SDK -->
+    <script src="https://sdk.scdn.co/spotify-web-playback-sdk.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>BEREIT FÜR TRACK ATTACK? 003</h1>
+        <h1>BEREIT FÜR TRACK ATTACK?</h1>
         <p>Melde dich mit deinem Premium-Account bei Spotify an, um das Spiel zu starten!</p>
         <button id="spotify-auth-button">Spotify Login</button>
         <p id="player-status" class="status-message"></p>
     </div>
 
     <!-- Link zu unserem externen JavaScript-Skript -->
-    <!-- 'defer' stellt sicher, dass das Skript erst ausgeführt wird, wenn das HTML geladen ist -->
     <script src="app.js" defer></script>
 </body>
 </html>
