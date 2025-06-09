@@ -238,13 +238,13 @@ window.onSpotifyWebPlaybackSDKReady = () => {
     }
 };
 
-/**
+/**  ${SPOTIFY_API_BASE_URL}/me/player
  * Überträgt die Wiedergabe auf den neu erstellten Web Playback SDK Player.
  * @param {string} deviceId - Die ID des Players, auf den übertragen werden soll.
  */
 async function transferPlayback(deviceId) {
     try {
-        const response = await fetch(`${SPOTIFY_API_BASE_URL}/me/player`, {
+        const response = await fetch(`https://support.spotify.com/de/article/cannot-remember-login/`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
