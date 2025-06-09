@@ -10,9 +10,10 @@ const SCOPES = [
     'user-modify-playback-state'
 ];
 
-// --- SPOTIFY API ENDPUNKTE (KORRIGIERT!) ---
-const SPOTIFY_ACCOUNTS_URL = 'https://community.spotify.com/t5/Android/Login-button-not-working/td-p/4404439';
-const SPOTIFY_API_URL = 'https://support.spotify.com/de/article/cannot-remember-login/';
+// --- SPOTIFY API ENDPUNKTE ---
+const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // Direkter Autorisierungs-Endpunkt
+const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';      // Direkter Token-Endpunkt
+const SPOTIFY_API_BASE_URL = 'https://support.spotify.com/de/article/cannot-remember-login/';   // Basis für Web API calls (playlists, player control)
 
 // --- UI-ELEMENTE ---
 const loginScreen = document.getElementById('login-screen');
@@ -27,6 +28,7 @@ let player = null;
 let currentPlaylistTracks = [];
 let activeDeviceId = null;
 let isPlayerReady = false; // Flag, das auf true gesetzt wird, wenn der SDK-Player verbunden ist
+let isSpotifySDKLoaded = false; // NEU: Flag, das gesetzt wird, wenn das SDK geladen ist
 
 // --- PKCE HELFER-FUNKTIONEN ---
 function generateRandomString(length) {
@@ -68,8 +70,7 @@ async function redirectToSpotifyAuthorize() {
         code_challenge: codeChallenge,
     });
 
-    // Korrekte Spotify Authorize-URL
-    window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    window.location.href = `${SPOTIFY_AUTHORIZE_URL}?${params.toString()}`;
 }
 
 /**
@@ -95,8 +96,7 @@ async function exchangeCodeForTokens(code) {
     });
 
     try {
-        // Korrekte Spotify Token-URL
-        const response = await fetch('https://accounts.spotify.com/api/token', {
+        const response = await fetch(SPOTIFY_TOKEN_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -114,11 +114,8 @@ async function exchangeCodeForTokens(code) {
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('expires_in', Date.now() + data.expires_in * 1000); // Ablaufzeitpunkt speichern
 
-        console.log('Access Token erfolgreich erhalten.');
+        console.log('Access Token erfolgreich erhalten und gespeichert.');
         localStorage.removeItem('code_verifier'); // Code Verifier ist jetzt nicht mehr nötig
-
-        // Token wurde erfolgreich erhalten. Wir überlassen es dem SDK, den Player zu initialisieren
-        // und den Screen zu wechseln, wenn es bereit ist.
 
     } catch (error) {
         console.error('Fehler beim Token-Austausch:', error);
@@ -128,21 +125,29 @@ async function exchangeCodeForTokens(code) {
 }
 
 /**
- * Initialisiert den Spotify Web Playback SDK Player.
- * Dieser Callback wird vom Spotify SDK aufgerufen, sobald es vollständig geladen ist.
+ * NEUE FUNKTION: Initialisiert und verbindet den Spotify Player.
+ * Wird aufgerufen, wenn sowohl das SDK geladen als auch der Access Token verfügbar ist.
  */
-window.onSpotifyWebPlaybackSDKReady = () => {
-    console.log('Spotify Web Playback SDK ist bereit.');
+async function initializeSpotifyPlayer() {
+    console.log('Versuche Spotify Player zu initialisieren...');
 
-    // Stelle sicher, dass der Access Token hier verfügbar ist, bevor der Player erstellt wird
-    if (!accessToken) {
-        accessToken = localStorage.getItem('access_token');
-        if (!accessToken || localStorage.getItem('expires_in') < Date.now()) {
-            console.warn('Access Token fehlt oder ist abgelaufen bei SDK-Bereitschaft. Zeige Login-Screen.');
-            playbackStatus.textContent = 'Fehler: Spotify Session abgelaufen oder nicht angemeldet. Bitte neu anmelden.';
-            showLoginScreen();
-            return;
-        }
+    // Prüfe nochmals, ob alles bereit ist
+    if (!isSpotifySDKLoaded) {
+        console.warn('initializeSpotifyPlayer aufgerufen, aber SDK noch nicht geladen.');
+        return; // Warte auf window.onSpotifyWebPlaybackSDKReady
+    }
+    if (!accessToken || localStorage.getItem('expires_in') < Date.now()) {
+        console.warn('initializeSpotifyPlayer aufgerufen, aber Access Token fehlt oder ist abgelaufen. Zeige Login-Screen.');
+        playbackStatus.textContent = 'Fehler: Spotify Session abgelaufen oder nicht angemeldet. Bitte neu anmelden.';
+        showLoginScreen();
+        return;
+    }
+
+    // Wenn der Player bereits initialisiert ist, nichts tun
+    if (player) {
+        console.log('Spotify Player bereits initialisiert.');
+        showGameScreen(); // Zeige Game Screen, falls noch nicht geschehen
+        return;
     }
 
     player = new Spotify.Player({
@@ -211,7 +216,25 @@ window.onSpotifyWebPlaybackSDKReady = () => {
             console.warn('Verbindung zum Web Playback SDK Player fehlgeschlagen.');
             playbackStatus.textContent = 'Verbindung zum Spotify Player fehlgeschlagen.';
         }
+    }).catch(err => {
+        console.error('Fehler beim Verbinden des Players:', err);
+        playbackStatus.textContent = `Verbindung zum Player fehlgeschlagen: ${err.message}`;
     });
+}
+
+
+/**
+ * Globaler Callback für das Spotify Web Playback SDK.
+ * WIRD VOM SDK AUFGERUFEN, SOBALD ES GELADEN IST.
+ */
+window.onSpotifyWebPlaybackSDKReady = () => {
+    console.log('Spotify Web Playback SDK ist bereit (onSpotifyWebPlaybackSDKReady wurde ausgelöst).');
+    isSpotifySDKLoaded = true; // Setze das Flag
+
+    // Wenn der Access Token bereits verfügbar ist, können wir den Player jetzt initialisieren
+    if (accessToken) {
+        initializeSpotifyPlayer();
+    }
 };
 
 /**
@@ -220,8 +243,7 @@ window.onSpotifyWebPlaybackSDKReady = () => {
  */
 async function transferPlayback(deviceId) {
     try {
-        // Korrekte Spotify Player API-URL für Geräteübertragung
-        const response = await fetch('https://api.spotify.com/v1/me/player', {
+        const response = await fetch(`${SPOTIFY_API_BASE_URL}/me/player`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -229,7 +251,7 @@ async function transferPlayback(deviceId) {
             },
             body: JSON.stringify({
                 device_ids: [deviceId],
-                play: false // Nur Gerät aktivieren, nicht sofort abspielen
+                play: false
             })
         });
 
@@ -254,8 +276,7 @@ async function getPlaylistTracks() {
     }
     try {
         let allTracks = [];
-        // Korrekte Spotify Playlist API-URL
-        let nextUrl = `https://api.spotify.com/v1/playlists/${PLAYLIST_ID}/tracks?limit=100`;
+        let nextUrl = `${SPOTIFY_API_BASE_URL}/playlists/${PLAYLIST_ID}/tracks?limit=100`;
 
         while (nextUrl) {
             const response = await fetch(nextUrl, {
@@ -311,20 +332,16 @@ async function playRandomSongFromPlaylist() {
         const trackUri = randomTrackItem.track.uri;
         const trackDurationMs = randomTrackItem.track.duration_ms;
 
-        // Startposition: Zufällige Position innerhalb der ersten 80% des Songs
         const maxStartPositionMs = Math.floor(trackDurationMs * 0.8);
         const startPositionMs = Math.floor(Math.random() * maxStartPositionMs);
 
-        console.log(`Spiele Track: ${randomTrackItem.track.name} von ${randomTrackItem.track.artists[0].name}`);
-        console.log(`Track URI: ${trackUri}`);
-        console.log(`Startposition: ${startPositionMs}ms`);
+        console.log(`Versuche abzuspielen: ${randomTrackItem.track.name} (${trackUri})`);
+        console.log(`Sende PUT an: ${SPOTIFY_API_BASE_URL}/me/player/play`);
+        console.log(`Body der Anfrage:`, JSON.stringify({ uris: [trackUri], position_ms: startPositionMs }));
 
-        // WICHTIG: player.activateElement() für Nutzerinteraktion (oft notwendig in mobilen Browsern)
-        await player.activateElement();
+        await player.activateElement(); // Wichtig für Nutzerinteraktion
 
-        // Starten der Wiedergabe über die Web API mit dem Track URI
-        // Korrekte Spotify Player API-URL für Wiedergabe-Steuerung
-        const playResponse = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${activeDeviceId}`, {
+        const playResponse = await fetch(`${SPOTIFY_API_BASE_URL}/me/player/play`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -338,13 +355,13 @@ async function playRandomSongFromPlaylist() {
 
         if (!playResponse.ok) {
             const errorData = await playResponse.json();
+            console.error('Fehler-Response von /me/player/play:', errorData); // Logge die Fehlerdaten
             throw new Error(`Fehler beim Starten der Wiedergabe: ${playResponse.status} - ${errorData.error.message || playResponse.statusText}`);
         }
 
         playbackStatus.textContent = 'Spiele Song...';
         console.log('Song gestartet über Web API.');
 
-        // Stoppe nach 2 Sekunden (via SDK pause)
         setTimeout(() => {
             player.pause().then(() => {
                 playbackStatus.textContent = 'Song beendet.';
@@ -377,7 +394,7 @@ function showGameScreen() {
 }
 
 // --- INITIALISIERUNG BEIM LADEN DER SEITE ---
-document.addEventListener('DOMContentLoaded', async () => { // Async, um bei Bedarf await nutzen zu können
+document.addEventListener('DOMContentLoaded', async () => {
     // Event Listener für Buttons hinzufügen
     if (spotifyLoginButton) {
         spotifyLoginButton.addEventListener('click', redirectToSpotifyAuthorize);
@@ -395,25 +412,21 @@ document.addEventListener('DOMContentLoaded', async () => { // Async, um bei Bed
     const code = params.get('code');
 
     if (code) {
-        // Wir kommen von Spotify zurück, tauschen den Code aus
         console.log('Authorization Code erhalten, tausche ihn gegen Access Token.');
         await exchangeCodeForTokens(code); // Warten, bis der Token-Austausch abgeschlossen ist
-
-        // Der Screen-Wechsel und Player-Initialisierung passiert,
-        // sobald das SDK durch window.onSpotifyWebPlaybackSDKReady fertig ist und der Player ready meldet.
         history.replaceState({}, document.title, REDIRECT_URI); // Saubere URL
+        // Token wurde erhalten. Jetzt versuchen, den Player zu initialisieren
+        initializeSpotifyPlayer();
     } else if (localStorage.getItem('access_token') && localStorage.getItem('expires_in') > Date.now()) {
-        // Bereits eingeloggt und Token gültig
+        console.log('Vorhandenen Access Token aus localStorage geladen.');
         accessToken = localStorage.getItem('access_token');
-        console.log('Vorhandenen Access Token aus localStorage geladen. Warte auf Spotify SDK.');
-        // Der Screen-Wechsel wird durch onSpotifyWebPlaybackSDKReady ausgelöst, wenn der Player bereit ist.
+        // Token ist da. Jetzt versuchen, den Player zu initialisieren
+        initializeSpotifyPlayer();
     } else {
-        // Nicht eingeloggt oder Token abgelaufen
         console.log('Kein gültiger Access Token vorhanden. Zeige Login-Screen.');
         showLoginScreen();
     }
 });
 
-// WICHTIG: Die SDK-Skript-Referenz im HTML MUSS NACH dem body-Tag stehen,
-// aber das window.onSpotifyWebPlaybackSDKReady event wird ausgelöst,
-// sobald das SDK selbst geladen ist, unabhängig von DOMContentLoaded.
+// window.onSpotifyWebPlaybackSDKReady wird ausgelöst, sobald das SDK-Skript geladen ist.
+// Die eigentliche Player-Initialisierung ist jetzt in initializeSpotifyPlayer() gekapselt.
