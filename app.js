@@ -153,13 +153,11 @@ async function exchangeCodeForToken(code) {
         localStorage.setItem('spotify_token_expires_at', Date.now() + (tokenExpiresIn * 1000));
 
         console.log('Access Token erhalten:', accessToken);
-        playerStatus.textContent = "Du bist angemeldet! Initialisiere den Spotify-Player...";
-
-        // Initialisiere den Spotify Web Playback SDK Player nach erfolgreichem Token-Austausch
-        initializeSpotifyPlayer();
-        
-        authButton.textContent = 'TRACK ATTACK starten!';
-        authButton.onclick = playRandomTrackFromPlaylist; // Button-Funktion ändern
+        playerStatus.textContent = "Du bist angemeldet! Warte auf den Spotify-Player...";
+        // Die Initialisierung des Players erfolgt nun ausschließlich über window.onSpotifyWebPlaybackSDKReady
+        // Der Button wird erst nach Player-Bereitschaft auf "TRACK ATTACK starten!" gesetzt.
+        authButton.textContent = 'Spotify Player initialisieren...';
+        authButton.disabled = true; // Button deaktivieren, bis Player bereit ist
 
     } catch (error) {
         console.error('Fehler beim Token-Austausch:', error);
@@ -172,12 +170,18 @@ async function exchangeCodeForToken(code) {
 
 /**
  * Initialisiert den Spotify Web Playback SDK Player.
- * Diese Funktion wird aufgerufen, wenn das SDK geladen ist und ein Access Token verfügbar ist.
+ * Diese Funktion wird NUR aufgerufen, wenn das SDK geladen ist und ein Access Token verfügbar ist.
  */
 function initializeSpotifyPlayer() {
-    if (!accessToken) {
-        console.error("Kein Access Token verfügbar, Player kann nicht initialisiert werden.");
-        playerStatus.textContent = "Fehler: Nicht angemeldet, um den Player zu initialisieren.";
+    // Überprüfe, ob das Access Token noch gültig ist, bevor der Player initialisiert wird
+    const tokenExpiresAt = localStorage.getItem('spotify_token_expires_at');
+    if (!accessToken || (tokenExpiresAt && Date.now() > parseInt(tokenExpiresAt, 10))) {
+        console.warn("Access Token ungültig oder abgelaufen, kann Player nicht initialisieren.");
+        // Sollte eigentlich nicht passieren, wenn dieser Punkt über onSpotifyWebPlaybackSDKReady erreicht wird,
+        // aber als zusätzliche Absicherung.
+        playerStatus.textContent = "Bitte logge dich erneut ein, um den Player zu initialisieren.";
+        authButton.textContent = 'Spotify Login';
+        authButton.onclick = handleSpotifyAuth;
         return;
     }
 
@@ -186,19 +190,12 @@ function initializeSpotifyPlayer() {
         return;
     }
 
-    // Zusätzlicher Check, ob das Spotify SDK (window.Spotify) geladen ist
+    // Stelle sicher, dass das Spotify SDK (window.Spotify) wirklich geladen ist
     if (typeof Spotify === 'undefined' || !Spotify.Player) {
-        console.error("Spotify Web Playback SDK nicht geladen. Überprüfe die Skript-URL in index.html und deine Browser-Erweiterungen.");
-        playerStatus.textContent = "Fehler: Spotify Player konnte nicht geladen werden. Aktiviere ihn, indem du deine Browser-Erweiterungen überprüfst oder die Seite neu lädst.";
-        // Setze einen Timeout, falls das SDK asynchron und verzögert geladen wird
-        setTimeout(() => {
-            if (typeof Spotify === 'undefined' || !Spotify.Player) {
-                playerStatus.textContent = "Konnte Spotify Player nicht laden. Ist die Internetverbindung stabil? Oder blockiert eine Browser-Erweiterung das SDK?";
-            }
-        }, 3000); // Warte 3 Sekunden
+        console.error("Spotify Web Playback SDK nicht geladen. Dies sollte nicht passieren, wenn onSpotifyWebPlaybackSDKReady aufgerufen wurde.");
+        playerStatus.textContent = "Fehler: Spotify Player konnte nicht geladen werden. Browser-Erweiterungen prüfen oder Seite neu laden.";
         return;
     }
-
 
     player = new Spotify.Player({
         name: 'TRACK ATTACK Web Player', // Name deines Players
@@ -206,18 +203,22 @@ function initializeSpotifyPlayer() {
         volume: 0.5 // Standardlautstärke
     });
 
-    // Connect Listener
+    // Event-Listener für den Player
     player.addListener('ready', ({ device_id }) => {
         deviceId = device_id;
         console.log('Ready with Device ID', deviceId);
         playerStatus.textContent = "Spotify-Player bereit! Klicke 'TRACK ATTACK starten!' um ein Lied zu spielen.";
-        // Automatisches Transferieren der Wiedergabe auf diesen neuen Player, wenn er bereit ist
-        transferPlaybackToDevice(deviceId);
+        authButton.textContent = 'TRACK ATTACK starten!'; // Button-Text aktualisieren
+        authButton.disabled = false; // Button aktivieren
+        authButton.onclick = playRandomTrackFromPlaylist; // Button-Funktion ändern
+        transferPlaybackToDevice(deviceId); // Wiedergabe auf diesen Player übertragen
     });
 
     player.addListener('not_ready', ({ device_id }) => {
         console.log('Device ID has gone offline', device_id);
         playerStatus.textContent = "Spotify-Player nicht verfügbar. Stelle sicher, dass du Premium hast.";
+        authButton.textContent = 'Spotify Player nicht bereit';
+        authButton.disabled = true;
         deviceId = null; // Gerät ist nicht mehr verfügbar
     });
 
@@ -228,6 +229,9 @@ function initializeSpotifyPlayer() {
         } else {
             playerStatus.textContent = `Spotify-Fehler: ${message}`;
         }
+        authButton.textContent = 'Spotify Login';
+        authButton.onclick = handleSpotifyAuth; // Zurück zum Login
+        authButton.disabled = false;
     });
 
     player.addListener('authentication_error', ({ message }) => {
@@ -240,11 +244,13 @@ function initializeSpotifyPlayer() {
         localStorage.removeItem('spotify_token_expires_at');
         authButton.textContent = 'Spotify Login';
         authButton.onclick = handleSpotifyAuth;
+        authButton.disabled = false;
     });
 
     player.addListener('playback_error', ({ message }) => {
         console.error('Playback Error:', message);
         playerStatus.textContent = `Wiedergabefehler: ${message}`;
+        authButton.disabled = false; // Button wieder aktivieren, um erneuten Versuch zu ermöglichen
     });
 
     // Verbinde den Player mit Spotify
@@ -349,17 +355,18 @@ async function playRandomTrackFromPlaylist() {
         const startPosition = Math.floor(Math.random() * maxStartPosition);
 
         // Wiedergabe über den Web Playback SDK Player starten
-        await player.play({ // await hier hinzugefügt, um auf den Abschluss von play zu warten
+        // Verwende 'device_id' im Aufruf, um sicherzustellen, dass es auf unserem SDK-Gerät abgespielt wird
+        await player.play({
             uris: [trackUri],
             position_ms: startPosition,
-            device_id: deviceId // Sicherstellen, dass es auf unserem SDK-Gerät abgespielt wird
+            device_id: deviceId
         });
 
         playerStatus.textContent = `Spiele ${randomTrack.name}...`;
 
         // Nach 2 Sekunden pausieren
         setTimeout(async () => {
-            await player.pause(); // await hier hinzugefügt
+            await player.pause();
             playerStatus.textContent = "Musik gespielt für 2 Sekunden. Rate den Song!";
             authButton.disabled = false;
             // Hier könntest du dann die Spielmechanik starten (Input-Feld, etc.)
@@ -392,14 +399,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const storedTokenExpiresAt = localStorage.getItem('spotify_token_expires_at');
 
         if (storedAccessToken && storedTokenExpiresAt && Date.now() < parseInt(storedTokenExpiresAt, 10)) {
-            // Gültiges Token gefunden, setze die Variablen und aktualisiere den Button
+            // Gültiges Token gefunden, setze die Variablen
             accessToken = storedAccessToken;
             refreshToken = localStorage.getItem('spotify_refresh_token');
-            authButton.textContent = 'TRACK ATTACK starten!';
-            authButton.onclick = playRandomTrackFromPlaylist;
-            playerStatus.textContent = "Du bist bereits angemeldet! Initialisiere den Spotify-Player...";
-            // Initialisiere den Player sofort, wenn ein gültiges Token gefunden wird
-            initializeSpotifyPlayer();
+            playerStatus.textContent = "Du bist bereits angemeldet! Warte auf den Spotify-Player...";
+            authButton.textContent = 'Spotify Player initialisieren...';
+            authButton.disabled = true; // Button deaktivieren, bis Player bereit ist
+            // Die Player-Initialisierung erfolgt nun ausschließlich über window.onSpotifyWebPlaybackSDKReady
         } else {
             // Kein gültiges Token gefunden, zeige den initialen Login-Button an
             authButton.textContent = 'Spotify Login';
@@ -410,12 +416,25 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Listener, der ausgelöst wird, sobald das Spotify Web Playback SDK geladen ist
-// ACHTUNG: Diese Funktion muss global sein (nicht in DOMContentLoaded-Scope)
+// Diese Funktion MUSS global sein (window.onSpotifyWebPlaybackSDKReady)
 window.onSpotifyWebPlaybackSDKReady = () => {
     console.log('Spotify Web Playback SDK ist bereit.');
     // Wenn bereits ein Access Token vorhanden ist (z.B. bei Reload), initialisiere den Player hier
-    // da `initializeSpotifyPlayer` auch 'ready'-Events behandelt und den `deviceId` setzt.
-    if (accessToken) {
+    // Nur hier ist garantiert, dass `window.Spotify.Player` verfügbar ist.
+    const storedAccessToken = localStorage.getItem('spotify_access_token');
+    const storedTokenExpiresAt = localStorage.getItem('spotify_token_expires_at');
+
+    if (storedAccessToken && storedTokenExpiresAt && Date.now() < parseInt(storedTokenExpiresAt, 10)) {
+        accessToken = storedAccessToken; // Sicherstellen, dass accessToken gesetzt ist
         initializeSpotifyPlayer();
+    } else {
+        // Wenn kein gültiges Token beim Ready-Event, bleibt der Login-Button bestehen,
+        // was der Standardfall sein sollte, wenn der Benutzer noch nicht eingeloggt ist.
+        console.log("Spotify Web Playback SDK ist bereit, aber kein gültiges Access Token gefunden.");
+        // Der Button behält seine Login-Funktion bei (was Standard ist)
+        authButton.textContent = 'Spotify Login';
+        authButton.onclick = handleSpotifyAuth;
+        authButton.disabled = false;
+        playerStatus.textContent = "Bitte melde dich an, um zu spielen.";
     }
 };
