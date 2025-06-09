@@ -3,23 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK - Musik Raten</title>
+    <title>TRACK ATTACK</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
-    <div id="login-screen" class="screen active">
-        <h1>TRACK ATTACK 19</h1>
-        <p>Melde dich mit deinem Premium-Account bei Spotify an.</p>
-        <button id="spotify-login-button">Mit Spotify anmelden</button>
-    </div>
 
-    <div id="game-screen" class="screen">
-        <h2>Bereit zum Angreifen? 19</h2>
-        <button id="start-game-button">TRACK ATTACK</button>
-        <p id="playback-status"></p>
+    <div id="app-container">
+        <div id="login-screen" class="screen active">
+            <h1>TRACK ATTACK</h1>
+            <p>Verbinde dich mit deinem Spotify Premium Account, um zu spielen.</p>
+            <button id="spotify-login-button">Mit Spotify anmelden</button>
+            <p id="playback-status" class="status-message"></p>
         </div>
 
-    <script src="script.js"></script>
-</body>
+        <div id="gamemode-selection-screen" class="screen">
+            <h1>Wähle deinen Spielmodus</h1>
+            <div class="gamemode-buttons">
+                <button class="gamemode-button" data-duration="30">Normalo (30 Sekunden)</button>
+                <button class="gamemode-button" data-duration="10">Like a Pro (10 Sekunden)</button>
+                <button class="gamemode-button" data-duration="2">Bin ich geil oder was? (2 Sekunden)</button>
+                <button class="gamemode-button" data-duration="random">Wilde Fahrt (Zufällig 2-30 Sekunden)</button>
+            </div>
+        </div>
+
+        <div id="genre-selection-screen" class="screen">
+            <h1>Wähle dein Genre</h1>
+            <div id="genre-buttons" class="genre-buttons-container">
+                </div>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <h1 id="player-indicator">Spieler <span id="current-player-name">BLAU</span></h1>
+            <div class="score-display-container">
+                <p class="player-score-label blue-text">BLAU: <span id="score-blue">0</span></p>
+                <p class="player-score-label yellow-text">GELB: <span id="score-yellow">0</span></p>
+            </div>
+            <p class="song-count">Song <span id="current-song-number">1</span> von 10</p>
+
+            <button id="track-attack-button" class="action-button">TRACK ATTACK</button>
+
+            <div id="guess-controls" style="display: none; margin-top: 20px;">
+                <p id="feedback-message" class="feedback-message"></p>
+                <button id="reveal-button" class="game-button">AUFLÖSEN</button>
+                <button id="correct-button" class="game-button correct-button">RICHTIG</button>
+                <button id="wrong-button" class="game-button wrong-button">FALSCH</button>
+            </div>
+        </div>
+
+        <div id="game-end-screen" class="screen">
+            <h1>Spiel beendet!</h1>
+            <h2>Ergebnisse:</h2>
+            <p class="player-score-label blue-text">BLAU: <span id="final-score-blue">0</span> Punkte</p>
+            <p class="player-score-label yellow-text">GELB: <span id="final-score-yellow">0</span> Punkte</p>
+            <button id="next-attack-button" class="action-button">NEUES SPIEL STARTEN</button>
+        </div>
+    </div>
+
+    <script src="https://sdk.spotify.com/web-playback-sdk.js"></script>
+    <script src="script.js?v=2"></script> </body>
 </html>
