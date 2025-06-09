@@ -6,7 +6,7 @@ const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
 const REDIRECT_URI = 'https://dookye.github.io/musik-raten/';
 // Die Scopes, die wir benötigen (zusätzlich 'streaming' für das Web Playback SDK)
 const SCOPES = 'user-read-private user-read-email playlist-read-private user-modify-playback-state user-read-playback-state streaming';
-const PLAYLIST_ID = '39sVxPTg7BKwrf2MfgrtcD'; // Punk Rock (90's & 00's)
+const PLAYLIST_ID = '39sVxVxPTg7BKwrf2MfgrtcD'; // Punk Rock (90's & 00's)
 const AUTH_URL = 'https://accounts.spotify.com/authorize';
 const TOKEN_URL = 'https://accounts.spotify.com/api/token';
 
@@ -176,8 +176,8 @@ async function exchangeCodeForToken(code) {
  * Dies umgeht die Autoplay-Richtlinien der Browser.
  */
 function startSpotifyPlayer() {
-    if (player) {
-        console.log("Player bereits initialisiert. Starte Wiedergabe.");
+    if (player && typeof player.play === 'function' && deviceId) {
+        console.log("Player bereits initialisiert und bereit. Starte Wiedergabe.");
         playRandomTrackFromPlaylist(); // Wenn Player schon läuft, direkt Song abspielen
         return;
     }
@@ -355,8 +355,21 @@ async function playRandomTrackFromPlaylist() {
     // Zusätzliche Überprüfung, ob der Player wirklich bereit und die play-Funktion verfügbar ist
     if (!accessToken || !player || typeof player.play !== 'function' || !deviceId) {
         playerStatus.textContent = "Spotify-Player ist noch nicht bereit oder du bist nicht angemeldet. Bitte warte, bis der Player initialisiert ist, oder logge dich erneut ein.";
-        console.error("Player nicht bereit oder play-Funktion fehlt.");
-        authButton.disabled = false; // Button wieder aktivieren für erneuten Versuch
+        console.error("Player nicht bereit oder play-Funktion fehlt. Versuche Re-Initialisierung.");
+        // Versuche, den Player neu zu verbinden, falls er den Zustand verloren hat
+        authButton.disabled = true;
+        playerStatus.textContent = "Player nicht bereit. Versuche erneute Verbindung...";
+        try {
+            await initializeSpotifyPlayer(); // Versuche den Player neu zu initialisieren
+            // Nach erfolgreicher Re-Initialisierung wird der Button-Status vom 'ready' Listener gesetzt.
+            // Die Funktion beendet sich hier, der nächste Klickversuch sollte dann funktionieren.
+        } catch (error) {
+            console.error("Fehler bei der Re-Initialisierung des Players:", error);
+            playerStatus.textContent = `Player konnte nicht reinitialisiert werden: ${error.message}.`;
+            authButton.textContent = 'Spotify Login';
+            authButton.onclick = handleSpotifyAuth;
+            authButton.disabled = false;
+        }
         return;
     }
 
