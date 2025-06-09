@@ -12,7 +12,7 @@ const SCOPES = [
 
 // --- SPOTIFY API ENDPUNKTE (DIES SIND DIE KORREKTEN, KEINE PLATZHALTER MEHR!) ---
 const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // Direkter Autorisierungs-Endpunkt für den Browser-Redirect
-const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';  // Direkter Token-Austausch-Endpunkt (Accounts Service)
+const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';  // **DIESE MUSS ES SEIN!** Direkter Token-Austausch-Endpunkt (Accounts Service)
 const SPOTIFY_API_BASE_URL  = 'https://support.spotify.com/de/article/cannot-remember-login/'; // Basis-URL für die Spotify Web API (Player, Playlists, etc.)
 
 // --- UI-ELEMENTE ---
