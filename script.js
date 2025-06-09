@@ -460,8 +460,11 @@ async function startSongRound() {
                 throw new Error(`Fehler beim Laden der Playlist-Tracks: ${response.status} - ${errorData.error.message || response.statusText}`);
             }
             const data = await response.json();
+            // Wir filtern nur noch nach 'is_local' Tracks, da Premium-User volle Tracks streamen können, nicht nur Previews.
+            allTracks = allTracks.concat(data.items.filter(item => item.track && !item.track.is_local));
+            
             // Filtere nach Tracks, die keine lokalen Dateien sind und eine Preview-URL haben (Wichtig für Playback)
-            allTracks = allTracks.concat(data.items.filter(item => item.track && !item.track.is_local && item.track.preview_url));
+            // allTracks = allTracks.concat(data.items.filter(item => item.track && !item.track.is_local && item.track.preview_url));
             nextUrl = data.next;
         }
 
