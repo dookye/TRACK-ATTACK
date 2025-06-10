@@ -134,7 +134,7 @@ body:fullscreen {
     opacity: 0; /* Standardmäßig versteckt */
     transition: opacity 0.8s ease-in-out; /* Sanftes Einblenden */
     position: absolute; /* Positioniert sich relativ zum .game-container */
-    bottom: 10%; /* Abstand vom unteren Rand des .game-container */
+    bottom: 50%; /* Abstand vom unteren Rand des .game-container */
     left: 50%;
     transform: translateX(-50%); /* Horizontal zentrieren */
     width: 90%; /* Nimmt 90% der Breite des game-containers ein */
@@ -156,7 +156,7 @@ body:fullscreen {
     border: 2px solid #1DB954; /* Spotify Grün */
     border-radius: 8px;
     padding: 20px;
-    background-color: rgba(29, 185, 84, 0.1); /* Leicht transparenter Spotify-Grün-Hintergrund */
+    background-color: rgba(29, 185, 84, 0.5); /* Leicht transparenter Spotify-Grün-Hintergrund */
     width: 100%; /* Nimmt die volle Breite des Eltern-Containers ein */
     box-sizing: border-box;
 }
