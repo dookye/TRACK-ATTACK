@@ -128,7 +128,7 @@ body:fullscreen {
 
 .inactive-logo {
     /* --- ÄNDERUNG HIER: brightness für den inaktiven Zustand --- */
-    filter: brightness(30%); /* Dunkler, wenn deaktiviert */
+    filter: brightness(17%); /* Dunkler, wenn deaktiviert */
 }
 /* Login-Bereich Styling */
 #login-area {
