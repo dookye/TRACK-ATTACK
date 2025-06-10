@@ -166,7 +166,7 @@ body:fullscreen {
     border: 2px solid #1DB954; /* Spotify Grün */
     border-radius: 8px;
     padding: 20px;
-    background-color: rgba(29, 185, 84, 0.5); /* Leicht transparenter Spotify-Grün-Hintergrund */
+    background-color: rgba(0, 125, 84, 0.93); /* Leicht transparenter Spotify-Grün-Hintergrund */
     width: 100%; /* Nimmt die volle Breite des Eltern-Containers ein */
     box-sizing: border-box;
 }
