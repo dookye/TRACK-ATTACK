@@ -122,28 +122,26 @@ body:fullscreen {
 }
 
 #game-logo {
+    /* KEIN filter: brightness(...) hier! KEIN filter: drop-shadow(...) hier! */
+    /* NUR die Transition für den Filter und andere allgemeine Eigenschaften */
+    transition: filter 1s ease-in-out; /* Das ist entscheidend für den Übergang */
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
     max-width: 90%;
     max-height: 90%;
     height: auto;
     object-fit: contain;
     cursor: pointer;
-    transition: filter 1s ease-in-out;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
-
-    /* --- NEU: Entfernen des Tap-Highlights und der Outline --- */
-    -webkit-tap-highlight-color: transparent; /* Für Webkit-Browser (iOS, Android Chrome) */
-    outline: none; /* Entfernt den Fokus-Outline, der oft auch blau sein kann */
 }
 
-
 .active-logo {
+    /* HIER sind BEIDE Filter in einer Zeile kombiniert */
     filter: brightness(100%) drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
-    /* transform: scale(1.02); WIRD HIER ENTFERNT, da es Teil des Bounce-Effekts wird */
 }
 
 .inactive-logo {
-    filter: brightness(17%) drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
-    /* transform: scale(1); WIRD HIER ENTFERNT */
+    /* HIER sind BEIDE Filter in einer Zeile kombiniert */
+    filter: brightness(30%) drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
 }
 
 /* --- NEU: Keyframes für den Bouncing-Effekt --- */
