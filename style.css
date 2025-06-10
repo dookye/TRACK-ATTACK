@@ -1,237 +1,171 @@
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #1DB954; /* Spotify Green */
-    color: #fff;
+/* Grundlegende Einstellungen */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Verhindert Scrollbalken */
+    background-color: black; /* Schwarzer Hintergrund */
+    font-family: Arial, sans-serif; /* Standard-Schriftart */
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    overflow: hidden;
+    color: white;
     text-align: center;
 }
 
-.screen {
-    display: none; /* Standardmäßig alle Bildschirme ausblenden */
+/* Vollbildmodus für mobile Browser erzwingen (experimentell, aber hilfreich) */
+body:-webkit-full-screen {
+    width: 100%;
+    height: 100%;
+}
+body:-moz-full-screen {
+    width: 100%;
+    height: 100%;
+}
+body:-ms-full-screen {
+    width: 100%;
+    height: 100%;
+}
+body:fullscreen {
+    width: 100%;
+    height: 100%;
+}
+
+/* Landscape-Modus Erzwingung für mobile Geräte */
+/* Dieser Teil wird nur auf kleineren Bildschirmen (vermutlich Handys/Tablets) aktiv */
+@media screen and (max-width: 992px) { /* Beispiel-Breakpoint, anpassen falls nötig */
+    body {
+        /* Dreht den Inhalt, wenn im Hochformat */
+        transform: rotate(90deg);
+        transform-origin: bottom left;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100vh; /* viewport height */
+        height: 100vw; /* viewport width */
+        overflow: hidden;
+    }
+
+    /* Das Overlay, das erscheint, wenn im Hochformat */
+    #orientation-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9); /* Dunkles, halbtransparentes Overlay */
+        color: white;
+        display: none; /* Standardmäßig versteckt */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999; /* Immer im Vordergrund */
+        font-size: 1.5em;
+        padding: 20px;
+        box-sizing: border-box;
+        text-align: center;
+        /* Behebt die Drehung für das Overlay selbst */
+        transform: rotate(-90deg) translate(-100%, 0);
+        transform-origin: top left;
+        width: 100vh;
+        height: 100vw;
+    }
+
+    /* Wenn der Body im Querformat ist, das Overlay verstecken */
+    body:not([style*="transform: rotate(90deg)"]) #orientation-overlay {
+        display: none !important;
+    }
+}
+
+/* Zentrieren des gesamten Spielinhalts */
+.game-container {
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* Logo Styling */
+#logo-container {
+    margin-bottom: 20px; /* Abstand zum Login-Bereich */
+}
+
+#game-logo {
+    max-width: 80%; /* Logo nimmt maximal 80% der Breite ein */
+    max-height: 80vh; /* Logo nimmt maximal 80% der Viewport-Höhe ein */
+    height: auto;
+    cursor: pointer; /* Zeigt an, dass es ein Klick-Element ist */
+    transition: filter 1s ease-in-out; /* Übergang für Helligkeit */
+    filter: brightness(100%); /* Starthelligkeit */
+}
+
+.active-logo {
+    filter: brightness(100%); /* Hell zu Beginn */
+}
+
+.inactive-logo {
+    filter: brightness(30%); /* Dunkler, wenn deaktiviert */
+}
+
+/* Login-Bereich Styling */
+#login-area {
+    opacity: 0; /* Standardmäßig versteckt */
+    transition: opacity 0.8s ease-in-out; /* Sanftes Einblenden */
+    position: absolute; /* Positionierung relativ zum Container */
+    bottom: 10%; /* Abstand vom unteren Rand */
+    left: 50%;
+    transform: translateX(-50%); /* Horizontal zentrieren */
+}
+
+#login-area.hidden {
+    display: none; /* Sorgt dafür, dass es im DOM nicht vorhanden ist, wenn hidden */
+}
+
+#login-area.visible {
+    opacity: 1; /* Sichtbar machen */
+    display: block; /* Wieder anzeigen */
+}
+
+
+.spotify-box {
+    border: 2px solid #1DB954; /* Spotify Grün */
+    border-radius: 8px;
     padding: 20px;
-    background-color: #191414; /* Spotify Black */
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    max-width: 500px;
-    width: 90%;
-    min-height: 300px;
+    background-color: rgba(29, 185, 84, 0.1); /* Leicht transparenter Spotify-Grün-Hintergrund */
+    max-width: 400px;
+    margin: 0 auto;
 }
 
-.screen.active {
-    display: flex; /* Aktiven Bildschirm anzeigen */
-}
-
-h1 {
-    font-size: 3.5em;
-    margin-bottom: 20px;
-    color: #1DB954; /* Spotify Green */
-    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-}
-
-h2 {
-    font-size: 2.5em;
-    margin-bottom: 30px;
-}
-
-p {
+#login-hint {
     font-size: 1.2em;
-    margin-bottom: 30px;
-}
-
-button {
-    background-color: #1DB954; /* Spotify Green */
+    margin-bottom: 15px;
     color: white;
-    border: none;
-    padding: 15px 30px;
-    font-size: 1.4em;
-    font-weight: bold;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-button:hover {
-    background-color: #2CDA7B; /* Lighter Green on hover */
-    transform: translateY(-2px);
-}
-
-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-}
-
-#playback-status {
-    margin-top: 20px;
-    font-size: 1.1em;
-    color: #bbb;
-}
-
-/* Grundlegende Layouts für Screens */
-body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    background-color: #333; /* Standard-Hintergrundfarbe */
-    color: white;
-    transition: background-color 0.5s ease; /* Übergang für Hintergrundfarbe */
-}
-
-#app-container {
-    background-color: #222;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-    text-align: center;
-    width: 90%;
-    max-width: 600px;
-}
-
-.screen {
-    display: none; /* Alle Bildschirme standardmäßig ausblenden */
-}
-
-.screen.active {
-    display: block; /* Nur den aktiven Bildschirm anzeigen */
-}
-
-h1 {
-    color: #1DB954; /* Spotify Grün */
-    margin-bottom: 20px;
-}
-
-button {
+.spotify-button {
     background-color: #1DB954; /* Spotify Grün */
     color: white;
     border: none;
+    border-radius: 500px; /* Stark abgerundete Ecken für Spotify-Look */
     padding: 12px 25px;
-    margin: 10px 5px;
-    border-radius: 25px;
-    cursor: pointer;
     font-size: 1.1em;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-button:hover:not(:disabled) {
-    background-color: #1ed760;
-    transform: translateY(-2px);
-}
-
-button:disabled {
-    background-color: #555;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-/* Spezifische Button-Stile */
-.gamemode-buttons, .genre-buttons-container {
-    margin-top: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px; /* Abstand zwischen Buttons */
-}
-
-.gamemode-button, .genre-button {
-    flex: 1 1 auto; /* Erlaubt Buttons, sich anzupassen */
-    min-width: 150px;
-    max-width: 250px;
-}
-
-.action-button {
-    padding: 15px 30px;
-    font-size: 1.3em;
-    margin-top: 30px;
-}
-
-.game-button {
-    padding: 10px 20px;
-    font-size: 1em;
-}
-
-.correct-button {
-    background-color: #28a745; /* Grün */
-}
-.correct-button:hover:not(:disabled) {
-    background-color: #218838;
-}
-
-.wrong-button {
-    background-color: #dc3545; /* Rot */
-}
-.wrong-button:hover:not(:disabled) {
-    background-color: #c82333;
-}
-
-input[type="text"] {
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #555;
-    background-color: #444;
-    color: white;
-    width: calc(100% - 22px); /* Breite anpassen */
-    max-width: 300px;
-    margin-bottom: 15px;
-    font-size: 1em;
-}
-
-.status-message, .feedback-message {
-    margin-top: 15px;
-    font-style: italic;
-}
-
-.score-display-container {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    margin-top: 20px;
-    font-size: 1.2em;
-}
-
-.player-score-label {
     font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Abstand zwischen Icon und Text */
+    transition: background-color 0.3s ease;
 }
 
-/* Spieler-Farben für Hintergrund */
-body.player-blue {
-    background-color: #3f51b5; /* Dunkelblau */
-}
-body.player-yellow {
-    background-color: #ffc107; /* Dunkelgelb */
+.spotify-button:hover {
+    background-color: #1ed760; /* Helleres Grün beim Hover */
 }
 
-.blue-text { color: #8c9eff; } /* Helleres Blau für Text */
-.yellow-text { color: #fff3e0; } /* Helleres Gelb für Text */
-
-/* Player-Indikator */
-#player-indicator {
-    font-size: 1.8em;
-    margin-bottom: 15px;
-}
-#player-indicator #current-player-name {
-    padding: 5px 10px;
-    border-radius: 5px;
-    display: inline-block;
-}
-
-body.player-blue #player-indicator #current-player-name {
-    background-color: #8c9eff;
-    color: #1a237e;
-}
-body.player-yellow #player-indicator #current-player-name {
-    background-color: #fff3e0;
-    color: #ff6f00;
+.spotify-icon {
+    width: 24px; /* Größe des Spotify Icons */
+    height: 24px;
 }
