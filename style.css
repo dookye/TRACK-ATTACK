@@ -116,9 +116,16 @@ body:fullscreen {
     height: auto;
     object-fit: contain;
     cursor: pointer;
-    /* --- ÄNDERUNG HIER: Statt filter verwenden wir opacity --- */
     transition: opacity 1s ease-in-out; /* Übergang für Opacity */
-    opacity: 1; /* Starthelligkeit (voll sichtbar) */
+    /* --- ÄNDERUNG HIER: opacity: 1; WURDE ENTFERNT! --- */
+}
+
+.active-logo {
+    opacity: 1; /* Hell zu Beginn (voll sichtbar) */
+}
+
+.inactive-logo {
+    opacity: 0.3; /* Dunkler, wenn deaktiviert (30% sichtbar, 70% transparent) */
 }
 
 .active-logo {
