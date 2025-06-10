@@ -37,6 +37,15 @@
         const orientationOverlay = document.getElementById('orientation-overlay');
         const initialClickBlocker = document.getElementById('initial-click-blocker');
 
+        // --- TEMPORÄRER DEBUG-CODE: Prüfen, ob der Blocker Klicks abfängt ---
+        if (initialClickBlocker) {
+            initialClickBlocker.addEventListener('click', (event) => {
+                console.log("Klick auf initialClickBlocker abgefangen!");
+                event.stopPropagation(); // Verhindert, dass der Klick weiter nach unten durchgereicht wird
+            });
+        }
+        // --- ENDE TEMPORÄRER DEBUG-CODE ---
+
         // Funktion zum Erzwingen des Vollbildmodus
         function requestFullscreen() {
             const docEl = document.documentElement;
