@@ -131,24 +131,27 @@ body:fullscreen {
 
 /* Login-Bereich Styling */
 #login-area {
-    opacity: 0; /* Standardmäßig versteckt */
-    transition: opacity 0.8s ease-in-out; /* Sanftes Einblenden */
-    position: absolute; /* Positioniert sich relativ zum .game-container */
-    bottom: 50%; /* Abstand vom unteren Rand des .game-container */
-    left: 50%;
-    transform: translateX(-50%); /* Horizontal zentrieren */
-    width: 90%; /* Nimmt 90% der Breite des game-containers ein */
-    max-width: 400px; /* Begrenzt die maximale Breite des Login-Bereichs */
-    box-sizing: border-box; /* Padding wird in die Breite eingerechnet */
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    /* --- ÄNDERUNGEN HIER für mittige Positionierung --- */
+    position: absolute; /* Bleibt absolut, aber anders zentriert */
+    top: 50%; /* 50% vom oberen Rand des game-containers */
+    left: 50%; /* 50% vom linken Rand des game-containers */
+    transform: translate(-50%, -50%); /* Zentriert den Kasten an seinem eigenen Mittelpunkt */
+    width: 90%;
+    max-width: 400px;
+    box-sizing: border-box;
 }
 
 #login-area.hidden {
-    display: none; /* Sorgt dafür, dass es im DOM nicht vorhanden ist, wenn hidden */
+    /* Wichtig: Um sicherzustellen, dass es nicht im DOM ist, wenn es versteckt ist,
+       und keine Interaktionen zulässt, auch wenn es transparent ist. */
+    display: none;
 }
 
 #login-area.visible {
-    opacity: 1; /* Sichtbar machen */
-    display: block; /* Wieder anzeigen */
+    opacity: 1;
+    display: block; /* Wieder anzeigen, wenn sichtbar */
 }
 
 
