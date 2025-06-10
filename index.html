@@ -3,62 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK</title>
+    <title>Musik-Rate-Spiel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="app-container">
-        <div id="login-screen" class="screen active">
-            <h1>TRACK ATTACK 5</h1>
-            <p>Verbinde dich mit deinem Spotify Premium Account, um zu spielen.</p>
-            <button id="spotify-login-button">Mit Spotify anmelden</button>
-            <p id="playback-status" class="status-message"></p>
+    <div id="orientation-overlay">
+        <p>Bitte drehe dein Gerät in den Querformat-Modus.</p>
+    </div>
+
+    <div class="game-container">
+        <div id="logo-container">
+            <img src="path/to/your/logo.png" alt="Spiel Logo" id="game-logo" class="active-logo">
         </div>
 
-        <div id="gamemode-selection-screen" class="screen">
-            <h1>Wähle deinen Spielmodus</h1>
-            <div class="gamemode-buttons">
-                <button class="gamemode-button" data-duration="30">Normalo (30 Sekunden)</button>
-                <button class="gamemode-button" data-duration="10">Like a Pro (10 Sekunden)</button>
-                <button class="gamemode-button" data-duration="2">Bin ich geil oder was? (2 Sekunden)</button>
-                <button class="gamemode-button" data-duration="random">Wilde Fahrt (Zufällig 2-30 Sekunden)</button>
+        <div id="login-area" class="hidden">
+            <div class="spotify-box">
+                <p id="login-hint">Bitte logge dich mit deinem Spotify-Konto ein, um das Spiel zu starten.</p>
+                <button id="spotify-login-button" class="spotify-button">
+                    <img src="path/to/spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
+                    Mit Spotify einloggen
+                </button>
             </div>
-        </div>
-
-        <div id="genre-selection-screen" class="screen">
-            <h1>Wähle dein Genre</h1>
-            <div id="genre-buttons" class="genre-buttons-container">
-                </div>
-        </div>
-
-        <div id="game-screen" class="screen">
-            <h1 id="player-indicator">Spieler <span id="current-player-name">BLAU</span></h1>
-            <div class="score-display-container">
-                <p class="player-score-label blue-text">BLAU: <span id="score-blue">0</span></p>
-                <p class="player-score-label yellow-text">GELB: <span id="score-yellow">0</span></p>
-            </div>
-            <p class="song-count">Song <span id="current-song-number">1</span> von 10</p>
-
-            <button id="track-attack-button" class="action-button">TRACK ATTACK</button>
-
-            <div id="guess-controls" style="display: none; margin-top: 20px;">
-                <p id="feedback-message" class="feedback-message"></p>
-                <button id="reveal-button" class="game-button">AUFLÖSEN</button>
-                <button id="correct-button" class="game-button correct-button">RICHTIG</button>
-                <button id="wrong-button" class="game-button wrong-button">FALSCH</button>
-            </div>
-        </div>
-
-        <div id="game-end-screen" class="screen">
-            <h1>Spiel beendet!</h1>
-            <h2>Ergebnisse:</h2>
-            <p class="player-score-label blue-text">BLAU: <span id="final-score-blue">0</span> Punkte</p>
-            <p class="player-score-label yellow-text">GELB: <span id="final-score-yellow">0</span> Punkte</p>
-            <button id="next-attack-button" class="action-button">NEUES SPIEL STARTEN</button>
         </div>
     </div>
 
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
-    <script src="script.js?v=5"></script> </body>
+    <script>
+        // Hier kommt später unser JavaScript-Code rein
+        // Temporäre Platzhalter, die wir gleich im nächsten Schritt befüllen
+        const logo = document.getElementById('game-logo');
+        const loginArea = document.getElementById('login-area');
+        const spotifyLoginButton = document.getElementById('spotify-login-button');
+        const orientationOverlay = document.getElementById('orientation-overlay');
+
+        // Funktion zum Erzwingen des Vollbildmodus
+        function requestFullscreen() {
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen();
+            } else if (docEl.mozRequestFullScreen) { /* Firefox */
+                docEl.mozRequestFullScreen();
+            } else if (docEl.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                docEl.webkitRequestFullscreen();
+            } else if (docEl.msRequestFullscreen) { /* IE/Edge */
+                docEl.msRequestFullscreen();
+            }
+        }
+
+        // Bei Klick auf das Dokument oder den Login-Button den Vollbildmodus anfordern
+        document.addEventListener('click', () => {
+            requestFullscreen();
+        });
+
+        // Logik für den Landscape-Modus-Hinweis (wird später in style.css gesteuert)
+        function checkOrientation() {
+            if (window.innerHeight > window.innerWidth) { // Hochformat
+                orientationOverlay.style.display = 'flex';
+            } else { // Querformat
+                orientationOverlay.style.display = 'none';
+            }
+        }
+
+        // Beim Laden der Seite und bei Änderungen der Bildschirmgröße prüfen
+        window.addEventListener('load', checkOrientation);
+        window.addEventListener('resize', checkOrientation);
+
+        // JavaScript für die Animation des Logos und Einblenden des Login-Bereichs
+        window.onload = () => {
+            setTimeout(() => {
+                logo.classList.remove('active-logo'); // Entfernt die Helligkeit
+                logo.classList.add('inactive-logo'); // Fügt die Dunkelheit hinzu
+
+                // Nach der Animation des Logos den Login-Bereich einblenden
+                setTimeout(() => {
+                    loginArea.classList.remove('hidden');
+                    loginArea.classList.add('visible');
+                }, 500); // 0.5 Sekunden nach dem Abdunkeln des Logos
+            }, 1500); // 1.5 Sekunden Verzögerung, bevor das Logo dunkler wird
+        };
+    </script>
+</body>
 </html>
