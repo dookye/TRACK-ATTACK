@@ -116,26 +116,20 @@ body:fullscreen {
     height: auto;
     object-fit: contain;
     cursor: pointer;
-    transition: opacity 1s ease-in-out; /* Übergang für Opacity */
-    /* --- ÄNDERUNG HIER: opacity: 1; WURDE ENTFERNT! --- */
+    /* --- ÄNDERUNG HIER: transition ist wieder auf filter --- */
+    transition: filter 1s ease-in-out;
+    /* --- WICHTIG: KEINE filter: brightness(...) hier! Die wird durch die Klassen gesetzt. --- */
 }
 
 .active-logo {
-    opacity: 1; /* Hell zu Beginn (voll sichtbar) */
+    /* --- ÄNDERUNG HIER: brightness für den aktiven Zustand --- */
+    filter: brightness(100%); /* Hell zu Beginn */
 }
 
 .inactive-logo {
-    opacity: 0.3; /* Dunkler, wenn deaktiviert (30% sichtbar, 70% transparent) */
+    /* --- ÄNDERUNG HIER: brightness für den inaktiven Zustand --- */
+    filter: brightness(30%); /* Dunkler, wenn deaktiviert */
 }
-
-.active-logo {
-    opacity: 1; /* Hell zu Beginn (voll sichtbar) */
-}
-
-.inactive-logo {
-    opacity: 0.3; /* Dunkler, wenn deaktiviert (30% sichtbar, 70% transparent) */
-}
-
 /* Login-Bereich Styling */
 #login-area {
     opacity: 0;
