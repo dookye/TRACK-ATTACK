@@ -7,14 +7,16 @@ html, body {
     overflow: hidden; /* Verhindert Scrollbalken */
     background-color: black; /* Schwarzer Hintergrund */
     font-family: Arial, sans-serif; /* Standard-Schriftart */
+    color: white;
+    text-align: center;
+    /* Grundlegende Flexbox-Zentrierung für den Body */
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
-    text-align: center;
 }
 
 /* Vollbildmodus für mobile Browser erzwingen (experimentell, aber hilfreich) */
+/* Diese Regeln helfen, den Vollbildmodus auf verschiedenen Browsern zu stylen */
 body:-webkit-full-screen {
     width: 100%;
     height: 100%;
@@ -32,31 +34,24 @@ body:fullscreen {
     height: 100%;
 }
 
-/* Landscape-Modus Erzwingung für mobile Geräte */
-/* Dieser Teil wird nur auf kleineren Bildschirmen (vermutlich Handys/Tablets) aktiv */
-@media screen and (max-width: 992px) { /* Beispiel-Breakpoint, anpassen falls nötig */
-    body {
-        /* Dreht den Inhalt, wenn im Hochformat */
-        transform: rotate(90deg);
-        transform-origin: bottom left;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100vh; /* viewport height */
-        height: 100vw; /* viewport width */
-        overflow: hidden;
-    }
+/* --- Mobile spezifische Anpassungen und Landscape-Modus --- */
+/* Diese @media Query wird nur auf Geräten mit einer maximalen Breite von 992px aktiv.
+   Du kannst diesen Wert anpassen, wenn du eine andere Definition für "kleiner Bildschirm" hast. */
+@media screen and (max-width: 992px) {
+    /* Wichtig: Wir drehen NICHT den Body direkt, sondern nutzen ein Overlay und passen den Inhalt an.
+       Die eigentliche Drehung des Bildschirms wird vom Betriebssystem erzwungen,
+       wir zeigen nur einen Hinweis an, wenn es falsch ist. */
 
-    /* Das Overlay, das erscheint, wenn im Hochformat */
+    /* Das Overlay, das erscheint, wenn im Hochformat (Portrait) */
     #orientation-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.9); /* Dunkles, halbtransparentes Overlay */
+        background-color: rgba(0, 0, 0, 0.95); /* Dunkles, fast undurchsichtiges Overlay */
         color: white;
-        display: none; /* Standardmäßig versteckt */
+        display: none; /* Standardmäßig versteckt, wird per JS/Media Query eingeblendet */
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -65,18 +60,30 @@ body:fullscreen {
         padding: 20px;
         box-sizing: border-box;
         text-align: center;
-        /* Behebt die Drehung für das Overlay selbst */
-        transform: rotate(-90deg) translate(-100%, 0);
-        transform-origin: top left;
-        width: 100vh;
-        height: 100vw;
     }
 
-    /* Wenn der Body im Querformat ist, das Overlay verstecken */
-    body:not([style*="transform: rotate(90deg)"]) #orientation-overlay {
-        display: none !important;
+    /* Zeige das Overlay nur an, wenn der Bildschirm im Hochformat ist */
+    @media (orientation: portrait) {
+        #orientation-overlay {
+            display: flex; /* Zeigt das Overlay im Hochformat an */
+        }
+        /* Verstecke den eigentlichen Spielinhalt, wenn das Overlay aktiv ist */
+        .game-container {
+            display: none;
+        }
+    }
+
+    /* Stelle sicher, dass der Spielinhalt im Querformat sichtbar ist */
+    @media (orientation: landscape) {
+        #orientation-overlay {
+            display: none; /* Verstecke das Overlay im Querformat */
+        }
+        .game-container {
+            display: flex; /* Stelle sicher, dass der Spielinhalt sichtbar ist */
+        }
     }
 }
+
 
 /* Zentrieren des gesamten Spielinhalts */
 .game-container {
@@ -86,19 +93,30 @@ body:fullscreen {
     align-items: center;
     width: 100%;
     height: 100%;
+    /* Max-Breite, damit es auf großen Bildschirmen nicht zu riesig wird */
+    max-width: 1200px; /* Beispielwert, kann angepasst werden */
+    max-height: 800px; /* Beispielwert, kann angepasst werden */
+    margin: auto; /* Zentriert den Container im Body */
+    position: relative; /* Wichtig für die Positionierung des Login-Bereichs */
 }
 
 /* Logo Styling */
 #logo-container {
     margin-bottom: 20px; /* Abstand zum Login-Bereich */
+    display: flex; /* Auch hier Flexbox für interne Zentrierung, falls nötig */
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Nimmt die volle Breite des Containers ein */
+    height: 70%; /* Nimmt einen Großteil der Höhe für das Logo ein */
 }
 
 #game-logo {
-    max-width: 80%; /* Logo nimmt maximal 80% der Breite ein */
-    max-height: 80vh; /* Logo nimmt maximal 80% der Viewport-Höhe ein */
+    max-width: 90%; /* Logo nimmt maximal 90% der Breite des Containers ein */
+    max-height: 90%; /* Logo nimmt maximal 90% der Höhe des Containers ein */
     height: auto;
-    cursor: pointer; /* Zeigt an, dass es ein Klick-Element ist */
-    transition: filter 1s ease-in-out; /* Übergang für Helligkeit */
+    object-fit: contain; /* Stellt sicher, dass das Bild im Rahmen bleibt und skaliert */
+    cursor: pointer;
+    transition: filter 1s ease-in-out;
     filter: brightness(100%); /* Starthelligkeit */
 }
 
@@ -114,10 +132,13 @@ body:fullscreen {
 #login-area {
     opacity: 0; /* Standardmäßig versteckt */
     transition: opacity 0.8s ease-in-out; /* Sanftes Einblenden */
-    position: absolute; /* Positionierung relativ zum Container */
-    bottom: 10%; /* Abstand vom unteren Rand */
+    position: absolute; /* Positioniert sich relativ zum .game-container */
+    bottom: 10%; /* Abstand vom unteren Rand des .game-container */
     left: 50%;
     transform: translateX(-50%); /* Horizontal zentrieren */
+    width: 90%; /* Nimmt 90% der Breite des game-containers ein */
+    max-width: 400px; /* Begrenzt die maximale Breite des Login-Bereichs */
+    box-sizing: border-box; /* Padding wird in die Breite eingerechnet */
 }
 
 #login-area.hidden {
@@ -135,8 +156,8 @@ body:fullscreen {
     border-radius: 8px;
     padding: 20px;
     background-color: rgba(29, 185, 84, 0.1); /* Leicht transparenter Spotify-Grün-Hintergrund */
-    max-width: 400px;
-    margin: 0 auto;
+    width: 100%; /* Nimmt die volle Breite des Eltern-Containers ein */
+    box-sizing: border-box;
 }
 
 #login-hint {
@@ -159,6 +180,8 @@ body:fullscreen {
     justify-content: center;
     gap: 10px; /* Abstand zwischen Icon und Text */
     transition: background-color 0.3s ease;
+    width: 100%; /* Button nimmt volle Breite des Containers ein */
+    box-sizing: border-box;
 }
 
 .spotify-button:hover {
