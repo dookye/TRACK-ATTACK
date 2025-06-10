@@ -131,7 +131,7 @@ body:fullscreen {
 }
 
 .inactive-logo {
-    filter: brightness(30%) drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
+    filter: brightness(17%) drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
     /* transform: scale(1); WIRD HIER ENTFERNT */
 }
 
