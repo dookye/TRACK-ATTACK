@@ -81,6 +81,31 @@
                 }, 1500); // 0.5 Sekunden nach dem Abdunkeln des Logos
             }, 1500); // 1.5 Sekunden Verzögerung, bevor das Logo dunkler wird
         };
+
+         // --- NEU: Event Listener für den Bounce-Effekt beim Klick auf das Logo ---
+        logo.addEventListener('click', () => {
+            // Sicherstellen, dass die Animation nur ausgelöst wird, wenn der Button "aktiv" ist,
+            // was er nach dem Abdunkeln nicht mehr ist.
+            // Später wird diese Logik angepasst, wenn der Logo-Button die Play/Pause-Funktion steuert.
+            // Für den Startbildschirm können wir es erstmal so lassen, dass er beim Klick bouncen würde.
+            // Wichtig: Der Logo-Button ist ja aktuell "deaktiviert", wenn er dunkel ist.
+            // Der Bounce soll also nur bei Klick passieren, wenn er aktiv ist oder später als Play/Pause fungiert.
+            // Aktuell ist er nur dekorativ beim Startbildschirm.
+
+            // Um den Bounce sofort zu sehen, können wir ihn trotzdem auslösen, auch wenn er inaktiv ist:
+            logo.classList.remove('logo-bounce'); // Entfernt die Klasse, um die Animation zurückzusetzen
+            void logo.offsetWidth; // Erzwingt einen Reflow, damit die Animation neu startet
+            logo.classList.add('logo-bounce'); // Fügt die Klasse wieder hinzu
+
+            // Optional: Entferne die Klasse nach der Animationsdauer, damit sie erneut ausgelöst werden kann
+            // In diesem Fall, da wir `logo.classList.remove()` vor jedem Klick machen, ist das nicht zwingend nötig.
+            // Aber es ist eine gute Praxis, wenn man nur einmal die Animation auslösen möchte.
+            // setTimeout(() => {
+            //     logo.classList.remove('logo-bounce');
+            // }, 600); // Nach 0.6 Sekunden (Dauer der Animation)
+        });
+
+        
     </script>
 </body>
 </html>
