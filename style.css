@@ -116,20 +116,45 @@ body:fullscreen {
     height: auto;
     object-fit: contain;
     cursor: pointer;
-    /* --- ÄNDERUNG HIER: transition ist wieder auf filter --- */
-    transition: filter 1s ease-in-out;
-    /* --- WICHTIG: KEINE filter: brightness(...) hier! Die wird durch die Klassen gesetzt. --- */
+    /* transition für Helligkeit und Schatten bleibt */
+    transition: filter 1s ease-in-out; /* Kein transform hier mehr, das machen wir für den Bounce-Effekt anders */
+
+    /* Standard-Schatten für den plastischen Effekt (wie vorher) */
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
 }
 
 .active-logo {
-    /* --- ÄNDERUNG HIER: brightness für den aktiven Zustand --- */
-    filter: brightness(100%); /* Hell zu Beginn */
+    filter: brightness(100%) drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
+    /* transform: scale(1.02); WIRD HIER ENTFERNT, da es Teil des Bounce-Effekts wird */
 }
 
 .inactive-logo {
-    /* --- ÄNDERUNG HIER: brightness für den inaktiven Zustand --- */
-    filter: brightness(17%); /* Dunkler, wenn deaktiviert */
+    filter: brightness(30%) drop-shadow(0 0 5px rgba(255, 255, 255, 0.2));
+    /* transform: scale(1); WIRD HIER ENTFERNT */
 }
+
+/* --- NEU: Keyframes für den Bouncing-Effekt --- */
+@keyframes bounce {
+    0% { transform: scale(1); }
+    20% { transform: scale(1.08); /* Start des Bounce, größer */ }
+    40% { transform: scale(0.98); /* Etwas zurückfedern, kleiner */ }
+    60% { transform: scale(1.06); /* Zweiter kleinerer Sprung */ }
+    80% { transform: scale(0.99); /* Wieder etwas zurück */ }
+    100% { transform: scale(1); /* Endzustand, Originalgröße */ }
+}
+
+/* --- NEU: Klasse für den Bouncing-Effekt --- */
+.logo-bounce {
+    animation: bounce 0.6s ease-out; /* Animation anwenden: 0.6 Sekunden Dauer, sanfter Endzustand */
+}
+
+/* --- ENTFERNE DEN VORHERIGEN :hover-Effekt, falls er noch da ist --- */
+/*
+#game-logo:hover {
+    filter: brightness(110%) drop-shadow(0 0 20px rgba(255, 255, 255, 0.9));
+    transform: scale(1.05);
+}
+*/
 /* Login-Bereich Styling */
 #login-area {
     opacity: 0;
