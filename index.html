@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK 10</title>
+    <title>TRACK ATTACK 11</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -117,13 +117,19 @@
             }, 1500); // 1.5 Sekunden Verzögerung, bevor das Logo dunkler wird
         };
 
-        // Event Listener für den Bounce-Effekt beim Klick auf das Logo
+       // Event Listener für den Bounce-Effekt beim Klick auf das Logo
         logo.addEventListener('click', () => {
-            logo.classList.remove('logo-bounce');
-            void logo.offsetWidth;
-            logo.classList.add('logo-bounce');
+            // NEU: Nur bouncen, wenn das Logo die 'active-logo'-Klasse hat
+            if (logo.classList.contains('active-logo')) {
+                logo.classList.remove('logo-bounce'); // Entfernt die Klasse
+                void logo.offsetWidth; // Erzwingt Reflow, damit die Animation neu starten kann
+                logo.classList.add('logo-bounce'); // Fügt die Klasse wieder hinzu
+                console.log("Logo bouncet! (Aktiver Zustand)"); // Optional: Zur Überprüfung in der Konsole
+            } else {
+                console.log("Logo ist inaktiv, kein Bounce."); // Optional: Zur Überprüfung in der Konsole
+            }
         });
-
+        
         // Event Listener für den Spotify Login Button
         // Dieser wird dann später deinen Spotify Login Code aufrufen
         spotifyLoginButton.addEventListener('click', () => {
