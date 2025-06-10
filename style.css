@@ -116,12 +116,14 @@ body:fullscreen {
     height: auto;
     object-fit: contain;
     cursor: pointer;
-    /* transition für Helligkeit und Schatten bleibt */
-    transition: filter 1s ease-in-out; /* Kein transform hier mehr, das machen wir für den Bounce-Effekt anders */
-
-    /* Standard-Schatten für den plastischen Effekt (wie vorher) */
+    transition: filter 1s ease-in-out;
     filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+
+    /* --- NEU: Entfernen des Tap-Highlights und der Outline --- */
+    -webkit-tap-highlight-color: transparent; /* Für Webkit-Browser (iOS, Android Chrome) */
+    outline: none; /* Entfernt den Fokus-Outline, der oft auch blau sein kann */
 }
+
 
 .active-logo {
     filter: brightness(100%) drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
@@ -212,6 +214,8 @@ body:fullscreen {
     transition: background-color 0.3s ease;
     width: 100%; /* Button nimmt volle Breite des Containers ein */
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
 }
 
 .spotify-button:hover {
