@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK4</title>
+    <title>TRACK ATTACK 6</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+    <div id="initial-click-blocker"></div>
 
     <div id="orientation-overlay">
         <p>Please rotate your device to landscape mode</p>
@@ -14,14 +16,14 @@
 
     <div class="game-container">
         <div id="logo-container">
-            <img src="logo3.png" alt="Spiel Logo" id="game-logo" class="active-logo">
+            <img src="path/to/your/logo.png" alt="Spiel Logo" id="game-logo" class="active-logo">
         </div>
 
         <div id="login-area" class="hidden">
             <div class="spotify-box">
                 <p id="login-hint">To play this game, a Spotify Premium account is required. Please log in to your Spotify account to continue</p>
                 <button id="spotify-login-button" class="spotify-button">
-                    <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
+                    <img src="path/to/spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
                     Log in with Spotify
                 </button>
             </div>
@@ -29,12 +31,11 @@
     </div>
 
     <script>
-        // Hier kommt später unser JavaScript-Code rein
-        // Temporäre Platzhalter, die wir gleich im nächsten Schritt befüllen
         const logo = document.getElementById('game-logo');
         const loginArea = document.getElementById('login-area');
         const spotifyLoginButton = document.getElementById('spotify-login-button');
         const orientationOverlay = document.getElementById('orientation-overlay');
+        const initialClickBlocker = document.getElementById('initial-click-blocker');
 
         // Funktion zum Erzwingen des Vollbildmodus
         function requestFullscreen() {
@@ -50,12 +51,25 @@
             }
         }
 
-        // Bei Klick auf das Dokument oder den Login-Button den Vollbildmodus anfordern
-        document.addEventListener('click', () => {
-            requestFullscreen();
-        });
+        // Variable, um zu verfolgen, ob der Vollbildmodus schon angefordert wurde
+        let fullscreenRequested = false;
 
-        // Logik für den Landscape-Modus-Hinweis (wird später in style.css gesteuert)
+        // Funktion, die den Vollbildmodus auslöst und sich selbst deaktiviert
+        function activateFullscreenAndRemoveListener() {
+            if (!fullscreenRequested) {
+                requestFullscreen();
+                fullscreenRequested = true; // Markieren, dass es versucht wurde
+                // Nach dem ersten Klick (z.B. auf den Login-Button), der Fullscreen auslösen soll,
+                // brauchen wir den generellen Listener nicht mehr.
+                document.removeEventListener('click', activateFullscreenAndRemoveListener);
+            }
+        }
+
+        // --- NEU: Den Event Listener für den Vollbildmodus erst hinzufügen, wenn der Blocker entfernt ist ---
+        // Dies wird in der window.onload-Funktion passieren, wenn der Login-Bereich sichtbar wird.
+
+
+        // Logik für den Landscape-Modus-Hinweis
         function checkOrientation() {
             if (window.innerHeight > window.innerWidth) { // Hochformat
                 orientationOverlay.style.display = 'flex';
@@ -68,44 +82,48 @@
         window.addEventListener('load', checkOrientation);
         window.addEventListener('resize', checkOrientation);
 
-        // JavaScript für die Animation des Logos und Einblenden des Login-Bereichs
-        window.onload = () => {
-            setTimeout(() => {
-                logo.classList.remove('active-logo'); // Entfernt die Helligkeit
-                logo.classList.add('inactive-logo'); // Fügt die Dunkelheit hinzu
 
-                // Nach der Animation des Logos den Login-Bereich einblenden
+        // JavaScript für die Animation des Logos (Abdunkeln) und Einblenden des Login-Bereichs
+        window.onload = () => {
+            // Nach der Animation und dem Erscheinen des Login-Bereichs den Blocker entfernen
+            setTimeout(() => {
+                logo.classList.remove('active-logo');
+                logo.classList.add('inactive-logo');
+
                 setTimeout(() => {
                     loginArea.classList.remove('hidden');
                     loginArea.classList.add('visible');
-                }, 1500); // 0.5 Sekunden nach dem Abdunkeln des Logos
+
+                    // Den Klick-Blocker entfernen, wenn der Login-Bereich sichtbar ist
+                    if (initialClickBlocker) {
+                        initialClickBlocker.style.display = 'none';
+                    }
+
+                    // --- NEU: Jetzt den Event Listener für den Vollbildmodus hinzufügen ---
+                    // Dieser Listener fängt den ersten Klick (z.B. auf den Spotify-Login-Button) ab.
+                    // Er wird nur einmal ausgelöst und entfernt sich dann selbst.
+                    document.addEventListener('click', activateFullscreenAndRemoveListener);
+
+                }, 1300); // 0.5 Sekunden nach dem Abdunkeln des Logos
             }, 1500); // 1.5 Sekunden Verzögerung, bevor das Logo dunkler wird
         };
 
-         // --- NEU: Event Listener für den Bounce-Effekt beim Klick auf das Logo ---
+        // Event Listener für den Bounce-Effekt beim Klick auf das Logo
         logo.addEventListener('click', () => {
-            // Sicherstellen, dass die Animation nur ausgelöst wird, wenn der Button "aktiv" ist,
-            // was er nach dem Abdunkeln nicht mehr ist.
-            // Später wird diese Logik angepasst, wenn der Logo-Button die Play/Pause-Funktion steuert.
-            // Für den Startbildschirm können wir es erstmal so lassen, dass er beim Klick bouncen würde.
-            // Wichtig: Der Logo-Button ist ja aktuell "deaktiviert", wenn er dunkel ist.
-            // Der Bounce soll also nur bei Klick passieren, wenn er aktiv ist oder später als Play/Pause fungiert.
-            // Aktuell ist er nur dekorativ beim Startbildschirm.
-
-            // Um den Bounce sofort zu sehen, können wir ihn trotzdem auslösen, auch wenn er inaktiv ist:
-            logo.classList.remove('logo-bounce'); // Entfernt die Klasse, um die Animation zurückzusetzen
-            void logo.offsetWidth; // Erzwingt einen Reflow, damit die Animation neu startet
-            logo.classList.add('logo-bounce'); // Fügt die Klasse wieder hinzu
-
-            // Optional: Entferne die Klasse nach der Animationsdauer, damit sie erneut ausgelöst werden kann
-            // In diesem Fall, da wir `logo.classList.remove()` vor jedem Klick machen, ist das nicht zwingend nötig.
-            // Aber es ist eine gute Praxis, wenn man nur einmal die Animation auslösen möchte.
-            // setTimeout(() => {
-            //     logo.classList.remove('logo-bounce');
-            // }, 600); // Nach 0.6 Sekunden (Dauer der Animation)
+            logo.classList.remove('logo-bounce');
+            void logo.offsetWidth;
+            logo.classList.add('logo-bounce');
         });
 
-        
+        // Event Listener für den Spotify Login Button
+        // Dieser wird dann später deinen Spotify Login Code aufrufen
+        spotifyLoginButton.addEventListener('click', () => {
+            console.log("Spotify Login Button geklickt!");
+            // Hier kommt später dein Spotify Login Code rein
+            // Er wird dann auch den activateFullscreenAndRemoveListener() auslösen,
+            // falls der Benutzer nicht schon vorher woanders geklickt hat.
+        });
+
     </script>
 </body>
 </html>
