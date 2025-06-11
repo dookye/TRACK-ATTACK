@@ -272,44 +272,55 @@ async function transferPlayback(deviceId) {
     }
 }
 
+// === START BUTTON: TRACK ATTACK ===
+startGameBtn.addEventListener('click', async () => {
+    if (!accessToken || !isPlayerReady) {
+        console.warn('Token oder Player nicht bereit');
+        return;
+    }
+
+    // Zufällige Playlist auswählen
+    selectedPlaylistId = playlistIds[Math.floor(Math.random() * playlistIds.length)];
+    console.log('Zufällige Playlist:', selectedPlaylistId);
+
+    await getPlaylistTracks(selectedPlaylistId);
+
+    if (currentPlaylistTracks.length > 0) {
+        await playFirstTrack();
+        showGameScreen();
+    } else {
+        playbackStatus.textContent = 'Fehler: Playlist ist leer oder konnte nicht geladen werden.';
+    }
+});
+
 /**
  * Holt die Tracks einer bestimmten Playlist.
  */
-async function getPlaylistTracks() {
-    if (currentPlaylistTracks.length > 0) {
-        return currentPlaylistTracks; // Bereits geladen
+async function getPlaylistTracks(playlistId) {
+    if (!playlistId) {
+        console.warn('Keine Playlist-ID übergeben');
+        return;
     }
+
+    const endpoint = `${SPOTIFY_API_BASE_URL}/playlists/${playlistId}/tracks`;
     try {
-        let allTracks = [];
-        let nextUrl = `${SPOTIFY_API_BASE_URL}/playlists/${PLAYLIST_ID}/tracks?limit=100`;
-
-        while (nextUrl) {
-            const response = await fetch(nextUrl, {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                }
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`Fehler beim Laden der Playlist-Tracks: ${response.status} - ${errorData.error.message || response.statusText}`);
+        const response = await fetch(endpoint, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
             }
+        });
 
-            const data = await response.json();
-            allTracks = allTracks.concat(data.items.filter(item => item.track && !item.track.is_local));
-            nextUrl = data.next;
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Fehler beim Abrufen der Playlist: ${response.status} – ${errorData.error.message}`);
         }
-        currentPlaylistTracks = allTracks;
-        console.log(`Geladene Tracks aus Playlist: ${currentPlaylistTracks.length}`);
-        if (currentPlaylistTracks.length === 0) {
-            console.warn('Keine spielbaren Tracks in der Playlist gefunden.');
-            playbackStatus.textContent = 'Achtung: Keine spielbaren Tracks in der Playlist gefunden. Stelle sicher, dass die Playlist Tracks enthält und in deinem Markt verfügbar sind.';
-        }
-        return currentPlaylistTracks;
+
+        const data = await response.json();
+        currentPlaylistTracks = data.items.filter(item => item.track && item.track.preview_url); // Optional: nur Tracks mit Previews
+        console.log(`Playlist (${playlistId}) geladen. Tracks:`, currentPlaylistTracks.length);
     } catch (error) {
-        console.error('Fehler beim Laden der Playlist-Tracks:', error);
-        playbackStatus.textContent = `Fehler beim Laden der Playlist: ${error.message}`;
-        return [];
+        console.error('Fehler bei getPlaylistTracks():', error);
+        currentPlaylistTracks = [];
     }
 }
 
