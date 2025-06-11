@@ -1,7 +1,7 @@
 // --- KONSTANTEN ---
 const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
 const REDIRECT_URI = 'https://dookye.github.io/musik-raten/';
-const PLAYLIST_ID = '39sVxPTg7BKwrf2MfgrtcD'; // Punk Rock (90's & 00's)
+const PLAYLIST_ID = '2ZnrLLb3q9qEmpzDApzKMe';'36UqUEUrE2siIfs7lsWw4x'; // Punk Rock (90's & 00's)
 const SCOPES = [
     'user-read-private',
     'user-read-email',
@@ -371,7 +371,7 @@ async function playRandomSongFromPlaylist() {
                 console.error('Fehler beim Pausieren des Songs via SDK:', pauseError);
                 playbackStatus.textContent = `Fehler beim Stoppen: ${pauseError.message}`;
             });
-        }, 2000);
+        }, 5000);
 
     } catch (error) {
         console.error('Fehler beim Abspielen des zufälligen Songs:', error);
