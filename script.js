@@ -1,10 +1,7 @@
 // --- KONSTANTEN ---
 const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
 const REDIRECT_URI = 'https://dookye.github.io/musik-raten/';
-const playlistIds = [
-    '2ZnrLLb3q9qEmpzDApzKMe',
-    '36UqUEUrE2siIfs7lsWw4x',
-];
+const PLAYLIST_ID = '39sVxPTg7BKwrf2MfgrtcD'; // Punk Rock (90's & 00's)
 const SCOPES = [
     'user-read-private',
     'user-read-email',
@@ -33,7 +30,6 @@ let currentPlaylistTracks = [];
 let activeDeviceId = null;
 let isPlayerReady = false; // Flag, das auf true gesetzt wird, wenn der SDK-Player verbunden ist
 let isSpotifySDKLoaded = false; // NEU: Flag, das gesetzt wird, wenn das SDK geladen ist
-let selectedPlaylistId = null;
 
 // --- PKCE HELFER-FUNKTIONEN ---
 function generateRandomString(length) {
@@ -272,49 +268,44 @@ async function transferPlayback(deviceId) {
     }
 }
 
-
-    // Zufällige Playlist auswählen
-    selectedPlaylistId = playlistIds[Math.floor(Math.random() * playlistIds.length)];
-    console.log('Zufällige Playlist:', selectedPlaylistId);
-
-    await getPlaylistTracks(selectedPlaylistId);
-
-    if (currentPlaylistTracks.length > 0) {
-        await playFirstTrack();
-        showGameScreen();
-    } else {
-        playbackStatus.textContent = 'Fehler: Playlist ist leer oder konnte nicht geladen werden.';
-    }
-});
-
 /**
  * Holt die Tracks einer bestimmten Playlist.
  */
-async function getPlaylistTracks(playlistId) {
-    if (!playlistId) {
-        console.warn('Keine Playlist-ID übergeben');
-        return;
+async function getPlaylistTracks() {
+    if (currentPlaylistTracks.length > 0) {
+        return currentPlaylistTracks; // Bereits geladen
     }
-
-    const endpoint = `${SPOTIFY_API_BASE_URL}/playlists/${playlistId}/tracks`;
     try {
-        const response = await fetch(endpoint, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
+        let allTracks = [];
+        let nextUrl = `${SPOTIFY_API_BASE_URL}/playlists/${PLAYLIST_ID}/tracks?limit=100`;
+
+        while (nextUrl) {
+            const response = await fetch(nextUrl, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`Fehler beim Laden der Playlist-Tracks: ${response.status} - ${errorData.error.message || response.statusText}`);
             }
-        });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Fehler beim Abrufen der Playlist: ${response.status} – ${errorData.error.message}`);
+            const data = await response.json();
+            allTracks = allTracks.concat(data.items.filter(item => item.track && !item.track.is_local));
+            nextUrl = data.next;
         }
-
-        const data = await response.json();
-        currentPlaylistTracks = data.items.filter(item => item.track && item.track.preview_url); // Optional: nur Tracks mit Previews
-        console.log(`Playlist (${playlistId}) geladen. Tracks:`, currentPlaylistTracks.length);
+        currentPlaylistTracks = allTracks;
+        console.log(`Geladene Tracks aus Playlist: ${currentPlaylistTracks.length}`);
+        if (currentPlaylistTracks.length === 0) {
+            console.warn('Keine spielbaren Tracks in der Playlist gefunden.');
+            playbackStatus.textContent = 'Achtung: Keine spielbaren Tracks in der Playlist gefunden. Stelle sicher, dass die Playlist Tracks enthält und in deinem Markt verfügbar sind.';
+        }
+        return currentPlaylistTracks;
     } catch (error) {
-        console.error('Fehler bei getPlaylistTracks():', error);
-        currentPlaylistTracks = [];
+        console.error('Fehler beim Laden der Playlist-Tracks:', error);
+        playbackStatus.textContent = `Fehler beim Laden der Playlist: ${error.message}`;
+        return [];
     }
 }
 
@@ -439,4 +430,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // window.onSpotifyWebPlaybackSDKReady wird ausgelöst, sobald das SDK-Skript geladen ist.
-// Die eigentliche Player-Initialisierung ist jetzt in initializeSpotifyPlayer() gekap
+// Die eigentliche Player-Initialisierung ist jetzt in initializeSpotifyPlayer() gekapselt.
