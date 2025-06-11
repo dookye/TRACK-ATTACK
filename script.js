@@ -33,6 +33,7 @@ let currentPlaylistTracks = [];
 let activeDeviceId = null;
 let isPlayerReady = false; // Flag, das auf true gesetzt wird, wenn der SDK-Player verbunden ist
 let isSpotifySDKLoaded = false; // NEU: Flag, das gesetzt wird, wenn das SDK geladen ist
+let selectedPlaylistId = null;
 
 // --- PKCE HELFER-FUNKTIONEN ---
 function generateRandomString(length) {
