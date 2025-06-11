@@ -1,7 +1,7 @@
 // --- KONSTANTEN ---
 const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
 const REDIRECT_URI = 'https://dookye.github.io/musik-raten/';
-const PLAYLIST_ID = '2ZnrLLb3q9qEmpzDApzKMe','36UqUEUrE2siIfs7lsWw4x'; // Punk Rock (90's & 00's)
+const PLAYLIST_ID = '2ZnrLLb3q9qEmpzDApzKMe''36UqUEUrE2siIfs7lsWw4x'; // Punk Rock (90's & 00's)
 const SCOPES = [
     'user-read-private',
     'user-read-email',
