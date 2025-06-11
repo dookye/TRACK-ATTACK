@@ -3,9 +3,9 @@ const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
 const REDIRECT_URI = 'https://dookye.github.io/musik-raten/';
 // NEU: Ein Array von Playlist-IDs für mehr Vielfalt
 const PLAYLIST_IDS = [
-    '39sVxPTg7BKwrf2MfgrtcD', // Punk Rock (90's & 00's)
-    '37i9dQZF1DXcBWIGoYBM5M', // Rock Party
-    '37i9dQZF1DWXR9CgZf9C7y'  // Alternative Rock
+    '2ZnrLLb3q9qEmpzDApzKMe', // raten1
+    '36UqUEUrE2siIfs7lsWw4x', // raten2
+//    '37i9dQZF1DWXR9CgZf9C7y'  // Alternative Rock
 ];
 const SCOPES = [
     'user-read-private',
