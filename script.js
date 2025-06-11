@@ -272,12 +272,6 @@ async function transferPlayback(deviceId) {
     }
 }
 
-// === START BUTTON: TRACK ATTACK ===
-startGameBtn.addEventListener('click', async () => {
-    if (!accessToken || !isPlayerReady) {
-        console.warn('Token oder Player nicht bereit');
-        return;
-    }
 
     // Zufällige Playlist auswählen
     selectedPlaylistId = playlistIds[Math.floor(Math.random() * playlistIds.length)];
