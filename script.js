@@ -1,7 +1,12 @@
 // --- KONSTANTEN ---
 const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
 const REDIRECT_URI = 'https://dookye.github.io/musik-raten/';
-const PLAYLIST_ID = '39sVxPTg7BKwrf2MfgrtcD'; // Punk Rock (90's & 00's)
+// NEU: Ein Array von Playlist-IDs für mehr Vielfalt
+const PLAYLIST_IDS = [
+    '39sVxPTg7BKwrf2MfgrtcD', // Punk Rock (90's & 00's)
+    '37i9dQZF1DXcBWIGoYBM5M', // Rock Party
+    '37i9dQZF1DWXR9CgZf9C7y'  // Alternative Rock
+];
 const SCOPES = [
     'user-read-private',
     'user-read-email',
@@ -12,9 +17,9 @@ const SCOPES = [
 
 // --- SPOTIFY API ENDPUNKTE (DIES SIND DIE KORREKTEN, KEINE PLATZHALTER MEHR!) ---
 const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // Direkter Autorisierungs-Endpunkt für den Browser-Redirect
-const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';  // **DIESE MUSS ES SEIN!** Direkter Token-Austausch-Endpunkt (Accounts Service)
+const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token'; // **DIESE MUSS ES SEIN!** Direkter Token-Austausch-Endpunkt (Accounts Service)
 const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1'; // Basis-URL für die Spotify Web API (Player, Playlists, etc.)
-// ---https://support.spotify.com/de/article/cannot-remember-login/
+// ---
 
 // --- UI-ELEMENTE ---
 const loginScreen = document.getElementById('login-screen');
@@ -26,7 +31,7 @@ const playbackStatus = document.getElementById('playback-status');
 // --- GLOBALE ZUSTANDSVARIABLEN ---
 let accessToken = '';
 let player = null;
-let currentPlaylistTracks = [];
+let allAvailableTracks = []; // Geändert: Sammelt Tracks aus ALLEN ausgewählten Playlists
 let activeDeviceId = null;
 let isPlayerReady = false; // Flag, das auf true gesetzt wird, wenn der SDK-Player verbunden ist
 let isSpotifySDKLoaded = false; // NEU: Flag, das gesetzt wird, wenn das SDK geladen ist
@@ -238,7 +243,7 @@ window.onSpotifyWebPlaybackSDKReady = () => {
     }
 };
 
-/**  ${SPOTIFY_API_BASE_URL}/me/player
+/**
  * Überträgt die Wiedergabe auf den neu erstellten Web Playback SDK Player.
  * @param {string} deviceId - Die ID des Players, auf den übertragen werden soll.
  */
@@ -269,49 +274,57 @@ async function transferPlayback(deviceId) {
 }
 
 /**
- * Holt die Tracks einer bestimmten Playlist.
+ * Holt die Tracks aller angegebenen Playlists.
  */
-async function getPlaylistTracks() {
-    if (currentPlaylistTracks.length > 0) {
-        return currentPlaylistTracks; // Bereits geladen
+async function getAllPlaylistsTracks() {
+    // Wenn bereits Tracks geladen wurden, gib sie zurück, um redundante API-Aufrufe zu vermeiden.
+    if (allAvailableTracks.length > 0) {
+        return allAvailableTracks;
     }
-    try {
-        let allTracks = [];
-        let nextUrl = `${SPOTIFY_API_BASE_URL}/playlists/${PLAYLIST_ID}/tracks?limit=100`;
 
-        while (nextUrl) {
-            const response = await fetch(nextUrl, {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
+    let fetchedTracks = [];
+    playbackStatus.textContent = 'Lade Playlists...';
+
+    for (const playlistId of PLAYLIST_IDS) {
+        console.log(`Lade Tracks aus Playlist ID: ${playlistId}`);
+        let nextUrl = `${SPOTIFY_API_BASE_URL}/playlists/${playlistId}/tracks?limit=100`;
+        try {
+            while (nextUrl) {
+                const response = await fetch(nextUrl, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Fehler beim Laden der Tracks aus Playlist ${playlistId}: ${response.status} - ${errorData.error.message || response.statusText}`);
                 }
-            });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`Fehler beim Laden der Playlist-Tracks: ${response.status} - ${errorData.error.message || response.statusText}`);
+                const data = await response.json();
+                // Füge nur Tracks hinzu, die nicht lokal sind (vollständig über Spotify streambar)
+                fetchedTracks = fetchedTracks.concat(data.items.filter(item => item.track && !item.track.is_local));
+                nextUrl = data.next;
             }
-
-            const data = await response.json();
-            allTracks = allTracks.concat(data.items.filter(item => item.track && !item.track.is_local));
-            nextUrl = data.next;
+        } catch (error) {
+            console.error(`Fehler beim Laden der Tracks aus Playlist ${playlistId}:`, error);
+            // Fahre fort mit den anderen Playlists, auch wenn eine fehlschlägt
+            playbackStatus.textContent = `Fehler beim Laden einer Playlist: ${error.message}`;
         }
-        currentPlaylistTracks = allTracks;
-        console.log(`Geladene Tracks aus Playlist: ${currentPlaylistTracks.length}`);
-        if (currentPlaylistTracks.length === 0) {
-            console.warn('Keine spielbaren Tracks in der Playlist gefunden.');
-            playbackStatus.textContent = 'Achtung: Keine spielbaren Tracks in der Playlist gefunden. Stelle sicher, dass die Playlist Tracks enthält und in deinem Markt verfügbar sind.';
-        }
-        return currentPlaylistTracks;
-    } catch (error) {
-        console.error('Fehler beim Laden der Playlist-Tracks:', error);
-        playbackStatus.textContent = `Fehler beim Laden der Playlist: ${error.message}`;
-        return [];
     }
+
+    allAvailableTracks = fetchedTracks;
+    console.log(`Insgesamt geladene Tracks aus allen Playlists: ${allAvailableTracks.length}`);
+    if (allAvailableTracks.length === 0) {
+        console.warn('Keine spielbaren Tracks in den ausgewählten Playlists gefunden.');
+        playbackStatus.textContent = 'Achtung: Keine spielbaren Tracks in den Playlists gefunden. Stelle sicher, dass die Playlists Tracks enthalten und in deinem Markt verfügbar sind.';
+    }
+    return allAvailableTracks;
 }
 
 
 /**
- * Spielt einen zufälligen Song aus der Playlist an einer zufälligen Position ab.
+ * Spielt einen zufälligen Song aus der gesammelten Liste aller Playlists an einer zufälligen Position ab.
  */
 async function playRandomSongFromPlaylist() {
     if (!isPlayerReady || !player || !activeDeviceId) {
@@ -323,9 +336,9 @@ async function playRandomSongFromPlaylist() {
     playbackStatus.textContent = 'Lade Song...';
 
     try {
-        const tracks = await getPlaylistTracks();
+        const tracks = await getAllPlaylistsTracks(); // Hier rufen wir jetzt die neue Funktion auf
         if (tracks.length === 0) {
-            playbackStatus.textContent = 'Keine Tracks in der Playlist gefunden oder geladen.';
+            playbackStatus.textContent = 'Keine Tracks in den Playlists gefunden oder geladen.';
             return;
         }
 
@@ -350,7 +363,8 @@ async function playRandomSongFromPlaylist() {
             },
             body: JSON.stringify({
                 uris: [trackUri],
-                position_ms: startPositionMs
+                position_ms: startPositionMs,
+                device_id: activeDeviceId // Stelle sicher, dass wir auf dem richtigen Gerät spielen
             })
         });
 
@@ -392,6 +406,8 @@ function showLoginScreen() {
 function showGameScreen() {
     loginScreen.classList.remove('active');
     gameScreen.classList.add('active');
+    // Optional: Lade die Tracks, sobald der Game Screen sichtbar wird, um Ladezeiten zu minimieren
+    getAllPlaylistsTracks();
 }
 
 // --- INITIALISIERUNG BEIM LADEN DER SEITE ---
