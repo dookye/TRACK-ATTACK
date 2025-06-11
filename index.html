@@ -3,142 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK 11</title>
+    <title>TRACK ATTACK - Musik Raten</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
-
-    <div id="initial-click-blocker"></div>
-
-    <div id="orientation-overlay">
-        <p>Please rotate your device to landscape mode</p>
+    <div id="login-screen" class="screen active">
+        <h1>TRACK ATTACK 19</h1>
+        <p>Melde dich mit deinem Premium-Account bei Spotify an.</p>
+        <button id="spotify-login-button">Mit Spotify anmelden</button>
     </div>
 
-    <div class="game-container">
-        <div id="logo-container">
-            <img src="logo3.png" alt="Spiel Logo" id="game-logo" class="active-logo">
+    <div id="game-screen" class="screen">
+        <h2>Bereit zum Angreifen? 19</h2>
+        <button id="start-game-button">TRACK ATTACK</button>
+        <p id="playback-status"></p>
         </div>
 
-        <div id="login-area" class="hidden">
-            <div class="spotify-box">
-                <p id="login-hint">To play this game, a Spotify Premium account is required. Please log in to your Spotify account to continue</p>
-                <button id="spotify-login-button" class="spotify-button">
-                    <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
-                    Log in with Spotify
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const logo = document.getElementById('game-logo');
-        const loginArea = document.getElementById('login-area');
-        const spotifyLoginButton = document.getElementById('spotify-login-button');
-        const orientationOverlay = document.getElementById('orientation-overlay');
-        const initialClickBlocker = document.getElementById('initial-click-blocker');
-
-        // --- TEMPORÄRER DEBUG-CODE: Prüfen, ob der Blocker Klicks abfängt ---
-        if (initialClickBlocker) {
-            initialClickBlocker.addEventListener('click', (event) => {
-                console.log("Klick auf initialClickBlocker abgefangen!");
-                event.stopPropagation(); // Verhindert, dass der Klick weiter nach unten durchgereicht wird
-            });
-        }
-        // --- ENDE TEMPORÄRER DEBUG-CODE ---
-
-        // Funktion zum Erzwingen des Vollbildmodus
-        function requestFullscreen() {
-            const docEl = document.documentElement;
-            if (docEl.requestFullscreen) {
-                docEl.requestFullscreen();
-            } else if (docEl.mozRequestFullScreen) { /* Firefox */
-                docEl.mozRequestFullScreen();
-            } else if (docEl.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-                docEl.webkitRequestFullscreen();
-            } else if (docEl.msRequestFullscreen) { /* IE/Edge */
-                docEl.msRequestFullscreen();
-            }
-        }
-
-        // Variable, um zu verfolgen, ob der Vollbildmodus schon angefordert wurde
-        let fullscreenRequested = false;
-
-        // Funktion, die den Vollbildmodus auslöst und sich selbst deaktiviert
-        function activateFullscreenAndRemoveListener() {
-            if (!fullscreenRequested) {
-                requestFullscreen();
-                fullscreenRequested = true; // Markieren, dass es versucht wurde
-                // Nach dem ersten Klick (z.B. auf den Login-Button), der Fullscreen auslösen soll,
-                // brauchen wir den generellen Listener nicht mehr.
-                document.removeEventListener('click', activateFullscreenAndRemoveListener);
-            }
-        }
-
-        // --- NEU: Den Event Listener für den Vollbildmodus erst hinzufügen, wenn der Blocker entfernt ist ---
-        // Dies wird in der window.onload-Funktion passieren, wenn der Login-Bereich sichtbar wird.
-
-
-        // Logik für den Landscape-Modus-Hinweis
-        function checkOrientation() {
-            if (window.innerHeight > window.innerWidth) { // Hochformat
-                orientationOverlay.style.display = 'flex';
-            } else { // Querformat
-                orientationOverlay.style.display = 'none';
-            }
-        }
-
-        // Beim Laden der Seite und bei Änderungen der Bildschirmgröße prüfen
-        window.addEventListener('load', checkOrientation);
-        window.addEventListener('resize', checkOrientation);
-
-
-        // JavaScript für die Animation des Logos (Abdunkeln) und Einblenden des Login-Bereichs
-        window.onload = () => {
-            // Nach der Animation und dem Erscheinen des Login-Bereichs den Blocker entfernen
-            setTimeout(() => {
-                logo.classList.remove('active-logo');
-                logo.classList.add('inactive-logo');
-
-                setTimeout(() => {
-                    loginArea.classList.remove('hidden');
-                    loginArea.classList.add('visible');
-
-                    // Den Klick-Blocker entfernen, wenn der Login-Bereich sichtbar ist
-                    if (initialClickBlocker) {
-                        initialClickBlocker.style.display = 'none';
-                    }
-
-                    // --- NEU: Jetzt den Event Listener für den Vollbildmodus hinzufügen ---
-                    // Dieser Listener fängt den ersten Klick (z.B. auf den Spotify-Login-Button) ab.
-                    // Er wird nur einmal ausgelöst und entfernt sich dann selbst.
-                    document.addEventListener('click', activateFullscreenAndRemoveListener);
-
-                }, 1300); // 0.5 Sekunden nach dem Abdunkeln des Logos
-            }, 1500); // 1.5 Sekunden Verzögerung, bevor das Logo dunkler wird
-        };
-
-       // Event Listener für den Bounce-Effekt beim Klick auf das Logo
-        logo.addEventListener('click', () => {
-            // NEU: Nur bouncen, wenn das Logo die 'active-logo'-Klasse hat
-            if (logo.classList.contains('active-logo')) {
-                logo.classList.remove('logo-bounce'); // Entfernt die Klasse
-                void logo.offsetWidth; // Erzwingt Reflow, damit die Animation neu starten kann
-                logo.classList.add('logo-bounce'); // Fügt die Klasse wieder hinzu
-                console.log("Logo bouncet! (Aktiver Zustand)"); // Optional: Zur Überprüfung in der Konsole
-            } else {
-                console.log("Logo ist inaktiv, kein Bounce."); // Optional: Zur Überprüfung in der Konsole
-            }
-        });
-        
-        // Event Listener für den Spotify Login Button
-        // Dieser wird dann später deinen Spotify Login Code aufrufen
-        spotifyLoginButton.addEventListener('click', () => {
-            console.log("Spotify Login Button geklickt!");
-            // Hier kommt später dein Spotify Login Code rein
-            // Er wird dann auch den activateFullscreenAndRemoveListener() auslösen,
-            // falls der Benutzer nicht schon vorher woanders geklickt hat.
-        });
-
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
