@@ -76,3 +76,51 @@ button:active {
     font-size: 1.1em;
     color: #bbb;
 }
+
+/* Zusätzliche Stile für deine style.css */
+
+#track-info {
+    display: none; /* Standardmäßig versteckt */
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #282828;
+    border-radius: 8px;
+    text-align: left;
+}
+
+#track-info.visible {
+    display: block; /* Macht die Informationen sichtbar */
+}
+
+#track-info p {
+    margin: 5px 0;
+}
+
+#game-controls {
+    display: flex;
+    gap: 10px; /* Abstand zwischen den Buttons */
+    justify-content: center;
+    margin-top: 15px;
+}
+
+/* Optional: Einheitliches Styling für alle Buttons im Spiel */
+#game-screen button {
+    background-color: #1DB954;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 500px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#game-screen button:hover {
+    background-color: #1ed760;
+}
+
+#game-screen button:disabled {
+    background-color: #535353;
+    cursor: not-allowed;
+}
