@@ -385,7 +385,7 @@ async function playRandomSongFromPlaylist() {
                 console.error('Fehler beim Pausieren des Songs via SDK:', pauseError);
                 playbackStatus.textContent = `Fehler beim Stoppen: ${pauseError.message}`;
             });
-        }, 2000);
+        }, 7000);
 
     } catch (error) {
         console.error('Fehler beim Abspielen des zufälligen Songs:', error);
