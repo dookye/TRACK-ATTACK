@@ -22,16 +22,11 @@ const SCOPES = [
     'user-modify-playback-state'
 ];
 
-// --- SPOTIFY API ENDPUNKTE (BITTE HIER DIE KORREKTEN SPOTIFY-URLS EINTRAGEN!) ---
-// Beispiel:
-// const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
-// const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';
-// const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1';
+// --- SPOTIFY API ENDPUNKTE (Ich habe die korrekten eingetragen) ---
 
-// AKTUELLE PLATZHALTER (DU MUSST SIE ERSETZEN!)
-const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // ERSETZEN!
-const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token'; // ERSETZEN!
-const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1'; // ERSETZEN!
+const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
+const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';
+const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1';
 
 
 // --- GLOBALE ZUSTANDSVARIABLEN ---
@@ -535,7 +530,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Spotify SDK Skript dynamisch laden
     const script = document.createElement('script');
-    script.src = 'https://sdk.scdn.co/spotify-web-playback-sdk.js'; // KORRIGIERTE URL!
+    script.src = 'https://sdk.scdn.co/spotify-player.js'; // KORRIGIERTE URL!
     script.async = true;
     document.body.appendChild(script);
 
