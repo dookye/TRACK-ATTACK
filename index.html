@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK 2</title>
+    <title>Musik-Rate-Spiel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
         <p>Click to fullscreen mode.</p>
     </div>
 
-    <div class="game-container">
+    <div class="game-container hidden">
         <div id="logo-container">
             <img src="logo3.png" alt="Spiel Logo" id="game-logo" class="active-logo">
         </div>
@@ -30,9 +30,11 @@
                     <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
                     Log in with Spotify
                 </button>
-            </div>
+                <p id="playback-status" style="margin-top: 10px; font-size: 0.9em; color: #ccc;"></p> </div>
         </div>
-    </div>
 
-    <script src="script.js"></script> </body>
+        </div>
+
+    <script src="script.js"></script>
+</body>
 </html>
