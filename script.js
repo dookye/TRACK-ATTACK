@@ -24,10 +24,9 @@ const SCOPES = [
 
 // --- SPOTIFY API ENDPUNKTE (Ich habe die korrekten eingetragen) ---
 
-const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
-const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';
-const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1';
-
+const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // Direkter Autorisierungs-Endpunkt für den Browser-Redirect
+const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';  // **DIESE MUSS ES SEIN!** Direkter Token-Austausch-Endpunkt (Accounts Service)
+const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1'; // Basis-URL für die Spotify Web API (Player, Playlists, etc.)
 
 // --- GLOBALE ZUSTANDSVARIABLEN ---
 let accessToken = '';
