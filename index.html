@@ -3,36 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK - Musik Raten</title>
+    <title>Musik-Rate-Spiel</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
-    <div id="login-screen" class="screen active">
-        <h1>TRACK ATTACK 4</h1>
-        <p>Melde dich mit deinem Premium-Account bei Spotify an.</p>
-        <button id="spotify-login-button">Mit Spotify anmelden</button>
+
+    <div id="initial-click-blocker"></div>
+
+    <div id="orientation-message" class="overlay-message hidden">
+        <p>Please rotate your device to landscape mode.</p>
     </div>
 
-    <div id="game-screen" class="screen">
-        <h2>Bereit zum Angreifen? 4</h2>
-        <button id="start-game-button">TRACK ATTACK</button>
-        <p id="playback-status"></p>
-        <button id="start-game-button">Erneut abspielen</button>
-
-<div id="game-controls">
-    <button id="reveal-button">Auflösen</button>
-    <button id="reset-button">Nächster Song</button>
-</div>
-
-<div id="track-info">
-    <p><strong>Interpret:</strong> <span id="track-artist">...</span></p>
-    <p><strong>Titel:</strong> <span id="track-title">...</span></p>
-</div>
-
-<p id="playback-status">Verbinde mit Spotify...</p>
+    <div id="fullscreen-message" class="overlay-message hidden">
+        <p>Click to fullscreen mode.</p>
     </div>
 
-    <script src="script.js"></script>
-</body>
+    <div class="game-container">
+        <div id="logo-container">
+            <img src="logo3.png" alt="Spiel Logo" id="game-logo" class="active-logo">
+        </div>
+
+        <div id="login-area" class="hidden">
+            <div class="spotify-box">
+                <p id="login-hint">Please log in with your Spotify account to start the game.</p>
+                <button id="spotify-login-button" class="spotify-button">
+                    <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
+                    Log in with Spotify
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script> </body>
 </html>
