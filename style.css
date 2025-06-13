@@ -205,7 +205,7 @@ body {
 }
 
 .logo-bounce {
-    animation: press-down-bounce 0.1s ease-out;
+    animation: press-down-bounce 0.8s ease-out;
 }
 
 /* Aktiver Zustand des Logos */
