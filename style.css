@@ -213,10 +213,6 @@ body {
     }
 }
 
-.logo-bounce {
-    animation: press-down-bounce 0.8s ease-out;
-}
-
 /* Aktiver Zustand des Logos */
 .active-logo {
     filter: brightness(100%);
