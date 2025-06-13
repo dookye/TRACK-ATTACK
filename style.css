@@ -173,24 +173,19 @@ body {
 /* Diese Animation wird auf den #logo-container angewendet */
 @keyframes fall-in {
     0% {
-        /* Startpunkt: Stark skaliert, unsichtbar, vertikal zentriert. */
-        /* Das Logo "existiert" bereits in der Mitte, ist aber riesig und unsichtbar. */
-        transform: scale(5); /* Muss GLEICH wie in initial-hidden sein */
+        transform: scale(5); /* Startpunkt: Stark skaliert, unsichtbar, vertikal zentriert. */
         opacity: 0;
     }
     30% {
-        /* "Peak" des Zoom-Out: Logo ist am kleinsten und leicht über dem Zentrum. */
-        /* Wird sichtbar, kommt leicht von oben */
-        transform: translateY(-20px) scale(0.8); /* Leicht hochschieben, kleiner werden. Experimentiere mit -10px, -30px */
+        transform: translateY(-20px) scale(0.8); /* "Peak" des Zoom-Out: Logo ist am kleinsten und leicht über dem Zentrum. */
         opacity: 1;
     }
-    70% {
-        /* Vor dem finalen Bounce: Fällt auf oder leicht unter die Endposition */
+    /* NEUE TIMINGS für den Bounce: */
+    85% { /* Vor dem finalen Bounce: Fällt auf oder leicht unter die Endposition */
         transform: translateY(10px) scale(1.05); /* Leicht unter die Mitte fallen, etwas größer */
         opacity: 1;
     }
-    100% {
-        /* Endpunkt: Finale Ruheposition, normale Größe, perfekt zentriert */
+    100% { /* Endpunkt: Finale Ruheposition, normale Größe */
         transform: translateY(0) scale(1);
         opacity: 1;
     }
