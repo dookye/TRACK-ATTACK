@@ -76,7 +76,19 @@ body {
     transition: opacity 0.3s ease-in-out;
 }
 
-/* Spotify Login Box */
+/* Spotify Login Box - Stellen wir sicher, dass dieser Bereich auch korrekt zentriert ist */
+#login-area { /* ID-Selektor für spezifische Stile */
+    display: flex; /* Stellt sicher, dass der Login-Bereich zentriert werden kann */
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%; /* Nimmt vollen Platz im game-container ein */
+    position: absolute; /* Wichtig, damit es den gleichen Raum wie der logo-container einnimmt */
+    top: 0;
+    left: 0;
+    z-index: 5; /* Etwas niedriger als Overlays, aber höher als das Logo, wenn Login aktiv */
+}
+
 .spotify-box {
     background-color: #1a1a1a;
     padding: 30px;
@@ -88,7 +100,7 @@ body {
     gap: 20px;
     max-width: 300px;
     width: 90%;
-    margin: auto; /* Zentriert die Box */
+    /* margin: auto; hier nicht nötig, da login-area flex ist */
 }
 
 #login-hint {
@@ -121,95 +133,96 @@ body {
     height: 24px;
 }
 
-/* Logo Container - Anfangs versteckt */
+/* --- LOGO CONTAINER UND LOGO --- */
+
 #logo-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    /* Dieser Container nimmt den gesamten Platz ein und zentriert das Logo darin */
+    position: absolute; /* Muss absolut sein, um top/left zu nutzen */
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    position: relative; /* Beibehalten für absolut positioniertes initial-hidden Kind */
-    overflow: hidden; /* Beibehalten */
+    display: flex; /* Zum Zentrieren des #game-logo innerhalb dieses Containers */
+    justify-content: center; /* Horizontale Zentrierung des Logos */
+    align-items: center; /* Vertikale Zentrierung des Logos */
+    overflow: hidden; /* Verhindert, dass das große Logo über den Container ragt */
+    z-index: 10; /* Stellen wir sicher, dass es über dem Login-Bereich liegt */
+    /* Keine 'transition' hier, da Animationen direkt gesetzt werden */
 }
-
-/* --- Animationen für das Logo --- */
 
 /* Initialer Zustand für das Logo, wenn es noch nicht sichtbar ist und reinfallen soll */
 #logo-container.initial-hidden {
-    /* POSITION DER ANIMATION BEIM START (0% der Animation) */
-    /*
-     * 'translate(-50%, -150vh)' steuert die Startposition.
-     * - Der erste Wert (-50%) verschiebt das Element horizontal um die Hälfte seiner EIGENEN Breite nach links.
-     * In Kombination mit 'left: 50%;' (unten) zentriert das den Startpunkt perfekt horizontal.
-     * Dieser Wert sollte für eine mittige Bewegung IMMER -50% bleiben.
-     * - Der zweite Wert (-150vh) verschiebt das Element vertikal nach oben.
-     * 'vh' steht für "viewport height" (Höhe des sichtbaren Browserbereichs).
-     * -100vh würde es genau an den oberen Rand schieben, -150vh bedeutet 150% der Viewporthöhe nach oben.
-     * Experimentiere hier mit größeren negativen Werten (-200vh, -300vh), um es von weiter oben kommen zu lassen.
-     * Verändere diesen Wert, um zu beeinflussen, wie weit oben die Animation beginnt.
-     */
-    transform: translate(-50%, -150vh) scale(3); 
-    opacity: 0;
+    /* Hier ist der Startpunkt der Animation */
+    /* Wir verschieben das Logo IM Container, um es von oben reinfallen zu lassen. */
+    /* 'top: 0;' ist der Ausgangspunkt der Verschiebung */
+    
+    /* Wichtig: transform-origin muss mittig sein, für saubere Skalierung */
+    transform-origin: center center;
 
-    /* DIESE EIGENSCHAFTEN SIND ENTSCHEIDEND FÜR DIE HORIZONTALE ZENTRIERUNG DES STARTPUNKTS */
-    position: absolute; /* Wichtig: Ermöglicht die Verwendung von top/left und translate */
-    left: 50%;          /* Setzt den linken Rand des Elements in die Mitte des Elternelements */
-    top: 0;             /* Setzt den oberen Rand des Elements an den oberen Rand des Elternelements */
-    width: 100%;
-    height: 100%;
+    /* Startposition außerhalb des Bildschirms, horizontal zentriert im Container */
+    /* Die X-Achse muss hier NICHT translate(-50%) haben, da der Container selbst flex-zentriert ist */
+    /* Sondern wir verschieben hier nur das Logo (im Container) vertikal. */
+    transform: translateY(-150vh) scale(3); 
+    opacity: 0; /* Startet unsichtbar */
+    
+    /* KEINE 'position: absolute; left: 50%;' HIER, da der #logo-container schon absolut und flex-zentriert ist.
+       Diese Regeln würden sonst die Zentrierung des #logo-containers selbst überschreiben oder doppeln. */
 }
 
-/* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
-@keyframes fall-in {
-    0% {
-        /* Startpunkt der Animation (muss mit initial-hidden übereinstimmen) */
-        /* Behalte '-50%' für die horizontale Zentrierung bei. */
-        /* Verändere '-150vh', um den Startpunkt der fallenden Bewegung anzupassen. */
-        transform: translate(-50%, -150vh) scale(3); 
-        opacity: 0;
-    }
-    60% { 
-        /* ZWISCHENPUNKT: Kurz vor dem Aufprall */
-        /*
-         * '-50%' hält die horizontale Zentrierung.
-         * '0px' ist die vertikale Position relativ zur initialen 'top: 0;'.
-         * Hier bleibt das Logo auf der "normalen" Y-Achse, bereit für den Bounce.
-         */
-        transform: translate(-50%, 0px) scale(1.1); /* An Zielposition, etwas größer für den "Pop" */
-        opacity: 1;
-    }
-    80% { 
-        /* ZWISCHENPUNKT: Beim leichten "Abprallen" nach oben */
-        /*
-         * '-50%' hält die horizontale Zentrierung.
-         * '-20px' bewegt das Logo leicht nach oben (negativer Wert) über seine finale Ruheposition.
-         * Je größer der negative Wert, desto höher "federt" es.
-         */
-        transform: translate(-50%, -20px) scale(0.95); /* Leicht nach oben ziehen, etwas kleiner */
-        opacity: 1;
-    }
-    100% { 
-        /* ENDPUNKT der Animation: Finale Position */
-        /*
-         * '-50%' hält die horizontale Zentrierung.
-         * '0' ist die finale vertikale Ruheposition.
-         * Hier soll das Logo genau da sein, wo es am Ende sichtbar bleiben soll.
-         */
-        transform: translate(-50%, 0) scale(1); /* An Endposition, normale Größe */
-        opacity: 1;
-    }
-}
 
 #game-logo {
     width: 60vmin; /* Responsive Größe basierend auf der kleineren Dimension des Viewports */
     height: auto;
     cursor: pointer;
     max-width: 500px; /* Maximale Größe für Desktop */
-    /* ENTFÄLLE ODER ÄNDERE DIESE ZEILE: */
-    /* transition: transform 0.3s ease-out, filter 0.3s ease-out; */ 
-    
-    /* NEU: Nur 'filter' als Transition beibehalten, wenn es für andere Effekte genutzt wird */
-    transition: filter 0.3s ease-out; /* Hält nur die Transition für 'filter' */
+    /* KEINE 'transform' Transition hier, um Konflikte mit Animationen zu vermeiden */
+    transition: filter 0.3s ease-out; /* Nur 'filter' Transition beibehalten */
+    /* transform-origin muss hier auch mittig sein, für saubere Skalierung der Animation */
+    transform-origin: center center; 
+}
+
+
+/* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
+/* Diese Animation wird auf den #logo-container angewendet */
+@keyframes fall-in {
+    0% {
+        /* Startpunkt: Vertikal sehr weit oben, 3x so groß, unsichtbar */
+        /* translateX(-50%) ist HIER NICHT NOTWENDIG, da der #logo-container das Bild bereits zentriert */
+        transform: translateY(-150vh) scale(3); 
+        opacity: 0;
+    }
+    60% { 
+        /* Zwischenpunkt: Fast am Ende der Fallbewegung, leicht vergrößert für den "Pop" */
+        transform: translateY(0px) scale(1.1); 
+        opacity: 1;
+    }
+    80% { 
+        /* Zwischenpunkt: Kurzer "Rückprall" nach oben, leicht verkleinert */
+        transform: translateY(-20px) scale(0.95); 
+        opacity: 1;
+    }
+    100% { 
+        /* Endpunkt: Finale Ruheposition, normale Größe */
+        transform: translateY(0) scale(1); 
+        opacity: 1;
+    }
+}
+
+/* Animation für den Bounce bei jedem Klick (wird auf das #game-logo selbst angewendet) */
+@keyframes press-down-bounce {
+    0% {
+        transform: scale(1); /* Normale Größe */
+    }
+    50% {
+        transform: scale(0.9); /* Beim "Drücken" kleiner werden */
+    }
+    100% {
+        transform: scale(1); /* Wieder normale Größe beim "Loslassen" */
+    }
+}
+
+.logo-bounce {
+    animation: press-down-bounce 0.3s ease-out;
 }
 
 /* Aktiver Zustand des Logos */
