@@ -39,6 +39,7 @@ let isSpotifySDKLoaded = false; // Flag, das gesetzt wird, wenn das SDK geladen 
 let fullscreenRequested = false; // Zur Steuerung des Fullscreen-States
 let orientationChecked = false; // NEU: Flag, ob Orientierung schon geprüft wurde
 let hasUserInteracted = false; // NEU: Flag, ob der User initial geklickt hat (für Fullscreen)
+let currentGameState = 'startScreen'; // Mögliche Zustände: 'startScreen', 'playing', 'paused', 'roundOver'
 
 
 // --- PKCE HELFER-FUNKTIONEN ---
@@ -492,19 +493,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Event Listener für den Bounce-Effekt beim Klick auf das Logo
-    logo.addEventListener('click', () => {
-        console.log("Logo geklickt.");
-        if (logo.classList.contains('active-logo')) {
-            logo.classList.remove('logo-bounce');
-            void logo.offsetWidth; // Force reflow
-            logo.classList.add('logo-bounce');
-            console.log("Logo bouncet! (Aktiver Zustand)");
-            // Hier könnte später der Spielstart erfolgen
-            // if (isPlayerReady) { playRandomSongFromPlaylist(); }
+logo.addEventListener('click', () => {
+    console.log("Logo geklickt.");
+
+    // Füge den Bounce-Effekt immer hinzu, wenn geklickt wird
+    logo.classList.remove('logo-bounce');
+    void logo.offsetWidth; // Force reflow
+    logo.classList.add('logo-bounce');
+    console.log("Logo bouncet!");
+
+    // Logik basierend auf dem aktuellen Spielzustand
+    if (currentGameState === 'startScreen') {
+        if (isPlayerReady) {
+            console.log("Spiel wird gestartet!");
+            // Hier würdest du die Funktion aufrufen, die das Spiel wirklich startet
+            // Zum Beispiel: startGame();
+            playbackStatus.textContent = 'Bereit zum Abspielen!'; // Status-Update
+            // Ändere den Spielzustand
+            currentGameState = 'playing'; // Oder 'waitingForRoundStart'
+            // Optional: Ändere das Aussehen des Buttons, um Play-Funktion anzudeuten
         } else {
-            console.log("Logo ist inaktiv, kein Bounce.");
+            console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
+            playbackStatus.textContent = 'Spotify Player ist noch nicht bereit. Bitte warten...';
         }
-    });
+    } else if (currentGameState === 'playing') {
+        // Hier könnte die Logik zum Abspielen eines Songs sein
+        console.log("Spiele nächsten Song oder starte Runde.");
+        playRandomSongFromPlaylist(); // Ruft deine bestehende Funktion auf
+        // Ändere den Spielzustand, wenn der Song spielt
+        currentGameState = 'songPlaying'; // Neuer Zustand
+    } else if (currentGameState === 'songPlaying') {
+        // Wenn der Song spielt, kann der Button vielleicht pausieren
+        if (player) {
+            player.pause().then(() => {
+                console.log("Song pausiert.");
+                playbackStatus.textContent = 'Song pausiert.';
+                currentGameState = 'playing'; // Zurück zu 'playing' (bereit zum Fortsetzen/Neustarten)
+            });
+        }
+    }
 
     // Listener für das Beenden des Fullscreen-Modus
     document.addEventListener('fullscreenchange', () => {
