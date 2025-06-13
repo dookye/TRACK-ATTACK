@@ -555,9 +555,10 @@ function showLogoButton() {
 
         // Setze den Klick-Listener für den Spielstart
         if (logoClickListener) {
-            logo.removeEventListener('click', logoClickListener);
+            logo.removeEventListener('pointerdown', logoClickListener);
         }
-        logoClickListener = function() {
+        logoClickListener = function(event) {
+            event.preventDefault(); // Verhindert Standardverhalten (z.B. bei Touch)
             console.log("Logo geklickt zum Spielstart (ohne Re-Animation)!");
             logo.classList.remove('logo-bounce');
             void logo.offsetWidth;
@@ -575,7 +576,7 @@ function showLogoButton() {
                 }
             }
         };
-        logo.addEventListener('click', logoClickListener);
+        logo.addEventListener('pointerdown', logoClickListener);
         currentGameState = 'startScreen';
         return; // Funktion hier beenden
     }
@@ -603,9 +604,10 @@ function showLogoButton() {
 
             // Jetzt den Klick-Listener für den Spielstart aktivieren
             if (logoClickListener) { // Alten Listener entfernen, falls vorhanden
-                logo.removeEventListener('click', logoClickListener);
+                logo.removeEventListener('pointerdown', logoClickListener);
             }
-            logoClickListener = function() {
+            logoClickListener = function(event) {
+                event.preventDefault(); // Verhindert Standardverhalten (z.B. bei Touch)
                 console.log("Logo geklickt zum Spielstart!");
                 // Füge den kleinen Bounce-Effekt bei jedem Klick hinzu
                 logo.classList.remove('logo-bounce');
@@ -624,7 +626,7 @@ function showLogoButton() {
                     }
                 }
             };
-            logo.addEventListener('click', logoClickListener);
+            logo.addEventListener('pointerdown', logoClickListener);
             
             // Setze den initialen Spielzustand nach der Animation
             currentGameState = 'startScreen';
@@ -639,11 +641,12 @@ function setLogoAsPlayButton() {
     console.log("setLogoAsPlayButton: Logo wird zum Play/Pause-Button.");
     // Entferne den "Spiel starten"-Listener
     if (logoClickListener) {
-        logo.removeEventListener('click', logoClickListener);
+        logo.removeEventListener('pointerdown', logoClickListener);
     }
 
     // Setze den neuen Listener für die Play/Pause-Funktion
-    logoClickListener = function() {
+    logoClickListener = function(event) {
+        event.preventDefault(); // Verhindert Standardverhalten
         console.log("Play/Pause-Button (Logo) geklickt!");
         // Füge den Bounce-Effekt hinzu
         logo.classList.remove('logo-bounce');
@@ -669,7 +672,7 @@ function setLogoAsPlayButton() {
             playbackStatus.textContent = 'Spotify Player ist nicht bereit für Wiedergabe.';
         }
     };
-    logo.addEventListener('click', logoClickListener);
+    logo.addEventListener('pointerdown', logoClickListener);
 }
 
 
