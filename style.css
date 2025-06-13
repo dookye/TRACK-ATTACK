@@ -132,18 +132,72 @@ body {
     overflow: hidden; /* Beibehalten */
 }
 
+/* --- Animationen für das Logo --- */
+
 /* Initialer Zustand für das Logo, wenn es noch nicht sichtbar ist und reinfallen soll */
 #logo-container.initial-hidden {
-    /* WICHTIG: absolute Positionierung für genaue Kontrolle */
-    position: absolute; 
-    left: 50%; /* Startet horizontal in der Mitte des Containers */
-    top: 0; /* Startet am oberen Rand des Containers (für -150% translateY) */
-    width: 100%; /* Übernimmt Breite des Parent */
-    height: 100%; /* Übernimmt Höhe des Parent */
-    
-    /* Der Startpunkt der Transformation - hier ist translateX(-50%) entscheidend für die Zentrierung */
-    transform: translate(-50%, -150vh) scale(3); /* -150vh um sicher von oben zu starten */
-    opacity: 0; /* Startet unsichtbar */
+    /* POSITION DER ANIMATION BEIM START (0% der Animation) */
+    /*
+     * 'translate(-50%, -150vh)' steuert die Startposition.
+     * - Der erste Wert (-50%) verschiebt das Element horizontal um die Hälfte seiner EIGENEN Breite nach links.
+     * In Kombination mit 'left: 50%;' (unten) zentriert das den Startpunkt perfekt horizontal.
+     * Dieser Wert sollte für eine mittige Bewegung IMMER -50% bleiben.
+     * - Der zweite Wert (-150vh) verschiebt das Element vertikal nach oben.
+     * 'vh' steht für "viewport height" (Höhe des sichtbaren Browserbereichs).
+     * -100vh würde es genau an den oberen Rand schieben, -150vh bedeutet 150% der Viewporthöhe nach oben.
+     * Experimentiere hier mit größeren negativen Werten (-200vh, -300vh), um es von weiter oben kommen zu lassen.
+     * Verändere diesen Wert, um zu beeinflussen, wie weit oben die Animation beginnt.
+     */
+    transform: translate(-50%, -150vh) scale(3); 
+    opacity: 0;
+
+    /* DIESE EIGENSCHAFTEN SIND ENTSCHEIDEND FÜR DIE HORIZONTALE ZENTRIERUNG DES STARTPUNKTS */
+    position: absolute; /* Wichtig: Ermöglicht die Verwendung von top/left und translate */
+    left: 50%;          /* Setzt den linken Rand des Elements in die Mitte des Elternelements */
+    top: 0;             /* Setzt den oberen Rand des Elements an den oberen Rand des Elternelements */
+    width: 100%;
+    height: 100%;
+}
+
+/* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
+@keyframes fall-in {
+    0% {
+        /* Startpunkt der Animation (muss mit initial-hidden übereinstimmen) */
+        /* Behalte '-50%' für die horizontale Zentrierung bei. */
+        /* Verändere '-150vh', um den Startpunkt der fallenden Bewegung anzupassen. */
+        transform: translate(-50%, -150vh) scale(3); 
+        opacity: 0;
+    }
+    60% { 
+        /* ZWISCHENPUNKT: Kurz vor dem Aufprall */
+        /*
+         * '-50%' hält die horizontale Zentrierung.
+         * '0px' ist die vertikale Position relativ zur initialen 'top: 0;'.
+         * Hier bleibt das Logo auf der "normalen" Y-Achse, bereit für den Bounce.
+         */
+        transform: translate(-50%, 0px) scale(1.1); /* An Zielposition, etwas größer für den "Pop" */
+        opacity: 1;
+    }
+    80% { 
+        /* ZWISCHENPUNKT: Beim leichten "Abprallen" nach oben */
+        /*
+         * '-50%' hält die horizontale Zentrierung.
+         * '-20px' bewegt das Logo leicht nach oben (negativer Wert) über seine finale Ruheposition.
+         * Je größer der negative Wert, desto höher "federt" es.
+         */
+        transform: translate(-50%, -20px) scale(0.95); /* Leicht nach oben ziehen, etwas kleiner */
+        opacity: 1;
+    }
+    100% { 
+        /* ENDPUNKT der Animation: Finale Position */
+        /*
+         * '-50%' hält die horizontale Zentrierung.
+         * '0' ist die finale vertikale Ruheposition.
+         * Hier soll das Logo genau da sein, wo es am Ende sichtbar bleiben soll.
+         */
+        transform: translate(-50%, 0) scale(1); /* An Endposition, normale Größe */
+        opacity: 1;
+    }
 }
 
 #game-logo {
@@ -151,7 +205,11 @@ body {
     height: auto;
     cursor: pointer;
     max-width: 500px; /* Maximale Größe für Desktop */
-    transition: transform 0.3s ease-out, filter 0.3s ease-out;
+    /* ENTFÄLLE ODER ÄNDERE DIESE ZEILE: */
+    /* transition: transform 0.3s ease-out, filter 0.3s ease-out; */ 
+    
+    /* NEU: Nur 'filter' als Transition beibehalten, wenn es für andere Effekte genutzt wird */
+    transition: filter 0.3s ease-out; /* Hält nur die Transition für 'filter' */
 }
 
 /* Aktiver Zustand des Logos */
@@ -162,26 +220,6 @@ body {
 /* Inaktiver Zustand des Logos */
 .inactive-logo {
     filter: brightness(50%); /* Leicht abgedunkelt */
-}
-
-/* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
-@keyframes fall-in {
-    0% {
-        transform: translate(-50%, -150vh) scale(3); /* Start: Oben mittig, sehr groß, unsichtbar */
-        opacity: 0;
-    }
-    60% { /* Kurz vor dem Aufprall (kürzere Dauer = schneller) */
-        transform: translate(-50%, 0px) scale(1.1); /* An Zielposition, etwas größer für den "Pop" */
-        opacity: 1;
-    }
-    80% { /* Beim Aufprall - springt leicht nach oben */
-        transform: translate(-50%, -20px) scale(0.95); /* Leicht nach oben ziehen, etwas kleiner */
-        opacity: 1;
-    }
-    100% { /* Finaler Zustand - lande exakt auf Null */
-        transform: translate(-50%, 0) scale(1); /* An Endposition, normale Größe */
-        opacity: 1;
-    }
 }
 
 /* Bestehende @keyframes logo-click-bounce (oder umbenannt zu press-down) */
