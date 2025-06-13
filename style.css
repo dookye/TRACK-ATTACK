@@ -177,12 +177,12 @@ body {
         opacity: 0;
     }
     30% {
-        transform: translateY(0px) scale(0.8); /* "Peak" des Zoom-Out: Logo ist am kleinsten und leicht über dem Zentrum. */
+        transform: translateY(0px) scale(0.9); /* "Peak" des Zoom-Out: Logo ist am kleinsten und leicht über dem Zentrum. */
         opacity: 1;
     }
     /* NEUE TIMINGS für den Bounce: */
-    90% { /* Vor dem finalen Bounce: Fällt auf oder leicht unter die Endposition */
-        transform: translateY(0px) scale(1.01); /* Leicht unter die Mitte fallen, etwas größer */
+    70% { /* Vor dem finalen Bounce: Fällt auf oder leicht unter die Endposition */
+        transform: translateY(0px) scale(1.005); /* Leicht unter die Mitte fallen, etwas größer */
         opacity: 1;
     }
     100% { /* Endpunkt: Finale Ruheposition, normale Größe */
