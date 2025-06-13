@@ -225,7 +225,7 @@ body {
 
 /* Die Klasse, die beim Klick hinzugefügt wird */
 .logo-bounce { /* Behalten wir den Namen bei, aber die Animation ist neu */
-    animation: press-down-bounce 0.1s ease-out; /* Schneller und knackiger */
+    animation: press-down-bounce 0.3s ease-out; /* Schneller und knackiger */
 }
 
 /* Media Queries für Orientierung und Desktop */
