@@ -39,6 +39,9 @@ let isSpotifySDKLoaded = false; // Flag, wenn das SDK geladen ist
 let fullscreenRequested = false; // Zur Steuerung des Fullscreen-States
 let logoClickListener = null; // Für den dynamischen Klick-Listener des Logos
 let currentGameState = 'loading'; // Zustände: 'loading', 'startScreen', 'playing', 'songPlaying', 'songPaused'
+// Globale Variable, um zu speichern, ob die Logo-Intro-Animation schon einmal lief
+let introAnimationPlayed = false;
+
 
 
 // --- PKCE HELFER-FUNKTIONEN ---
@@ -529,31 +532,23 @@ function activateFullscreenAndRemoveListener(event) {
  * Aktiviert den Klick-Listener nach Abschluss der Animation.
  */
 function showLogoButton() {
-    console.log("showLogoButton: Starte Logo-Reinfall-Animation.");
-    loginArea.classList.add('hidden');
-    hideMessage(fullscreenMessage);
-    hideMessage(orientationMessage);
+    // Bedingung HINZUGEFÜGT: Wenn die Intro-Animation schon einmal lief
+    if (introAnimationPlayed && currentGameState !== 'startScreen') {
+        console.log("showLogoButton: Intro-Animation wurde bereits abgespielt. Zeige Logo ohne Animation.");
+        logoContainer.classList.remove('hidden');
+        logoContainer.classList.remove('initial-hidden');
+        logoContainer.style.animation = ''; // Sicherstellen, dass keine Animation aktiv ist
 
-    // Sicherstellen, dass der Container sichtbar ist und die initialen Klassen entfernt werden
-    logoContainer.classList.remove('hidden');
-    logoContainer.classList.remove('initial-hidden'); // Entferne die Initial-Positionierung
-
-    // Füge die Reinfall-Animation hinzu
-    logoContainer.style.animation = 'fall-in 1.5s ease-out forwards'; // forwards = bleibt am Endzustand
-
-    // Event-Listener für das Ende der Reinfall-Animation
-    logoContainer.addEventListener('animationend', function handler(event) {
-        if (event.animationName === 'fall-in') {
-            console.log("fall-in Animation beendet. Logo ist bereit für Klicks.");
-            logoContainer.removeEventListener('animationend', handler); // Listener entfernen
-            logoContainer.style.animation = ''; // Animation zurücksetzen, um Styling Konflikte zu vermeiden
-
-            // Jetzt den Klick-Listener für den Spielstart aktivieren
-            if (logoClickListener) { // Alten Listener entfernen, falls vorhanden
+        // Direkt den Klick-Listener für den Play-Button aktivieren (da Spiel läuft)
+        if (currentGameState === 'playing' || currentGameState === 'songPlaying' || currentGameState === 'songPaused') {
+             setLogoAsPlayButton();
+        } else { // Ansonsten, wenn wir im Startscreen sind, aber die Animation schon lief
+             // Das Logo ist sichtbar und klickbar für den Start
+             if (logoClickListener) { // Alten Listener entfernen, falls vorhanden
                 logo.removeEventListener('click', logoClickListener);
             }
             logoClickListener = function() {
-                console.log("Logo geklickt zum Spielstart!");
+                console.log("Logo geklickt zum Spielstart (ohne Re-Animation)!");
                 // Füge den kleinen Bounce-Effekt bei jedem Klick hinzu
                 logo.classList.remove('logo-bounce');
                 void logo.offsetWidth; // Force reflow
@@ -572,8 +567,54 @@ function showLogoButton() {
                 }
             };
             logo.addEventListener('click', logoClickListener);
+            currentGameState = 'startScreen';
+        }
+        return; // Funktion hier beenden
+    }
+
+    // Dieser Teil wird nur ausgeführt, wenn die Intro-Animation noch NICHT lief
+    console.log("showLogoButton: Starte Logo-Reinfall-Animation.");
+    loginArea.classList.add('hidden');
+    hideMessage(fullscreenMessage);
+    hideMessage(orientationMessage);
+
+    logoContainer.classList.remove('hidden');
+    logoContainer.classList.remove('initial-hidden');
+
+    // Hier die Geschwindigkeit anpassen, z.B. 1s
+    logoContainer.style.animation = 'fall-in 1s ease-out forwards'; // Geschwindigkeit hier einstellen!
+
+    logoContainer.addEventListener('animationend', function handler(event) {
+        if (event.animationName === 'fall-in') {
+            console.log("fall-in Animation beendet. Logo ist bereit für Klicks.");
+            logoContainer.removeEventListener('animationend', handler);
+            logoContainer.style.animation = '';
             
-            // Setze den initialen Spielzustand nach der Animation
+            introAnimationPlayed = true; // Markiere, dass die Animation gelaufen ist
+
+            if (logoClickListener) {
+                logo.removeEventListener('click', logoClickListener);
+            }
+            logoClickListener = function() {
+                console.log("Logo geklickt zum Spielstart!");
+                logo.classList.remove('logo-bounce');
+                void logo.offsetWidth;
+                logo.classList.add('logo-bounce');
+
+                if (currentGameState === 'startScreen') {
+                    if (isPlayerReady) {
+                        console.log("Spiel wird gestartet!");
+                        playbackStatus.textContent = 'Bereit zum Abspielen!';
+                        currentGameState = 'playing';
+                        setLogoAsPlayButton();
+                    } else {
+                        console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
+                        playbackStatus.textContent = 'Spotify Player ist noch nicht bereit. Bitte warten...';
+                    }
+                }
+            };
+            logo.addEventListener('click', logoClickListener);
+            
             currentGameState = 'startScreen';
         }
     });
