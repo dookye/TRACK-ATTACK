@@ -134,9 +134,14 @@ body {
 
 /* Initialer Zustand für das Logo, wenn es noch nicht sichtbar ist und reinfallen soll */
 #logo-container.initial-hidden {
-    transform: translateY(-50vh) scale(3); /* Startet oberhalb des Bildschirms, 3x so groß */
+    /* Startet direkt im Zentrum der X-Achse, aber oberhalb des Viewports */
+    transform: translate(-50%, -150%) scale(3); 
     opacity: 0;
-}
+    /* transform-origin muss auf 50% 50% (Standard) bleiben, damit Skalierung mittig erfolgt */
+    left: 50%; /* Zentriert horizontal */
+    top: 0; /* Positioniert es am oberen Rand des Containers */
+    position: absolute; /* Wichtig, damit translate relative zum Container funktioniert */
+    /* Füge diese Zeilen hinzu, falls sie fehlen */
 
 #game-logo {
     width: 60vmin; /* Responsive Größe basierend auf der kleineren Dimension des Viewports */
@@ -159,38 +164,39 @@ body {
 /* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
 @keyframes fall-in {
     0% {
-        transform: translateY(-50vh) scale(3); /* Start: Oben, sehr groß, unsichtbar */
+        transform: translate(-50%, -150%) scale(3); /* Start: Oben mittig, sehr groß, unsichtbar */
         opacity: 0;
     }
-    60% { /* Kurz vor dem Aufprall */
-        transform: translateY(20px) scale(1.1); /* Leicht unter die Endposition, etwas größer */
+    70% { /* Kurz vor dem Aufprall - Schneller und direkter Fall */
+        transform: translate(-50%, 0px) scale(1.1); /* An Zielposition, etwas größer für den "Pop" */
         opacity: 1;
     }
-    80% { /* Beim Aufprall */
-        transform: translateY(0) scale(1); /* An Endposition, normale Größe */
+    85% { /* Beim Aufprall - springt leicht nach oben */
+        transform: translate(-50%, -20px) scale(0.95); /* Leicht nach oben ziehen, etwas kleiner */
         opacity: 1;
     }
-    90% { /* Leichtes Nachwippen nach oben */
-        transform: translateY(-10px) scale(0.95);
-        opacity: 1;
-    }
-    100% { /* Finaler Zustand */
-        transform: translateY(0) scale(1);
+    100% { /* Finaler Zustand - lande exakt auf Null */
+        transform: translate(-50%, 0) scale(1); /* An Endposition, normale Größe */
         opacity: 1;
     }
 }
 
-/* Animation für den Bounce bei jedem Klick (separate Animation vom Fall-in) */
-@keyframes logo-click-bounce {
-    0%, 100% {
-        transform: translateY(0);
+/* Bestehende @keyframes logo-click-bounce (oder umbenannt zu press-down) */
+@keyframes press-down-bounce {
+    0% {
+        transform: scale(1); /* Normale Größe */
     }
-    40% {
-        transform: translateY(-10px);
+    50% {
+        transform: scale(0.9); /* Beim "Drücken" kleiner werden */
     }
-    60% {
-        transform: translateY(-5px);
+    100% {
+        transform: scale(1); /* Wieder normale Größe beim "Loslassen" */
     }
+}
+
+/* Die Klasse, die beim Klick hinzugefügt wird */
+.logo-bounce { /* Behalten wir den Namen bei, aber die Animation ist neu */
+    animation: press-down-bounce 0.3s ease-out; /* Schneller und knackiger */
 }
 
 .logo-bounce {
