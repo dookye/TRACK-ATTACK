@@ -236,10 +236,6 @@ body {
     animation: press-down-bounce 0.3s ease-out; /* Schneller und knackiger */
 }
 
-.logo-bounce {
-    animation: logo-click-bounce 0.5s ease-out;
-}
-
 /* Media Queries für Orientierung und Desktop */
 @media (orientation: portrait) {
     /* Nichts spezifisches hier, da Orientierungs-Message dies übernimmt */
