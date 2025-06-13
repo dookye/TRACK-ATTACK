@@ -134,14 +134,18 @@ body {
 
 /* Initialer Zustand für das Logo, wenn es noch nicht sichtbar ist und reinfallen soll */
 #logo-container.initial-hidden {
-    /* Startet direkt im Zentrum der X-Achse, aber oberhalb des Viewports */
-    transform: translate(-50%, -150%) scale(3); 
-    opacity: 0;
-    /* transform-origin muss auf 50% 50% (Standard) bleiben, damit Skalierung mittig erfolgt */
-    left: 50%; /* Zentriert horizontal */
-    top: 0; /* Positioniert es am oberen Rand des Containers */
-    position: absolute; /* Wichtig, damit translate relative zum Container funktioniert */
-    /* Füge diese Zeilen hinzu, falls sie fehlen */
+    /* STARTPUNKT der Animation: */
+    transform: translate(-50%, -150%) scale(3); /* Startet oberhalb des Viewports, 3x so groß */
+    opacity: 0; /* START: Unsichtbar */
+    
+    /* WICHTIG: Stelle sicher, dass diese hier stehen, um die Positionierung zu kontrollieren! */
+    position: absolute; /* Muss absolut positioniert sein für translate und top/left */
+    left: 50%; /* Horizontal zentriert */
+    top: 0; /* Oben im Elternelement beginnen */
+    
+    /* Füge eine Transition für den 'display' Wechsel hinzu, falls du das mal haben solltest,
+       aber für Animationen direkt auf 'transform' und 'opacity' ist es nicht nötig */
+}
 
 #game-logo {
     width: 60vmin; /* Responsive Größe basierend auf der kleineren Dimension des Viewports */
