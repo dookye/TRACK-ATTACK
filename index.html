@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musik-Rate-Spiel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="initial-click-blocker" class="hidden"></div> 
+
+    <div id="orientation-message" class="overlay-message hidden">
+        <p>Please rotate your device to landscape mode.</p>
+    </div>
+
+    <div id="fullscreen-message" class="overlay-message hidden">
+        <p>Click to fullscreen mode.</p>
+    </div>
+
+    <div class="game-container"> 
+        <div id="login-area"> 
+            <div class="spotify-box">
+                <p id="login-hint">Please log in with your Spotify account to play.</p>
+                <button id="spotify-login-button" class="spotify-button">
+                    <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
+                    Log in with Spotify
+                </button>
+                <p id="playback-status" style="margin-top: 10px; font-size: 0.9em; color: #ccc;"></p> 
+            </div>
+        </div>
+
+        <div id="logo-container" class="hidden initial-hidden"> 
+            <img src="logo3.png" alt="Spiel Logo" id="game-logo" class="active-logo">
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
