@@ -620,6 +620,45 @@ function setLogoAsPlayButton() {
 }
 
 
+// --- Funktion, die den Spotify Login-Status überprüft und den Player initialisiert ---
+// Dies muss vor dem DOMContentLoaded-Listener definiert sein!
+async function checkSpotifyLoginStatus() {
+    console.log("checkSpotifyLoginStatus: Überprüfe Spotify Login Status.");
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+
+    if (code) {
+        console.log('checkSpotifyLoginStatus: Authorization Code erhalten, tausche ihn gegen Access Token.');
+        const success = await exchangeCodeForTokens(code); // Warte auf Erfolg
+        history.replaceState({}, document.title, REDIRECT_URI); // Code aus URL entfernen
+        
+        if (success && accessToken && isSpotifySDKLoaded) {
+             console.log("checkSpotifyLoginStatus: Access Token und SDK bereit, initialisiere Player.");
+             initializeSpotifyPlayer();
+        } else if (success && accessToken) {
+             console.log("checkSpotifyLoginStatus: Access Token vorhanden, aber SDK noch nicht geladen. Player-Initialisierung wartet auf SDK Ready.");
+             // initializeSpotifyPlayer wird dann von window.onSpotifyWebPlaybackSDKReady() aufgerufen
+        } else {
+             console.log("checkSpotifyLoginStatus: Token-Austausch fehlgeschlagen oder kein Access Token.");
+             showLoginScreen(); // Zeigt den Login-Screen mit Fehlermeldung
+        }
+    } else if (localStorage.getItem('access_token') && localStorage.getItem('expires_in') > Date.now()) {
+        console.log('checkSpotifyLoginStatus: Vorhandenen Access Token aus localStorage geladen.');
+        accessToken = localStorage.getItem('access_token');
+        if (isSpotifySDKLoaded) {
+            console.log("checkSpotifyLoginStatus: Vorhandener Token und SDK bereit, initialisiere Player.");
+            initializeSpotifyPlayer();
+        } else {
+            console.log("checkSpotifyLoginStatus: Vorhandener Token, aber SDK noch nicht geladen. Player-Initialisierung wartet auf SDK Ready.");
+        }
+    } else {
+        console.log('checkSpotifyLoginStatus: Kein gültiger Access Token vorhanden. Zeige Login-Screen.');
+        playbackStatus.textContent = 'Bitte logge dich mit Spotify ein.';
+        showLoginScreen(); // Sicherstellen, dass der Login-Screen aktiv ist
+    }
+}
+
+
 // --- INITIALISIERUNG BEIM LADEN DER SEITE ---
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOMContentLoaded: Seite geladen.");
@@ -644,7 +683,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     logoContainer.classList.add('hidden', 'initial-hidden'); // Logo verstecken und initial positionieren
     playbackStatus.textContent = ''; // Anfangs leer
 
-    // Prüfe den Login-Status sofort
+    // Prüfe den Login-Status sofort (MUSS NACH DEFINITION VON checkSpotifyLoginStatus SEIN!)
     await checkSpotifyLoginStatus();
 
     // Event Listener für Orientierungsänderungen und Fenstergrößenänderungen
