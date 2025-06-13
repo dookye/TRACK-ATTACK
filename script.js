@@ -41,6 +41,7 @@ let logoClickListener = null; // Für den dynamischen Klick-Listener des Logos
 let currentGameState = 'loading'; // Zustände: 'loading', 'startScreen', 'playing', 'songPlaying', 'songPaused'
 // Globale Variable, um zu speichern, ob die Logo-Intro-Animation schon einmal lief
 let introAnimationPlayed = false;
+let logoClickListener = null; // Für den dynamischen Klick-Listener des Logos
 
 
 
