@@ -18,7 +18,7 @@ body {
 
 /* Sichtbare Elemente */
 .visible {
-    display: flex; /* Oder block, je nach Element */
+    display: flex !important; /* Oder block, je nach Element */
 }
 
 /* Game Container - Immer sichtbar zu Beginn */
