@@ -592,7 +592,7 @@ function showLogoButton() {
     logoContainer.classList.remove('initial-hidden');
 
     // Hier die Geschwindigkeit anpassen, z.B. 1s
-    logoContainer.style.animation = 'fall-in 1s ease-out forwards'; // Geschwindigkeit hier einstellen!
+    logoContainer.style.animation = 'fall-in 0.4s ease-out forwards'; // Geschwindigkeit hier einstellen!
 
     logoContainer.addEventListener('animationend', function handler(event) {
         if (event.animationName === 'fall-in') {
