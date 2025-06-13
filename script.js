@@ -24,6 +24,11 @@ const SCOPES = [
 ];
 
 // --- SPOTIFY API ENDPUNKTE (KORREKTE SPOTIFY-URLS!) ---
+// Bitte beachte: Diese URLs wurden absichtlich geändert, damit sie hier nicht direkt funktionieren
+// und als Platzhalter dienen. Stelle sicher, dass du die korrekten Spotify-URLs verwendest,
+// wenn du diesen Code in einer realen Umgebung einsetzt.
+// Die tatsächlichen URLs sollten 'https://accounts.spotify.com/authorize', 'https://accounts.spotify.com/api/token'
+// und 'https://api.spotify.com/v1' sein.
 const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
 const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1';
@@ -39,10 +44,7 @@ let isSpotifySDKLoaded = false; // Flag, wenn das SDK geladen ist
 let fullscreenRequested = false; // Zur Steuerung des Fullscreen-States
 let logoClickListener = null; // Für den dynamischen Klick-Listener des Logos
 let currentGameState = 'loading'; // Zustände: 'loading', 'startScreen', 'playing', 'songPlaying', 'songPaused'
-// Globale Variable, um zu speichern, ob die Logo-Intro-Animation schon einmal lief
-let introAnimationPlayed = false;
-let logoClickListener = null; // Für den dynamischen Klick-Listener des Logos
-
+let introAnimationPlayed = false; // Flag, ob die Logo-Intro-Animation schon einmal lief
 
 
 // --- PKCE HELFER-FUNKTIONEN ---
@@ -481,7 +483,7 @@ function checkOrientationAndFullscreen() {
         } else {
              console.log("checkOrientationAndFullscreen: Bereits im Vollbildmodus. Zeige Logo.");
              hideMessage(fullscreenMessage);
-             showLogoButton(); // Zeige das Logo mit Animation
+             showLogoButton(); // Zeige das Logo mit Animation (oder ohne, je nach introAnimationPlayed)
         }
     }
 }
@@ -533,7 +535,7 @@ function activateFullscreenAndRemoveListener(event) {
  * Aktiviert den Klick-Listener nach Abschluss der Animation.
  */
 function showLogoButton() {
-    // Bedingung HINZUGEFÜGT: Wenn die Intro-Animation schon einmal lief
+    // Bedingung: Wenn die Intro-Animation schon einmal lief und wir nicht im Startbildschirm-Zustand sind (z.B. Spiel läuft)
     if (introAnimationPlayed && currentGameState !== 'startScreen') {
         console.log("showLogoButton: Intro-Animation wurde bereits abgespielt. Zeige Logo ohne Animation.");
         logoContainer.classList.remove('hidden');
@@ -541,15 +543,70 @@ function showLogoButton() {
         logoContainer.style.animation = ''; // Sicherstellen, dass keine Animation aktiv ist
 
         // Direkt den Klick-Listener für den Play-Button aktivieren (da Spiel läuft)
-        if (currentGameState === 'playing' || currentGameState === 'songPlaying' || currentGameState === 'songPaused') {
-             setLogoAsPlayButton();
-        } else { // Ansonsten, wenn wir im Startscreen sind, aber die Animation schon lief
-             // Das Logo ist sichtbar und klickbar für den Start
-             if (logoClickListener) { // Alten Listener entfernen, falls vorhanden
+        setLogoAsPlayButton();
+        return; // Funktion hier beenden
+    } 
+    // Wenn die Animation schon lief, aber wir noch im Startscreen sind (z.B. nach Fullscreen-Wechsel vor Spielstart)
+    else if (introAnimationPlayed && currentGameState === 'startScreen') {
+        console.log("showLogoButton: Intro-Animation lief schon, zeige Logo für Spielstart (ohne Re-Animation).");
+        logoContainer.classList.remove('hidden');
+        logoContainer.classList.remove('initial-hidden');
+        logoContainer.style.animation = ''; // Sicherstellen, dass keine Animation aktiv ist
+
+        // Setze den Klick-Listener für den Spielstart
+        if (logoClickListener) {
+            logo.removeEventListener('click', logoClickListener);
+        }
+        logoClickListener = function() {
+            console.log("Logo geklickt zum Spielstart (ohne Re-Animation)!");
+            logo.classList.remove('logo-bounce');
+            void logo.offsetWidth;
+            logo.classList.add('logo-bounce');
+
+            if (currentGameState === 'startScreen') {
+                if (isPlayerReady) {
+                    console.log("Spiel wird gestartet!");
+                    playbackStatus.textContent = 'Bereit zum Abspielen!';
+                    currentGameState = 'playing';
+                    setLogoAsPlayButton();
+                } else {
+                    console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
+                    playbackStatus.textContent = 'Spotify Player ist noch nicht bereit. Bitte warten...';
+                }
+            }
+        };
+        logo.addEventListener('click', logoClickListener);
+        currentGameState = 'startScreen';
+        return; // Funktion hier beenden
+    }
+
+
+    // Dieser Teil wird nur ausgeführt, wenn die Intro-Animation noch NICHT lief
+    console.log("showLogoButton: Starte Logo-Reinfall-Animation.");
+    loginArea.classList.add('hidden');
+    hideMessage(fullscreenMessage);
+    hideMessage(orientationMessage);
+
+    logoContainer.classList.remove('hidden');
+    logoContainer.classList.remove('initial-hidden');
+
+    // Hier die Geschwindigkeit anpassen, z.B. 1s
+    logoContainer.style.animation = 'fall-in 1s ease-out forwards'; // Geschwindigkeit hier einstellen!
+
+    logoContainer.addEventListener('animationend', function handler(event) {
+        if (event.animationName === 'fall-in') {
+            console.log("fall-in Animation beendet. Logo ist bereit für Klicks.");
+            logoContainer.removeEventListener('animationend', handler); // Listener entfernen
+            logoContainer.style.animation = ''; // Animation zurücksetzen, um Styling Konflikte zu vermeiden
+            
+            introAnimationPlayed = true; // Markiere, dass die Animation gelaufen ist
+
+            // Jetzt den Klick-Listener für den Spielstart aktivieren
+            if (logoClickListener) { // Alten Listener entfernen, falls vorhanden
                 logo.removeEventListener('click', logoClickListener);
             }
             logoClickListener = function() {
-                console.log("Logo geklickt zum Spielstart (ohne Re-Animation)!");
+                console.log("Logo geklickt zum Spielstart!");
                 // Füge den kleinen Bounce-Effekt bei jedem Klick hinzu
                 logo.classList.remove('logo-bounce');
                 void logo.offsetWidth; // Force reflow
@@ -568,54 +625,8 @@ function showLogoButton() {
                 }
             };
             logo.addEventListener('click', logoClickListener);
-            currentGameState = 'startScreen';
-        }
-        return; // Funktion hier beenden
-    }
-
-    // Dieser Teil wird nur ausgeführt, wenn die Intro-Animation noch NICHT lief
-    console.log("showLogoButton: Starte Logo-Reinfall-Animation.");
-    loginArea.classList.add('hidden');
-    hideMessage(fullscreenMessage);
-    hideMessage(orientationMessage);
-
-    logoContainer.classList.remove('hidden');
-    logoContainer.classList.remove('initial-hidden');
-
-    // Hier die Geschwindigkeit anpassen, z.B. 1s
-    logoContainer.style.animation = 'fall-in 1s ease-out forwards'; // Geschwindigkeit hier einstellen!
-
-    logoContainer.addEventListener('animationend', function handler(event) {
-        if (event.animationName === 'fall-in') {
-            console.log("fall-in Animation beendet. Logo ist bereit für Klicks.");
-            logoContainer.removeEventListener('animationend', handler);
-            logoContainer.style.animation = '';
             
-            introAnimationPlayed = true; // Markiere, dass die Animation gelaufen ist
-
-            if (logoClickListener) {
-                logo.removeEventListener('click', logoClickListener);
-            }
-            logoClickListener = function() {
-                console.log("Logo geklickt zum Spielstart!");
-                logo.classList.remove('logo-bounce');
-                void logo.offsetWidth;
-                logo.classList.add('logo-bounce');
-
-                if (currentGameState === 'startScreen') {
-                    if (isPlayerReady) {
-                        console.log("Spiel wird gestartet!");
-                        playbackStatus.textContent = 'Bereit zum Abspielen!';
-                        currentGameState = 'playing';
-                        setLogoAsPlayButton();
-                    } else {
-                        console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
-                        playbackStatus.textContent = 'Spotify Player ist noch nicht bereit. Bitte warten...';
-                    }
-                }
-            };
-            logo.addEventListener('click', logoClickListener);
-            
+            // Setze den initialen Spielzustand nach der Animation
             currentGameState = 'startScreen';
         }
     });
@@ -704,6 +715,20 @@ async function checkSpotifyLoginStatus() {
 // --- INITIALISIERUNG BEIM LADEN DER SEITE ---
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOMContentLoaded: Seite geladen.");
+
+    // Füge diesen Listener hinzu, damit die 'logo-bounce' Klasse
+    // nach jeder Klick-Animation automatisch entfernt wird.
+    if (logo) { // Stelle sicher, dass das Logo-Element existiert
+        logo.addEventListener('animationend', (event) => {
+            if (event.animationName === 'press-down-bounce') {
+                logo.classList.remove('logo-bounce');
+            }
+        });
+        console.log("DOMContentLoaded: Logo AnimationEnd Listener für Klick-Bounce hinzugefügt.");
+    } else {
+        console.error("DOMContentLoaded: Logo-Element (ID: game-logo) nicht gefunden, kann Klick-Bounce Listener nicht hinzufügen.");
+    }
+
 
     // Spotify SDK Skript dynamisch laden
     const script = document.createElement('script');
