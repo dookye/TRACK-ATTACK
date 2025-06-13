@@ -123,28 +123,27 @@ body {
 
 /* Logo Container - Anfangs versteckt */
 #logo-container {
-    display: flex; /* Flex, um das Logo zu zentrieren */
+    display: flex;
     justify-content: center;
     align-items: center;
-    height: 100%; /* Nimmt verfügbaren Platz im game-container ein */
     width: 100%;
-    /* Standard-Transition für die Animation (wenn sie durch JS gesetzt wird) */
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out; 
+    height: 100%;
+    position: relative; /* Beibehalten für absolut positioniertes initial-hidden Kind */
+    overflow: hidden; /* Beibehalten */
 }
 
 /* Initialer Zustand für das Logo, wenn es noch nicht sichtbar ist und reinfallen soll */
 #logo-container.initial-hidden {
-    /* STARTPUNKT der Animation: */
-    transform: translate(-50%, -150%) scale(3); /* Startet oberhalb des Viewports, 3x so groß */
-    opacity: 0; /* START: Unsichtbar */
+    /* WICHTIG: absolute Positionierung für genaue Kontrolle */
+    position: absolute; 
+    left: 50%; /* Startet horizontal in der Mitte des Containers */
+    top: 0; /* Startet am oberen Rand des Containers (für -150% translateY) */
+    width: 100%; /* Übernimmt Breite des Parent */
+    height: 100%; /* Übernimmt Höhe des Parent */
     
-    /* WICHTIG: Stelle sicher, dass diese hier stehen, um die Positionierung zu kontrollieren! */
-    position: absolute; /* Muss absolut positioniert sein für translate und top/left */
-    left: 50%; /* Horizontal zentriert */
-    top: 0; /* Oben im Elternelement beginnen */
-    
-    /* Füge eine Transition für den 'display' Wechsel hinzu, falls du das mal haben solltest,
-       aber für Animationen direkt auf 'transform' und 'opacity' ist es nicht nötig */
+    /* Der Startpunkt der Transformation - hier ist translateX(-50%) entscheidend für die Zentrierung */
+    transform: translate(-50%, -150vh) scale(3); /* -150vh um sicher von oben zu starten */
+    opacity: 0; /* Startet unsichtbar */
 }
 
 #game-logo {
@@ -168,14 +167,14 @@ body {
 /* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
 @keyframes fall-in {
     0% {
-        transform: translate(-50%, -150%) scale(3); /* Start: Oben mittig, sehr groß, unsichtbar */
+        transform: translate(-50%, -150vh) scale(3); /* Start: Oben mittig, sehr groß, unsichtbar */
         opacity: 0;
     }
-    70% { /* Kurz vor dem Aufprall - Schneller und direkter Fall */
+    60% { /* Kurz vor dem Aufprall (kürzere Dauer = schneller) */
         transform: translate(-50%, 0px) scale(1.1); /* An Zielposition, etwas größer für den "Pop" */
         opacity: 1;
     }
-    85% { /* Beim Aufprall - springt leicht nach oben */
+    80% { /* Beim Aufprall - springt leicht nach oben */
         transform: translate(-50%, -20px) scale(0.95); /* Leicht nach oben ziehen, etwas kleiner */
         opacity: 1;
     }
