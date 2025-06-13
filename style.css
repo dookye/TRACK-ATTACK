@@ -122,6 +122,8 @@ body {
     align-items: center;
     gap: 10px;
     transition: background-color 0.3s ease;
+      outline: none !important;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .spotify-button:hover {
@@ -167,6 +169,13 @@ body {
     max-width: 500px;
     transition: filter 0.3s ease-out;
     transform-origin: center center; /* Auch hier wichtig für den Klick-Bounce */
+     -webkit-tap-highlight-color: transparent; /* Für Webkit-Browser (iOS, Android Chrome) */
+    -webkit-touch-callout: none; /* Deaktiviert das Kontextmenü bei langem Drücken auf iOS */
+    -webkit-user-select: none; /* Verhindert Textauswahl */
+    -moz-user-select: none; /* Für Firefox */
+    -ms-user-select: none; /* Für Internet Explorer/Edge */
+    user-select: none; /* Standard für andere Browser */
+    outline: none !important; /* Entfernt den Fokus-Outline */
 }
 
 /* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
