@@ -136,8 +136,7 @@ body {
 /* --- LOGO CONTAINER UND LOGO --- */
 
 #logo-container {
-    /* Dieser Container nimmt den gesamten Platz ein und zentriert das Logo darin */
-    position: absolute; /* Muss absolut sein, um top/left zu nutzen */
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -145,65 +144,56 @@ body {
     display: flex; /* Zum Zentrieren des #game-logo innerhalb dieses Containers */
     justify-content: center; /* Horizontale Zentrierung des Logos */
     align-items: center; /* Vertikale Zentrierung des Logos */
-    overflow: hidden; /* Verhindert, dass das große Logo über den Container ragt */
-    z-index: 10; /* Stellen wir sicher, dass es über dem Login-Bereich liegt */
-    /* Keine 'transition' hier, da Animationen direkt gesetzt werden */
+    overflow: hidden;
+    z-index: 10;
 }
 
 /* Initialer Zustand für das Logo, wenn es noch nicht sichtbar ist und reinfallen soll */
 #logo-container.initial-hidden {
-    /* Hier ist der Startpunkt der Animation */
-    /* Wir verschieben das Logo IM Container, um es von oben reinfallen zu lassen. */
-    /* 'top: 0;' ist der Ausgangspunkt der Verschiebung */
-    
-    /* Wichtig: transform-origin muss mittig sein, für saubere Skalierung */
     transform-origin: center center;
 
-    /* Startposition außerhalb des Bildschirms, horizontal zentriert im Container */
-    /* Die X-Achse muss hier NICHT translate(-50%) haben, da der Container selbst flex-zentriert ist */
-    /* Sondern wir verschieben hier nur das Logo (im Container) vertikal. */
-    transform: translateY(-150vh) scale(3); 
-    opacity: 0; /* Startet unsichtbar */
-    
-    /* KEINE 'position: absolute; left: 50%;' HIER, da der #logo-container schon absolut und flex-zentriert ist.
-       Diese Regeln würden sonst die Zentrierung des #logo-containers selbst überschreiben oder doppeln. */
+    /* NEU: Vertikale Startposition anpassen! */
+    /*
+     * Das Logo landet später vertikal zentriert durch Flexbox.
+     * Um es von "oben" reinfallen zu lassen, verschieben wir es von dieser finalen Position aus nach oben.
+     * Eine Verschiebung von z.B. -50vh bedeutet, dass es 50% der Viewporthöhe oberhalb seiner finalen Mitte startet.
+     * Experimentiere mit diesem Wert (-30vh, -70vh), um die Starthöhe anzupassen.
+     */
+    transform: translateY(-50vh) scale(3); /* Jetzt von "mittig oben" startend */
+    opacity: 0;
 }
 
 
 #game-logo {
-    width: 60vmin; /* Responsive Größe basierend auf der kleineren Dimension des Viewports */
+    width: 60vmin;
     height: auto;
     cursor: pointer;
-    max-width: 500px; /* Maximale Größe für Desktop */
-    /* KEINE 'transform' Transition hier, um Konflikte mit Animationen zu vermeiden */
-    transition: filter 0.3s ease-out; /* Nur 'filter' Transition beibehalten */
-    /* transform-origin muss hier auch mittig sein, für saubere Skalierung der Animation */
-    transform-origin: center center; 
+    max-width: 500px;
+    transition: filter 0.3s ease-out;
+    transform-origin: center center;
 }
-
 
 /* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
 /* Diese Animation wird auf den #logo-container angewendet */
 @keyframes fall-in {
     0% {
-        /* Startpunkt: Vertikal sehr weit oben, 3x so groß, unsichtbar */
-        /* translateX(-50%) ist HIER NICHT NOTWENDIG, da der #logo-container das Bild bereits zentriert */
-        transform: translateY(-150vh) scale(3); 
+        /* Startpunkt der Animation: Muss mit initial-hidden übereinstimmen! */
+        transform: translateY(-50vh) scale(3); /* NEU: Gleicher Startpunkt wie initial-hidden */
         opacity: 0;
     }
-    60% { 
+    60% {
         /* Zwischenpunkt: Fast am Ende der Fallbewegung, leicht vergrößert für den "Pop" */
-        transform: translateY(0px) scale(1.1); 
+        transform: translateY(0px) scale(1.1); /* Landet auf der vertikalen Mittelachse */
         opacity: 1;
     }
-    80% { 
+    80% {
         /* Zwischenpunkt: Kurzer "Rückprall" nach oben, leicht verkleinert */
-        transform: translateY(-20px) scale(0.95); 
+        transform: translateY(-20px) scale(0.95);
         opacity: 1;
     }
-    100% { 
+    100% {
         /* Endpunkt: Finale Ruheposition, normale Größe */
-        transform: translateY(0) scale(1); 
+        transform: translateY(0) scale(1); /* Endet auf der vertikalen Mittelachse */
         opacity: 1;
     }
 }
