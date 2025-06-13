@@ -182,7 +182,7 @@ body {
     }
     /* NEUE TIMINGS für den Bounce: */
     70% { /* Vor dem finalen Bounce: Fällt auf oder leicht unter die Endposition */
-        transform: translateY(0px) scale(1.005); /* Leicht unter die Mitte fallen, etwas größer */
+        transform: translateY(0px) scale(1.008); /* Leicht unter die Mitte fallen, etwas größer */
         opacity: 1;
     }
     100% { /* Endpunkt: Finale Ruheposition, normale Größe */
@@ -205,7 +205,7 @@ body {
 }
 
 .logo-bounce {
-    animation: press-down-bounce 0.3s ease-out;
+    animation: press-down-bounce 0.1s ease-out;
 }
 
 /* Aktiver Zustand des Logos */
