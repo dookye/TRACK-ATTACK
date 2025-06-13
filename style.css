@@ -223,22 +223,9 @@ body {
     filter: brightness(50%); /* Leicht abgedunkelt */
 }
 
-/* Bestehende @keyframes logo-click-bounce (oder umbenannt zu press-down) */
-@keyframes press-down-bounce {
-    0% {
-        transform: scale(1); /* Normale Größe */
-    }
-    50% {
-        transform: scale(0.9); /* Beim "Drücken" kleiner werden */
-    }
-    100% {
-        transform: scale(1); /* Wieder normale Größe beim "Loslassen" */
-    }
-}
-
 /* Die Klasse, die beim Klick hinzugefügt wird */
 .logo-bounce { /* Behalten wir den Namen bei, aber die Animation ist neu */
-    animation: press-down-bounce 0.3s ease-out; /* Schneller und knackiger */
+    animation: press-down-bounce 0.1s ease-out; /* Schneller und knackiger */
 }
 
 /* Media Queries für Orientierung und Desktop */
