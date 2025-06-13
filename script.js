@@ -396,12 +396,19 @@ function checkOrientationAndFullscreen() {
 }
 
 // NEU: Funktion zum Anzeigen des Logo-Buttons
+// Funktion zum Anzeigen des Logo-Buttons (TRACK ATTACK)
 function showLogoButton() {
     console.log("showLogoButton: Zeige TRACK ATTACK Logo.");
-    loginArea.classList.add('hidden'); // Login-Bereich definitiv ausblenden
-    logoContainer.classList.remove('hidden'); // Logo-Container sichtbar machen
-    logoContainer.classList.add('visible');
-    // Das Logo selbst hat schon die Klasse 'active-logo' von Anfang an im HTML
+    loginArea.classList.add('hidden'); // Login-Bereich ausblenden
+    hideMessage(fullscreenMessage); // Stellen Sie sicher, dass die Fullscreen-Nachricht wirklich weg ist
+    hideMessage(orientationMessage); // Und die Orientierungsnachricht auch
+
+    logoContainer.classList.remove('hidden'); // logo-container sichtbar machen
+    logoContainer.classList.add('visible'); // visible Klasse hinzufügen
+
+    // Optional: Wenn das Logo noch nicht auf 'active-logo' war, hier setzen
+    logo.classList.remove('inactive-logo');
+    logo.classList.add('active-logo');
 }
 
 
@@ -421,19 +428,25 @@ function requestFullscreen() {
 
 function activateFullscreenAndRemoveListener(event) {
     console.log("activateFullscreenAndRemoveListener: Vollbildmodus-Aktivierung durch Klick.");
-    // Überprüfen, ob der Klick auf das Fullscreen-Nachrichten-Element kam
+    
+    // Nur reagieren, wenn der Klick auf der Fullscreen-Nachricht selbst war,
+    // um ungewollte Klicks (z.B. auf den Body) zu ignorieren.
     if (!fullscreenMessage.contains(event.target)) {
         console.log("activateFullscreenAndRemoveListener: Klick nicht auf Fullscreen-Nachricht, ignoriere.");
-        // Wenn der Klick nicht auf der Nachricht war, und der Listener {once: true} ist, muss er neu hinzugefügt werden.
+        // Wichtig: Da der Listener mit `{ once: true }` hinzugefügt wird,
+        // muss er bei einem ignorierten Klick erneut hinzugefügt werden,
+        // sonst kann der User später nicht mehr durch Klicken den Fullscreen triggern.
         document.addEventListener('click', activateFullscreenAndRemoveListener, { once: true });
         return;
     }
 
-    if (!fullscreenRequested) { // Nur ausführen, wenn Fullscreen noch nicht angefordert wurde
+    if (!fullscreenRequested) {
         requestFullscreen();
         fullscreenRequested = true; // Setze Flag, um Mehrfachauslösung zu verhindern
-        hideMessage(fullscreenMessage); // Fullscreen-Meldung ausblenden
-        showLogoButton(); // Zeige das Logo nach Fullscreen
+        document.removeEventListener('click', activateFullscreenAndRemoveListener); // Entferne den Listener, da Klick erfolgreich war
+        
+        // Nach erfolgreicher Fullscreen-Anforderung das Logo anzeigen
+        showLogoButton(); 
     }
 }
 
@@ -495,18 +508,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Listener für das Beenden des Fullscreen-Modus
     document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement) {
-            console.log("Fullscreen verlassen.");
-            fullscreenRequested = false; // Zurücksetzen, damit es erneut angefordert werden kann
-            // Wenn Fullscreen verlassen wird, prüfen wir wieder die Orientierung und zeigen ggf. die Aufforderung
-            if (isPlayerReady) { // Nur wenn der Player bereits verbunden ist
-                checkOrientationAndFullscreen();
-            }
+    if (!document.fullscreenElement) {
+        console.log("Fullscreen verlassen.");
+        fullscreenRequested = false; // Zurücksetzen, damit es erneut angefordert werden kann
+        // Wenn Fullscreen verlassen wird, prüfen wir wieder die Orientierung und zeigen ggf. die Aufforderung
+        if (isPlayerReady) { // Nur wenn der Player bereits verbunden ist
+            checkOrientationAndFullscreen(); // Dies wird die Fullscreen-Meldung wieder anzeigen
         } else {
-            console.log("Fullscreen aktiviert.");
-            // Hier wird nichts extra getan, da showLogoButton() bereits im activateFullscreenAndRemoveListener aufgerufen wird.
+            // Wenn der Player nicht bereit ist (z.B. nach einem Fehler), zurück zum Login-Screen
+            showLoginScreen();
         }
-    });
+    } else {
+        console.log("Fullscreen aktiviert.");
+        // Wenn Fullscreen aktiviert wird (z.B. durch user-interaktion), Logo anzeigen
+        // showLogoButton(); // Dies sollte bereits in activateFullscreenAndRemoveListener aufgerufen werden
+    }
+});
 });
 
 
