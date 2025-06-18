@@ -13,7 +13,7 @@ const playbackStatus = document.getElementById('playback-status');
 
 // --- SPOTIFY KONSTANTEN ---
 const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
-const REDIRECT_URI = 'https://dookye.github.io/musik-raten/'; // Deine GitHub Pages URL
+const REDIRECT_URI = 'https://dookye.github.io/TRACK-ATTACK/'; // Deine GitHub Pages URL
 const PLAYLIST_ID = '39sVxPTg7BKwrf2MfgrtcD'; // Punk Rock (90's & 00's)
 const SCOPES = [
     'user-read-private',
