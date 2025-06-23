@@ -13,8 +13,8 @@ const fullscreenMessage = document.getElementById('fullscreen-message');
 const enterFullscreenButton = document.getElementById('enter-fullscreen-button');
 
 // Spotify API Credentials (Bitte hier Ihre echten Client ID und Redirect URI eintragen)
-const CLIENT_ID = 'YOUR_CLIENT_ID'; // ERSETZE DIES DURCH DEINE CLIENT ID
-const REDIRECT_URI = 'http://localhost:8888/callback'; // Stelle sicher, dass dies in deinen Spotify App Einstellungen registriert ist
+const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6'; // ERSETZE DIES DURCH DEINE CLIENT ID
+const REDIRECT_URI = 'https://dookye.github.io/TRACK-ATTACK/'; // Stelle sicher, dass dies in deinen Spotify App Einstellungen registriert ist
 
 // Spotify API Endpunkte
 const AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
