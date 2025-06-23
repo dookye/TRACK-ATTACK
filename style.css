@@ -42,13 +42,10 @@ html, body, #game-logo, .spotify-button {
 
 /* --- SPIELER-SPEZIFISCHE HINTERGRÜNDE --- */
 /* Diese Klassen werden dynamisch von JavaScript hinzugefügt/entfernt */
-
-/* Hintergrund für Spieler 1 (Blau - linke Seite) */
 .player-blue-active {
     background: linear-gradient(to right, #0000FF 0%, #000000 50%, #000000 50%, #000000 100%);
 }
 
-/* Hintergrund für Spieler 2 (Pink - rechte Seite) */
 .player-pink-active {
     background: linear-gradient(to left, #FF69B4 0%, #000000 50%, #000000 50%, #000000 100%);
 }
@@ -58,21 +55,28 @@ html, body, #game-logo, .spotify-button {
 #login-area {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    width: 100vw;
-    position: absolute; /* Überlagert den game-container bei Bedarf */
+    justify-content: center; /* Vertikal zentrieren */
+    align-items: center;     /* Horizontal zentrieren */
+    height: 100vh;           /* Volle Viewport-Höhe */
+    width: 100vw;            /* Volle Viewport-Breite */
+    position: fixed;         /* Fixed position, damit es unabhängig vom Scrolling/anderen Containern ist */
     top: 0;
     left: 0;
-    background-color: rgba(0, 0, 0, 0.8); /* Leichter schwarzer Overlay */
-    z-index: 100; /* Sorgt dafür, dass es über anderen Elementen liegt */
-    transition: opacity 0.5s ease-out; /* Smooth fade-out */
+    background-color: rgba(0, 0, 0, 0.95); /* Dunkler, leicht transparenter Hintergrund für den Login */
+    z-index: 200;            /* Höherer z-index als alles andere, damit es immer oben liegt */
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out; /* Transition für Visibility hinzugefügt */
 }
 
 #login-area.hidden {
     opacity: 0;
-    pointer-events: none; /* Macht den Bereich undurchklickbar, wenn versteckt */
+    pointer-events: none;
+    visibility: hidden; /* Verbirgt den Bereich vollständig, wenn ausgeblendet */
+}
+
+#login-area p { /* Stile für den Text im Login-Bereich */
+    font-size: 1.5em; /* Macht den Text größer und besser lesbar */
+    margin-bottom: 30px; /* Mehr Abstand zum Button */
+    text-align: center;
 }
 
 .spotify-button {
@@ -85,12 +89,7 @@ html, body, #game-logo, .spotify-button {
     cursor: pointer;
     transition: background-color 0.3s ease;
     text-decoration: none; /* Falls es ein Link ist */
-    display: inline-block; /* Für padding und Zentrierung */
-    margin-top: 20px;
-}
-
-.spotify-button:hover {
-    background-color: #1ed760; /* Etwas helleres Grün beim Hover */
+    display: inline-block; /* Wichtig für padding und Zentrierung */
 }
 
 #playback-status {
@@ -182,7 +181,7 @@ html, body, #game-logo, .spotify-button {
 
 /* --- OVERLAY NACHRICHTEN (Orientierung, Fullscreen) --- */
 .message-overlay {
-    position: absolute;
+    position: fixed; /* Auch fixed, um immer über allem zu liegen */
     top: 0;
     left: 0;
     width: 100vw;
@@ -197,15 +196,16 @@ html, body, #game-logo, .spotify-button {
     padding: 20px;
     box-sizing: border-box;
     font-size: 1.5em;
-    z-index: 150; /* Über allen anderen Inhalten */
+    z-index: 150; /* Über allen anderen Inhalten, aber unter Login-Bereich */
     opacity: 0;
-    transition: opacity 0.5s ease-out;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
     pointer-events: none; /* Standardmäßig keine Klicks abfangen */
 }
 
 .message-overlay.visible {
     opacity: 1;
     pointer-events: auto; /* Klicks abfangen, wenn sichtbar */
+    visibility: visible;
 }
 
 .message-overlay p {
@@ -230,7 +230,7 @@ html, body, #game-logo, .spotify-button {
 /* Initialer Klick-Blocker, der verhindert, dass die App startet,
    bevor die Orientierung/Fullscreen geklärt ist */
 #initial-click-blocker {
-    position: absolute;
+    position: fixed; /* Auch fixed */
     top: 0;
     left: 0;
     width: 100vw;
@@ -238,12 +238,13 @@ html, body, #game-logo, .spotify-button {
     background-color: transparent; /* Unsichtbar, fängt aber Klicks ab */
     z-index: 120; /* Zwischen Overlays und Spielinhalt */
     pointer-events: auto; /* Standardmäßig aktiv */
-    transition: opacity 0.5s ease-out;
+    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
 }
 
 #initial-click-blocker.hidden {
     pointer-events: none; /* Klicks durchlassen */
     opacity: 0;
+    visibility: hidden;
 }
 
 
@@ -262,6 +263,9 @@ html, body, #game-logo, .spotify-button {
     #logo-container {
         width: 90vmin;
         height: 90vmin;
+    }
+    #login-area p {
+        font-size: 1.2em;
     }
 }
 
