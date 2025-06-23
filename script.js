@@ -41,6 +41,19 @@ let songsPlayedInRound = 0; // Zählt die Songs pro Runde (max. 2 pro Runde)
 let isFullscreen = false; // Verfolgt den Fullscreen-Status
 let isPortrait = false; // Verfolgt den Portrait-Modus
 
+// --- DOM-ELEMENT REFERENZEN (WERDEN ERST IM DOMContentLoaded INITIALISIERT) ---
+// Deklariere sie hier nur mit 'let', ohne Zuweisung!
+let gameContainer;
+let loginArea;
+let spotifyLoginButton; // <-- Dies bleibt 'let'
+let playbackStatus;
+let logoContainer;
+let logo;
+let initialClickBlocker;
+let orientationMessage;
+let fullscreenMessage;
+let enterFullscreenButton;
+
 
 // --- AUTHENTIFIZIERUNG & TOKEN MANAGEMENT ---
 
@@ -418,6 +431,18 @@ window.addEventListener('resize', () => {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM geladen. Starte Initialisierung...");
 
+    // HIER WERDEN ALLE DOM-ELEMENTE INITIALISIERT!
+    gameContainer = document.querySelector('.game-container');
+    loginArea = document.getElementById('login-area');
+    spotifyLoginButton = document.getElementById('spotify-login-button'); // <-- Hier die Zuweisung!
+    playbackStatus = document.getElementById('playback-status');
+    logoContainer = document.getElementById('logo-container');
+    logo = document.getElementById('game-logo');
+    initialClickBlocker = document.getElementById('initial-click-blocker');
+    orientationMessage = document.getElementById('orientation-message');
+    fullscreenMessage = document.getElementById('fullscreen-message');
+    enterFullscreenButton = document.getElementById('enter-fullscreen-button');
+
     // Zeige zuerst den Initial Click Blocker, um unerwünschte Interaktionen zu verhindern
     initialClickBlocker.classList.add('visible');
 
@@ -487,6 +512,10 @@ async function tryAuthenticateAndInit() {
 }
 
 // Event Listener für den Spotify Login Button
-if (spotifyLoginButton) {
-    spotifyLoginButton.addEventListener('click', authorizeSpotify);
-}
+ if (spotifyLoginButton) { // Der Check ist immer noch gut, falls ein Tippfehler im HTML ist
+        spotifyLoginButton.addEventListener('click', authorizeSpotify);
+    } else {
+        console.error("Fehler: Spotify Login Button konnte nicht gefunden werden!");
+    }
+    // ...
+});
