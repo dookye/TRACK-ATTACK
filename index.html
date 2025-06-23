@@ -3,37 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK04</title>
+    <title>TRACK ATTACK</title>
     <link rel="stylesheet" href="style.css">
-</head>
+    </head>
 <body>
 
-    <div id="initial-click-blocker" class="hidden"></div> 
+    <div class="game-container">
+        </div>
 
-    <div id="orientation-message" class="overlay-message hidden">
-        <p>Please rotate your device to landscape mode.</p>
-    </div>
-
-    <div id="fullscreen-message" class="overlay-message hidden">
-        <p>Click to fullscreen mode.</p>
-    </div>
-
-    <div class="game-container"> 
-        <div id="login-area" class="hidden"> <div class="spotify-box">
+    <div id="login-area" class="hidden">
+        <div class="spotify-box">
             <p id="login-hint">Please log in with your Spotify account to play.</p>
             <button id="spotify-login-button" class="spotify-button">
-                <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
+                <img src="img/spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
                 Log in with Spotify
             </button>
             <p id="playback-status" style="margin-top: 10px; font-size: 0.9em; color: #ccc;"></p>
         </div>
-        </div>
-
-        <div id="logo-container" class="hidden initial-hidden"> 
-            <img src="logo3.png" alt="Spiel Logo" id="game-logo" class="active-logo">
-        </div>
-
     </div>
+
+    <div id="logo-container" class="hidden initial-hidden">
+        <img id="game-logo" src="img/track_attack_logo.png" alt="TRACK ATTACK Logo">
+    </div>
+
+    <div id="orientation-message" class="message-overlay">
+        <p>Bitte drehe dein Gerät ins Querformat.</p>
+        <p>Für das beste Spielerlebnis ist der Landscape-Modus erforderlich.</p>
+    </div>
+
+    <div id="fullscreen-message" class="message-overlay">
+        <p>Für ein ungestörtes Spielerlebnis</p>
+        <p>empfehlen wir den Vollbildmodus.</p>
+        <button id="enter-fullscreen-button" class="action-button">Vollbild aktivieren</button>
+    </div>
+
+    <div id="initial-click-blocker" class="visible"></div>
 
     <script src="script.js"></script>
 </body>
