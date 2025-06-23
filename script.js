@@ -745,7 +745,7 @@ function showLoginScreen() {
     loginArea.classList.remove('hidden');
     // Stellen Sie sicher, dass der Hintergrund wieder schwarz ist, wenn zum Login gewechselt wird
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
-    // gameContainer.style.backgroundColor = 'black';
+    gameContainer.style.backgroundColor = 'black';
     currentGameState = 'loading'; // Oder 'loginScreen'
 }
 
