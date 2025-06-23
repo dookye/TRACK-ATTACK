@@ -1,20 +1,175 @@
-/* style.css */
-
-/* --- Globale Reset- und Basis-Stile --- */
-html, body {
+body {
     margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Arial', sans-serif; /* Oder eine andere schöne Schriftart */
-    color: #FFFFFF; /* Standardtextfarbe, Weiß für gute Lesbarkeit */
-    overflow: hidden; /* Verhindert Scrollbalken auf der Seite */
-    background-color: #000000; /* Fallback für den Body-Hintergrund */
+    overflow: hidden; /* Verhindert Scrollbalken */
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Nimmt die gesamte Viewport-Höhe ein */
+    width: 100vw; /* Nimmt die gesamte Viewport-Breite ein */
 }
 
-/* Verhindert das blaue/graue Tap-Highlight auf iOS/Android beim Klicken */
-/* und entfernt den Fokus-Outline, sorgt für reibungsloses User-Select */
-html, body, #game-logo, .spotify-button {
-    -webkit-tap-highlight-color: transparent; /* Für Webkit-Browser (iOS, Android Chrome) */
+/* Versteckte Elemente */
+.hidden {
+    display: none !important;
+}
+
+/* Sichtbare Elemente */
+.visible {
+    display: flex !important; /* Wichtig: Sorgt dafür, dass es display: none überschreibt */
+}
+
+/* Game Container - Immer sichtbar zu Beginn */
+.game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex; /* Macht den Container flexibel */
+    flex-direction: column; /* Elemente untereinander */
+    justify-content: center; /* Zentriert vertikal */
+    align-items: center; /* Zentriert horizontal */
+    background-color: black;
+    color: white;
+    text-align: center;
+    transition: opacity 1s ease-in-out;
+    opacity: 1; /* Standardmäßig sichtbar */
+}
+
+/* Initial Click Blocker - Nur für Overlay-Nachrichten */
+#initial-click-blocker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: none; /* Standardmäßig versteckt */
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2em;
+    text-align: center;
+    cursor: pointer;
+}
+
+/* Overlay Nachrichten (Orientierung, Fullscreen) */
+.overlay-message {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9); /* Dunkler als der Blocker */
+    z-index: 1010; /* Über dem Blocker */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.5em;
+    text-align: center;
+    cursor: pointer;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Spotify Login Box - Stellen wir sicher, dass dieser Bereich auch korrekt zentriert ist */
+#login-area { /* ID-Selektor für spezifische Stile */
+    display: flex; /* Stellt sicher, dass der Login-Bereich zentriert werden kann */
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%; /* Nimmt vollen Platz im game-container ein */
+    position: absolute; /* Wichtig, damit es den gleichen Raum wie der logo-container einnimmt */
+    top: 0;
+    left: 0;
+    z-index: 5; /* Etwas niedriger als Overlays, aber höher als das Logo, wenn Login aktiv */
+}
+
+.spotify-box {
+    background-color: #1a1a1a;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    max-width: 300px;
+    width: 90%;
+    /* margin: auto; hier nicht nötig, da login-area flex ist */
+}
+
+#login-hint {
+    margin-bottom: 0px;
+    font-size: 0.9em;
+    color: #bbb;
+}
+
+.spotify-button {
+    background-color: #1DB954;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background-color 0.3s ease;
+      outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.spotify-button:hover {
+    background-color: #1ed760;
+}
+
+.spotify-icon {
+    width: 24px;
+    height: 24px;
+}
+
+/* --- LOGO CONTAINER UND LOGO --- */
+
+#logo-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    z-index: 10;
+}
+
+/* Initialer Zustand für das Logo, wenn es noch nicht sichtbar ist und reinfallen soll */
+#logo-container.initial-hidden {
+    /* Wichtig: transform-origin muss mittig sein, damit die Skalierung vom Mittelpunkt aus erfolgt. */
+    transform-origin: center center;
+
+    /* NEU: Start ist hier auch vertikal zentriert, aber stark skaliert und unsichtbar. */
+    /* Das Logo ist extrem groß, aber noch an seiner "finalen" vertikalen Position (Y=0) */
+    transform: scale(5); /* Beispiel: 5x so groß. Experimentiere mit 4, 6, 7... */
+    opacity: 0; /* Startet unsichtbar */
+}
+
+
+#game-logo {
+    width: 60vmin;
+    height: auto;
+    cursor: pointer;
+    max-width: 500px;
+    transition: filter 0.3s ease-out;
+    transform-origin: center center; /* Auch hier wichtig für den Klick-Bounce */
+     -webkit-tap-highlight-color: transparent; /* Für Webkit-Browser (iOS, Android Chrome) */
     -webkit-touch-callout: none; /* Deaktiviert das Kontextmenü bei langem Drücken auf iOS */
     -webkit-user-select: none; /* Verhindert Textauswahl */
     -moz-user-select: none; /* Für Firefox */
@@ -23,284 +178,73 @@ html, body, #game-logo, .spotify-button {
     outline: none !important; /* Entfernt den Fokus-Outline */
 }
 
-/* --- GAME CONTAINER & LAYOUT --- */
-.game-container {
-    position: relative; /* Wichtig für die Positionierung von Kind-Elementen innerhalb des Containers */
-    width: 100vw; /* Volle Breite des Viewports */
-    height: 100vh; /* Volle Höhe des Viewports */
-    overflow: hidden; /* Stellt sicher, dass nichts über den Rand geht */
-    display: flex; /* Für einfache Zentrierung oder Ausrichtung von Elementen */
-    flex-direction: column; /* Elemente untereinander anordnen */
-    justify-content: center; /* Vertikal zentrieren */
-    align-items: center; /* Horizontal zentrieren */
-    
-    /* Standard-Hintergrund: Alles Schwarz */
-    background: linear-gradient(to right, #000000 50%, #000000 50%);
-    /* Übergang für den Hintergrundfarbwechsel (Dauer und Timing-Funktion) */
-    transition: background 0.7s ease-in-out; /* Etwas langsamerer, smootherer Übergang */
-}
-
-/* --- SPIELER-SPEZIFISCHE HINTERGRÜNDE --- */
-/* Diese Klassen werden dynamisch von JavaScript hinzugefügt/entfernt */
-.player-blue-active {
-    background: linear-gradient(to right, #0000FF 0%, #000000 50%, #000000 50%, #000000 100%);
-}
-
-.player-pink-active {
-    background: linear-gradient(to left, #FF69B4 0%, #000000 50%, #000000 50%, #000000 100%);
-}
-
-
-/* --- LOGIN BEREICH --- */
-#login-area {
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Vertikal zentrieren */
-    align-items: center;     /* Horizontal zentrieren */
-    height: 100vh;           /* Volle Viewport-Höhe */
-    width: 100vw;            /* Volle Viewport-Breite */
-    position: fixed;         /* Fixed position, damit es unabhängig vom Scrolling/anderen Containern ist */
-    top: 0;
-    left: 0;
-    background-color: rgba(0, 0, 0, 0.95); /* Dunkler, leicht transparenter Hintergrund für den Login */
-    z-index: 250;            /* HÖCHSTER Z-INDEX, damit der Login-Bereich IMMER oben liegt, wenn sichtbar */
-    transition: opacity 0.5s ease-out, visibility 0.5s ease-out; /* Transition für Visibility hinzugefügt */
-}
-
-#login-area.hidden {
-    opacity: 0;
-    pointer-events: none;
-    visibility: hidden; /* Verbirgt den Bereich vollständig, wenn ausgeblendet */
-}
-
-/* NEU: Styling für die spotify-box */
-.spotify-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Zentriert Inhalte wie Text und Button horizontal */
-    padding: 40px; /* Innenabstand */
-    background-color: #282828; /* Dunklerer Hintergrund für die Box */
-    border-radius: 10px; /* Abgerundete Ecken */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Leichter Schatten */
-    max-width: 90%; /* Verhindert, dass die Box zu breit wird */
-    width: 400px; /* Feste Breite, passt sich aber bei kleineren Bildschirmen an */
-    box-sizing: border-box; /* Padding wird in die Breite/Höhe eingerechnet */
-}
-
-#login-hint { /* Angepasst für die neue ID */
-    font-size: 1.2em; /* Etwas kleiner als vorher, da es jetzt in der Box ist */
-    margin-bottom: 25px; /* Abstand zum Button */
-    text-align: center;
-    color: #E0E0E0; /* Hellerer Text */
-}
-
-#spotify-login-button { /* ID des Buttons */
-    background-color: #1DB954; /* Spotify Grün */
-    color: white;
-    padding: 12px 25px; /* Etwas weniger Padding, um die Höhe zu kontrollieren */
-    border: none;
-    border-radius: 50px; /* Abgerundeter Button */
-    font-size: 1.1em; /* Etwas kleinere Schrift */
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    display: flex; /* NEU: Macht den Button zum Flex-Container für Icon und Text */
-    align-items: center; /* Zentriert Icon und Text vertikal */
-    justify-content: center; /* Zentriert Icon und Text horizontal */
-    gap: 10px; /* Abstand zwischen Icon und Text */
-}
-
-#spotify-login-button:hover {
-    background-color: #1ed760; /* Etwas helleres Grün beim Hover */
-}
-
-.spotify-icon { /* NEU: Styling für das Spotify Icon im Button */
-    width: 24px; /* Größe des Icons */
-    height: 24px;
-    vertical-align: middle; /* Stellt sicher, dass es mittig zum Text ist */
-}
-
-#playback-status {
-    color: #BBB;
-    margin-top: 15px; /* Abstand zur Box und zum Button */
-    font-size: 0.9em;
-    text-align: center;
-}
-
-/* --- LOGO & LOGO CONTAINER --- */
-#logo-container {
-    position: relative; /* Für Positionierung des Logos selbst */
-    width: 80vmin; /* Responsive Größe, relativ zur kleineren Viewport-Dimension */
-    max-width: 500px; /* Maximale Größe */
-    height: 80vmin;
-    max-height: 500px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden; /* Falls das Logo über den Container hinausgeht */
-    opacity: 1;
-    transition: opacity 0.5s ease-out;
-    z-index: 50; /* Über dem Hintergrund, aber unter Messages */
-}
-
-#logo-container.hidden {
-    opacity: 0;
-    pointer-events: none; /* Verhindert Klicks auf das unsichtbare Logo */
-}
-
-/* Initialer Zustand vor der Animation, das Logo ist außerhalb des Sichtfelds */
-#logo-container.initial-hidden {
-    transform: translateY(-200vh); /* Startet weit oben */
-    opacity: 0;
-}
-
-#game-logo {
-    max-width: 100%; /* Passt sich der Größe des Containers an */
-    height: auto;
-    cursor: pointer;
-    display: block; /* Entfernt zusätzlichen Platz unter dem Bild */
-    filter: brightness(100%); /* Standard Helligkeit (aktiv) */
-    transition: filter 0.3s ease-in-out; /* Smooth Transition für Helligkeit */
-}
-
-/* Inaktiver Zustand des Logos (wenn z.B. Song spielt) */
-#game-logo.inactive {
-    filter: brightness(50%); /* Dunkler, um Inaktivität zu signalisieren */
-    cursor: default; /* Zeigt an, dass es nicht klickbar ist */
-}
-
-/* Animation für den Fall-in Effekt des Logos */
+/* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
+/* Diese Animation wird auf den #logo-container angewendet */
 @keyframes fall-in {
     0% {
-        transform: translateY(-200vh);
+        transform: scale(5); /* Startpunkt: Stark skaliert, unsichtbar, vertikal zentriert. */
         opacity: 0;
     }
-    70% {
-        transform: translateY(0);
+    30% {
+        transform: translateY(0px) scale(0.9); /* "Peak" des Zoom-Out: Logo ist am kleinsten und leicht über dem Zentrum. */
         opacity: 1;
     }
-    85% {
-        transform: translateY(-5%); /* Kurzer Rückprall nach dem Fall */
+    /* NEUE TIMINGS für den Bounce: */
+    70% { /* Vor dem finalen Bounce: Fällt auf oder leicht unter die Endposition */
+        transform: translateY(0px) scale(1.008); /* Leicht unter die Mitte fallen, etwas größer */
+        opacity: 1;
     }
-    100% {
-        transform: translateY(0);
+    100% { /* Endpunkt: Finale Ruheposition, normale Größe */
+        transform: translateY(0) scale(1);
         opacity: 1;
     }
 }
-/* Die fall-in Animation wird direkt auf #logo-container angewendet */
 
-
-/* Animation für den Klick-Bounce des Logos */
+/* Animation für den Bounce bei jedem Klick (wird auf das #game-logo selbst angewendet) */
 @keyframes press-down-bounce {
     0% {
-        transform: scale(1);
+        transform: scale(1); /* Normale Größe */
     }
     50% {
-        transform: scale(0.9); /* Drückt das Logo leicht ein */
+        transform: scale(0.9); /* Beim "Drücken" kleiner werden */
     }
     100% {
-        transform: scale(1);
+        transform: scale(1); /* Wieder normale Größe beim "Loslassen" */
     }
 }
 
-.logo-bounce {
-    animation: press-down-bounce 0.15s ease-out; /* Schneller und knackiger */
+/* Aktiver Zustand des Logos */
+.active-logo {
+    filter: brightness(100%);
 }
 
-
-/* --- OVERLAY NACHRICHTEN (Orientierung, Fullscreen) --- */
-.message-overlay {
-    position: fixed; /* Auch fixed, um immer über allem zu liegen */
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.9); /* Dunkler, halbtransparenter Hintergrund */
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 20px;
-    box-sizing: border-box;
-    font-size: 1.5em;
-    z-index: 200; /* ANPASSUNG: Über dem game-container, aber unter login-area */
-    opacity: 0;
-    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
-    pointer-events: none; /* Standardmäßig keine Klicks abfangen */
+/* Inaktiver Zustand des Logos */
+.inactive-logo {
+    filter: brightness(50%); /* Leicht abgedunkelt */
 }
 
-.message-overlay.visible {
-    opacity: 1;
-    pointer-events: auto; /* Klicks abfangen, wenn sichtbar */
-    visibility: visible;
+/* Die Klasse, die beim Klick hinzugefügt wird */
+.logo-bounce { /* Behalten wir den Namen bei, aber die Animation ist neu */
+    animation: press-down-bounce 0.3s ease-out; /* Schneller und knackiger */
 }
 
-.message-overlay p {
-    margin-bottom: 20px;
+/* Media Queries für Orientierung und Desktop */
+@media (orientation: portrait) {
+    /* Nichts spezifisches hier, da Orientierungs-Message dies übernimmt */
 }
 
-.message-overlay button {
-    background-color: #007BFF; /* Beispiel Blau */
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
-}
-
-.message-overlay button:hover {
-    background-color: #0056b3;
-}
-
-/* Initialer Klick-Blocker, der verhindert, dass die App startet,
-   bevor die Orientierung/Fullscreen geklärt ist */
-#initial-click-blocker {
-    position: fixed; /* Auch fixed */
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: transparent; /* Unsichtbar, fängt aber Klicks ab */
-    z-index: 220; /* ANPASSUNG: Muss über den message-overlays liegen, wenn aktiv! */
-    pointer-events: auto; /* Standardmäßig aktiv */
-    transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
-}
-
-#initial-click-blocker.hidden {
-    pointer-events: none; /* Klicks durchlassen */
-    opacity: 0;
-    visibility: hidden;
-}
-
-
-/* --- MEDIA QUERIES (immer am Ende für responsive Anpassungen) --- */
-@media (max-width: 768px) {
+@media (min-width: 768px) {
+    /* Anpassungen für größere Bildschirme / Desktop */
+    .spotify-box {
+        padding: 40px;
+        max-width: 400px;
+    }
     .spotify-button {
-        font-size: 1em;
-        padding: 12px 25px;
-    }
-
-    .message-overlay {
-        font-size: 1.2em;
-        padding: 15px;
-    }
-
-    #logo-container {
-        width: 90vmin;
-        height: 90vmin;
-    }
-    #login-area p {
+        padding: 15px 30px;
         font-size: 1.2em;
     }
-}
-
-@media (max-height: 450px) and (orientation: landscape) {
-    /* Spezielle Anpassungen für sehr flache Querformate (Handys im Querformat) */
-    .message-overlay {
-        font-size: 1em;
-        padding: 10px;
+    #game-logo {
+        width: 40vmin;
+        max-width: 400px;
     }
 }
