@@ -1,28 +1,18 @@
-// script.js (Teil 1/2)
+// script.js
 
-// --- ALLGEMEINE KONSTANTEN & VARIABLEN ---
-const gameContainer = document.querySelector('.game-container');
-const loginArea = document.getElementById('login-area');
-const spotifyLoginButton = document.getElementById('spotify-login-button');
-const playbackStatus = document.getElementById('playback-status');
-const logoContainer = document.getElementById('logo-container');
-const logo = document.getElementById('game-logo');
-const initialClickBlocker = document.getElementById('initial-click-blocker');
-const orientationMessage = document.getElementById('orientation-message');
-const fullscreenMessage = document.getElementById('fullscreen-message');
-const enterFullscreenButton = document.getElementById('enter-fullscreen-button');
+// --- ALLGEMEINE KONSTANTEN & GLOBALE VARIABLEN (NICHT DOM-Elemente) ---
 
-// Spotify API Credentials (Bitte hier Ihre echten Client ID und Redirect URI eintragen)
-const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6'; // ERSETZE DIES DURCH DEINE CLIENT ID
-const REDIRECT_URI = 'https://dookye.github.io/TRACK-ATTACK/'; // Stelle sicher, dass dies in deinen Spotify App Einstellungen registriert ist
+// Spotify API Credentials (Jetzt mit deinen Daten)
+const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
+const REDIRECT_URI = 'https://dookye.github.io/TRACK-ATTACK'; // Deine GitHub Pages URL
 
-// Spotify API Endpunkte
-const AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
-const TOKEN_URL = 'https://accounts.spotify.com/api/token';
+// Spotify API Endpunkte (Diese sind statisch)
+const AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // Korrigierte URL
+const TOKEN_URL = 'https://accounts.spotify.com/api/token';     // Korrigierte URL
 const PLAYLISTS_URL = 'https://api.spotify.com/v1/me/playlists';
 const PLAYER_URL = 'https://api.spotify.com/v1/me/player';
 
-// Globale Zustandsvariablen
+// Globale Zustandsvariablen für Spotify und Spielablauf
 let accessToken = '';
 let refreshToken = '';
 let player = null;
@@ -30,22 +20,24 @@ let deviceId = '';
 let isPlayerReady = false;
 let currentGameState = 'loading'; // 'loading', 'loginScreen', 'startScreen', 'playing', 'songPlaying', 'songPaused', 'resolving'
 let introAnimationPlayed = false; // Verfolgt, ob die Intro-Logo-Animation einmal gelaufen ist
-let logoClickListener = null; // Speichert den aktuellen Event Listener für das Logo
+let logoClickListener = null;     // Speichert den aktuellen Event Listener für das Logo
 
-// --- NEUE SPIEL-ZUSTANDSVARIABLEN ---
+// Spiel-Zustandsvariablen
 let currentPlayer = 'player1'; // 'player1' (Blau) oder 'player2' (Pink)
 let player1Score = 0;
 let player2Score = 0;
-let roundCounter = 0; // Zählt die Runden (10 Durchgänge = 20 Songs, 1 Runde = 2 Songs)
-let songsPlayedInRound = 0; // Zählt die Songs pro Runde (max. 2 pro Runde)
-let isFullscreen = false; // Verfolgt den Fullscreen-Status
-let isPortrait = false; // Verfolgt den Portrait-Modus
+let roundCounter = 0;          // Zählt die Runden (10 Durchgänge = 20 Songs, 1 Runde = 2 Songs)
+let songsPlayedInRound = 0;    // Zählt die Songs pro Runde (max. 2 pro Runde)
+let isFullscreen = false;      // Verfolgt den Fullscreen-Status
+let isPortrait = false;        // Verfolgt den Portrait-Modus
 
-// --- DOM-ELEMENT REFERENZEN (WERDEN ERST IM DOMContentLoaded INITIALISIERT) ---
-// Deklariere sie hier nur mit 'let', ohne Zuweisung!
+
+// --- DOM-ELEMENT REFERENZEN (Werden im DOMContentLoaded Block initialisiert) ---
+// Diese Variablen werden hier nur deklariert, aber noch nicht initialisiert.
+// Ihre Zuweisung erfolgt später, sobald das HTML-Dokument vollständig geladen ist.
 let gameContainer;
 let loginArea;
-let spotifyLoginButton; // <-- Dies bleibt 'let'
+let spotifyLoginButton;
 let playbackStatus;
 let logoContainer;
 let logo;
@@ -59,16 +51,18 @@ let enterFullscreenButton;
 
 /**
  * Holt den Access Token und Refresh Token aus der URL, nachdem Spotify zurückgeleitet hat.
+ * @returns {boolean} True, wenn Tokens gefunden und gespeichert wurden, sonst False.
  */
 function getTokensFromUrl() {
     const params = new URLSearchParams(window.location.hash.substring(1));
     accessToken = params.get('access_token');
     refreshToken = params.get('refresh_token');
 
-    // Wenn Tokens in der URL sind, speichern und URL bereinigen
     if (accessToken) {
         localStorage.setItem('spotify_access_token', accessToken);
-        localStorage.setItem('spotify_refresh_token', refreshToken);
+        // Da wir das CLIENT_SECRET nicht verwenden, speichern wir den refresh_token nicht mehr persistent.
+        // Andernfalls müsste sich der Nutzer nach 1h neu anmelden.
+        // localStorage.setItem('spotify_refresh_token', refreshToken); 
         localStorage.setItem('spotify_token_timestamp', Date.now()); // Speichert den Zeitpunkt des Erhalts
         window.history.pushState({}, document.title, window.location.pathname); // Bereinigt die URL
         return true;
@@ -80,6 +74,7 @@ function getTokensFromUrl() {
  * Leitet den Nutzer zur Spotify Autorisierung weiter.
  */
 function authorizeSpotify() {
+    // Die Scopes definieren, welche Berechtigungen deine App benötigt.
     const scope = 'user-read-private user-read-email user-modify-playback-state user-read-playback-state user-read-currently-playing playlist-read-private';
     const authUrl = `${AUTHORIZE_URL}?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=${scope}`;
     window.location.href = authUrl;
@@ -87,55 +82,24 @@ function authorizeSpotify() {
 
 /**
  * Aktualisiert den Access Token mithilfe des Refresh Tokens.
+ * HINWEIS: Diese Funktion wird ohne ein Backend NICHT funktionieren,
+ * da das CLIENT_SECRET erforderlich ist. Der Benutzer muss sich neu anmelden.
  */
 async function refreshAccessToken() {
-    const storedRefreshToken = localStorage.getItem('spotify_refresh_token');
-    if (!storedRefreshToken) {
-        console.warn('Kein Refresh Token gefunden, erneute Autorisierung erforderlich.');
-        currentGameState = 'loginScreen';
-        showLoginScreen();
-        return;
-    }
-
-    try {
-        const response = await fetch(TOKEN_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Basic ' + btoa(CLIENT_ID + ':' + 'YOUR_CLIENT_SECRET') // Client Secret wird hier benötigt
-            },
-            body: new URLSearchParams({
-                grant_type: 'refresh_token',
-                refresh_token: storedRefreshToken,
-                client_id: CLIENT_ID // Client ID wird auch hier benötigt
-            })
-        });
-
-        if (!response.ok) {
-            if (response.status === 400) {
-                console.error('Refresh Token ungültig oder abgelaufen. Erneute Anmeldung erforderlich.');
-                currentGameState = 'loginScreen';
-                showLoginScreen();
-                return;
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        accessToken = data.access_token;
-        localStorage.setItem('spotify_access_token', accessToken);
-        localStorage.setItem('spotify_token_timestamp', Date.now());
-        console.log('Access Token erfolgreich aktualisiert.');
-        initSpotifyPlayer(); // Player erneut initialisieren, falls nötig
-    } catch (error) {
-        console.error('Fehler beim Aktualisieren des Access Tokens:', error);
-        currentGameState = 'loginScreen';
-        showLoginScreen();
-    }
+    // Da wir das CLIENT_SECRET nicht im Frontend exponieren,
+    // kann diese Funktion den Token nicht aktualisieren.
+    // Wir leiten den Benutzer stattdessen zum Login-Bildschirm zurück.
+    console.warn('refreshAccessToken: Token-Aktualisierung im Frontend ohne CLIENT_SECRET nicht möglich. Benutzer muss sich neu anmelden.');
+    currentGameState = 'loginScreen';
+    showLoginScreen();
+    return false; // Zeigt an, dass die Aktualisierung fehlgeschlagen ist
 }
 
 /**
- * Überprüft, ob der Access Token gültig ist, und aktualisiert ihn bei Bedarf.
+ * Überprüft, ob der Access Token gültig ist.
+ * Da wir den Token nicht aktualisieren können, wird der Token als ungültig betrachtet,
+ * sobald er abgelaufen ist.
+ * @returns {boolean} True, wenn ein gültiger Token verfügbar ist, sonst False.
  */
 async function checkTokenValidity() {
     const storedAccessToken = localStorage.getItem('spotify_access_token');
@@ -145,14 +109,17 @@ async function checkTokenValidity() {
         const expiresIn = 3600 * 1000; // Spotify Tokens sind normalerweise 1 Stunde gültig (in Millisekunden)
         const elapsed = Date.now() - parseInt(tokenTimestamp, 10);
 
-        if (elapsed < expiresIn - 60000) { // Aktualisiere 1 Minute vor Ablauf
+        if (elapsed < expiresIn - 10000) { // Betrachte es als gültig, bis kurz vor Ablauf (10s Puffer)
             accessToken = storedAccessToken;
             console.log('Access Token ist noch gültig.');
             return true;
         } else {
-            console.log('Access Token ist abgelaufen oder kurz davor, versuche zu aktualisieren...');
-            await refreshAccessToken();
-            return accessToken ? true : false;
+            console.log('Access Token ist abgelaufen oder kurz davor. Erneute Anmeldung erforderlich.');
+            // Token ist abgelaufen, setzen wir ihn zurück und fordern neuen Login an
+            accessToken = '';
+            localStorage.removeItem('spotify_access_token');
+            localStorage.removeItem('spotify_token_timestamp');
+            return false;
         }
     }
     return false;
@@ -165,38 +132,47 @@ async function checkTokenValidity() {
  * Initialisiert den Spotify Web Playback SDK Player.
  */
 function initSpotifyPlayer() {
-    window.onSpotifyWebPlaybackSDKReady = () => {
-        player = new Spotify.Player({
-            name: 'TRACK ATTACK Player',
-            getOAuthToken: cb => { cb(accessToken); },
-            volume: 0.5
-        });
+    // Überprüfe, ob das SDK bereits geladen ist
+    if (window.Spotify && window.Spotify.Player) {
+        setupSpotifyPlayer();
+    } else {
+        // Lädt das Spotify Web Playback SDK Skript dynamisch
+        const script = document.createElement('script');
+        script.src = 'https://sdk.scdn.co/spotify-web-playback-sdk.js';
+        script.onload = setupSpotifyPlayer; // Rufe setupSpotifyPlayer auf, wenn Skript geladen ist
+        document.body.appendChild(script);
+    }
+}
 
-        // Event Listener für den Player
-        player.addListener('ready', ({ device_id }) => {
-            deviceId = device_id;
-            console.log('Gerät bereit mit ID', deviceId);
-            handlePlayerReady(); // Player ist bereit, Spiel kann starten
-        });
+/**
+ * Konfiguriert den Spotify Player, nachdem das SDK geladen wurde.
+ */
+function setupSpotifyPlayer() {
+    player = new Spotify.Player({
+        name: 'TRACK ATTACK Player',
+        getOAuthToken: cb => { cb(accessToken); },
+        volume: 0.5
+    });
 
-        player.addListener('not_ready', ({ device_id }) => {
-            console.log('Gerät getrennt', device_id);
-            playbackStatus.textContent = 'Spotify Player nicht bereit. Bitte überprüfen Sie Ihre Verbindung.';
-            isPlayerReady = false;
-        });
+    // Event Listener für den Player
+    player.addListener('ready', ({ device_id }) => {
+        deviceId = device_id;
+        console.log('Gerät bereit mit ID', deviceId);
+        handlePlayerReady(); // Player ist bereit, Spiel kann starten
+    });
 
-        player.addListener('initialization_error', ({ message }) => { console.error('Initialisierungsfehler:', message); });
-        player.addListener('authentication_error', ({ message }) => { console.error('Authentifizierungsfehler:', message); currentGameState = 'loginScreen'; showLoginScreen(); });
-        player.addListener('account_error', ({ message }) => { console.error('Konto-Fehler:', message); });
-        player.addListener('playback_error', ({ message }) => { console.error('Wiedergabefehler:', message); });
+    player.addListener('not_ready', ({ device_id }) => {
+        console.log('Gerät getrennt', device_id);
+        playbackStatus.textContent = 'Spotify Player nicht bereit. Bitte überprüfen Sie Ihre Verbindung.';
+        isPlayerReady = false;
+    });
 
-        player.connect();
-    };
+    player.addListener('initialization_error', ({ message }) => { console.error('Initialisierungsfehler:', message); });
+    player.addListener('authentication_error', ({ message }) => { console.error('Authentifizierungsfehler:', message); currentGameState = 'loginScreen'; showLoginScreen(); });
+    player.addListener('account_error', ({ message }) => { console.error('Konto-Fehler:', message); });
+    player.addListener('playback_error', ({ message }) => { console.error('Wiedergabefehler:', message); });
 
-    // Lädt das Spotify Web Playback SDK Skript
-    const script = document.createElement('script');
-    script.src = 'https://sdk.scdn.co/spotify-web-playback-sdk.js';
-    document.body.appendChild(script);
+    player.connect();
 }
 
 /**
@@ -210,17 +186,12 @@ async function handlePlayerReady() {
     // Login-Bereich ausblenden
     if (loginArea) {
         loginArea.classList.add('hidden'); // Führt die CSS-Transition aus
-        // Der Visibility-Wechsel passiert durch die CSS-Transition
     }
     
     // Anzeigen des TRACK ATTACK Logos
     showLogoButton(); // Diese Funktion sollte die Animation starten und das Logo sichtbar machen
 }
 
-// ... (Restlicher Code in Teil 2)
-// script.js (Teil 2/2)
-
-// ... (Fortsetzung von Teil 1) ...
 
 // --- UI STEUERUNGSFUNKTIONEN ---
 
@@ -233,7 +204,10 @@ function showLoginScreen() {
     loginArea.classList.remove('hidden'); // Macht den Login-Bereich sichtbar
     gameContainer.classList.remove('player-blue-active', 'player-pink-active'); // Hintergrund neutralisieren
     logoContainer.classList.add('hidden'); // Logo ausblenden, falls sichtbar
-    initialClickBlocker.classList.add('hidden'); // Initialen Blocker ausblenden, Login soll klickbar sein
+    // Der initialClickBlocker sollte hier bereits hidden sein, falls er zuvor sichtbar war.
+    // Wir wollen hier keine Blockade, damit der Login-Button klickbar ist.
+    initialClickBlocker.classList.add('hidden');
+    initialClickBlocker.classList.remove('visible');
 }
 
 /**
@@ -255,10 +229,8 @@ function showLogoButton() {
     logoClickListener = function() {
         if (currentGameState === 'startScreen' && isPlayerReady) {
             console.log("Logo geklickt - Spiel wird gestartet!");
-            // Starte das Spiel
             startGame();
-            // Optional: Logo visuell inaktiv schalten oder ausblenden für den nächsten Schritt
-            logo.classList.add('inactive');
+            logo.classList.add('inactive'); // Logo visuell inaktiv schalten
             // Entferne den Listener, da der erste Klick das Spiel startet
             logo.removeEventListener('click', logoClickListener);
             logo.removeEventListener('pointerdown', logoClickListener);
@@ -284,7 +256,6 @@ function showLogoButton() {
 
     } else {
         console.log("showLogoButton: Intro-Animation lief schon, zeige Logo für Spielstart (ohne Re-Animation).");
-        // Setze das Logo direkt sichtbar und aktiv, wenn die Animation schon gelaufen ist
         logoContainer.style.animation = 'none';
         logoContainer.classList.remove('initial-hidden');
         logoContainer.style.opacity = '1';
@@ -299,10 +270,10 @@ function startGame() {
     console.log("startGame: Spiel startet jetzt!");
     currentGameState = 'playing'; // Der Hauptspielfluss beginnt
     logo.classList.add('inactive'); // Logo wird inaktiv, da es nicht mehr für den Startklick ist
+    
     // Hintergrund auf Blau für Spieler 1 setzen
     switchPlayer('player1'); // Ruft switchPlayer auf, um den Hintergrund zu setzen
     // Hier würden die Würfel-Animationen oder andere Startschritte folgen
-    // Für jetzt lassen wir es dabei, dass der Hintergrund wechselt.
 }
 
 
@@ -353,9 +324,6 @@ function switchPlayer(initialPlayer = null) {
     console.log(`switchPlayer: Neuer Spieler: ${currentPlayer}, Runden: ${roundCounter}, Songs in Runde: ${songsPlayedInRound}`);
 }
 
-// ... (Platzhalter für zukünftige Funktionen wie playRandomSong, showGenreSelection etc.) ...
-
-
 // --- FULLSCREEN & ORIENTIERUNG MANAGEMENT ---
 
 /**
@@ -366,13 +334,15 @@ function checkOrientation() {
     if (isPortrait) {
         orientationMessage.classList.add('visible');
         initialClickBlocker.classList.add('visible'); // Blocker aktivieren
+        initialClickBlocker.classList.remove('hidden');
     } else {
         orientationMessage.classList.remove('visible');
         // Blocker nur entfernen, wenn Fullscreen auch aktiv ist oder gar nicht benötigt wird
-        if (isFullscreen) { // Wenn bereits Fullscreen, kann der Blocker weg
+        if (isFullscreen) {
             initialClickBlocker.classList.remove('visible');
-        } else { // Ansonsten Fullscreen-Nachricht anzeigen
-             checkFullscreenStatus();
+            initialClickBlocker.classList.add('hidden'); // Sicherstellen, dass er wirklich hidden ist
+        } else {
+             checkFullscreenStatus(); // Prüft und zeigt ggf. Fullscreen-Meldung an
         }
     }
 }
@@ -381,17 +351,24 @@ function checkOrientation() {
  * Überprüft den Fullscreen-Status und zeigt ggf. eine Meldung an.
  */
 function checkFullscreenStatus() {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+    // Prüfe, ob wir uns im Fullscreen-Modus befinden
+    const isCurrentlyFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+    if (!isCurrentlyFullscreen) {
         isFullscreen = false;
-        if (!isPortrait) { // Nur anzeigen, wenn nicht im Portrait-Modus (da dort Orientierungsmeldung Priorität hat)
+        // Nur Fullscreen-Meldung anzeigen, wenn nicht im Portrait-Modus (da dort Orientierungsmeldung Priorität hat)
+        if (!isPortrait) {
             fullscreenMessage.classList.add('visible');
             initialClickBlocker.classList.add('visible'); // Blocker aktivieren
+            initialClickBlocker.classList.remove('hidden');
         }
     } else {
         isFullscreen = true;
         fullscreenMessage.classList.remove('visible');
-        if (!isPortrait) { // Blocker nur entfernen, wenn auch die Orientierung stimmt
+        // Blocker nur entfernen, wenn auch die Orientierung stimmt
+        if (!isPortrait) {
             initialClickBlocker.classList.remove('visible');
+            initialClickBlocker.classList.add('hidden'); // Sicherstellen, dass er wirklich hidden ist
         }
     }
 }
@@ -410,84 +387,6 @@ function enterFullscreen() {
     }
 }
 
-// Event Listener für Fullscreen-Button
-enterFullscreenButton.addEventListener('click', enterFullscreen);
-
-// Event Listener für Fullscreen-Änderungen und Orientierung
-document.addEventListener('fullscreenchange', checkFullscreenStatus);
-document.addEventListener('webkitfullscreenchange', checkFullscreenStatus); // Safari
-document.addEventListener('mozfullscreenchange', checkFullscreenStatus); // Firefox
-document.addEventListener('MSFullscreenChange', checkFullscreenStatus); // IE11
-window.addEventListener('orientationchange', checkOrientation);
-window.addEventListener('resize', () => {
-    // Wenn die Größe geändert wird (z.B. Tastatur auf Handy öffnet sich),
-    // prüfen wir beides kurz nach, da sich der Viewport ändern kann.
-    checkOrientation();
-    checkFullscreenStatus();
-});
-
-
-// --- INITIALER START DER ANWENDUNG ---
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log("DOM geladen. Starte Initialisierung...");
-
-    // HIER WERDEN ALLE DOM-ELEMENTE INITIALISIERT!
-    gameContainer = document.querySelector('.game-container');
-    loginArea = document.getElementById('login-area');
-    spotifyLoginButton = document.getElementById('spotify-login-button'); // <-- Hier die Zuweisung!
-    playbackStatus = document.getElementById('playback-status');
-    logoContainer = document.getElementById('logo-container');
-    logo = document.getElementById('game-logo');
-    initialClickBlocker = document.getElementById('initial-click-blocker');
-    orientationMessage = document.getElementById('orientation-message');
-    fullscreenMessage = document.getElementById('fullscreen-message');
-    enterFullscreenButton = document.getElementById('enter-fullscreen-button');
-
-    // Zeige zuerst den Initial Click Blocker, um unerwünschte Interaktionen zu verhindern
-    initialClickBlocker.classList.add('visible');
-
-    // Initialen Status prüfen
-    checkOrientation();
-    checkFullscreenStatus();
-
-    // Wenn der Click Blocker noch da ist (wegen Orientierung oder Fullscreen),
-    // darf die App noch nicht zum Login-Screen springen.
-    // Der Login-Screen wird erst gezeigt, wenn der Blocker entfernt wird
-    // (d.h., wenn Orientierung und Fullscreen passen).
-    // Ansonsten zeigen wir direkt den Login-Screen, wenn alles andere OK ist.
-
-    // Wenn der Blocker NICHT sichtbar ist (oder sobald er nicht mehr sichtbar ist),
-    // fahren wir mit der Authentifizierung fort.
-    // Dies ist etwas komplexer, da es vom Nutzer-Input abhängt.
-
-    // Eine sicherere Methode: Wir starten immer mit dem Blocker und
-    // blenden den Login oder das Spiel erst ein, wenn der Blocker verschwindet.
-    // Der Blocker verschwindet, wenn checkOrientation/checkFullscreenStatus
-    // ihn als 'hidden' markieren.
-
-    // Wir rufen die Authentifizierung nur auf, wenn der Blocker entfernt wurde.
-    // Dies kann durch einen Listener auf den Blocker oder durch eine direkte Prüfung geschehen.
-
-    // Einfache Logik für den Start (muss nach dem Fullscreen/Orientierung aufgelöst sein):
-    if (!orientationMessage.classList.contains('visible') && !fullscreenMessage.classList.contains('visible')) {
-        initialClickBlocker.classList.remove('visible'); // Blocker entfernen, wenn keine Meldungen angezeigt werden
-        await tryAuthenticateAndInit();
-    } else {
-        // Falls Meldungen aktiv sind, warten wir, bis der Blocker durch die User-Interaktion verschwindet.
-        // Die Authentifizierung wird dann ausgelöst, sobald der Blocker in `hidden` Zustand wechselt.
-        const observer = new MutationObserver((mutationsList) => {
-            for (const mutation of mutationsList) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                    if (initialClickBlocker.classList.contains('hidden') && currentGameState === 'loading') {
-                        observer.disconnect(); // Beobachter stoppen
-                        tryAuthenticateAndInit();
-                    }
-                }
-            }
-        });
-        observer.observe(initialClickBlocker, { attributes: true });
-    }
-});
 
 /**
  * Versucht, den Benutzer zu authentifizieren und den Spotify-Player zu initialisieren.
@@ -501,8 +400,8 @@ async function tryAuthenticateAndInit() {
     if (getTokensFromUrl()) {
         console.log("Tokens aus URL erhalten.");
         initSpotifyPlayer();
-    } else if (await checkTokenValidity()) { // Versuche, Token aus localStorage zu verwenden/aktualisieren
-        console.log("Token aus localStorage gültig oder erfolgreich aktualisiert.");
+    } else if (await checkTokenValidity()) { // Versuche, Token aus localStorage zu verwenden/zu prüfen
+        console.log("Token aus localStorage gültig.");
         initSpotifyPlayer();
     } else {
         // Wenn keine gültigen Tokens vorhanden, zeige Login-Bildschirm
@@ -511,11 +410,80 @@ async function tryAuthenticateAndInit() {
     }
 }
 
-// Event Listener für den Spotify Login Button
- if (spotifyLoginButton) { // Der Check ist immer noch gut, falls ein Tippfehler im HTML ist
+
+// --- INITIALER START DER ANWENDUNG (DOMContentLoaded Event Listener) ---
+// Dieser Event Listener stellt sicher, dass das Skript erst ausgeführt wird,
+// wenn das gesamte HTML-Dokument geladen und geparst wurde.
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log("DOM geladen. Starte Initialisierung...");
+
+    // 1. DOM-Elemente initialisieren:
+    // Diese Zuweisungen müssen HIER erfolgen, da die Elemente im HTML
+    // erst jetzt garantiert verfügbar sind.
+    gameContainer = document.querySelector('.game-container');
+    loginArea = document.getElementById('login-area');
+    spotifyLoginButton = document.getElementById('spotify-login-button');
+    playbackStatus = document.getElementById('playback-status');
+    logoContainer = document.getElementById('logo-container');
+    logo = document.getElementById('game-logo');
+    initialClickBlocker = document.getElementById('initial-click-blocker');
+    orientationMessage = document.getElementById('orientation-message');
+    fullscreenMessage = document.getElementById('fullscreen-message');
+    enterFullscreenButton = document.getElementById('enter-fullscreen-button');
+
+    // 2. Event Listener für Buttons hinzufügen:
+    // Diese müssen HIER hinzugefügt werden, nachdem die Buttons existieren.
+    if (spotifyLoginButton) {
         spotifyLoginButton.addEventListener('click', authorizeSpotify);
     } else {
-        console.error("Fehler: Spotify Login Button konnte nicht gefunden werden!");
+        console.error("Fehler: Spotify Login Button konnte nicht gefunden werden! Überprüfe die ID in index.html.");
     }
-    // ...
+
+    if (enterFullscreenButton) {
+        enterFullscreenButton.addEventListener('click', enterFullscreen);
+    } else {
+        console.error("Fehler: Fullscreen Button konnte nicht gefunden werden! Überprüfe die ID in index.html.");
+    }
+    
+    // Event Listener für Fullscreen-Änderungen und Orientierung (immer aktiv)
+    document.addEventListener('fullscreenchange', checkFullscreenStatus);
+    document.addEventListener('webkitfullscreenchange', checkFullscreenStatus); // Safari
+    document.addEventListener('mozfullscreenchange', checkFullscreenStatus); // Firefox
+    document.addEventListener('MSFullscreenChange', checkFullscreenStatus); // IE11
+    window.addEventListener('orientationchange', checkOrientation);
+    window.addEventListener('resize', () => {
+        // Wenn die Größe geändert wird (z.B. Tastatur auf Handy öffnet sich),
+        // prüfen wir beides kurz nach, da sich der Viewport ändern kann.
+        checkOrientation();
+        checkFullscreenStatus();
+    });
+
+    // 3. Initialen Status prüfen und Authentifizierung starten:
+    // Dies ist die Startlogik der App.
+    checkOrientation();
+    checkFullscreenStatus(); // Prüft Fullscreen und setzt initialClickBlocker
+
+    // Die Authentifizierung wird nur gestartet, wenn der Blocker entfernt wurde.
+    // Dies kann durch einen Observer geschehen, wenn die Meldungen aktiv sind.
+    if (!orientationMessage.classList.contains('visible') && !fullscreenMessage.classList.contains('visible')) {
+        // Wenn keine Meldungen sichtbar sind, Blocker entfernen und sofort authentifizieren
+        initialClickBlocker.classList.remove('visible');
+        initialClickBlocker.classList.add('hidden'); // Sicherstellen, dass er wirklich versteckt ist
+        await tryAuthenticateAndInit();
+    } else {
+        // Wenn Meldungen aktiv sind, warten wir, bis der Blocker durch User-Interaktion verschwindet.
+        const observer = new MutationObserver((mutationsList) => {
+            for (const mutation of mutationsList) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    // Sobald initialClickBlocker die Klasse 'hidden' hat und wir noch im 'loading'-Zustand sind
+                    if (initialClickBlocker.classList.contains('hidden') && currentGameState === 'loading') {
+                        observer.disconnect(); // Beobachter stoppen, um unnötige Aufrufe zu vermeiden
+                        tryAuthenticateAndInit(); // Authentifizierung starten
+                    }
+                }
+            }
+        });
+        // Beobachte Änderungen der 'class' Eigenschaft auf dem initialClickBlocker
+        observer.observe(initialClickBlocker, { attributes: true });
+    }
 });
