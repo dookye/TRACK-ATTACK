@@ -11,8 +11,7 @@ const gameContainer = document.querySelector('.game-container');
 // Spotify UI-Elemente
 const playbackStatus = document.getElementById('playback-status');
 
-// NEU: Spieler-Indikator
-const playerIndicator = document.getElementById('player-indicator');
+// Die Konstante playerIndicator wurde entfernt, da das Element nicht mehr existiert
 
 
 // --- SPOTIFY KONSTANTEN ---
@@ -465,25 +464,12 @@ async function playSongBasedOnDice() {
 function updatePlayerBackground() {
     // Entferne zuerst alle Spieler-Hintergrund-Klassen
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
-    if (playerIndicator) {
-        playerIndicator.classList.remove('player1-active-bg', 'player2-active-bg', 'hidden');
-    }
 
     // Füge die Klasse für den aktiven Spieler hinzu
     if (activePlayer === 1) {
         gameContainer.classList.add('player1-active-bg');
-        if (playerIndicator) {
-            playerIndicator.textContent = 'Spieler 1 ist dran!';
-            playerIndicator.classList.add('player1-active-bg'); // Fügt die Positionsklasse hinzu
-            playerIndicator.classList.remove('hidden'); // Macht den Indikator sichtbar
-        }
     } else {
         gameContainer.classList.add('player2-active-bg');
-        if (playerIndicator) {
-            playerIndicator.textContent = 'Spieler 2 ist dran!';
-            playerIndicator.classList.add('player2-active-bg'); // Fügt die Positionsklasse hinzu
-            playerIndicator.classList.remove('hidden'); // Macht den Indikator sichtbar
-        }
     }
     console.log(`Hintergrund aktualisiert für Spieler ${activePlayer}`);
 }
@@ -517,17 +503,12 @@ function startDiceRollPhase() {
     // Logo-Button inaktiv machen, da jetzt gewürfelt wird
     setLogoAsPlayButton(false); // Macht das Logo inaktiv und entfernt den Listener
 
-    if (playerIndicator) {
-        playerIndicator.classList.remove('hidden'); // Sicherstellen, dass der Indikator sichtbar bleibt
-    }
-
     playbackStatus.textContent = `Spieler ${activePlayer} würfelt...`;
 
     // Beispiel für 3 Sekunden Würfel-Animation
     setTimeout(() => {
         console.log("Würfel-Animation beendet. Zeige Würfelwahl-Buttons.");
         // Hier werden später die Würfelwahl-Buttons eingeblendet.
-        // Fürs Erste simulieren wir einfach den Übergang zur Genre-Auswahl.
         playbackStatus.textContent = 'Wähle deinen Würfelwert!';
         
         // Simuliere Würfelwahl und gehe zur Genre-Auswahl.
@@ -657,9 +638,10 @@ function endGame() {
     currentGameState = 'gameEnded';
     // Hier die Logik für den Auswertungsscreen
     playbackStatus.textContent = `Spiel beendet! Spieler 1: ${playerScores[1]} Punkte, Spieler 2: ${playerScores[2]} Punkte.`;
-    if (playerIndicator) {
-        playerIndicator.classList.add('hidden'); // Spieler-Indikator ausblenden
-    }
+    // Entferne alle Spieler-Hintergrund-Klassen am Ende des Spiels
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    gameContainer.style.backgroundColor = 'black'; // Stelle sicher, dass es wieder schwarz wird
+
 
     // Reset game state for new game
     setTimeout(() => {
@@ -680,6 +662,10 @@ function resetGame() {
     
     // UI auf Startzustand zurücksetzen
     showLoginScreen(); // Oder direkt zum Logo, wenn schon eingeloggt
+    // Entferne alle Spieler-Hintergrund-Klassen beim Reset
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    gameContainer.style.backgroundColor = 'black'; // Setze den Hintergrund auf schwarz zurück
+
     if (isPlayerReady && !document.fullscreenElement) {
         // Wenn Player Ready, aber Fullscreen verlassen, erneut Fullscreen prüfen
         checkOrientationAndFullscreen();
@@ -687,7 +673,6 @@ function resetGame() {
         // Wenn Player Ready und Fullscreen, direkt Logo zeigen (ohne Animation beim zweiten Mal)
         showLogoButton();
     }
-    updatePlayerBackground(); // Hintergrund auf Spieler 1 setzen
 }
 
 
@@ -699,9 +684,9 @@ function handlePlayerReady() {
     console.log("handlePlayerReady: Spotify Player ist verbunden. Starte Orientierungs-/Fullscreen-Check.");
     loginArea.classList.add('hidden'); // Login-Bereich ausblenden
     
-    // Setze den initialen Spieler-Hintergrund, BEVOR die Orientierungsprüfung
-    // das Logo einblendet.
-    updatePlayerBackground(); // Initialer Hintergrund für Spieler 1
+    // Der Hintergrund wird NICHT hier aktualisiert, sondern erst beim ersten Klick auf das Logo.
+    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Sicherstellen, dass es noch schwarz ist
+    // gameContainer.style.backgroundColor = 'black'; // Explicitly set to black
 
     checkOrientationAndFullscreen(); // Jetzt den Orientierungs- und Fullscreen-Check starten
 }
@@ -713,10 +698,9 @@ function showLoginScreen() {
     console.log("showLoginScreen: Zeige Login-Bereich.");
     logoContainer.classList.add('hidden', 'initial-hidden'); // Logo ausblenden und initial positionieren
     loginArea.classList.remove('hidden');
-    // Sicherstellen, dass playerIndicator ausgeblendet ist, wenn wir zum Login gehen
-    if (playerIndicator) {
-        playerIndicator.classList.add('hidden');
-    }
+    // Stellen Sie sicher, dass der Hintergrund wieder schwarz ist, wenn zum Login gewechselt wird
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    gameContainer.style.backgroundColor = 'black';
     currentGameState = 'loading'; // Oder 'loginScreen'
 }
 
@@ -822,6 +806,7 @@ function showLogoButton() {
     // Bedingung: Wenn die Intro-Animation schon einmal lief und wir nicht im Startbildschirm-Zustand sind (z.B. Spiel läuft)
     if (introAnimationPlayed && currentGameState !== 'startScreen') {
         console.log("showLogoButton: Intro-Animation wurde bereits abgespielt. Zeige Logo ohne Animation.");
+        loginArea.classList.add('hidden'); // Login ausblenden
         logoContainer.classList.remove('hidden');
         logoContainer.classList.remove('initial-hidden');
         logoContainer.style.animation = ''; // Sicherstellen, dass keine Animation aktiv ist
@@ -840,6 +825,7 @@ function showLogoButton() {
     // Wenn die Animation schon lief, aber wir noch im Startscreen sind (z.B. nach Fullscreen-Wechsel vor Spielstart)
     else if (introAnimationPlayed && currentGameState === 'startScreen') {
         console.log("showLogoButton: Intro-Animation lief schon, zeige Logo für Spielstart (ohne Re-Animation).");
+        loginArea.classList.add('hidden'); // Login ausblenden
         logoContainer.classList.remove('hidden');
         logoContainer.classList.remove('initial-hidden');
         logoContainer.style.animation = ''; // Sicherstellen, dass keine Animation aktiv ist
@@ -860,6 +846,7 @@ function showLogoButton() {
                     console.log("Spiel wird gestartet!");
                     playbackStatus.textContent = 'Bereit zum Abspielen!';
                     currentGameState = 'diceRoll'; // NEUER Zustand
+                    updatePlayerBackground(); // HIER WIRD DER HINTERGRUND BEIM ERSTEN SPIELSTART BLAU
                     startDiceRollPhase(); // Starte die Würfelphase
                 } else {
                     console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
@@ -910,6 +897,7 @@ function showLogoButton() {
                         console.log("Spiel wird gestartet!");
                         playbackStatus.textContent = 'Bereit zum Abspielen!';
                         currentGameState = 'diceRoll'; // Zustandswechsel
+                        updatePlayerBackground(); // HIER WIRD DER HINTERGRUND BEIM ERSTEN SPIELSTART BLAU
                         startDiceRollPhase(); // Starte die Würfelphase
                     } else {
                         console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
@@ -1049,9 +1037,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     logoContainer.classList.add('hidden', 'initial-hidden'); // Logo verstecken und initial positionieren
     playbackStatus.textContent = ''; // Anfangs leer
 
-    // Setze den initialen Hintergrund, auch wenn noch nicht eingeloggt (spieler1-active-bg als Standard)
-    // Dies stellt sicher, dass der Hintergrund sofort korrekt ist.
-    updatePlayerBackground(); 
+    // Setze den initialen Hintergrund auf schwarz - dies wird durch CSS bereits gehandhabt.
+    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Sicherstellen, dass es noch schwarz ist
+    // gameContainer.style.backgroundColor = 'black'; // Explicitly set to black if needed, but CSS handles it
 
     // Prüfe den Login-Status sofort
     await checkSpotifyLoginStatus();
