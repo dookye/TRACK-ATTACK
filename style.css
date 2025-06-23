@@ -254,7 +254,7 @@ body {
 /* Würfel-Animation (GIF) */
 #dice-animation {
     width: 50vmin; /* Responsive Größe */
-    max-width: 300px;
+    max-width: 400px;
     height: auto;
 }
 
@@ -268,7 +268,7 @@ body {
 
 .dice-button {
     width: 35vmin; /* Responsive Größe für Buttons */
-    max-width: 100px;
+    max-width: 200px;
     height: auto;
     cursor: pointer;
     transition: transform 0.2s ease, filter 0.2s ease;
