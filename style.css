@@ -33,7 +33,7 @@ body {
     background-color: black; /* Startet schwarz */
     color: white;
     text-align: center;
-    transition: background 2s ease-in-out, opacity 1s ease-in-out; /* Füge background zur Transition hinzu */
+    transition: background 2s ease-in-out, opacity 1s ease-in-out; /* HIER IST DIE WICHTIGE ZEILE */
     opacity: 1; /* Standardmäßig sichtbar */
 }
 
@@ -253,22 +253,22 @@ body {
 
 /* Würfel-Animation (GIF) */
 #dice-animation {
-    width: 60vmin; /* Responsive Größe */
-    max-width: 400px;
+    width: 50vmin; /* Angepasste Größe */
+    max-width: 400px; /* Angepasste Größe */
     height: auto;
 }
 
 /* Würfel-Buttons (PNGs) */
 #dice-buttons {
     display: flex; /* Buttons nebeneinander */
-    gap: 30px; /* Abstand zwischen den Buttons */
+    gap: 20px; /* Abstand zwischen den Buttons */
     flex-wrap: wrap; /* Buttons umbrechen, falls zu viele in einer Reihe */
     justify-content: center;
 }
 
 .dice-button {
-    width: 35vmin; /* Responsive Größe für Buttons */
-    max-width: 200px;
+    width: 20vmin; /* Angepasste Größe */
+    max-width: 150px; /* Angepasste Größe */
     height: auto;
     cursor: pointer;
     transition: transform 0.2s ease, filter 0.2s ease;
@@ -302,7 +302,7 @@ body {
         font-size: 1.2em;
     }
     #game-logo {
-        width: 50vmin;
-        max-width: 500px;
+        width: 40vmin;
+        max-width: 400px;
     }
 }
