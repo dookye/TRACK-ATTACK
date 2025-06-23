@@ -462,10 +462,12 @@ async function playSongBasedOnDice() {
  * @param {function} [callback] - Eine optionale Funktion, die nach der Hintergrund-Transition ausgeführt wird.
  */
 function updatePlayerBackground(callback = null) {
-    // Entferne zuerst alle Spieler-Hintergrund-Klassen
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
 
-    // Füge die Klasse für den aktiven Spieler hinzu
+    // NEU: Erzwinge einen Reflow (macht den Browser auf CSS-Änderung aufmerksam)
+    // Dies ist ein alter Trick, um Browser zu zwingen, Styles neu zu berechnen.
+    void gameContainer.offsetWidth; 
+
     if (activePlayer === 1) {
         gameContainer.classList.add('player1-active-bg');
     } else {
@@ -473,9 +475,7 @@ function updatePlayerBackground(callback = null) {
     }
     console.log(`Hintergrund aktualisiert für Spieler ${activePlayer}`);
 
-    // Warte auf das Ende der Hintergrund-Transition, bevor der Callback aufgerufen wird
-    // Die Dauer muss mit der 'transition'-Dauer in style.css übereinstimmen!
-    const backgroundTransitionDurationMs = 2000; // 2 Sekunden für den Hintergrundübergang
+    const backgroundTransitionDurationMs = 2000; 
 
     if (callback && typeof callback === 'function') {
         setTimeout(callback, backgroundTransitionDurationMs);
