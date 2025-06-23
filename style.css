@@ -253,7 +253,7 @@ body {
 
 /* Würfel-Animation (GIF) */
 #dice-animation {
-    width: 40vmin; /* Responsive Größe */
+    width: 50vmin; /* Responsive Größe */
     max-width: 300px;
     height: auto;
 }
@@ -261,13 +261,13 @@ body {
 /* Würfel-Buttons (PNGs) */
 #dice-buttons {
     display: flex; /* Buttons nebeneinander */
-    gap: 20px; /* Abstand zwischen den Buttons */
+    gap: 30px; /* Abstand zwischen den Buttons */
     flex-wrap: wrap; /* Buttons umbrechen, falls zu viele in einer Reihe */
     justify-content: center;
 }
 
 .dice-button {
-    width: 15vmin; /* Responsive Größe für Buttons */
+    width: 35vmin; /* Responsive Größe für Buttons */
     max-width: 100px;
     height: auto;
     cursor: pointer;
