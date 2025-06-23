@@ -63,7 +63,7 @@ html, body, #game-logo, .spotify-button {
     top: 0;
     left: 0;
     background-color: rgba(0, 0, 0, 0.95); /* Dunkler, leicht transparenter Hintergrund für den Login */
-    z-index: 250;            /* HÖHERER Z-INDEX: Dieser muss HÖHER sein als alle Overlays */
+    z-index: 250;            /* HÖCHSTER Z-INDEX, damit der Login-Bereich IMMER oben liegt, wenn sichtbar */
     transition: opacity 0.5s ease-out, visibility 0.5s ease-out; /* Transition für Visibility hinzugefügt */
 }
 
@@ -73,29 +73,57 @@ html, body, #game-logo, .spotify-button {
     visibility: hidden; /* Verbirgt den Bereich vollständig, wenn ausgeblendet */
 }
 
-#login-area p { /* Stile für den Text im Login-Bereich */
-    font-size: 1.5em; /* Macht den Text größer und besser lesbar */
-    margin-bottom: 30px; /* Mehr Abstand zum Button */
-    text-align: center;
+/* NEU: Styling für die spotify-box */
+.spotify-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Zentriert Inhalte wie Text und Button horizontal */
+    padding: 40px; /* Innenabstand */
+    background-color: #282828; /* Dunklerer Hintergrund für die Box */
+    border-radius: 10px; /* Abgerundete Ecken */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Leichter Schatten */
+    max-width: 90%; /* Verhindert, dass die Box zu breit wird */
+    width: 400px; /* Feste Breite, passt sich aber bei kleineren Bildschirmen an */
+    box-sizing: border-box; /* Padding wird in die Breite/Höhe eingerechnet */
 }
 
-.spotify-button {
+#login-hint { /* Angepasst für die neue ID */
+    font-size: 1.2em; /* Etwas kleiner als vorher, da es jetzt in der Box ist */
+    margin-bottom: 25px; /* Abstand zum Button */
+    text-align: center;
+    color: #E0E0E0; /* Hellerer Text */
+}
+
+#spotify-login-button { /* ID des Buttons */
     background-color: #1DB954; /* Spotify Grün */
     color: white;
-    padding: 15px 30px;
+    padding: 12px 25px; /* Etwas weniger Padding, um die Höhe zu kontrollieren */
     border: none;
     border-radius: 50px; /* Abgerundeter Button */
-    font-size: 1.2em;
+    font-size: 1.1em; /* Etwas kleinere Schrift */
     cursor: pointer;
     transition: background-color 0.3s ease;
-    text-decoration: none; /* Falls es ein Link ist */
-    display: inline-block; /* Wichtig für padding und Zentrierung */
+    display: flex; /* NEU: Macht den Button zum Flex-Container für Icon und Text */
+    align-items: center; /* Zentriert Icon und Text vertikal */
+    justify-content: center; /* Zentriert Icon und Text horizontal */
+    gap: 10px; /* Abstand zwischen Icon und Text */
+}
+
+#spotify-login-button:hover {
+    background-color: #1ed760; /* Etwas helleres Grün beim Hover */
+}
+
+.spotify-icon { /* NEU: Styling für das Spotify Icon im Button */
+    width: 24px; /* Größe des Icons */
+    height: 24px;
+    vertical-align: middle; /* Stellt sicher, dass es mittig zum Text ist */
 }
 
 #playback-status {
     color: #BBB;
-    margin-top: 20px;
-    font-size: 1em;
+    margin-top: 15px; /* Abstand zur Box und zum Button */
+    font-size: 0.9em;
+    text-align: center;
 }
 
 /* --- LOGO & LOGO CONTAINER --- */
