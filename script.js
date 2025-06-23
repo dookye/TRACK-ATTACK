@@ -11,7 +11,11 @@ const gameContainer = document.querySelector('.game-container');
 // Spotify UI-Elemente
 const playbackStatus = document.getElementById('playback-status');
 
-// Die Konstante playerIndicator wurde entfernt, da das Element nicht mehr existiert
+// NEU: Würfel UI-Elemente
+const diceContainer = document.getElementById('dice-container');
+const diceAnimation = document.getElementById('dice-animation');
+const diceButtonsContainer = document.getElementById('dice-buttons');
+const diceButtons = document.querySelectorAll('.dice-button'); // Alle Würfel-Buttons
 
 
 // --- SPOTIFY KONSTANTEN ---
@@ -27,11 +31,6 @@ const SCOPES = [
 ];
 
 // --- SPOTIFY API ENDPUNKTE (KORREKTE SPOTIFY-URLS!) ---
-// Bitte beachte: Diese URLs wurden absichtlich geändert, damit sie hier nicht direkt funktionieren
-// und als Platzhalter dienen. Stelle sicher, dass du die korrekten Spotify-URLs verwendest,
-// wenn du diesen Code in einer realen Umgebung einsetzt.
-// Die tatsächlichen URLs sollten 'https://accounts.spotify.com/authorize', 'https://accounts.spotify.com/api/token'
-// und 'https://api.spotify.com/v1' sein.
 const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
 const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1';
@@ -46,7 +45,7 @@ let isPlayerReady = false; // Flag, wenn der SDK-Player verbunden ist
 let isSpotifySDKLoaded = false; // Flag, wenn das SDK geladen ist
 let fullscreenRequested = false; // Zur Steuerung des Fullscreen-States
 let logoClickListener = null; // Für den dynamischen Klick-Listener des Logos
-let currentGameState = 'loading'; // Zustände: 'loading', 'startScreen', 'playing', 'songPlaying', 'songPaused', 'diceRoll', 'genreSelect', 'resolutionPhase'
+let currentGameState = 'loading'; // Zustände: 'loading', 'startScreen', 'diceSelect', 'playing', 'songPlaying', 'songPaused', 'genreSelect', 'resolutionPhase'
 let introAnimationPlayed = false; // Flag, ob die Logo-Intro-Animation schon einmal lief
 
 // NEU für Spieler & Rundenmanagement
@@ -493,31 +492,72 @@ function switchPlayer() {
 }
 
 /**
- * Startet die Würfel-Phase: Zeigt die Würfel-Animation an.
+ * Startet die Würfel-Phase: Zeigt die Würfel-Animation an und danach die Auswahl-Buttons.
  */
 function startDiceRollPhase() {
     console.log(`startDiceRollPhase: Spieler ${activePlayer} würfelt.`);
-    // Zuerst alle spielspezifischen UI-Elemente ausblenden, falls sie noch sichtbar sind
-    hideAllGameUI();
-    
-    // Logo-Button inaktiv machen, da jetzt gewürfelt wird
-    setLogoAsPlayButton(false); // Macht das Logo inaktiv und entfernt den Listener
+    hideAllGameUI(); // Stellt sicher, dass alles andere ausgeblendet ist
+
+    // Logo-Button inaktiv machen
+    setLogoAsPlayButton(false);
 
     playbackStatus.textContent = `Spieler ${activePlayer} würfelt...`;
 
-    // Beispiel für 3 Sekunden Würfel-Animation
+    // Würfel-Container einblenden und Animation starten
+    diceContainer.classList.remove('hidden');
+    diceAnimation.classList.remove('hidden'); // GIF anzeigen
+    diceButtonsContainer.classList.add('hidden'); // Buttons noch verstecken
+
+    // Die Dauer der GIF-Animation anpassen (hier 2 Sekunden)
+    const animationDurationMs = 2000; 
+
     setTimeout(() => {
         console.log("Würfel-Animation beendet. Zeige Würfelwahl-Buttons.");
-        // Hier werden später die Würfelwahl-Buttons eingeblendet.
+        diceAnimation.classList.add('hidden'); // GIF ausblenden
+        diceButtonsContainer.classList.remove('hidden'); // Buttons einblenden
         playbackStatus.textContent = 'Wähle deinen Würfelwert!';
-        
-        // Simuliere Würfelwahl und gehe zur Genre-Auswahl.
-        // In Zukunft wird hier eine UI zur Auswahl der Würfelwerte implementiert.
-        // Temporär wird ein Zufallswert gewählt: 3, 4, 5 oder 7
-        const possibleDice = [3, 4, 5, 7];
-        const randomDice = possibleDice[Math.floor(Math.random() * possibleDice.length)];
-        simulateDiceSelection(randomDice); 
-    }, 3000); // 3 Sekunden Verzögerung für die "Würfel-Animation"
+        currentGameState = 'diceSelect'; // Neuer Zustand: Warten auf Würfelwahl
+
+        // Event-Listener für die Würfel-Buttons hinzufügen
+        diceButtons.forEach(button => {
+            button.addEventListener('pointerdown', handleDiceSelection, { once: true }); // { once: true } sorgt dafür, dass der Listener nach einmaliger Ausführung entfernt wird
+        });
+
+    }, animationDurationMs);
+}
+
+/**
+ * Behandelt die Auswahl eines Würfel-Buttons durch den Spieler.
+ * @param {Event} event - Das Klick-Event des Buttons.
+ */
+function handleDiceSelection(event) {
+    event.preventDefault(); // Verhindert Standardverhalten (z.B. bei Touch)
+
+    if (currentGameState !== 'diceSelect') {
+        console.warn("handleDiceSelection: Nicht im 'diceSelect' Zustand, ignoriere Klick.");
+        return;
+    }
+
+    // Entferne alle anderen Listener, falls doch nicht { once: true } verwendet wird
+    // (Obwohl { once: true } das schon macht, ist es gute Praxis für den Fall, dass es geändert wird)
+    diceButtons.forEach(button => {
+        button.removeEventListener('pointerdown', handleDiceSelection);
+    });
+
+    const selectedDiceValue = parseInt(event.currentTarget.dataset.diceValue, 10);
+    currentDiceRoll = selectedDiceValue;
+    currentMaxPointsForSong = DICE_PARAMETERS[selectedDiceValue].maxPoints;
+    currentSongRepetitionsLeft = DICE_PARAMETERS[selectedDiceValue].repetitions;
+
+    console.log(`Würfel ${selectedDiceValue} gewählt. Max Punkte: ${currentMaxPointsForSong}, Wiederholungen: ${currentSongRepetitionsLeft}`);
+
+    // Würfel-UI ausblenden
+    diceContainer.classList.add('hidden');
+    diceAnimation.classList.add('hidden');
+    diceButtonsContainer.classList.add('hidden');
+
+    // Weiter zur Genre-Auswahlphase
+    startGenreSelectionPhase();
 }
 
 /**
@@ -526,18 +566,14 @@ function startDiceRollPhase() {
  * Diese Funktion muss erweitert werden, sobald du mehr UI-Elemente hast.
  */
 function hideAllGameUI() {
+    console.log("Alle Game UI Elemente ausgeblendet.");
+    // NEU: Dice Container ausblenden
+    diceContainer.classList.add('hidden');
+    diceAnimation.classList.add('hidden');
+    diceButtonsContainer.classList.add('hidden');
+
     // Beispiel: Auflösen-Button, Richtig/Falsch-Buttons, Titel/Interpret-Anzeige
     // Diese Elemente werden später implementiert. Füge hier deren `classList.add('hidden');` hinzu.
-    console.log("Alle Game UI Elemente ausgeblendet (Platzhalter).");
-}
-
-// Nur zu Demonstrationszwecken, später durch tatsächliche Button-Interaktion ersetzen
-function simulateDiceSelection(diceValue) {
-    currentDiceRoll = diceValue;
-    currentMaxPointsForSong = DICE_PARAMETERS[diceValue].maxPoints;
-    currentSongRepetitionsLeft = DICE_PARAMETERS[diceValue].repetitions;
-    console.log(`Würfel ${diceValue} gewählt. Max Punkte: ${currentMaxPointsForSong}, Wiederholungen: ${currentSongRepetitionsLeft}`);
-    startGenreSelectionPhase(); // Weiter zur Genre-Auswahl
 }
 
 // Platzhalter für die Genre-Auswahlphase (noch zu implementieren)
@@ -684,10 +720,6 @@ function handlePlayerReady() {
     console.log("handlePlayerReady: Spotify Player ist verbunden. Starte Orientierungs-/Fullscreen-Check.");
     loginArea.classList.add('hidden'); // Login-Bereich ausblenden
     
-    // Der Hintergrund wird NICHT hier aktualisiert, sondern erst beim ersten Klick auf das Logo.
-    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Sicherstellen, dass es noch schwarz ist
-    // gameContainer.style.backgroundColor = 'black'; // Explicitly set to black
-
     checkOrientationAndFullscreen(); // Jetzt den Orientierungs- und Fullscreen-Check starten
 }
 
@@ -1019,7 +1051,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Spotify SDK Skript dynamisch laden
     const script = document.createElement('script');
-    script.src = 'https://sdk.scdn.co/spotify-player.js'; // KORREKTE URL!
+    script.src = 'https://sdk.scdn.co/spotify-player.js';
     script.async = true;
     document.body.appendChild(script);
     console.log("DOMContentLoaded: Spotify SDK Skript geladen von " + script.src);
@@ -1036,10 +1068,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     loginArea.classList.remove('hidden');
     logoContainer.classList.add('hidden', 'initial-hidden'); // Logo verstecken und initial positionieren
     playbackStatus.textContent = ''; // Anfangs leer
-
-    // Setze den initialen Hintergrund auf schwarz - dies wird durch CSS bereits gehandhabt.
-    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Sicherstellen, dass es noch schwarz ist
-    // gameContainer.style.backgroundColor = 'black'; // Explicitly set to black if needed, but CSS handles it
 
     // Prüfe den Login-Status sofort
     await checkSpotifyLoginStatus();
