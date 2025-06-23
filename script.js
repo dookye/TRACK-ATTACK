@@ -457,10 +457,11 @@ async function playSongBasedOnDice() {
 // --- UI STEUERUNGSFUNKTIONEN ---
 
 /**
- * Aktualisiert den Hintergrund des Spielcontainers basierend auf dem aktiven Spieler.
- * Setzt die entsprechende CSS-Klasse.
+ * Aktualisiert den Hintergrund des Spielcontainers basierend auf dem aktiven Spieler
+ * und startet optional einen Callback nach Abschluss der Hintergrund-Transition.
+ * @param {function} [callback] - Eine optionale Funktion, die nach der Hintergrund-Transition ausgeführt wird.
  */
-function updatePlayerBackground() {
+function updatePlayerBackground(callback = null) {
     // Entferne zuerst alle Spieler-Hintergrund-Klassen
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
 
@@ -471,23 +472,35 @@ function updatePlayerBackground() {
         gameContainer.classList.add('player2-active-bg');
     }
     console.log(`Hintergrund aktualisiert für Spieler ${activePlayer}`);
+
+    // Warte auf das Ende der Hintergrund-Transition, bevor der Callback aufgerufen wird
+    // Die Dauer muss mit der 'transition'-Dauer in style.css übereinstimmen!
+    const backgroundTransitionDurationMs = 2000; // 2 Sekunden für den Hintergrundübergang
+
+    if (callback && typeof callback === 'function') {
+        setTimeout(callback, backgroundTransitionDurationMs);
+    }
 }
 
 /**
  * Wechselt den aktiven Spieler von 1 zu 2 oder umgekehrt.
- * Aktualisiert anschließend den Hintergrund und startet die nächste Runde.
+ * Aktualisiert anschließend den Hintergrund und startet die nächste Phase.
  */
 function switchPlayer() {
     activePlayer = (activePlayer === 1) ? 2 : 1;
     console.log(`Spieler gewechselt. Aktiver Spieler: ${activePlayer}`);
-    updatePlayerBackground(); // Hintergrund sofort aktualisieren
     currentRound++; // Runde erhöhen
-    console.log(`Starte Runde ${Math.ceil(currentRound / 2)} für Spieler ${activePlayer}`); // Anpassung für Rundenanzeige (Runde 1 für Spieler 1, Runde 1 für Spieler 2, dann Runde 2 für Spieler 1 usw.)
+    console.log(`Starte Runde ${Math.ceil(currentRound / 2)} für Spieler ${activePlayer}`);
 
     if (currentRound >= TOTAL_GAME_ROUNDS) {
-        endGame(); // Spiel beenden, wenn maximale Runden erreicht sind
+        // Wenn max. Runden erreicht, direkt Spiel beenden
+        endGame();
     } else {
-        startDiceRollPhase(); // Neue Phase starten (Würfeln)
+        // Hier rufen wir updatePlayerBackground mit einem Callback auf
+        // Die Würfelphase startet erst NACHDEM der Hintergrund gewechselt ist
+        updatePlayerBackground(() => {
+            startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
+        });
     }
 }
 
@@ -873,13 +886,17 @@ function showLogoButton() {
             void logo.offsetWidth;
             logo.classList.add('logo-bounce');
 
-            if (currentGameState === 'startScreen') {
-                if (isPlayerReady) {
-                    console.log("Spiel wird gestartet!");
-                    playbackStatus.textContent = 'Bereit zum Abspielen!';
-                    currentGameState = 'diceRoll'; // NEUER Zustand
-                    updatePlayerBackground(); // HIER WIRD DER HINTERGRUND BEIM ERSTEN SPIELSTART BLAU
-                    startDiceRollPhase(); // Starte die Würfelphase
+             if (currentGameState === 'startScreen') {
+                    if (isPlayerReady) {
+                        console.log("Spiel wird gestartet!");
+                        playbackStatus.textContent = 'Bereit zum Abspielen!';
+                        currentGameState = 'diceRoll'; // Zustandswechsel
+                        
+                        // HIER: Rufe updatePlayerBackground mit Callback auf!
+                        updatePlayerBackground(() => {
+                            startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
+                        });
+						
                 } else {
                     console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
                     playbackStatus.textContent = 'Spotify Player ist noch nicht bereit. Bitte warten...';
