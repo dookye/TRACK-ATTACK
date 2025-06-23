@@ -253,7 +253,7 @@ body {
 
 /* Würfel-Animation (GIF) */
 #dice-animation {
-    width: 50vmin; /* Responsive Größe */
+    width: 60vmin; /* Responsive Größe */
     max-width: 400px;
     height: auto;
 }
