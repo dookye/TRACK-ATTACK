@@ -509,7 +509,7 @@ function startDiceRollPhase() {
     diceButtonsContainer.classList.add('hidden'); // Buttons noch verstecken
 
     // Die Dauer der GIF-Animation anpassen (hier 2 Sekunden)
-    const animationDurationMs = 2000; 
+    const animationDurationMs = 3500; 
 
     setTimeout(() => {
         console.log("Würfel-Animation beendet. Zeige Würfelwahl-Buttons.");
