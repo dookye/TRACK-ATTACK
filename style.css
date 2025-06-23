@@ -30,7 +30,7 @@ body {
     flex-direction: column; /* Elemente untereinander */
     justify-content: center; /* Zentriert vertikal */
     align-items: center; /* Zentriert horizontal */
-    /* background-color: black; */ /* DIESE ZEILE WIRD NUN DURCH DYNAMISCHE HINTERGRÜNDE ERSETZT */
+    background-color: black; /* WIEDER HINZUGEFÜGT: Startet schwarz */
     color: white;
     text-align: center;
     transition: background 1s ease-in-out, opacity 1s ease-in-out; /* Füge background zur Transition hinzu */
@@ -238,35 +238,7 @@ body {
 }
 
 
-/* NEU: Eine Anzeige für den aktiven Spieler, die sich mitbewegt */
-#player-indicator {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 2em;
-    padding: 20px;
-    border-radius: 10px;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent */
-    transition: left 1s ease-in-out, right 1s ease-in-out, opacity 0.5s ease-in-out; /* Auch hier Transition */
-    text-align: center;
-    opacity: 0; /* Starte versteckt */
-    pointer-events: none; /* Verhindert Klicks, wenn nicht sichtbar */
-    z-index: 20; /* Über Logo und Login-Bereich */
-}
-
-/* Position für Spieler 1 */
-.player1-active-bg #player-indicator {
-    left: 20%;
-    right: auto;
-    opacity: 1;
-}
-
-/* Position für Spieler 2 */
-.player2-active-bg #player-indicator {
-    left: auto;
-    right: 20%;
-    opacity: 1;
-}
+/* Die Regeln für #player-indicator und die zugehörigen Hintergrund-Klassen-Kombinationen wurden entfernt */
 
 
 /* Media Queries für Orientierung und Desktop */
