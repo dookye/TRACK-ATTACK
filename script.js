@@ -111,7 +111,7 @@ async function redirectToSpotifyAuthorize() {
         code_challenge: codeChallenge,
     });
 
-    window.location.href = `${SPOTIFY_AUTHORIZE_URL}?${params.toString()}`;
+    window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
 }
 
 /**
@@ -139,7 +139,7 @@ async function exchangeCodeForTokens(code) {
     });
 
     try {
-        const response = await fetch(SPOTIFY_TOKEN_URL, {
+        const response = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -522,7 +522,7 @@ function startDiceRollPhase() {
     diceButtonsContainer.classList.add('hidden'); // Buttons noch verstecken
 
     // Die Dauer der GIF-Animation anpassen (hier 2 Sekunden)
-    const animationDurationMs = 3500; 
+    const animationDurationMs = 2000; 
 
     setTimeout(() => {
         console.log("Würfel-Animation beendet. Zeige Würfelwahl-Buttons.");
@@ -788,7 +788,7 @@ function checkOrientationAndFullscreen() {
         console.log("checkOrientationAndFullscreen: Querformat erkannt.");
         hideMessage(orientationMessage);
 
-        if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msRequestFullscreen) {
              console.log("checkOrientationAndFullscreen: Zeige Fullscreen-Aufforderung.");
              showMessage(fullscreenMessage);
              // Listener hinzufügen, wenn noch nicht im Vollbild. { once: true } entfernt ihn nach dem Klick.
@@ -858,8 +858,8 @@ function showLogoButton() {
 
         // WICHTIG: Hier Logo inaktiv machen, wenn das Spiel läuft und nicht gerade ein Song ansteht
         if (currentGameState === 'playing') { // 'playing' bedeutet, wir warten auf den ersten Song-Start nach Würfeln/Genre
-             setLogoAsPlayButton(false);
-             playbackStatus.textContent = 'Warte auf Würfelwahl oder Genre-Auswahl...'; // Oder ähnliche Meldung
+             setLogoAsPlayButton(true); // Logo als Play-Button aktivieren (Bereit zum ersten Song-Play)
+             playbackStatus.textContent = 'Klicke auf das Logo zum Abspielen des Songs!';
         } else if (currentGameState === 'songPlaying' || currentGameState === 'resolutionPhase') {
             setLogoAsPlayButton(false);
         } else { // Wenn der Zustand "playing" ist und wir zum Abspielen bereit sind
@@ -880,23 +880,22 @@ function showLogoButton() {
             logo.removeEventListener('pointerdown', logoClickListener);
         }
         logoClickListener = function(event) {
-            event.preventDefault(); // Verhindert Standardverhalten (z.B. bei Touch)
+            event.preventDefault(); // Verhindert Standardverhalten (z.g. bei Touch)
             console.log("Logo geklickt zum Spielstart (ohne Re-Animation)!");
             logo.classList.remove('logo-bounce');
             void logo.offsetWidth;
             logo.classList.add('logo-bounce');
 
-             if (currentGameState === 'startScreen') {
-                    if (isPlayerReady) {
-                        console.log("Spiel wird gestartet!");
-                        playbackStatus.textContent = 'Bereit zum Abspielen!';
-                        currentGameState = 'diceRoll'; // Zustandswechsel
-                        
-                        // HIER: Rufe updatePlayerBackground mit Callback auf!
-                        updatePlayerBackground(() => {
-                            startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
-                        });
-						
+            if (currentGameState === 'startScreen') {
+                if (isPlayerReady) {
+                    console.log("Spiel wird gestartet!");
+                    playbackStatus.textContent = 'Bereit zum Abspielen!';
+                    currentGameState = 'diceRoll'; // NEUER Zustand
+                    
+                    // NEU: updatePlayerBackground mit Callback
+                    updatePlayerBackground(() => {
+                        startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
+                    });
                 } else {
                     console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
                     playbackStatus.textContent = 'Spotify Player ist noch nicht bereit. Bitte warten...';
@@ -946,11 +945,29 @@ function showLogoButton() {
                         console.log("Spiel wird gestartet!");
                         playbackStatus.textContent = 'Bereit zum Abspielen!';
                         currentGameState = 'diceRoll'; // Zustandswechsel
-                        updatePlayerBackground(); // HIER WIRD DER HINTERGRUND BEIM ERSTEN SPIELSTART BLAU
-                        startDiceRollPhase(); // Starte die Würfelphase
+                        
+                        // NEU: updatePlayerBackground mit Callback
+                        updatePlayerBackground(() => {
+                            startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
+                        });
+                        
                     } else {
                         console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
                         playbackStatus.textContent = 'Spotify Player ist noch nicht bereit. Bitte warten...';
+                    }
+                }
+                 // Hinzugefügte Logik für den späteren Song-Play/Repeat
+                else if (currentGameState === 'playing' || currentGameState === 'songPaused') {
+                    if (isPlayerReady && currentDiceRoll) {
+                        if (currentSongRepetitionsLeft >= 0) {
+                            playSongBasedOnDice();
+                            setLogoAsPlayButton(false);
+                            currentGameState = 'songPlaying';
+                        } else {
+                            console.log("Keine weiteren Hördurchgänge für diesen Song mehr.");
+                            playbackStatus.textContent = 'Keine weiteren Versuche. Löse den Song auf!';
+                            setLogoAsPlayButton(false);
+                        }
                     }
                 }
             };
