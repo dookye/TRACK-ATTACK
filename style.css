@@ -63,7 +63,7 @@ html, body, #game-logo, .spotify-button {
     top: 0;
     left: 0;
     background-color: rgba(0, 0, 0, 0.95); /* Dunkler, leicht transparenter Hintergrund für den Login */
-    z-index: 200;            /* Höherer z-index als alles andere, damit es immer oben liegt */
+    z-index: 250;            /* HÖHERER Z-INDEX: Dieser muss HÖHER sein als alle Overlays */
     transition: opacity 0.5s ease-out, visibility 0.5s ease-out; /* Transition für Visibility hinzugefügt */
 }
 
@@ -196,7 +196,7 @@ html, body, #game-logo, .spotify-button {
     padding: 20px;
     box-sizing: border-box;
     font-size: 1.5em;
-    z-index: 150; /* Über allen anderen Inhalten, aber unter Login-Bereich */
+    z-index: 200; /* ANPASSUNG: Über dem game-container, aber unter login-area */
     opacity: 0;
     transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
     pointer-events: none; /* Standardmäßig keine Klicks abfangen */
@@ -236,7 +236,7 @@ html, body, #game-logo, .spotify-button {
     width: 100vw;
     height: 100vh;
     background-color: transparent; /* Unsichtbar, fängt aber Klicks ab */
-    z-index: 120; /* Zwischen Overlays und Spielinhalt */
+    z-index: 220; /* ANPASSUNG: Muss über den message-overlays liegen, wenn aktiv! */
     pointer-events: auto; /* Standardmäßig aktiv */
     transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
 }
