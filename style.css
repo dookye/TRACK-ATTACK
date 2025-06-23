@@ -33,7 +33,7 @@ body {
     background-color: black; /* Startet schwarz */
     color: white;
     text-align: center;
-    transition: background 1s ease-in-out, opacity 1s ease-in-out; /* Füge background zur Transition hinzu */
+    transition: background 2s ease-in-out, opacity 1s ease-in-out; /* Füge background zur Transition hinzu */
     opacity: 1; /* Standardmäßig sichtbar */
 }
 
