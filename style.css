@@ -302,7 +302,7 @@ body {
         font-size: 1.2em;
     }
     #game-logo {
-        width: 40vmin;
-        max-width: 400px;
+        width: 50vmin;
+        max-width: 500px;
     }
 }
