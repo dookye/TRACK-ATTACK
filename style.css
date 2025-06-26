@@ -31,7 +31,7 @@ body {
     justify-content: center; /* Zentriert vertikal */
     align-items: center;
     background-color: black; /* testweise einfache farbe, ohne gradient */
-    /* background: linear-gradient(to right, black, black); /* Startet mit einem schwarzen Gradienten */
+    /* background: linear-gradient(to right, black, black); /* Startet mit einem schwarzen Gradienten */ */
     color: white;
     text-align: center;
     transition: background 2s ease-in-out, opacity 1s ease-in-out; /* HIER IST DIE WICHTIGE ZEILE */
