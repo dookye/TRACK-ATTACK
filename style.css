@@ -189,7 +189,7 @@ body {
     height: auto;
     cursor: pointer;
     max-width: 500px;
-    transition: filter 0.3s ease-out;
+    transition: filter 0.3s ease-in-out;
     transform-origin: center center; /* Auch hier wichtig für den Klick-Bounce */
     -webkit-tap-highlight-color: transparent; /* Für Webkit-Browser (iOS, Android Chrome) */
     -webkit-touch-callout: none; /* Deaktiviert das Kontextmenü bei langem Drücken auf iOS */
@@ -238,11 +238,17 @@ body {
 /* Aktiver Zustand des Logos */
 .active-logo {
     filter: brightness(100%);
+    filter: blur(0px);
 }
 
 /* Inaktiver Zustand des Logos */
 .inactive-logo {
     filter: brightness(50%); /* Leicht abgedunkelt */
+    filter: blur(5px); /* NEU: Das Logo wird unscharf gemacht (5px ist ein guter Startwert) */
+    
+    cursor: default; /* Zeigt an, dass der Button nicht klickbar ist */
+    opacity: 0.5; /* Dein bestehender Opacity-Wert für die Dunkelheit */
+    pointer-events: none; /* Macht das Element nicht klickbar */
 }
 
 /* Die Klasse, die beim Klick hinzugefügt wird */
