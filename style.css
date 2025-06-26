@@ -37,7 +37,8 @@ body {
     /* Aber beachte: Wenn .playerX-active-bg background-color verwendet,
        ist der Übergang ZWISCHEN background-color und linear-gradient abrupt.
        Der Übergang ZWISCHEN den background-colors ist sanft. */
-    transition: background 2s ease-in-out, opacity 1s ease-in-out; 
+    transition: background 2s ease-in-out, opacity 2s ease-in-out;
+    transition: background 2s ease-in-out;
     opacity: 1; /* Standardmäßig sichtbar */
 }
 
