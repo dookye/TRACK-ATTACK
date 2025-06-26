@@ -30,8 +30,7 @@ body {
     flex-direction: column; /* Elemente untereinander */
     justify-content: center; /* Zentriert vertikal */
     align-items: center;
-    background-color: black; /* testweise einfache farbe, ohne gradient */
-    /* background: linear-gradient(to right, black, black); /* Startet mit einem schwarzen Gradienten */ */
+    background-color: black; /* - linear-gradient funktioniert nicht */
     color: white;
     text-align: center;
     transition: background 2s ease-in-out, opacity 1s ease-in-out; /* HIER IST DIE WICHTIGE ZEILE */
@@ -40,12 +39,11 @@ body {
 
 /* Neue Klassen für den dynamischen Hintergrund */
 .player1-active-bg {
-    background: linear-gradient(to right, #3498db, rgba(0, 0, 0, 0.8)); /* Blau zu Schwarz */
+    background-color: #3498d; /* EINFACHE FARBE (Blau) - linear-gradient funktioniert nicht */
 }
 
 .player2-active-bg {
-    /* background-color: #e91e63; */ /* EINFACHE FARBE (Pink) */
-    background: linear-gradient(to left, #e91e63, rgba(0, 0, 0, 0.8)); /* Pink zu Schwarz */
+    background-color: #e91e63; /* EINFACHE FARBE (Pink) - linear-gradient funktioniert nicht */
 }
 
 /* Initial Click Blocker - Nur für Overlay-Nachrichten */
