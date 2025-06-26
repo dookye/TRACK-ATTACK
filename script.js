@@ -6,7 +6,7 @@ const spotifyLoginButton = document.getElementById('spotify-login-button');
 const initialClickBlocker = document.getElementById('initial-click-blocker');
 const orientationMessage = document.getElementById('orientation-message');
 const fullscreenMessage = document.getElementById('fullscreen-message');
-const gameContainer = document.querySelector('.game-container');
+const gameContainer = document.querySelector('.game-container'); // Hier bleibt .game-container
 
 // Spotify UI-Elemente
 const playbackStatus = document.getElementById('playback-status');
@@ -111,7 +111,8 @@ async function redirectToSpotifyAuthorize() {
         code_challenge: codeChallenge,
     });
 
-    window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    // Korrekte URL für Spotify Authorize
+    window.location.href = `${SPOTIFY_AUTHORIZE_URL}?${params.toString()}`;
 }
 
 /**
@@ -139,7 +140,7 @@ async function exchangeCodeForTokens(code) {
     });
 
     try {
-        const response = await fetch('https://accounts.spotify.com/api/token', {
+        const response = await fetch(SPOTIFY_TOKEN_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -462,12 +463,14 @@ async function playSongBasedOnDice() {
  * @param {function} [callback] - Eine optionale Funktion, die nach der Hintergrund-Transition ausgeführt wird.
  */
 function updatePlayerBackground(callback = null) {
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    // Sicherstellen, dass alle spezifischen Hintergrundklassen entfernt werden, bevor eine neue hinzugefügt wird
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg'); // <<< HIER HABE ICH 'score-screen-bg' HINZUGEFÜGT
 
     // NEU: Erzwinge einen Reflow (macht den Browser auf CSS-Änderung aufmerksam)
     // Dies ist ein alter Trick, um Browser zu zwingen, Styles neu zu berechnen.
     void gameContainer.offsetWidth; 
 
+    // Füge die Klasse für den aktiven Spieler hinzu
     if (activePlayer === 1) {
         gameContainer.classList.add('player1-active-bg');
     } else {
@@ -617,6 +620,94 @@ function showResolveButton() {
     }, 2000); // Zeigt den Button 2 Sekunden nach Song-Ende an
 }
 
+// --- HIER BEGINNEN DIE NEUEN ODER GEÄNDERTEN FUNKTIONEN FÜR DEN SCORE-SCREEN-BG ---
+
+/**
+ * Startet die Auflösungsphase, in der der Songtitel und Interpret angezeigt werden
+ * und der Hintergrund auf den Score-Screen-Gradienten wechselt.
+ */
+function startResolutionPhase() {
+    if (isResolvingSong) return;
+    isResolvingSong = true;
+    currentGameState = 'resolutionPhase';
+    console.log("Starte Auflösungsphase. Zeige Titel/Interpret und Richtig/Falsch-Buttons.");
+
+    // Pausiere den Player, falls er noch spielt
+    if (player) {
+        player.pause();
+    }
+
+    // Zeige Song-Informationen an (müssen in der HTML vorhanden sein und hier sichtbar gemacht werden)
+    // Beispiel: songTitle, songArtist (wie in deiner alten Skizze)
+    // songTitle.textContent = `Titel: ${currentPlayingTrack.track.name}`;
+    // songArtist.textContent = `Interpret: ${currentPlayingTrack.track.artists.map(a => a.name).join(', ')}`;
+    // songInfo.classList.remove('hidden'); // Annahme, du hast ein Element mit ID 'song-info'
+
+    // Passe den Hintergrund an den Score-Screen-Gradienten an
+    // Der Übergang von background-color zu background (mit linear-gradient) ist abrupt, wie besprochen.
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    gameContainer.classList.add('score-screen-bg'); // <<< HIER WIRD DIE NEUE KLASSE HINZUGEFÜGT
+    
+    playbackStatus.textContent = `Song Auflösung: ${currentPlayingTrack.track.name} von ${currentPlayingTrack.track.artists[0].name}.`;
+
+    // Hier würdest du die "Richtig" und "Falsch" Buttons anzeigen,
+    // die dann die `handleGuess(true/false)` Funktion aufrufen.
+    // Beispiel:
+    // guessButton.classList.remove('hidden');
+    // passButton.classList.remove('hidden');
+}
+
+/**
+ * Behandelt die Logik, nachdem der Spieler geraten oder die Zeit abgelaufen ist.
+ * Aktualisiert Punkte und wechselt den Spieler/beendet das Spiel.
+ * @param {boolean} guessedCorrectly - True, wenn der Spieler richtig geraten hat, False sonst.
+ */
+function handleGuess(guessedCorrectly) {
+    console.log(`Spieler ${activePlayer} hat ${guessedCorrectly ? 'richtig' : 'falsch'} geraten.`);
+    isResolvingSong = false; // Auflösungsphase beendet
+    
+    // Annahme: Du hast irgendwo eine Logik für setTimeout, die hier gecleart werden muss.
+    // clearTimeout(timeoutId); // Wenn du einen Timeout für die Ratephase hattest
+
+    if (player) {
+        player.pause(); // Wiedergabe stoppen
+        player.setVolume(0.5); // Ggf. Lautstärke zurücksetzen
+    }
+
+    if (guessedCorrectly) {
+        playerScores[activePlayer] += currentMaxPointsForSong;
+        playbackStatus.textContent = `Richtig! +${currentMaxPointsForSong} Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}.`;
+    } else {
+        playbackStatus.textContent = `Falsch! 0 Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}.`;
+    }
+
+    // UI-Elemente zurücksetzen/ausblenden, die zur Ratephase gehören
+    // z.B. hideResolveButton(), hideGuessButtons() (noch zu implementieren)
+    // songInfo.classList.add('hidden');
+
+    // NEU: Entferne den Score-Screen-Hintergrund, da die Auflösungsphase beendet ist
+    // Dies sollte vor dem Wechsel des Spielers und dem Aufruf von updatePlayerBackground geschehen.
+    gameContainer.classList.remove('score-screen-bg'); // <<< HIER WIRD DIE KLASSE WIEDER ENTFERNT
+    // Hier kannst du optional auch einen kurzen Timeout einfügen, damit der Benutzer die Punkte sehen kann,
+    // bevor der Hintergrund sofort wechselt.
+    
+    updatePlayerScoresDisplay(); // Aktualisiert die Punkteanzeige (muss existieren)
+
+    // Warte eine kurze Zeit, bevor das Spiel zum nächsten Spieler wechselt oder endet
+    setTimeout(() => {
+        if (currentRound >= TOTAL_GAME_ROUNDS || playerScores[1] >= 50 || playerScores[2] >= 50) { // Beispiel: Spielende bei 50 Punkten
+            endGame();
+        } else {
+            // Song-Informationen zurücksetzen, bevor der Spieler wechselt
+            currentPlayingTrack = null;
+            currentDiceRoll = null;
+            currentMaxPointsForSong = 0;
+            currentSongRepetitionsLeft = 0;
+            
+            switchPlayer(); // Nächsten Spieler dran
+        }
+    }, 3000); // 3 Sekunden warten, bevor der Spieler wechselt
+}
 
 // Platzhalter-Funktion, die du später implementierst
 async function startResolutionPhase() {
@@ -641,6 +732,12 @@ async function startResolutionPhase() {
         console.log("Song spielt auf halber Lautstärke ab Beginn.");
     }
 
+    // Hintergrund auf den Score-Screen-Gradienten ändern
+    // Dies geschieht hier in der `startResolutionPhase`
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    gameContainer.classList.add('score-screen-bg'); // <<< NEUE KLASSE HINZUGEFÜGT
+    console.log("Hintergrund auf Score-Screen-Gradienten gesetzt.");
+
 
     // Hier würden die "Richtig" und "Falsch" Buttons erscheinen
     // und ihre Klicks würden dann z.B. eine Funktion handleGuess(isCorrect) aufrufen.
@@ -656,7 +753,7 @@ async function startResolutionPhase() {
 async function handleGuess(isCorrect) {
     console.log(`Spieler ${activePlayer} hat ${isCorrect ? 'richtig' : 'falsch'} geraten.`);
     isResolvingSong = false; // Auflösungsphase beendet
-    
+
     if (player) {
         await player.pause(); // Song stoppen
         await player.setVolume(0.5); // Lautstärke zurücksetzen
@@ -664,10 +761,17 @@ async function handleGuess(isCorrect) {
 
     if (isCorrect) {
         playerScores[activePlayer] += currentMaxPointsForSong;
-        playbackStatus.textContent = `Richtig! +${currentMaxPointsForSong} Punkte. Gesamt: ${playerScores[activePlayer]}`;
+        playbackStatus.textContent = `Richtig! +${currentMaxPointsForSong} Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}`; // Angepasste Nachricht
     } else {
-        playbackStatus.textContent = `Falsch! 0 Punkte. Gesamt: ${playerScores[activePlayer]}`;
+        playbackStatus.textContent = `Falsch! 0 Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}`; // Angepasste Nachricht
     }
+
+    // *** WICHTIG: Hier muss der `score-screen-bg` entfernt werden, BEVOR `switchPlayer`
+    // den nächsten Spielerhintergrund setzt. ***
+    gameContainer.classList.remove('score-screen-bg'); // <<< KLASSE ENTFERNT
+    console.log("Score-Screen-Hintergrund entfernt.");
+
+    // updatePlayerScoresDisplay(); // <-- Hinzufügen, wenn diese Funktion existiert und die Punktanzeige aktualisiert
 
     currentPlayingTrack = null; // Für die nächste Runde zurücksetzen
     currentDiceRoll = null; // Würfel zurücksetzen
@@ -677,7 +781,13 @@ async function handleGuess(isCorrect) {
     // Hier müsste die UI für Richtig/Falsch verschwinden
     // Danach den Spieler wechseln
     setTimeout(() => {
-        switchPlayer(); // Spielerwechsel initiieren
+        // Prüfe hier zusätzlich, ob das Spiel beendet ist, bevor switchPlayer aufgerufen wird.
+        // Das ist wichtig, da handleGuess an zwei Stellen das Spielende triggern könnte.
+        if (currentRound >= TOTAL_GAME_ROUNDS || playerScores[1] >= 50 || playerScores[2] >= 50) { // Beispiel: Spielende bei 50 Punkten
+            endGame();
+        } else {
+            switchPlayer(); // Spielerwechsel initiieren
+        }
     }, 2000); // Kurze Pause, um die Punkte anzuzeigen
 }
 
@@ -688,8 +798,13 @@ function endGame() {
     // Hier die Logik für den Auswertungsscreen
     playbackStatus.textContent = `Spiel beendet! Spieler 1: ${playerScores[1]} Punkte, Spieler 2: ${playerScores[2]} Punkte.`;
     // Entferne alle Spieler-Hintergrund-Klassen am Ende des Spiels
-    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
-    // gameContainer.style.backgroundColor = 'black'; // Stelle sicher, dass es wieder schwarz wird
+    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Diese werden in resetGame entfernt
+    // gameContainer.style.backgroundColor = 'black'; // Diese wird in resetGame gesetzt
+
+    // Hinzufügen des Score-Screen-Hintergrunds für den Endscreen
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Sicherstellen, dass andere BGs weg sind
+    gameContainer.classList.add('score-screen-bg'); // <<< HIER WIRD DIE KLASSE HINZUGEFÜGT FÜR DAS SPIELENDE
+    console.log("Hintergrund auf Score-Screen für Spielende gesetzt.");
 
 
     // Reset game state for new game
@@ -708,12 +823,14 @@ function resetGame() {
     currentPlayingTrack = null;
     introAnimationPlayed = false; // Animation wieder erlauben
     isResolvingSong = false;
-    
+
     // UI auf Startzustand zurücksetzen
     showLoginScreen(); // Oder direkt zum Logo, wenn schon eingeloggt
     // Entferne alle Spieler-Hintergrund-Klassen beim Reset
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg'); // <<< ALLE HINTERGRUNDKLASSEN ENTFERNEN
     gameContainer.style.backgroundColor = 'black'; // Setze den Hintergrund auf schwarz zurück
+    console.log("Spielhintergrund auf Schwarz zurückgesetzt (nach Reset).");
+
 
     if (isPlayerReady && !document.fullscreenElement) {
         // Wenn Player Ready, aber Fullscreen verlassen, erneut Fullscreen prüfen
@@ -732,7 +849,7 @@ function resetGame() {
 function handlePlayerReady() {
     console.log("handlePlayerReady: Spotify Player ist verbunden. Starte Orientierungs-/Fullscreen-Check.");
     loginArea.classList.add('hidden'); // Login-Bereich ausblenden
-    
+
     checkOrientationAndFullscreen(); // Jetzt den Orientierungs- und Fullscreen-Check starten
 }
 
@@ -744,8 +861,9 @@ function showLoginScreen() {
     logoContainer.classList.add('hidden', 'initial-hidden'); // Logo ausblenden und initial positionieren
     loginArea.classList.remove('hidden');
     // Stellen Sie sicher, dass der Hintergrund wieder schwarz ist, wenn zum Login gewechselt wird
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg'); // <<< ALLE HINTERGRUNDKLASSEN ENTFERNEN
     gameContainer.style.backgroundColor = 'black';
+    console.log("Spielhintergrund auf Schwarz zurückgesetzt (Login Screen).");
     currentGameState = 'loading'; // Oder 'loginScreen'
 }
 
@@ -789,14 +907,14 @@ function checkOrientationAndFullscreen() {
         hideMessage(orientationMessage);
 
         if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msRequestFullscreen) {
-             console.log("checkOrientationAndFullscreen: Zeige Fullscreen-Aufforderung.");
-             showMessage(fullscreenMessage);
-             // Listener hinzufügen, wenn noch nicht im Vollbild. { once: true } entfernt ihn nach dem Klick.
-             document.addEventListener('click', activateFullscreenAndRemoveListener, { once: true });
+               console.log("checkOrientationAndFullscreen: Zeige Fullscreen-Aufforderung.");
+               showMessage(fullscreenMessage);
+               // Listener hinzufügen, wenn noch nicht im Vollbild. { once: true } entfernt ihn nach dem Klick.
+               document.addEventListener('click', activateFullscreenAndRemoveListener, { once: true });
         } else {
-             console.log("checkOrientationAndFullscreen: Bereits im Vollbildmodus. Zeige Logo.");
-             hideMessage(fullscreenMessage);
-             showLogoButton(); // Zeige das Logo mit Animation (oder ohne, je nach introAnimationPlayed)
+               console.log("checkOrientationAndFullscreen: Bereits im Vollbildmodus. Zeige Logo.");
+               hideMessage(fullscreenMessage);
+               showLogoButton(); // Zeige das Logo mit Animation (oder ohne, je nach introAnimationPlayed)
         }
     }
 }
@@ -824,7 +942,7 @@ function requestFullscreen() {
  */
 function activateFullscreenAndRemoveListener(event) {
     console.log("activateFullscreenAndRemoveListener: Vollbildmodus-Aktivierung durch Klick.");
-    
+
     // Nur reagieren, wenn der Klick auf der Fullscreen-Nachricht selbst war.
     if (!fullscreenMessage.contains(event.target)) {
         console.log("activateFullscreenAndRemoveListener: Klick nicht auf Fullscreen-Nachricht, ignoriere.");
@@ -837,9 +955,9 @@ function activateFullscreenAndRemoveListener(event) {
         requestFullscreen();
         fullscreenRequested = true;
         // Listener wird durch { once: true } automatisch entfernt
-        
+
         // Nach erfolgreicher Fullscreen-Anforderung das Logo anzeigen
-        showLogoButton(); 
+        showLogoButton();
     }
 }
 
@@ -891,7 +1009,7 @@ function showLogoButton() {
                     console.log("Spiel wird gestartet!");
                     playbackStatus.textContent = 'Bereit zum Abspielen!';
                     currentGameState = 'diceRoll'; // NEUER Zustand
-                    
+
                     // NEU: updatePlayerBackground mit Callback
                     updatePlayerBackground(() => {
                         startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
@@ -925,7 +1043,7 @@ function showLogoButton() {
             console.log("fall-in Animation beendet. Logo ist bereit für Klicks.");
             logoContainer.removeEventListener('animationend', handler); // Listener entfernen
             logoContainer.style.animation = ''; // Animation zurücksetzen, um Styling Konflikte zu vermeiden
-            
+
             introAnimationPlayed = true; // Markiere, dass die Animation gelaufen ist
 
             // Jetzt den Klick-Listener für den Spielstart aktivieren
@@ -945,18 +1063,18 @@ function showLogoButton() {
                         console.log("Spiel wird gestartet!");
                         playbackStatus.textContent = 'Bereit zum Abspielen!';
                         currentGameState = 'diceRoll'; // Zustandswechsel
-                        
+
                         // NEU: updatePlayerBackground mit Callback
                         updatePlayerBackground(() => {
                             startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
                         });
-                        
+
                     } else {
                         console.warn("Player ist noch nicht bereit, kann Spiel nicht starten.");
                         playbackStatus.textContent = 'Spotify Player ist noch nicht bereit. Bitte warten...';
                     }
                 }
-                 // Hinzugefügte Logik für den späteren Song-Play/Repeat
+                   // Hinzugefügte Logik für den späteren Song-Play/Repeat
                 else if (currentGameState === 'playing' || currentGameState === 'songPaused') {
                     if (isPlayerReady && currentDiceRoll) {
                         if (currentSongRepetitionsLeft >= 0) {
@@ -972,7 +1090,7 @@ function showLogoButton() {
                 }
             };
             logo.addEventListener('pointerdown', logoClickListener);
-            
+
             // Setze den initialen Spielzustand nach der Animation
             currentGameState = 'startScreen';
             logo.classList.add('active-logo'); // Sicherstellen, dass es am Start aktiv ist
@@ -1010,7 +1128,7 @@ function setLogoAsPlayButton(activate = true) {
                     console.log("Keine weiteren Hördurchgänge für diesen Song mehr.");
                     playbackStatus.textContent = 'Keine weiteren Versuche. Löse den Song auf!';
                     // Logo bleibt inaktiv, da jetzt aufgelöst wird
-                    setLogoAsPlayButton(false); 
+                    setLogoAsPlayButton(false);
                 }
             } else {
                 console.warn("Player ist nicht bereit oder kein Würfelwert gesetzt.");
@@ -1038,16 +1156,16 @@ async function checkSpotifyLoginStatus() {
         console.log('checkSpotifyLoginStatus: Authorization Code erhalten, tausche ihn gegen Access Token.');
         const success = await exchangeCodeForTokens(code); // Warte auf Erfolg
         history.replaceState({}, document.title, REDIRECT_URI); // Code aus URL entfernen
-        
+
         if (success && accessToken && isSpotifySDKLoaded) {
-             console.log("checkSpotifyLoginStatus: Access Token und SDK bereit, initialisiere Player.");
-             initializeSpotifyPlayer();
+               console.log("checkSpotifyLoginStatus: Access Token und SDK bereit, initialisiere Player.");
+               initializeSpotifyPlayer();
         } else if (success && accessToken) {
-             console.log("checkSpotifyLoginStatus: Access Token vorhanden, aber SDK noch nicht geladen. Player-Initialisierung wartet auf SDK Ready.");
-             // initializeSpotifyPlayer wird dann von window.onSpotifyWebPlaybackSDKReady() aufgerufen
+               console.log("checkSpotifyLoginStatus: Access Token vorhanden, aber SDK noch nicht geladen. Player-Initialisierung wartet auf SDK Ready.");
+               // initializeSpotifyPlayer wird dann von window.onSpotifyWebPlaybackSDKReady() aufgerufen
         } else {
-             console.log("checkSpotifyLoginStatus: Token-Austausch fehlgeschlagen oder kein Access Token.");
-             showLoginScreen(); // Zeigt den Login-Screen mit Fehlermeldung
+               console.log("checkSpotifyLoginStatus: Token-Austausch fehlgeschlagen oder kein Access Token.");
+               showLoginScreen(); // Zeigt den Login-Screen mit Fehlermeldung
         }
     } else if (localStorage.getItem('access_token') && localStorage.getItem('expires_in') > Date.now()) {
         console.log('checkSpotifyLoginStatus: Vorhandenen Access Token aus localStorage geladen.');
@@ -1117,14 +1235,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             checkOrientationAndFullscreen();
         }
     });
-    
+
     // Listener für das Beenden des Fullscreen-Modus
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement) {
             console.log("Fullscreen verlassen.");
-            fullscreenRequested = false; 
-            if (isPlayerReady) { 
-                checkOrientationAndFullscreen(); 
+            fullscreenRequested = false;
+            if (isPlayerReady) {
+                checkOrientationAndFullscreen();
             } else {
                 showLoginScreen(); // Wenn Player nicht bereit, zurück zum Login
             }
