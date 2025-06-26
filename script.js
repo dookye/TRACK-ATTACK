@@ -713,7 +713,7 @@ function resetGame() {
     showLoginScreen(); // Oder direkt zum Logo, wenn schon eingeloggt
     // Entferne alle Spieler-Hintergrund-Klassen beim Reset
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
-    gameContainer.style.backgroundColor = 'black'; // Setze den Hintergrund auf schwarz zurück
+    // gameContainer.style.backgroundColor = 'black'; // Setze den Hintergrund auf schwarz zurück
 
     if (isPlayerReady && !document.fullscreenElement) {
         // Wenn Player Ready, aber Fullscreen verlassen, erneut Fullscreen prüfen
