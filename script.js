@@ -688,8 +688,8 @@ function endGame() {
     // Hier die Logik für den Auswertungsscreen
     playbackStatus.textContent = `Spiel beendet! Spieler 1: ${playerScores[1]} Punkte, Spieler 2: ${playerScores[2]} Punkte.`;
     // Entferne alle Spieler-Hintergrund-Klassen am Ende des Spiels
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
-    //gameContainer.style.backgroundColor = 'black'; // Stelle sicher, dass es wieder schwarz wird
+    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    // gameContainer.style.backgroundColor = 'black'; // Stelle sicher, dass es wieder schwarz wird
 
 
     // Reset game state for new game
