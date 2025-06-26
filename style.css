@@ -39,7 +39,7 @@ body {
 
 /* Neue Klassen für den dynamischen Hintergrund */
 .player1-active-bg {
-    background-color: #3498d; /* EINFACHE FARBE (Blau) - linear-gradient funktioniert nicht */
+    background-color: #3498db; /* EINFACHE FARBE (Blau) - linear-gradient funktioniert nicht */
 }
 
 .player2-active-bg {
