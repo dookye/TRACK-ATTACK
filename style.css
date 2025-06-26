@@ -40,13 +40,12 @@ body {
 
 /* Neue Klassen für den dynamischen Hintergrund */
 .player1-active-bg {
-    background-color: #3498db; /* EINFACHE FARBE (Blau) */
-    /* background: linear-gradient(to right, #3498db, rgba(0, 0, 0, 0.8)); /* Blau zu Schwarz */ */
+    background: linear-gradient(to right, #3498db, rgba(0, 0, 0, 0.8)); /* Blau zu Schwarz */
 }
 
 .player2-active-bg {
-    background-color: #e91e63; /* EINFACHE FARBE (Pink) */
-    /* background: linear-gradient(to left, #e91e63, rgba(0, 0, 0, 0.8)); /* Pink zu Schwarz */ */
+    /* background-color: #e91e63; */ /* EINFACHE FARBE (Pink) */
+    background: linear-gradient(to left, #e91e63, rgba(0, 0, 0, 0.8)); /* Pink zu Schwarz */
 }
 
 /* Initial Click Blocker - Nur für Overlay-Nachrichten */
