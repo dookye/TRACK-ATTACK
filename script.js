@@ -6,7 +6,7 @@ const spotifyLoginButton = document.getElementById('spotify-login-button');
 const initialClickBlocker = document.getElementById('initial-click-blocker');
 const orientationMessage = document.getElementById('orientation-message');
 const fullscreenMessage = document.getElementById('fullscreen-message');
-const gameContainer = document.querySelector('.game-container');
+const gameContainer = document.querySelector('.game-container'); // Hier bleibt .game-container
 
 // Spotify UI-Elemente
 const playbackStatus = document.getElementById('playback-status');
@@ -16,6 +16,7 @@ const diceContainer = document.getElementById('dice-container');
 const diceAnimation = document.getElementById('dice-animation');
 const diceButtonsContainer = document.getElementById('dice-buttons');
 const diceButtons = document.querySelectorAll('.dice-button'); // Alle Würfel-Buttons
+
 
 // --- SPOTIFY KONSTANTEN ---
 const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
@@ -30,9 +31,10 @@ const SCOPES = [
 ];
 
 // --- SPOTIFY API ENDPUNKTE (KORREKTE SPOTIFY-URLS!) ---
-const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // Korrigiert
-const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token'; // Korrigiert
-const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1'; // Korrigiert
+const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
+const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';
+const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1';
+
 
 // --- GLOBALE ZUSTANDSVARIABLEN ---
 let accessToken = '';
@@ -43,7 +45,7 @@ let isPlayerReady = false; // Flag, wenn der SDK-Player verbunden ist
 let isSpotifySDKLoaded = false; // Flag, wenn das SDK geladen ist
 let fullscreenRequested = false; // Zur Steuerung des Fullscreen-States
 let logoClickListener = null; // Für den dynamischen Klick-Listener des Logos
-let currentGameState = 'loading'; // Zustände: 'loading', 'startScreen', 'diceSelect', 'playing', 'songPlaying', 'songPaused', 'genreSelect', 'resolutionPhase', 'gameEnded'
+let currentGameState = 'loading'; // Zustände: 'loading', 'startScreen', 'diceSelect', 'playing', 'songPlaying', 'songPaused', 'genreSelect', 'resolutionPhase'
 let introAnimationPlayed = false; // Flag, ob die Logo-Intro-Animation schon einmal lief
 
 // NEU für Spieler & Rundenmanagement
@@ -66,6 +68,7 @@ let currentMaxPointsForSong = 0; // Maximale Punkte für den aktuellen Song (pas
 let currentPlayingTrack = null; // Speichert den aktuell abgespielten Track (für Auflösung)
 let currentPlayStartPosition = 0; // Speichert die Startposition des aktuellen Songs
 let isResolvingSong = false; // Flag für die Auflösungsphase
+
 
 // --- PKCE HELFER-FUNKTIONEN ---
 function generateRandomString(length) {
@@ -108,6 +111,7 @@ async function redirectToSpotifyAuthorize() {
         code_challenge: codeChallenge,
     });
 
+    // Korrekte URL für Spotify Authorize
     window.location.href = `${SPOTIFY_AUTHORIZE_URL}?${params.toString()}`;
 }
 
@@ -408,6 +412,7 @@ async function playSongBasedOnDice() {
     currentPlayStartPosition = Math.floor(Math.random() * (maxStartPositionMs > 0 ? maxStartPositionMs : 0));
     if (currentPlayStartPosition < 0) currentPlayStartPosition = 0; // Sicherstellen, dass es nicht negativ wird
 
+
     console.log(`Spiele ${currentPlayingTrack.track.name} von ${currentPlayingTrack.track.artists[0].name} ` +
                 `ab Position ${currentPlayStartPosition}ms für ${playDurationMs}ms.`);
 
@@ -439,13 +444,14 @@ async function playSongBasedOnDice() {
                 startResolutionPhase(); // Leite zur Auflösungsphase über
             } else {
                 setLogoAsPlayButton(true); // Logo wieder aktivieren für nächste Wiederholung
-                // showResolveButton(); // Diese Funktion musst du noch implementieren, wenn du einen separaten Auflösen-Button hast
+                showResolveButton(); // Diese Funktion musst du noch implementieren
             }
         }, playDurationMs);
 
     } catch (error) {
         console.error('playSongBasedOnDice Fehler:', error);
         playbackStatus.textContent = `Fehler beim Abspielen: ${error.message}`;
+        // Hier könntest du spezifischere Fehlermeldungen anzeigen, z.B. bei Premium-Fehlern
     }
 }
 
@@ -458,10 +464,11 @@ async function playSongBasedOnDice() {
  */
 function updatePlayerBackground(callback = null) {
     // Sicherstellen, dass alle spezifischen Hintergrundklassen entfernt werden, bevor eine neue hinzugefügt wird
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg');
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg'); // <<< HIER HABE ICH 'score-screen-bg' HINZUGEFÜGT
 
     // NEU: Erzwinge einen Reflow (macht den Browser auf CSS-Änderung aufmerksam)
-    void gameContainer.offsetWidth;
+    // Dies ist ein alter Trick, um Browser zu zwingen, Styles neu zu berechnen.
+    void gameContainer.offsetWidth; 
 
     // Füge die Klasse für den aktiven Spieler hinzu
     if (activePlayer === 1) {
@@ -471,7 +478,7 @@ function updatePlayerBackground(callback = null) {
     }
     console.log(`Hintergrund aktualisiert für Spieler ${activePlayer}`);
 
-    const backgroundTransitionDurationMs = 2000;
+    const backgroundTransitionDurationMs = 2000; 
 
     if (callback && typeof callback === 'function') {
         setTimeout(callback, backgroundTransitionDurationMs);
@@ -518,7 +525,7 @@ function startDiceRollPhase() {
     diceButtonsContainer.classList.add('hidden'); // Buttons noch verstecken
 
     // Die Dauer der GIF-Animation anpassen (hier 2 Sekunden)
-    const animationDurationMs = 2000;
+    const animationDurationMs = 2000; 
 
     setTimeout(() => {
         console.log("Würfel-Animation beendet. Zeige Würfelwahl-Buttons.");
@@ -529,7 +536,7 @@ function startDiceRollPhase() {
 
         // Event-Listener für die Würfel-Buttons hinzufügen
         diceButtons.forEach(button => {
-            button.addEventListener('pointerdown', handleDiceSelection, { once: true });
+            button.addEventListener('pointerdown', handleDiceSelection, { once: true }); // { once: true } sorgt dafür, dass der Listener nach einmaliger Ausführung entfernt wird
         });
 
     }, animationDurationMs);
@@ -540,13 +547,15 @@ function startDiceRollPhase() {
  * @param {Event} event - Das Klick-Event des Buttons.
  */
 function handleDiceSelection(event) {
-    event.preventDefault();
+    event.preventDefault(); // Verhindert Standardverhalten (z.B. bei Touch)
 
     if (currentGameState !== 'diceSelect') {
         console.warn("handleDiceSelection: Nicht im 'diceSelect' Zustand, ignoriere Klick.");
         return;
     }
 
+    // Entferne alle anderen Listener, falls doch nicht { once: true } verwendet wird
+    // (Obwohl { once: true } das schon macht, ist es gute Praxis für den Fall, dass es geändert wird)
     diceButtons.forEach(button => {
         button.removeEventListener('pointerdown', handleDiceSelection);
     });
@@ -570,13 +579,17 @@ function handleDiceSelection(event) {
 /**
  * Hilfsfunktion zum Ausblenden aller relevanten Game-UI-Elemente,
  * bevor eine neue Phase (z.B. Würfeln) beginnt.
+ * Diese Funktion muss erweitert werden, sobald du mehr UI-Elemente hast.
  */
 function hideAllGameUI() {
     console.log("Alle Game UI Elemente ausgeblendet.");
+    // NEU: Dice Container ausblenden
     diceContainer.classList.add('hidden');
     diceAnimation.classList.add('hidden');
     diceButtonsContainer.classList.add('hidden');
-    // Füge hier weitere UI-Elemente hinzu, die ausgeblendet werden sollen
+
+    // Beispiel: Auflösen-Button, Richtig/Falsch-Buttons, Titel/Interpret-Anzeige
+    // Diese Elemente werden später implementiert. Füge hier deren `classList.add('hidden');` hinzu.
 }
 
 // Platzhalter für die Genre-Auswahlphase (noch zu implementieren)
@@ -594,26 +607,117 @@ function startGenreSelectionPhase() {
     }, 3000);
 }
 
-// Eine Funktion zur Aktualisierung der Punkteanzeige (muss in deinem HTML implementiert werden)
-function updatePlayerScoresDisplay() {
-    // Beispiel:
-    // const player1ScoreElement = document.getElementById('player1-score');
-    // const player2ScoreElement = document.getElementById('player2-score');
-    // if (player1ScoreElement) player1ScoreElement.textContent = playerScores[1];
-    // if (player2ScoreElement) player2ScoreElement.textContent = playerScores[2];
-    console.log(`Punkte aktualisiert: Spieler 1: ${playerScores[1]}, Spieler 2: ${playerScores[2]}`);
+// Platzhalter-Funktion, die du später implementierst
+function showResolveButton() {
+    console.log("Platzhalter: 'Auflösen'-Button erscheint.");
+    // Hier Logik für das Anzeigen des Auflösen-Buttons einfügen.
+    // Dieser Button sollte dann die startResolutionPhase() aufrufen.
+    // Für jetzt simulieren wir einen Timeout, der die Auflösungsphase startet.
+    setTimeout(() => {
+        if (currentGameState !== 'resolutionPhase') { // Nur starten, wenn nicht schon in der Phase
+            startResolutionPhase();
+        }
+    }, 2000); // Zeigt den Button 2 Sekunden nach Song-Ende an
 }
+
+// --- HIER BEGINNEN DIE NEUEN ODER GEÄNDERTEN FUNKTIONEN FÜR DEN SCORE-SCREEN-BG ---
 
 /**
  * Startet die Auflösungsphase, in der der Songtitel und Interpret angezeigt werden
  * und der Hintergrund auf den Score-Screen-Gradienten wechselt.
  */
-async function startResolutionPhase() {
+function startResolutionPhase() {
     if (isResolvingSong) return;
     isResolvingSong = true;
     currentGameState = 'resolutionPhase';
-    setLogoAsPlayButton(false); // Logo inaktiv, da jetzt Auflösung stattfindet
     console.log("Starte Auflösungsphase. Zeige Titel/Interpret und Richtig/Falsch-Buttons.");
+
+    // Pausiere den Player, falls er noch spielt
+    if (player) {
+        player.pause();
+    }
+
+    // Zeige Song-Informationen an (müssen in der HTML vorhanden sein und hier sichtbar gemacht werden)
+    // Beispiel: songTitle, songArtist (wie in deiner alten Skizze)
+    // songTitle.textContent = `Titel: ${currentPlayingTrack.track.name}`;
+    // songArtist.textContent = `Interpret: ${currentPlayingTrack.track.artists.map(a => a.name).join(', ')}`;
+    // songInfo.classList.remove('hidden'); // Annahme, du hast ein Element mit ID 'song-info'
+
+    // Passe den Hintergrund an den Score-Screen-Gradienten an
+    // Der Übergang von background-color zu background (mit linear-gradient) ist abrupt, wie besprochen.
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
+    gameContainer.classList.add('score-screen-bg'); // <<< HIER WIRD DIE NEUE KLASSE HINZUGEFÜGT
+    
+    playbackStatus.textContent = `Song Auflösung: ${currentPlayingTrack.track.name} von ${currentPlayingTrack.track.artists[0].name}.`;
+
+    // Hier würdest du die "Richtig" und "Falsch" Buttons anzeigen,
+    // die dann die `handleGuess(true/false)` Funktion aufrufen.
+    // Beispiel:
+    // guessButton.classList.remove('hidden');
+    // passButton.classList.remove('hidden');
+}
+
+/**
+ * Behandelt die Logik, nachdem der Spieler geraten oder die Zeit abgelaufen ist.
+ * Aktualisiert Punkte und wechselt den Spieler/beendet das Spiel.
+ * @param {boolean} guessedCorrectly - True, wenn der Spieler richtig geraten hat, False sonst.
+ */
+function handleGuess(guessedCorrectly) {
+    console.log(`Spieler ${activePlayer} hat ${guessedCorrectly ? 'richtig' : 'falsch'} geraten.`);
+    isResolvingSong = false; // Auflösungsphase beendet
+    
+    // Annahme: Du hast irgendwo eine Logik für setTimeout, die hier gecleart werden muss.
+    // clearTimeout(timeoutId); // Wenn du einen Timeout für die Ratephase hattest
+
+    if (player) {
+        player.pause(); // Wiedergabe stoppen
+        player.setVolume(0.5); // Ggf. Lautstärke zurücksetzen
+    }
+
+    if (guessedCorrectly) {
+        playerScores[activePlayer] += currentMaxPointsForSong;
+        playbackStatus.textContent = `Richtig! +${currentMaxPointsForSong} Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}.`;
+    } else {
+        playbackStatus.textContent = `Falsch! 0 Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}.`;
+    }
+
+    // UI-Elemente zurücksetzen/ausblenden, die zur Ratephase gehören
+    // z.B. hideResolveButton(), hideGuessButtons() (noch zu implementieren)
+    // songInfo.classList.add('hidden');
+
+    // NEU: Entferne den Score-Screen-Hintergrund, da die Auflösungsphase beendet ist
+    // Dies sollte vor dem Wechsel des Spielers und dem Aufruf von updatePlayerBackground geschehen.
+    gameContainer.classList.remove('score-screen-bg'); // <<< HIER WIRD DIE KLASSE WIEDER ENTFERNT
+    // Hier kannst du optional auch einen kurzen Timeout einfügen, damit der Benutzer die Punkte sehen kann,
+    // bevor der Hintergrund sofort wechselt.
+    
+    updatePlayerScoresDisplay(); // Aktualisiert die Punkteanzeige (muss existieren)
+
+    // Warte eine kurze Zeit, bevor das Spiel zum nächsten Spieler wechselt oder endet
+    setTimeout(() => {
+        if (currentRound >= TOTAL_GAME_ROUNDS || playerScores[1] >= 50 || playerScores[2] >= 50) { // Beispiel: Spielende bei 50 Punkten
+            endGame();
+        } else {
+            // Song-Informationen zurücksetzen, bevor der Spieler wechselt
+            currentPlayingTrack = null;
+            currentDiceRoll = null;
+            currentMaxPointsForSong = 0;
+            currentSongRepetitionsLeft = 0;
+            
+            switchPlayer(); // Nächsten Spieler dran
+        }
+    }, 3000); // 3 Sekunden warten, bevor der Spieler wechselt
+}
+
+// Hier endet der erste Teil. Warte auf den zweiten Teil deiner `script.js`!
+
+// Platzhalter-Funktion, die du später implementierst
+async function startResolutionPhase() {
+    if (isResolvingSong) return; // Verhindert mehrfaches Aufrufen
+    isResolvingSong = true;
+    currentGameState = 'resolutionPhase';
+    setLogoAsPlayButton(false); // Logo inaktiv, da jetzt Auflösung stattfindet
+    console.log("Platzhalter: Starte Auflösungsphase. Zeige Titel/Interpret und Richtig/Falsch-Buttons.");
 
     playbackStatus.textContent = `Auflösung: ${currentPlayingTrack.track.name} von ${currentPlayingTrack.track.artists.map(a => a.name).join(', ')}`;
 
@@ -631,9 +735,11 @@ async function startResolutionPhase() {
     }
 
     // Hintergrund auf den Score-Screen-Gradienten ändern
+    // Dies geschieht hier in der `startResolutionPhase`
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
-    gameContainer.classList.add('score-screen-bg');
+    gameContainer.classList.add('score-screen-bg'); // <<< NEUE KLASSE HINZUGEFÜGT
     console.log("Hintergrund auf Score-Screen-Gradienten gesetzt.");
+
 
     // Hier würden die "Richtig" und "Falsch" Buttons erscheinen
     // und ihre Klicks würden dann z.B. eine Funktion handleGuess(isCorrect) aufrufen.
@@ -644,68 +750,64 @@ async function startResolutionPhase() {
     }, 5000); // 5 Sekunden für die Auflösung/Bewertung
 }
 
-/**
- * Behandelt die Logik, nachdem der Spieler geraten oder die Zeit abgelaufen ist.
- * Aktualisiert Punkte und wechselt den Spieler/beendet das Spiel.
- * @param {boolean} guessedCorrectly - True, wenn der Spieler richtig geraten hat, False sonst.
- */
-async function handleGuess(guessedCorrectly) {
-    console.log(`Spieler ${activePlayer} hat ${guessedCorrectly ? 'richtig' : 'falsch'} geraten.`);
+
+// Platzhalter-Funktion, die du später implementierst
+async function handleGuess(isCorrect) {
+    console.log(`Spieler ${activePlayer} hat ${isCorrect ? 'richtig' : 'falsch'} geraten.`);
     isResolvingSong = false; // Auflösungsphase beendet
 
     if (player) {
-        await player.pause(); // Wiedergabe stoppen
-        await player.setVolume(0.5); // Ggf. Lautstärke zurücksetzen
+        await player.pause(); // Song stoppen
+        await player.setVolume(0.5); // Lautstärke zurücksetzen
     }
 
-    if (guessedCorrectly) {
+    if (isCorrect) {
         playerScores[activePlayer] += currentMaxPointsForSong;
-        playbackStatus.textContent = `Richtig! +${currentMaxPointsForSong} Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}.`;
+        playbackStatus.textContent = `Richtig! +${currentMaxPointsForSong} Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}`; // Angepasste Nachricht
     } else {
-        playbackStatus.textContent = `Falsch! 0 Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}.`;
+        playbackStatus.textContent = `Falsch! 0 Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}`; // Angepasste Nachricht
     }
 
-    // UI-Elemente zurücksetzen/ausblenden, die zur Ratephase gehören
-    // z.B. hideResolveButton(), hideGuessButtons() (noch zu implementieren)
-    // songInfo.classList.add('hidden');
-
-    // WICHTIG: Hier muss der `score-screen-bg` entfernt werden, BEVOR `switchPlayer`
-    // den nächsten Spielerhintergrund setzt.
-    gameContainer.classList.remove('score-screen-bg');
+    // *** WICHTIG: Hier muss der `score-screen-bg` entfernt werden, BEVOR `switchPlayer`
+    // den nächsten Spielerhintergrund setzt. ***
+    gameContainer.classList.remove('score-screen-bg'); // <<< KLASSE ENTFERNT
     console.log("Score-Screen-Hintergrund entfernt.");
 
-    updatePlayerScoresDisplay(); // Aktualisiert die Punkteanzeige (muss existieren)
+    // updatePlayerScoresDisplay(); // <-- Hinzufügen, wenn diese Funktion existiert und die Punktanzeige aktualisiert
 
-    // Song-Informationen zurücksetzen, bevor der Spieler wechselt
-    currentPlayingTrack = null;
-    currentDiceRoll = null;
-    currentMaxPointsForSong = 0;
-    currentSongRepetitionsLeft = 0;
+    currentPlayingTrack = null; // Für die nächste Runde zurücksetzen
+    currentDiceRoll = null; // Würfel zurücksetzen
+    currentMaxPointsForSong = 0; // Punkte zurücksetzen
+    currentSongRepetitionsLeft = 0; // Wiederholungen zurücksetzen
 
-    // Warte eine kurze Zeit, bevor das Spiel zum nächsten Spieler wechselt oder endet
+    // Hier müsste die UI für Richtig/Falsch verschwinden
+    // Danach den Spieler wechseln
     setTimeout(() => {
         // Prüfe hier zusätzlich, ob das Spiel beendet ist, bevor switchPlayer aufgerufen wird.
+        // Das ist wichtig, da handleGuess an zwei Stellen das Spielende triggern könnte.
         if (currentRound >= TOTAL_GAME_ROUNDS || playerScores[1] >= 50 || playerScores[2] >= 50) { // Beispiel: Spielende bei 50 Punkten
             endGame();
         } else {
-            switchPlayer(); // Nächsten Spieler dran
+            switchPlayer(); // Spielerwechsel initiieren
         }
-    }, 3000); // 3 Sekunden warten, bevor der Spieler wechselt
+    }, 2000); // Kurze Pause, um die Punkte anzuzeigen
 }
 
-/**
- * Platzhalter-Funktion für das Spielende
- */
+// Platzhalter-Funktion für das Spielende
 function endGame() {
     console.log("Spiel beendet! Zeige Auswertungsscreen.");
     currentGameState = 'gameEnded';
     // Hier die Logik für den Auswertungsscreen
     playbackStatus.textContent = `Spiel beendet! Spieler 1: ${playerScores[1]} Punkte, Spieler 2: ${playerScores[2]} Punkte.`;
+    // Entferne alle Spieler-Hintergrund-Klassen am Ende des Spiels
+    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Diese werden in resetGame entfernt
+    // gameContainer.style.backgroundColor = 'black'; // Diese wird in resetGame gesetzt
 
     // Hinzufügen des Score-Screen-Hintergrunds für den Endscreen
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
-    gameContainer.classList.add('score-screen-bg');
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Sicherstellen, dass andere BGs weg sind
+    gameContainer.classList.add('score-screen-bg'); // <<< HIER WIRD DIE KLASSE HINZUGEFÜGT FÜR DAS SPIELENDE
     console.log("Hintergrund auf Score-Screen für Spielende gesetzt.");
+
 
     // Reset game state for new game
     setTimeout(() => {
@@ -713,9 +815,7 @@ function endGame() {
     }, 7000); // 7 Sekunden Auswertungsscreen
 }
 
-/**
- * Platzhalter-Funktion zum Zurücksetzen des Spiels
- */
+// Platzhalter-Funktion zum Zurücksetzen des Spiels
 function resetGame() {
     console.log("Spiel wird zurückgesetzt.");
     activePlayer = 1;
@@ -729,9 +829,10 @@ function resetGame() {
     // UI auf Startzustand zurücksetzen
     showLoginScreen(); // Oder direkt zum Logo, wenn schon eingeloggt
     // Entferne alle Spieler-Hintergrund-Klassen beim Reset
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg');
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg'); // <<< ALLE HINTERGRUNDKLASSEN ENTFERNEN
     gameContainer.style.backgroundColor = 'black'; // Setze den Hintergrund auf schwarz zurück
     console.log("Spielhintergrund auf Schwarz zurückgesetzt (nach Reset).");
+
 
     if (isPlayerReady && !document.fullscreenElement) {
         // Wenn Player Ready, aber Fullscreen verlassen, erneut Fullscreen prüfen
@@ -741,6 +842,7 @@ function resetGame() {
         showLogoButton();
     }
 }
+
 
 /**
  * Wird aufgerufen, wenn der Spotify Player erfolgreich initialisiert wurde.
@@ -761,7 +863,7 @@ function showLoginScreen() {
     logoContainer.classList.add('hidden', 'initial-hidden'); // Logo ausblenden und initial positionieren
     loginArea.classList.remove('hidden');
     // Stellen Sie sicher, dass der Hintergrund wieder schwarz ist, wenn zum Login gewechselt wird
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg');
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg'); // <<< ALLE HINTERGRUNDKLASSEN ENTFERNEN
     gameContainer.style.backgroundColor = 'black';
     console.log("Spielhintergrund auf Schwarz zurückgesetzt (Login Screen).");
     currentGameState = 'loading'; // Oder 'loginScreen'
@@ -807,14 +909,14 @@ function checkOrientationAndFullscreen() {
         hideMessage(orientationMessage);
 
         if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msRequestFullscreen) {
-            console.log("checkOrientationAndFullscreen: Zeige Fullscreen-Aufforderung.");
-            showMessage(fullscreenMessage);
-            // Listener hinzufügen, wenn noch nicht im Vollbild. { once: true } entfernt ihn nach dem Klick.
-            document.addEventListener('click', activateFullscreenAndRemoveListener, { once: true });
+               console.log("checkOrientationAndFullscreen: Zeige Fullscreen-Aufforderung.");
+               showMessage(fullscreenMessage);
+               // Listener hinzufügen, wenn noch nicht im Vollbild. { once: true } entfernt ihn nach dem Klick.
+               document.addEventListener('click', activateFullscreenAndRemoveListener, { once: true });
         } else {
-            console.log("checkOrientationAndFullscreen: Bereits im Vollbildmodus. Zeige Logo.");
-            hideMessage(fullscreenMessage);
-            showLogoButton(); // Zeige das Logo mit Animation (oder ohne, je nach introAnimationPlayed)
+               console.log("checkOrientationAndFullscreen: Bereits im Vollbildmodus. Zeige Logo.");
+               hideMessage(fullscreenMessage);
+               showLogoButton(); // Zeige das Logo mit Animation (oder ohne, je nach introAnimationPlayed)
         }
     }
 }
@@ -898,7 +1000,7 @@ function showLogoButton() {
             logo.removeEventListener('pointerdown', logoClickListener);
         }
         logoClickListener = function(event) {
-            event.preventDefault();
+            event.preventDefault(); // Verhindert Standardverhalten (z.g. bei Touch)
             console.log("Logo geklickt zum Spielstart (ohne Re-Animation)!");
             logo.classList.remove('logo-bounce');
             void logo.offsetWidth;
@@ -908,8 +1010,9 @@ function showLogoButton() {
                 if (isPlayerReady) {
                     console.log("Spiel wird gestartet!");
                     playbackStatus.textContent = 'Bereit zum Abspielen!';
-                    currentGameState = 'diceRoll';
+                    currentGameState = 'diceRoll'; // NEUER Zustand
 
+                    // NEU: updatePlayerBackground mit Callback
                     updatePlayerBackground(() => {
                         startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
                     });
@@ -921,8 +1024,9 @@ function showLogoButton() {
         };
         logo.addEventListener('pointerdown', logoClickListener);
         currentGameState = 'startScreen';
-        return;
+        return; // Funktion hier beenden
     }
+
 
     // Dieser Teil wird nur ausgeführt, wenn die Intro-Animation noch NICHT lief
     console.log("showLogoButton: Starte Logo-Reinfall-Animation.");
@@ -949,7 +1053,7 @@ function showLogoButton() {
                 logo.removeEventListener('pointerdown', logoClickListener);
             }
             logoClickListener = function(event) {
-                event.preventDefault();
+                event.preventDefault(); // Verhindert Standardverhalten (z.B. bei Touch)
                 console.log("Logo geklickt zum Spielstart!");
                 // Füge den kleinen Bounce-Effekt bei jedem Klick hinzu
                 logo.classList.remove('logo-bounce');
@@ -962,6 +1066,7 @@ function showLogoButton() {
                         playbackStatus.textContent = 'Bereit zum Abspielen!';
                         currentGameState = 'diceRoll'; // Zustandswechsel
 
+                        // NEU: updatePlayerBackground mit Callback
                         updatePlayerBackground(() => {
                             startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
                         });
@@ -971,7 +1076,7 @@ function showLogoButton() {
                         playbackStatus.textContent = 'Spotify Player ist noch nicht bereit. Bitte warten...';
                     }
                 }
-                    // Hinzugefügte Logik für den späteren Song-Play/Repeat
+                   // Hinzugefügte Logik für den späteren Song-Play/Repeat
                 else if (currentGameState === 'playing' || currentGameState === 'songPaused') {
                     if (isPlayerReady && currentDiceRoll) {
                         if (currentSongRepetitionsLeft >= 0) {
@@ -1041,6 +1146,7 @@ function setLogoAsPlayButton(activate = true) {
     }
 }
 
+
 // --- Funktion, die den Spotify Login-Status überprüft und den Player initialisiert ---
 // Dies muss vor dem DOMContentLoaded-Listener definiert sein!
 async function checkSpotifyLoginStatus() {
@@ -1054,14 +1160,14 @@ async function checkSpotifyLoginStatus() {
         history.replaceState({}, document.title, REDIRECT_URI); // Code aus URL entfernen
 
         if (success && accessToken && isSpotifySDKLoaded) {
-            console.log("checkSpotifyLoginStatus: Access Token und SDK bereit, initialisiere Player.");
-            initializeSpotifyPlayer();
+               console.log("checkSpotifyLoginStatus: Access Token und SDK bereit, initialisiere Player.");
+               initializeSpotifyPlayer();
         } else if (success && accessToken) {
-            console.log("checkSpotifyLoginStatus: Access Token vorhanden, aber SDK noch nicht geladen. Player-Initialisierung wartet auf SDK Ready.");
-            // initializeSpotifyPlayer wird dann von window.onSpotifyWebPlaybackSDKReady() aufgerufen
+               console.log("checkSpotifyLoginStatus: Access Token vorhanden, aber SDK noch nicht geladen. Player-Initialisierung wartet auf SDK Ready.");
+               // initializeSpotifyPlayer wird dann von window.onSpotifyWebPlaybackSDKReady() aufgerufen
         } else {
-            console.log("checkSpotifyLoginStatus: Token-Austausch fehlgeschlagen oder kein Access Token.");
-            showLoginScreen(); // Zeigt den Login-Screen mit Fehlermeldung
+               console.log("checkSpotifyLoginStatus: Token-Austausch fehlgeschlagen oder kein Access Token.");
+               showLoginScreen(); // Zeigt den Login-Screen mit Fehlermeldung
         }
     } else if (localStorage.getItem('access_token') && localStorage.getItem('expires_in') > Date.now()) {
         console.log('checkSpotifyLoginStatus: Vorhandenen Access Token aus localStorage geladen.');
@@ -1078,6 +1184,7 @@ async function checkSpotifyLoginStatus() {
         showLoginScreen(); // Sicherstellen, dass der Login-Screen aktiv ist
     }
 }
+
 
 // --- INITIALISIERUNG BEIM LADEN DER SEITE ---
 document.addEventListener('DOMContentLoaded', async () => {
