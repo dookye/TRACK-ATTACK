@@ -734,12 +734,6 @@ async function startResolutionPhase() {
         console.log("Song spielt auf halber Lautstärke ab Beginn.");
     }
 
-    // Hintergrund auf den Score-Screen-Gradienten ändern
-    // Dies geschieht hier in der `startResolutionPhase`
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
-    gameContainer.classList.add('score-screen-bg'); // <<< NEUE KLASSE HINZUGEFÜGT
-    console.log("Hintergrund auf Score-Screen-Gradienten gesetzt.");
-
 
     // Hier würden die "Richtig" und "Falsch" Buttons erscheinen
     // und ihre Klicks würden dann z.B. eine Funktion handleGuess(isCorrect) aufrufen.
@@ -761,19 +755,15 @@ async function handleGuess(isCorrect) {
         await player.setVolume(0.5); // Lautstärke zurücksetzen
     }
 
-    if (isCorrect) {
+     if (isCorrect) {
         playerScores[activePlayer] += currentMaxPointsForSong;
-        playbackStatus.textContent = `Richtig! +${currentMaxPointsForSong} Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}`; // Angepasste Nachricht
+        // playbackStatus.textContent = `Richtig! +${currentMaxPointsForSong} Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}`; // <<< DIESE ZEILE ENTFERNEN ODER AUSKOMMENTIEREN
+        playbackStatus.textContent = `Richtig!`; // Nur "Richtig!" anzeigen
     } else {
-        playbackStatus.textContent = `Falsch! 0 Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}`; // Angepasste Nachricht
+        // playbackStatus.textContent = `Falsch! 0 Punkte. Gesamt: ${playerScores[activePlayer]} für Spieler ${activePlayer}`; // <<< DIESE ZEILE ENTFERNEN ODER AUSKOMMENTIEREN
+        playbackStatus.textContent = `Falsch!`; // Nur "Falsch!" anzeigen
     }
 
-    // *** WICHTIG: Hier muss der `score-screen-bg` entfernt werden, BEVOR `switchPlayer`
-    // den nächsten Spielerhintergrund setzt. ***
-    gameContainer.classList.remove('score-screen-bg'); // <<< KLASSE ENTFERNT
-    console.log("Score-Screen-Hintergrund entfernt.");
-
-    // updatePlayerScoresDisplay(); // <-- Hinzufügen, wenn diese Funktion existiert und die Punktanzeige aktualisiert
 
     currentPlayingTrack = null; // Für die nächste Runde zurücksetzen
     currentDiceRoll = null; // Würfel zurücksetzen
@@ -783,30 +773,29 @@ async function handleGuess(isCorrect) {
     // Hier müsste die UI für Richtig/Falsch verschwinden
     // Danach den Spieler wechseln
     setTimeout(() => {
-        // Prüfe hier zusätzlich, ob das Spiel beendet ist, bevor switchPlayer aufgerufen wird.
-        // Das ist wichtig, da handleGuess an zwei Stellen das Spielende triggern könnte.
-        if (currentRound >= TOTAL_GAME_ROUNDS || playerScores[1] >= 50 || playerScores[2] >= 50) { // Beispiel: Spielende bei 50 Punkten
+        // Prüfe hier zusätzlich, ob das Spiel beendet ist.
+        // Die Spielendebedingung TOTAL_GAME_ROUNDS ist hier ausschlaggebend,
+        // da Punkteziel nicht mehr sichtbar ist.
+        if (currentRound >= TOTAL_GAME_ROUNDS) { // Annahme: TOTAL_GAME_ROUNDS ist deine Rundenanzahl
             endGame();
         } else {
             switchPlayer(); // Spielerwechsel initiieren
         }
-    }, 2000); // Kurze Pause, um die Punkte anzuzeigen
+    }, 2000); // Kurze Pause, um "Richtig!"/"Falsch!" anzuzeigen
 }
 
 // Platzhalter-Funktion für das Spielende
 function endGame() {
     console.log("Spiel beendet! Zeige Auswertungsscreen.");
     currentGameState = 'gameEnded';
-    // Hier die Logik für den Auswertungsscreen
-    playbackStatus.textContent = `Spiel beendet! Spieler 1: ${playerScores[1]} Punkte, Spieler 2: ${playerScores[2]} Punkte.`;
-    // Entferne alle Spieler-Hintergrund-Klassen am Ende des Spiels
-    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Diese werden in resetGame entfernt
-    // gameContainer.style.backgroundColor = 'black'; // Diese wird in resetGame gesetzt
 
-    // Hinzufügen des Score-Screen-Hintergrunds für den Endscreen
+    // *** HIER WIRD DER SCORE-SCREEN-BG HINZUGEFÜGT! ***
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg'); // Sicherstellen, dass andere BGs weg sind
-    gameContainer.classList.add('score-screen-bg'); // <<< HIER WIRD DIE KLASSE HINZUGEFÜGT FÜR DAS SPIELENDE
+    gameContainer.classList.add('score-screen-bg');
     console.log("Hintergrund auf Score-Screen für Spielende gesetzt.");
+
+    // HIER DIE LOGIK FÜR DEN AUSWERTUNGSSCREEN MIT PUNKTEN
+    playbackStatus.textContent = `Spiel beendet! Spieler 1: ${playerScores[1]} Punkte, Spieler 2: ${playerScores[2]} Punkte.`;
 
 
     // Reset game state for new game
@@ -820,7 +809,7 @@ function resetGame() {
     console.log("Spiel wird zurückgesetzt.");
     activePlayer = 1;
     playerScores = { 1: 0, 2: 0 };
-    currentRound = 0;
+    currentRound = 0; // Wichtig: Runden zählen, um endGame zu triggern
     currentDiceRoll = null;
     currentPlayingTrack = null;
     introAnimationPlayed = false; // Animation wieder erlauben
@@ -828,17 +817,14 @@ function resetGame() {
 
     // UI auf Startzustand zurücksetzen
     showLoginScreen(); // Oder direkt zum Logo, wenn schon eingeloggt
-    // Entferne alle Spieler-Hintergrund-Klassen beim Reset
-    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg'); // <<< ALLE HINTERGRUNDKLASSEN ENTFERNEN
+    // Entferne ALLE Spieler-Hintergrund-Klassen UND den Score-Screen-Hintergrund beim Reset
+    gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg');
     gameContainer.style.backgroundColor = 'black'; // Setze den Hintergrund auf schwarz zurück
     console.log("Spielhintergrund auf Schwarz zurückgesetzt (nach Reset).");
 
-
     if (isPlayerReady && !document.fullscreenElement) {
-        // Wenn Player Ready, aber Fullscreen verlassen, erneut Fullscreen prüfen
         checkOrientationAndFullscreen();
     } else if (isPlayerReady) {
-        // Wenn Player Ready und Fullscreen, direkt Logo zeigen (ohne Animation beim zweiten Mal)
         showLogoButton();
     }
 }
