@@ -30,21 +30,37 @@ body {
     flex-direction: column; /* Elemente untereinander */
     justify-content: center; /* Zentriert vertikal */
     align-items: center;
-    background-color: black; /* - linear-gradient funktioniert nicht */
+    background-color: black; /* Funktioniert jetzt mit background-color */
     color: white;
     text-align: center;
-    transition: background 2s ease-in-out, opacity 1s ease-in-out; /* HIER IST DIE WICHTIGE ZEILE */
+    /* HIER IST DIE WICHTIGE ZEILE: Transition auf 'background' (um Gradienten zu ermöglichen) */
+    /* Aber beachte: Wenn .playerX-active-bg background-color verwendet,
+       ist der Übergang ZWISCHEN background-color und linear-gradient abrupt.
+       Der Übergang ZWISCHEN den background-colors ist sanft. */
+    transition: background 2s ease-in-out, opacity 1s ease-in-out; 
     opacity: 1; /* Standardmäßig sichtbar */
 }
 
-/* Neue Klassen für den dynamischen Hintergrund */
+/* Neue Klassen für den dynamischen Hintergrund (beibehalten als background-color für sanften Übergang untereinander) */
 .player1-active-bg {
-    background-color: #3498db; /* EINFACHE FARBE (Blau) - linear-gradient funktioniert nicht */
+    background-color: #3498db; /* EINFACHE FARBE (Blau) - Funktioniert für sanften Übergang zu anderer Farbe */
 }
 
 .player2-active-bg {
-    background-color: #e91e63; /* EINFACHE FARBE (Pink) - linear-gradient funktioniert nicht */
+    background-color: #e91e63; /* EINFACHE FARBE (Pink) - Funktioniert für sanften Übergang zu anderer Farbe */
 }
+
+/* NEU: Hintergrund für den Punktevergabe-Bildschirm (mit Gradient) */
+.score-screen-bg {
+    background: linear-gradient(to right, #3498db, #e91e63); /* Von Blau nach Pink */
+    /* WICHTIG: Da der .game-container seine Transition auf 'background' hat,
+       und diese Klasse 'background' verwendet, sollte der Übergang
+       von der einfachen background-color zu diesem Gradienten ABRUPT sein.
+       Die Transition auf 'background' wirkt sich aber auf den opacity-Übergang und ggf. andere background-Eigenschaften aus,
+       die auch über 'background' gesteuert werden.
+       Wir müssen hier 'background' verwenden, damit der Gradient angezeigt wird. */
+}
+
 
 /* Initial Click Blocker - Nur für Overlay-Nachrichten */
 #initial-click-blocker {
