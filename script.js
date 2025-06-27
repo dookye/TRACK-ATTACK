@@ -556,6 +556,13 @@ function handleDiceSelection(event) {
         return;
     }
 
+    // --- Bounce-Effekt für den geklickten Würfel-Button ---
+    const clickedButton = event.currentTarget;
+    clickedButton.classList.remove('logo-bounce');
+    void clickedButton.offsetWidth; // Erzwingt Reflow
+    clickedButton.classList.add('logo-bounce');
+    // --- ENDE BOUNCE-EFFEKT ---
+    
     // Entferne alle anderen Listener, falls doch nicht { once: true } verwendet wird
     diceButtons.forEach(button => {
         button.removeEventListener('pointerdown', handleDiceSelection);
