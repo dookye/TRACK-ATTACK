@@ -462,6 +462,9 @@ async function playSongBasedOnDice() {
  * @param {function} [callback] - Eine optionale Funktion, die nach der Hintergrund-Transition ausgeführt wird.
  */
 function updatePlayerBackground(callback = null) {
+    // ZUERST: Sicherstellen, dass jeder zuvor gesetzte Inline-Style entfernt wird
+    gameContainer.style.backgroundColor = ''; // <-- NEU: Inline-Hintergrundfarbe entfernen!
+    
     // Sicherstellen, dass alle spezifischen Hintergrundklassen entfernt werden, bevor eine neue hinzugefügt wird
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg');
 
