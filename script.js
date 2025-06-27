@@ -18,7 +18,8 @@ let player2Score = 0;
 let currentTrack = null; // Speichert den aktuell gespielten Track
 let currentCategory = ''; // Speichert die aktuelle Würfelkategorie (z.B. 'artist', 'song')
 let currentDifficulty = ''; // Speichert die aktuelle Schwierigkeit (z.B. 'easy', 'medium', 'hard')
-let currentGuessDuration = 0; // Speichert die Dauer, die gewürfelt wurde
+let currentGuessDuration = 0; // Speichert die Dauer, die gewürfelt wurde (in Sekunden)
+
 
 // --- DOM-Elemente ---
 const loginArea = document.getElementById('login-area');
@@ -30,75 +31,104 @@ const initialClickBlocker = document.getElementById('initial-click-blocker');
 const orientationMessage = document.getElementById('orientation-message');
 const fullscreenMessage = document.getElementById('fullscreen-message');
 
-const scoreDisplay = document.getElementById('score-display'); // NEU
-const player1ScoreSpan = document.getElementById('player1-score'); // NEU
-const player2ScoreSpan = document.getElementById('player2-score'); // NEU
+const scoreDisplay = document.getElementById('score-display');
+const player1ScoreSpan = document.getElementById('player1-score');
+const player2ScoreSpan = document.getElementById('player2-score');
 
 const diceContainer = document.getElementById('dice-container');
 const diceAnimation = document.getElementById('dice-animation');
 const diceButtons = document.getElementById('dice-buttons');
 const diceButtonsImgs = document.querySelectorAll('.dice-button');
 
-const resolutionContainer = document.getElementById('resolution-container'); // NEU
-const songInfoDisplay = document.getElementById('song-info-display'); // NEU
-const correctButton = document.getElementById('correct-button'); // NEU
-const wrongButton = document.getElementById('wrong-button'); // NEU
+const resolutionContainer = document.getElementById('resolution-container');
+const songInfoDisplay = document.getElementById('song-info-display');
+const correctButton = document.getElementById('correct-button');
+const wrongButton = document.getElementById('wrong-button');
 
 
 // --- Event Listener ---
 spotifyLoginButton.addEventListener('click', handleSpotifyLogin);
+// Der initialClickBlocker hat jetzt eine zentrale Rolle
 initialClickBlocker.addEventListener('click', handleInitialClick);
-correctButton.addEventListener('click', () => handleGuess(true)); // NEU
-wrongButton.addEventListener('click', () => handleGuess(false)); // NEU
+correctButton.addEventListener('click', () => handleGuess(true));
+wrongButton.addEventListener('click', () => handleGuess(false));
 
 diceButtonsImgs.forEach(button => {
     button.addEventListener('click', handleDiceSelection);
 });
 
-// Vollbild und Orientierung prüfen
-window.addEventListener('resize', checkOrientationAndFullscreen);
-window.addEventListener('orientationchange', checkOrientationAndFullscreen);
+// Vollbild und Orientierung prüfen bei Resize und Orientierungsänderung
+window.addEventListener('resize', checkDisplayRequirements);
+window.addEventListener('orientationchange', checkDisplayRequirements);
 
 
 // --- Initialisierungsfunktionen ---
 
-// 1. Seite laden -> Token prüfen
+// 1. Seite laden -> Token prüfen und Blocker initialisieren
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialen Klick-Blocker anzeigen, um Audio-Context zu aktivieren
+    // Stellen Sie sicher, dass der initialClickBlocker sichtbar ist
     initialClickBlocker.classList.remove('hidden');
+    // Die Anzeigeanforderungen prüfen (Querformat, Vollbild)
+    // Wenn nicht erfüllt, bleiben die Nachrichten und der Blocker sichtbar.
+    // Wenn erfüllt, wird nur der Blocker sichtbar, der dann auf einen Klick wartet.
+    checkDisplayRequirements();
 
-    checkOrientationAndFullscreen(); // Orientierung und Vollbild beim Laden prüfen
     const urlParams = new URLSearchParams(window.location.hash.substring(1));
     accessToken = urlParams.get('access_token');
 
     if (accessToken) {
         console.log('Access Token erhalten:', accessToken);
-        history.replaceState(null, '', REDIRECT_URI); // Clean up URL
-        playbackStatus.textContent = 'Verbinde mit Spotify Player...';
-        // Spotify Web Playback SDK laden
-        loadSpotifySDK();
+        history.replaceState(null, '', REDIRECT_URI); // URL aufräumen
+        playbackStatus.textContent = 'Bereit zum Starten des Spiels. Bitte klicken Sie.';
+        // Hier laden wir das SDK noch NICHT, sondern erst nach dem Initial Click,
+        // um sicherzustellen, dass der AudioContext direkt aktiviert werden kann.
     } else {
-        playbackStatus.textContent = 'Bitte melde dich bei Spotify an.';
+        playbackStatus.textContent = 'Bitte melden Sie sich bei Spotify an, um zu beginnen.';
+        loginArea.classList.remove('hidden'); // Login-Bereich anzeigen, wenn kein Token
     }
 });
 
-// Handler für den initialen Klick
+// --- Handler für den initialen Klick ---
+// Dieser Klick ist entscheidend, um den AudioContext zu aktivieren und das Spiel zu starten.
 function handleInitialClick() {
     console.log("Initial click detected.");
-    initialClickBlocker.classList.add('hidden'); // Blocker entfernen
 
-    // Versuch, in den Vollbildmodus zu gehen, falls noch nicht geschehen
-    if (!document.fullscreenElement) {
-        requestFullscreen();
+    // Prüfen, ob die Anforderungen (Querformat, Vollbild) erfüllt sind
+    const isLandscape = window.innerWidth > window.innerHeight;
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+
+    if (!isLandscape) {
+        // Wenn nicht im Querformat, nur Orientierungsnachricht anzeigen
+        orientationMessage.classList.remove('hidden');
+        fullscreenMessage.classList.add('hidden'); // Andere Nachrichten ausblenden
+        return; // Den Blocker nicht ausblenden
     }
 
-    // Wenn ein Access Token vorhanden ist, aber der Player noch nicht bereit ist
-    if (accessToken && !player) {
-        // Hier sollte die Logik zum Laden des SDK oder Initialisieren des Players erfolgen,
-        // falls es nicht bereits durch `DOMContentLoaded` ausgelöst wurde.
-        // In diesem Setup sollte `loadSpotifySDK()` bereits durch `DOMContentLoaded` aufgerufen worden sein,
-        // aber dieser Klick kann dazu beitragen, den AudioContext zu reaktivieren.
+    if (!isFullscreen) {
+        // Wenn nicht im Vollbild, Vollbild anfordern
+        requestFullscreen();
+        // Nachricht anzeigen und Blocker nicht ausblenden, bis Vollbild aktiv ist
+        fullscreenMessage.classList.remove('hidden');
+        orientationMessage.classList.add('hidden'); // Andere Nachrichten ausblenden
+        return; // Den Blocker nicht ausblenden
+    }
+
+    // Wenn alle Bedingungen erfüllt sind (Querformat UND Vollbild UND Klick):
+    initialClickBlocker.classList.add('hidden'); // Blocker entfernen
+    orientationMessage.classList.add('hidden'); // Nachrichten ausblenden
+    fullscreenMessage.classList.add('hidden');
+
+    if (accessToken) {
+        // Nur wenn ein Token vorhanden ist, Player initialisieren
         playbackStatus.textContent = 'Verbinde mit Spotify Player...';
+        loginArea.classList.add('hidden'); // Login-Bereich ausblenden
+        logoContainer.classList.remove('hidden', 'initial-hidden'); // Logo anzeigen
+        scoreDisplay.classList.remove('hidden'); // Punkteanzeige anzeigen
+        updatePlayerScoresDisplay(); // Punkteanzeige initialisieren
+        loadSpotifySDK(); // Spotify SDK laden und Player initialisieren
+    } else {
+        // Wenn kein Token vorhanden ist, nur den Login-Bereich anzeigen
+        loginArea.classList.remove('hidden');
     }
 }
 
@@ -112,9 +142,14 @@ function handleSpotifyLogin() {
 
 function loadSpotifySDK() {
     console.log("Spotify SDK wird geladen...");
+    if (window.Spotify) { // Prüfen, ob SDK bereits geladen ist
+        initializeSpotifyPlayer();
+        return;
+    }
     const script = document.createElement('script');
     script.src = 'https://sdk.scdn.co/spotify-player.js';
     script.type = 'text/javascript';
+    script.async = true; // Asynchron laden
     document.head.appendChild(script);
 
     window.onSpotifyWebPlaybackSDKReady = () => {
@@ -124,6 +159,12 @@ function loadSpotifySDK() {
 }
 
 function initializeSpotifyPlayer() {
+    // Vermeiden Sie mehrfache Initialisierung
+    if (player) {
+        console.log("Spotify Player ist bereits initialisiert.");
+        return;
+    }
+
     player = new Spotify.Player({
         name: 'TRACK ATTACK Player',
         getOAuthToken: cb => { cb(accessToken); },
@@ -135,17 +176,20 @@ function initializeSpotifyPlayer() {
         console.log('Bereit mit Device ID', device_id);
         currentDeviceId = device_id;
         playbackStatus.textContent = 'Verbunden mit Spotify!';
-        logoContainer.classList.remove('hidden', 'initial-hidden'); // Logo anzeigen
-        scoreDisplay.classList.remove('hidden'); // Punkteanzeige anzeigen
-        updatePlayerScoresDisplay(); // Punkteanzeige initialisieren
         transferPlaybackToDevice(device_id); // Wiedergabe auf dieses Gerät übertragen
-        showDiceRoll(); // Würfelphase starten
+        setTimeout(() => { // Kurze Verzögerung, damit Transfer abgeschlossen ist
+            showDiceRoll(); // Würfelphase starten
+        }, 500);
+
     });
 
     // Not Ready
     player.addListener('not_ready', ({ device_id }) => {
         console.log('Gerät ist offline', device_id);
         playbackStatus.textContent = 'Gerät ist offline. Bitte Spotify auf einem anderen Gerät starten.';
+        loginArea.classList.remove('hidden'); // Optional: Login-Bereich wieder anzeigen
+        logoContainer.classList.add('hidden');
+        scoreDisplay.classList.add('hidden');
     });
 
     // Error Handling
@@ -156,12 +200,9 @@ function initializeSpotifyPlayer() {
 
     // Player State Changed (nützlich für Liedwechsel etc.)
     player.addListener('player_state_changed', state => {
-        if (!state) {
-            return;
-        }
-        // Hier könntest du auf Liedwechsel reagieren, wenn nötig
-        // console.log('Player State Changed:', state);
+        if (!state) return;
         currentTrack = state.track_window.current_track;
+        // Optional: Hier könnten weitere UI-Updates basierend auf dem aktuellen Track erfolgen
     });
 
     // Connect the player!
@@ -186,12 +227,14 @@ async function transferPlaybackToDevice(deviceId) {
             const errorData = await response.json();
             console.error('Fehler beim Übertragen der Wiedergabe:', errorData);
             playbackStatus.textContent = `Fehler beim Übertragen: ${errorData.error.message}`;
+            // Optional: Zurück zum Login oder Fehlerbildschirm
         } else {
             console.log('Wiedergabe auf neues Gerät übertragen.');
         }
     } catch (error) {
-        console.error('Fehler beim Übertragen der Wiedergabe:', error);
+        console.error('Netzwerkfehler beim Übertragen der Wiedergabe:', error);
         playbackStatus.textContent = 'Netzwerkfehler beim Übertragen der Wiedergabe.';
+        // Optional: Zurück zum Login oder Fehlerbildschirm
     }
 }
 
@@ -203,12 +246,13 @@ function showDiceRoll() {
     diceAnimation.classList.remove('hidden');
     diceButtons.classList.add('hidden'); // Buttons zuerst ausblenden
 
+    playbackStatus.textContent = `Spieler ${currentPlayer} ist an der Reihe. Wähle deinen Würfel!`;
+    updatePlayerScoresDisplay(); // Punkteanzeige aktualisieren, um aktiven Spieler hervorzuheben
+
     // Nach 2 Sekunden die Animation ausblenden und die Buttons anzeigen
     setTimeout(() => {
         diceAnimation.classList.add('hidden');
         diceButtons.classList.remove('hidden');
-        // Hier können wir auch den aktuellen Spieler hervorheben
-        updatePlayerScoresDisplay();
     }, 2000); // Passt zur Dauer deiner w-ani.gif
 }
 
@@ -247,6 +291,8 @@ function handleDiceSelection(event) {
             break;
         default:
             console.error('Ungültiger Würfelwert');
+            playbackStatus.textContent = 'Fehler beim Würfeln, bitte versuche es erneut.';
+            showDiceRoll(); // Zurück zum Würfeln
             return;
     }
 
@@ -260,12 +306,15 @@ function handleDiceSelection(event) {
 async function playRandomTrack(category, difficulty, duration) {
     playbackStatus.textContent = 'Suche Song...';
     try {
-        const genres = ['pop', 'rock', 'hip-hop', 'electronic', 'rnb', 'indie', 'jazz', 'classical', 'metal', 'funk']; // Beispiel-Genres
+        const genres = ['pop', 'rock', 'hip-hop', 'electronic', 'rnb', 'indie', 'jazz', 'classical', 'metal', 'funk', 'soul', 'country', 'blues', 'reggae']; // Erweiterte Beispiel-Genres
         const randomGenre = genres[Math.floor(Math.random() * genres.length)];
-        const minPopularity = (difficulty === 'easy') ? 60 : (difficulty === 'medium') ? 40 : 20; // Beliebtheit anpassen
+        // Beliebtheit anpassen: Niedrigere Popularität = schwieriger zu erkennen
+        const minPopularity = (difficulty === 'easy') ? 60 : (difficulty === 'medium') ? 40 : 20;
         const maxPopularity = (difficulty === 'easy') ? 100 : (difficulty === 'medium') ? 60 : 40;
 
-        // Suche nach Tracks, die dem Genre und der Beliebtheit entsprechen
+        // Suche nach Tracks mit dem gewählten Genre
+        // Die Spotify API unterstützt keine direkte Suche nach Popularität oder direkter Genrefilterung in 'search' außer in 'tag:genre'.
+        // Hier wird ein Workaround genutzt, indem nach Genre im Query gesucht und dann clientseitig gefiltert wird.
         const searchResponse = await fetch(`${API_BASE_URL}/search?q=genre:"${randomGenre}"&type=track&limit=50`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
@@ -276,9 +325,9 @@ async function playRandomTrack(category, difficulty, duration) {
         );
 
         if (tracks.length === 0) {
-            playbackStatus.textContent = 'Keine geeigneten Songs gefunden. Versuche es erneut.';
+            playbackStatus.textContent = `Keine passenden Songs für Genre "${randomGenre}" und Schwierigkeit "${difficulty}" gefunden. Versuche es erneut.`;
             console.warn('Keine geeigneten Songs gefunden für:', randomGenre, difficulty);
-            showDiceRoll(); // Erneut würfeln lassen
+            setTimeout(showDiceRoll, 2000); // Erneut würfeln lassen nach kurzer Pause
             return;
         }
 
@@ -292,20 +341,22 @@ async function playRandomTrack(category, difficulty, duration) {
             device_id: currentDeviceId
         });
 
+        playbackStatus.textContent = `Spiele ${currentCategory}-Schnipsel (${difficulty}) für ${duration} Sekunden...`;
+
         // Spiele nur einen Teil des Songs für die geratene Dauer
         setTimeout(async () => {
-            await player.pause();
-            console.log('Song gestoppt nach', duration, 'Sekunden.');
-            playbackStatus.textContent = 'Song gestoppt. Wer war dran?';
-            showResolutionPhase(); // Zur Auflösungsphase wechseln
+            if (player) { // Sicherstellen, dass der Player noch existiert
+                await player.pause();
+                console.log('Song gestoppt nach', duration, 'Sekunden.');
+                playbackStatus.textContent = 'Song gestoppt. Wer war dran?';
+                showResolutionPhase(); // Zur Auflösungsphase wechseln
+            }
         }, duration * 1000); // Konvertiere Sekunden in Millisekunden
-
-        playbackStatus.textContent = `Spiele ${currentCategory}-Schnipsel (${difficulty}) für ${duration} Sekunden...`;
 
     } catch (error) {
         console.error('Fehler beim Abspielen des Tracks:', error);
-        playbackStatus.textContent = `Fehler beim Abspielen: ${error.message}.`;
-        showDiceRoll(); // Zurück zum Würfeln
+        playbackStatus.textContent = `Fehler beim Abspielen: ${error.message}. Stelle sicher, dass Spotify läuft.`;
+        setTimeout(showDiceRoll, 3000); // Zurück zum Würfeln nach kurzer Fehleranzeige
     }
 }
 
@@ -314,42 +365,44 @@ function showResolutionPhase() {
     hideAllGamePhases(); // Andere Phasen ausblenden
     resolutionContainer.classList.remove('hidden');
 
-    let songInfoText = `Welcher ${currentCategory} ist das?`;
-    if (currentDifficulty === 'easy') {
-        songInfoText = `Leicht: Welcher ${currentCategory} ist das?`;
-    } else if (currentDifficulty === 'medium') {
-        songInfoText = `Mittel: Welcher ${currentCategory} ist das?`;
-    } else if (currentDifficulty === 'hard') {
-        songInfoText = `Schwer: Welcher ${currentCategory} ist das?`;
-    }
+    let categoryText = '';
+    if (currentCategory === 'artist') categoryText = 'Künstler';
+    else if (currentCategory === 'song') categoryText = 'Song';
+    else if (currentCategory === 'genre') categoryText = 'Genre';
 
-    songInfoDisplay.textContent = songInfoText;
+    const songTitle = currentTrack ? currentTrack.name : 'Unbekannter Song';
+    const artistName = currentTrack ? currentTrack.artists.map(a => a.name).join(', ') : 'Unbekannter Künstler';
+
+    songInfoDisplay.innerHTML = `
+        <p>Der Song war: <strong>${songTitle}</strong></p>
+        <p>vom Künstler: <strong>${artistName}</strong></p>
+        <p>Welcher ${categoryText} wurde von Spieler ${currentPlayer} gesucht?</p>
+    `;
+    playbackStatus.textContent = `Spieler ${currentPlayer}: War dein Tipp richtig?`;
 }
 
 function handleGuess(isCorrect) {
     let points = 0;
+    let feedbackText = '';
+
     if (isCorrect) {
-        // Punkte basierend auf Schwierigkeit vergeben
         if (currentDifficulty === 'easy') points = 1;
         else if (currentDifficulty === 'medium') points = 2;
         else if (currentDifficulty === 'hard') points = 3;
 
-        // Wenn die Kategorie "Artist" ist und der Benutzer "richtig" klickt,
-        // und es sich tatsächlich um den Künstler handelt.
-        // Das Spiel hat keine direkte Möglichkeit, die tatsächliche Antwort des Benutzers zu überprüfen.
-        // Wir gehen davon aus, dass der Benutzer nur auf "Richtig" klickt, wenn er tatsächlich richtig geraten hat.
-
-        playbackStatus.textContent = `Spieler ${currentPlayer} hat richtig geraten! +${points} Punkte.`;
+        feedbackText = `Spieler ${currentPlayer} hat richtig geraten! +${points} Punkte.`;
         if (currentPlayer === 1) {
             player1Score += points;
         } else {
             player2Score += points;
         }
     } else {
-        playbackStatus.textContent = `Spieler ${currentPlayer} hat falsch geraten. Keine Punkte.`;
+        feedbackText = `Spieler ${currentPlayer} hat falsch geraten. Keine Punkte.`;
     }
 
+    playbackStatus.textContent = feedbackText;
     updatePlayerScoresDisplay();
+
     // Nach 3 Sekunden zur nächsten Runde wechseln
     setTimeout(() => {
         hideAllGamePhases(); // Auflösungsphase ausblenden
@@ -385,41 +438,50 @@ function updatePlayerScoresDisplay() {
 // --- UI-Steuerung / Phasenmanagement ---
 
 function hideAllGamePhases() {
-    loginArea.classList.add('hidden');
+    // loginArea bleibt sichtbar, wenn kein Token
+    loginArea.classList.add('hidden'); // Wenn Spiel läuft, Login ausblenden
     logoContainer.classList.add('hidden');
     diceContainer.classList.add('hidden');
-    resolutionContainer.classList.add('hidden'); // Auch die neue Auflösungsphase ausblenden
+    resolutionContainer.classList.add('hidden');
     // playbackStatus bleibt meist sichtbar, daher nicht verstecken
 }
 
 
 // --- Geräte- und Vollbild-Handling ---
 
-function checkOrientationAndFullscreen() {
+// Diese Funktion wird jetzt beim Laden und bei jedem Klick auf den Blocker aufgerufen
+function checkDisplayRequirements() {
     const isLandscape = window.innerWidth > window.innerHeight;
-    const isFullscreen = document.fullscreenElement;
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
 
-    // Orientierung prüfen
+    // Standardmäßig alle Nachrichten ausblenden, dann nur die relevanten anzeigen
+    orientationMessage.classList.add('hidden');
+    fullscreenMessage.classList.add('hidden');
+
     if (!isLandscape) {
         orientationMessage.classList.remove('hidden');
-        initialClickBlocker.classList.remove('hidden'); // Blocker anzeigen, wenn falsch ausgerichtet
-    } else {
-        orientationMessage.classList.add('hidden');
+        initialClickBlocker.classList.remove('hidden'); // Blocker anzeigen, da Interaktion nötig
+        return false; // Bedingungen nicht erfüllt
     }
 
-    // Vollbild prüfen (nur anzeigen, wenn Landschaftsmodus aktiv ist)
-    if (isLandscape && !isFullscreen) {
+    if (!isFullscreen) {
         fullscreenMessage.classList.remove('hidden');
-        initialClickBlocker.classList.remove('hidden'); // Blocker anzeigen für Vollbild-Klick
-    } else {
-        fullscreenMessage.classList.add('hidden');
+        initialClickBlocker.classList.remove('hidden'); // Blocker anzeigen, da Interaktion nötig
+        return false; // Bedingungen nicht erfüllt
     }
 
-    // Wenn beides in Ordnung ist, Blocker entfernen (falls nicht schon geschehen)
-    if (isLandscape && isFullscreen) {
+    // Wenn hier angekommen, sind Querformat und Vollbild erfüllt.
+    // Der Blocker bleibt sichtbar, WENN kein AccessToken da ist oder der Player nicht bereit ist,
+    // damit der Nutzer den Starttrigger setzen kann.
+    if (!accessToken || !player) { // Prüfen, ob Spiel noch nicht gestartet ist
+        initialClickBlocker.classList.remove('hidden');
+    } else {
+        // Spiel läuft, Blocker kann ausgeblendet werden
         initialClickBlocker.classList.add('hidden');
     }
+    return true; // Bedingungen erfüllt
 }
+
 
 function requestFullscreen() {
     const element = document.documentElement; // Das gesamte HTML-Dokument
@@ -435,3 +497,9 @@ function requestFullscreen() {
     }
     console.log("Vollbild angefordert.");
 }
+
+// Event Listener für Fullscreen-Änderungen, um checkDisplayRequirements aufzurufen
+document.addEventListener('fullscreenchange', checkDisplayRequirements);
+document.addEventListener('webkitfullscreenchange', checkDisplayRequirements);
+document.addEventListener('mozfullscreenchange', checkDisplayRequirements);
+document.addEventListener('MSFullscreenChange', checkDisplayRequirements);
