@@ -1,128 +1,159 @@
 body {
     margin: 0;
-    overflow: hidden;
+    overflow: hidden; /* Verhindert Scrollbalken */
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    background-color: #121212; /* Dunkler Hintergrund */
-    font-family: 'Arial', sans-serif;
-    color: #f0f0f0; /* Helle Textfarbe */
-    -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-    -khtml-user-select: none; /* Konqueror HTML */
-    -moz-user-select: none; /* Old versions of Firefox */
-    -ms-user-select: none; /* Internet Explorer/Edge */
-    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+    height: 100vh; /* Nimmt die gesamte Viewport-Höhe ein */
+    width: 100vw; /* Nimmt die gesamte Viewport-Breite ein */
 }
 
-/* CSS-Variablen für Farben */
-:root {
-    --primary-color: #1DB954; /* Spotify Grün */
-    --secondary-color: #28a745; /* Ein dunkleres Grün für Hover */
-    --background-dark: #121212;
-    --text-color-primary: #f0f0f0;
-    --text-color-secondary: #ccc;
-    --overlay-bg: rgba(0, 0, 0, 0.9);
-
-    --player1-color: #00bfff; /* Himmelblau für Spieler 1 */
-    --player2-color: #ff69b4; /* Hot Pink für Spieler 2 */
-    --player1-color-rgb: 0, 191, 255; /* RGB-Werte für Schatteneffekte */
-    --player2-color-rgb: 255, 105, 180;
-
-    --green-color: #28a745; /* Grün für "Richtig" */
-    --red-color: #dc3545; /* Rot für "Falsch" */
-}
-
-/* Allgemeine Utility-Klassen */
+/* Versteckte Elemente */
 .hidden {
     display: none !important;
 }
 
-/* Overlay-Nachrichten (Bildschirm drehen, Vollbild) */
-.overlay-message {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--overlay-bg);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: var(--text-color-primary);
-    font-size: 1.5em;
-    text-align: center;
-    z-index: 100;
+/* Sichtbare Elemente */
+.visible {
+    display: flex !important; /* Wichtig: Sorgt dafür, dass es display: none überschreibt */
 }
 
+/* Game Container - Immer sichtbar zu Beginn */
+.game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex; /* Macht den Container flexibel */
+    flex-direction: column; /* Elemente untereinander */
+    justify-content: center; /* Zentriert vertikal */
+    align-items: center;
+    background-color: black; /* Funktioniert jetzt mit background-color */
+    color: white;
+    text-align: center;
+    /* HIER IST DIE WICHTIGE ZEILE: Transition auf 'background' (um Gradienten zu ermöglichen) */
+    /* Aber beachte: Wenn .playerX-active-bg background-color verwendet,
+        ist der Übergang ZWISCHEN background-color und linear-gradient abrupt.
+        Der Übergang ZWISCHEN den background-colors ist sanft. */
+    transition: background 2s ease-in-out, opacity 2s ease-in-out;
+    transition: background 2s ease-in-out;
+    opacity: 1; /* Standardmäßig sichtbar */
+}
+
+/* Neue Klassen für den dynamischen Hintergrund (beibehalten als background-color für sanften Übergang untereinander) */
+.player1-active-bg {
+    background-color: #3498db; /* EINFACHE FARBE (Blau) - Funktioniert für sanften Übergang zu anderer Farbe */
+}
+
+.player2-active-bg {
+    background-color: #e91e63; /* EINFACHE FARBE (Pink) - Funktioniert für sanften Übergang zu anderer Farbe */
+}
+
+/* NEU: Hintergrund für den Punktevergabe-Bildschirm (mit Gradient) */
+.score-screen-bg {
+    background: linear-gradient(to right, #3498db, #e91e63); /* Von Blau nach Pink */
+    /* WICHTIG: Da der .game-container seine Transition auf 'background' hat,
+        und diese Klasse 'background' verwendet, sollte der Übergang
+        von der einfachen background-color zu diesem Gradienten ABRUPT sein.
+        Die Transition auf 'background' wirkt sich aber auf den opacity-Übergang und ggf. andere background-Eigenschaften aus,
+        die auch über 'background' gesteuert werden.
+        Wir müssen hier 'background' verwenden, damit der Gradient angezeigt wird. */
+}
+
+
+/* Initial Click Blocker - Nur für Overlay-Nachrichten */
 #initial-click-blocker {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: transparent; /* Oder eine leichte Farbe, wenn gewünscht */
-    z-index: 1000; /* Sehr hoher Z-Index, um alles zu überlagern */
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: none; /* Standardmäßig versteckt */
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2em;
+    text-align: center;
     cursor: pointer;
 }
 
-
-/* Game Container */
-.game-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
+/* Overlay Nachrichten (Orientierung, Fullscreen) */
+.overlay-message {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9); /* Dunkler als der Blocker */
+    z-index: 1010; /* Über dem Blocker */
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column; /* Elemente vertikal zentrieren */
+    color: white;
+    font-size: 1.5em;
+    text-align: center;
+    cursor: pointer;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: opacity 0.3s ease-in-out;
 }
 
-/* Login Bereich */
-#login-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* Spotify Login Box - Stellen wir sicher, dass dieser Bereich auch korrekt zentriert ist */
+#login-area { /* ID-Selektor für spezifische Stile */
+    display: flex; /* Stellt sicher, dass der Login-Bereich zentriert werden kann */
     justify-content: center;
-    text-align: center;
-    height: 100%; /* Nimmt verfügbaren Platz ein */
+    align-items: center;
     width: 100%;
+    height: 100%; /* Nimmt vollen Platz im game-container ein */
+    position: absolute; /* Wichtig, damit es den gleichen Raum wie der logo-container einnimmt */
+    top: 0;
+    left: 0;
+    z-index: 5; /* Etwas niedriger als Overlays, aber höher als das Logo, wenn Login aktiv */
 }
 
 .spotify-box {
     background-color: #1a1a1a;
-    padding: 40px;
-    border-radius: 15px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    max-width: 300px;
+    width: 90%;
+    /* margin: auto; hier nicht nötig, da login-area flex ist */
 }
 
 #login-hint {
-    font-size: 1.2em;
-    color: var(--text-color-secondary);
+    margin-bottom: 0px;
+    font-size: 0.9em;
+    color: #bbb;
 }
 
 .spotify-button {
-    background-color: var(--primary-color);
-    color: var(--text-color-primary);
+    background-color: #1DB954;
+    color: white;
     border: none;
-    padding: 15px 30px;
-    border-radius: 30px;
-    font-size: 1.2em;
+    border-radius: 25px;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    font-weight: bold;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 10px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .spotify-button:hover {
-    background-color: var(--secondary-color);
-    transform: translateY(-2px);
+    background-color: #1ed760;
 }
 
 .spotify-icon {
@@ -130,271 +161,169 @@ body {
     height: 24px;
 }
 
-/* Logo Container */
+/* --- LOGO CONTAINER UND LOGO --- */
+
 #logo-container {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: opacity 1s ease-in-out; /* Für sanftes Einblenden */
-    opacity: 0; /* Standardmäßig unsichtbar */
+    overflow: hidden;
+    z-index: 10;
 }
 
+/* Initialer Zustand für das Logo, wenn es noch nicht sichtbar ist und reinfallen soll */
 #logo-container.initial-hidden {
+    transform-origin: center center;
+    transform: scale(5);
     opacity: 0;
 }
 
-#logo-container.active-logo {
-    opacity: 1; /* Wenn aktiv, vollständig sichtbar */
-}
 
 #game-logo {
-    max-width: 80%;
-    max-height: 80%;
+    width: 60vmin;
     height: auto;
-    width: auto;
-    object-fit: contain;
-}
-
-/* Score Display */
-#score-display {
-    position: absolute;
-    top: 20px; /* Anpassen nach Wunsch */
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    width: 80%;
-    max-width: 600px;
-    background-color: rgba(0, 0, 0, 0.7);
-    padding: 15px 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-    z-index: 10;
-    font-size: 1.5em;
-    color: var(--text-color-primary);
-    transition: opacity 0.5s ease-in-out;
-}
-
-#score-display.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.player-score {
-    flex: 1;
-    text-align: center;
-    padding: 0 10px;
-    white-space: nowrap;
-    transition: color 0.3s ease;
-}
-
-.player1-active-score {
-    color: var(--player1-color);
-    font-weight: bold;
-    text-shadow: 0 0 8px rgba(var(--player1-color-rgb), 0.7);
-}
-
-.player2-active-score {
-    color: var(--player2-color);
-    font-weight: bold;
-    text-shadow: 0 0 8px rgba(var(--player2-color-rgb), 0.7);
-}
-
-
-/* Resolution Container (Neuer Bereich für Liedauflösung) */
-#resolution-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    width: 90%;
-    max-width: 700px;
-    padding: 30px;
-    background-color: rgba(0, 0, 0, 0.85);
-    border-radius: 15px;
-    box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
-    gap: 30px;
-    position: absolute; /* Positioniert relativ zum game-container */
-    z-index: 5;
-    transition: opacity 0.5s ease-in-out;
-}
-
-.song-info-text {
-    font-size: 1.8em;
-    color: var(--text-color-primary);
-    line-height: 1.4;
-    font-weight: bold;
-}
-
-.button-group {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap; /* Erlaubt Umbruch auf kleineren Bildschirmen */
-    justify-content: center;
-}
-
-.action-button {
-    padding: 15px 35px;
-    border: none;
-    border-radius: 30px;
-    font-size: 1.4em;
-    font-weight: bold;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.3s ease, background-color 0.3s ease;
-    min-width: 150px; /* Mindestbreite für Buttons */
+    max-width: 500px;
+    transition: filter 0.3s ease-in-out;
+    transform-origin: center center; /* Auch hier wichtig für den Klick-Bounce */
+    -webkit-tap-highlight-color: transparent; /* Für Webkit-Browser (iOS, Android Chrome) */
+    -webkit-touch-callout: none; /* Deaktiviert das Kontextmenü bei langem Drücken auf iOS */
+    -webkit-user-select: none; /* Verhindert Textauswahl */
+    -moz-user-select: none; /* Für Firefox */
+    -ms-user-select: none; /* Für Internet Explorer/Edge */
+    user-select: none; /* Standard für andere Browser */
+    outline: none !important; /* Entfernt den Fokus-Outline */
 }
 
-.action-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+/* Animation für das Reinfallen (Skalierung, Position, Transparenz) */
+/* Diese Animation wird auf den #logo-container angewendet */
+@keyframes fall-in {
+    0% {
+        transform: scale(5); /* Startpunkt: Stark skaliert, unsichtbar, vertikal zentriert. */
+        opacity: 0;
+    }
+    30% {
+        transform: translateY(0px) scale(0.9); /* "Peak" des Zoom-Out: Logo ist am kleinsten und leicht über dem Zentrum. */
+        opacity: 1;
+    }
+    /* NEUE TIMINGS für den Bounce: */
+    70% { /* Vor dem finalen Bounce: Fällt auf oder leicht unter die Endposition */
+        transform: translateY(0px) scale(1.008); /* Leicht unter die Mitte fallen, etwas größer */
+        opacity: 1;
+    }
+    100% { /* Endpunkt: Finale Ruheposition, normale Größe */
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
 }
 
-.correct-guess-button {
-    background-color: var(--green-color);
-    color: white;
+/* Animation für den Bounce bei jedem Klick (wird auf das #game-logo selbst angewendet) */
+@keyframes press-down-bounce {
+    0% {
+        transform: scale(1); /* Normale Größe */
+    }
+    50% {
+        transform: scale(0.9); /* Beim "Drücken" kleiner werden */
+    }
+    100% {
+        transform: scale(1); /* Wieder normale Größe beim "Loslassen" */
+    }
 }
 
-.correct-guess-button:hover {
-    background-color: #218838; /* Etwas dunkleres Grün */
+/* Die Klasse, die beim Klick hinzugefügt wird */
+.logo-bounce { /* Behalten wir den Namen bei, aber die Animation ist neu */
+    animation: press-down-bounce 0.2s ease-out; /* Schneller und knackiger */
 }
 
-.wrong-guess-button {
-    background-color: var(--red-color);
-    color: white;
+/* Aktiver Zustand des Logos */
+.active-logo {
+    filter: brightness(100%);
+    filter: blur(0px);
 }
 
-.wrong-guess-button:hover {
-    background-color: #c82333; /* Etwas dunkleres Rot */
+/* Inaktiver Zustand des Logos */
+.inactive-logo {
+    filter: blur(5px) brightness(95%);
+    
+    cursor: default; /* Zeigt an, dass der Button nicht klickbar ist */
+    /* opacity: 0.5; */ /* Dein bestehender Opacity-Wert für die Dunkelheit */
+    pointer-events: none; /* Macht das Element nicht klickbar */
 }
 
-
-/* Würfel Container */
+/* NEU: Würfel-Container */
 #dice-container {
-    display: flex;
-    flex-direction: column;
+    position: absolute; /* Überlagert andere Inhalte, zentriert sich im game-container */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex; /* Für Zentrierung von Animation/Buttons */
+    flex-direction: column; /* Animation und Buttons untereinander */
+    justify-content: center;
     align-items: center;
-    gap: 20px;
-    position: absolute;
-    z-index: 5;
-    transition: opacity 0.5s ease-in-out;
+    gap: 30px; /* Abstand zwischen Animation und Buttons */
+    z-index: 15; /* Über dem Logo, aber unter Overlays */
+    background-color: rgba(0, 0, 0, 0.7); /* Leicht transparenter Hintergrund, um Fokus zu setzen */
+    backdrop-filter: blur(5px); /* Leichter Blur-Effekt */
 }
 
+/* Würfel-Animation (GIF) */
 #dice-animation {
-    width: 150px; /* Größe der GIF-Animation */
-    height: 150px;
-    object-fit: contain;
+    width: 50vmin; /* Angepasste Größe */
+    max-width: 400px; /* Angepasste Größe */
+    height: auto;
 }
 
+/* Würfel-Buttons (PNGs) */
 #dice-buttons {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap; /* Erlaubt Umbruch auf kleineren Bildschirmen */
+    display: flex; /* Buttons nebeneinander */
+    gap: 20px; /* Abstand zwischen den Buttons */
+    flex-wrap: wrap; /* Buttons umbrechen, falls zu viele in einer Reihe */
     justify-content: center;
 }
 
 .dice-button {
-    width: 80px; /* Größe der Würfelbilder */
-    height: 80px;
+    width: 20vmin; /* Angepasste Größe */
+    max-width: 150px; /* Angepasste Größe */
+    height: auto;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-    border-radius: 10px; /* Leicht abgerundete Ecken */
+    transition: transform 0.2s ease, filter 0.2s ease;
+    -webkit-tap-highlight-color: transparent; /* Für Touch-Geräte */
 }
 
 .dice-button:hover {
-    transform: scale(1.08);
-    opacity: 0.9;
+    transform: scale(1.05); /* Leichter Zoom bei Hover */
+    filter: brightness(1.2); /* Heller bei Hover */
 }
 
-/* Für kleinere Bildschirme */
-@media (max-width: 768px) {
-    .spotify-box {
-        padding: 20px;
-    }
-
-    .spotify-button {
-        padding: 12px 25px;
-        font-size: 1em;
-    }
-
-    #login-hint {
-        font-size: 1em;
-    }
-
-    #score-display {
-        font-size: 1.2em;
-        padding: 10px 15px;
-        top: 10px;
-        width: 90%;
-    }
-
-    #resolution-container {
-        padding: 20px;
-        width: 95%;
-        gap: 20px;
-    }
-
-    .song-info-text {
-        font-size: 1.4em;
-    }
-
-    .action-button {
-        padding: 12px 25px;
-        font-size: 1.2em;
-        min-width: 120px;
-    }
-
-    #dice-animation {
-        width: 120px;
-        height: 120px;
-    }
-
-    .dice-button {
-        width: 60px;
-        height: 60px;
-    }
-
-    .overlay-message {
-        font-size: 1.2em;
-    }
+.dice-button:active {
+    transform: scale(0.95); /* Leichter Druck-Effekt bei Klick */
+    filter: brightness(0.8); /* Dunkler bei Klick */
 }
 
-@media (max-width: 480px) {
+
+/* Media Queries für Orientierung und Desktop */
+@media (orientation: portrait) {
+    /* Nichts spezifisches hier, da Orientierungs-Message dies übernimmt */
+}
+
+@media (min-width: 768px) {
+    /* Anpassungen für größere Bildschirme / Desktop */
     .spotify-box {
-        padding: 15px;
+        padding: 40px;
+        max-width: 400px;
     }
-
     .spotify-button {
-        padding: 10px 20px;
-        font-size: 0.9em;
+        padding: 15px 30px;
+        font-size: 1.2em;
     }
-
-    #score-display {
-        font-size: 1em;
-        padding: 8px 10px;
-    }
-
-    #resolution-container {
-        padding: 15px;
-        gap: 15px;
-    }
-
-    .song-info-text {
-        font-size: 1.1em;
-    }
-
-    .action-button {
-        padding: 10px 20px;
-        font-size: 1em;
-        min-width: 100px;
-    }
-
-    .dice-button {
-        width: 50px;
-        height: 50px;
+    #game-logo {
+        width: 40vmin;
+        max-width: 400px;
     }
 }
