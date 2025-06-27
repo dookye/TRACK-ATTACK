@@ -549,39 +549,52 @@ function startDiceRollPhase() {
  * @param {Event} event - Das Klick-Event des Buttons.
  */
 function handleDiceSelection(event) {
-    event.preventDefault(); // Verhindert Standardverhalten (z.B. bei Touch)
+    event.preventDefault();
 
     if (currentGameState !== 'diceSelect') {
         console.warn("handleDiceSelection: Nicht im 'diceSelect' Zustand, ignoriere Klick.");
         return;
     }
 
-    // --- Bounce-Effekt für den geklickten Würfel-Button ---
     const clickedButton = event.currentTarget;
+
+    // Optional: Entferne alle anderen Listener VOR dem Bounce, um Mehrfachklicks während der Animation zu vermeiden.
+    // Das { once: true } am Listener macht das schon, aber doppelte Sicherheit schadet nicht.
+    diceButtons.forEach(button => {
+        button.removeEventListener('pointerup', handleDiceSelection);
+        button.classList.add('inactive-dice-button'); // Optional: Macht Buttons inaktiv während des Bounces
+    });
+
+    // --- Bounce-Effekt für den geklickten Würfel-Button ---
     clickedButton.classList.remove('logo-bounce');
     void clickedButton.offsetWidth; // Erzwingt Reflow
     clickedButton.classList.add('logo-bounce');
     // --- ENDE BOUNCE-EFFEKT ---
-    
-    // Entferne alle anderen Listener, falls doch nicht { once: true } verwendet wird
-    diceButtons.forEach(button => {
-        button.removeEventListener('pointerdown', handleDiceSelection);
-    });
 
-    const selectedDiceValue = parseInt(event.currentTarget.dataset.diceValue, 10);
-    currentDiceRoll = selectedDiceValue;
-    currentMaxPointsForSong = DICE_PARAMETERS[selectedDiceValue].maxPoints;
-    currentSongRepetitionsLeft = DICE_PARAMETERS[selectedDiceValue].repetitions;
+    // Verzögere die Ausführung der eigentlichen Aktion, bis der Bounce beendet ist
+    const bounceDurationMs = 200; // Dauer deiner 'press-down-bounce' Animation
+    setTimeout(() => {
+        const selectedDiceValue = parseInt(clickedButton.dataset.diceValue, 10);
+        currentDiceRoll = selectedDiceValue;
+        currentMaxPointsForSong = DICE_PARAMETERS[selectedDiceValue].maxPoints;
+        currentSongRepetitionsLeft = DICE_PARAMETERS[selectedDiceValue].repetitions;
 
-    console.log(`Würfel ${selectedDiceValue} gewählt. Max Punkte: ${currentMaxPointsForSong}, Wiederholungen: ${currentSongRepetitionsLeft}`);
+        console.log(`Würfel ${selectedDiceValue} gewählt. Max Punkte: ${currentMaxPointsForSong}, Wiederholungen: ${currentSongRepetitionsLeft}`);
 
-    // Würfel-UI ausblenden
-    diceContainer.classList.add('hidden');
-    diceAnimation.classList.add('hidden');
-    diceButtonsContainer.classList.add('hidden');
+        // Würfel-UI ausblenden
+        diceContainer.classList.add('hidden');
+        diceAnimation.classList.add('hidden');
+        diceButtonsContainer.classList.add('hidden');
 
-    // Weiter zur Genre-Auswahlphase
-    startGenreSelectionPhase();
+        // Optional: Entferne die Inaktivitätsklasse von allen Buttons, falls hinzugefügt
+        diceButtons.forEach(button => {
+            button.classList.remove('inactive-dice-button');
+        });
+
+        // Weiter zur Genre-Auswahlphase
+        startGenreSelectionPhase();
+
+    }, bounceDurationMs); // Warte, bis der Bounce vorbei ist
 }
 
 /**
