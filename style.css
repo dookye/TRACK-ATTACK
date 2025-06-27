@@ -43,6 +43,7 @@ body {
 }
 
 /* Neue Klassen für den dynamischen Hintergrund (beibehalten als background-color für sanften Übergang untereinander) */
+/*
 .player1-active-bg {
     background-color: #3498db; /* EINFACHE FARBE (Blau) - Funktioniert für sanften Übergang zu anderer Farbe */
 }
@@ -50,6 +51,7 @@ body {
 .player2-active-bg {
     background-color: #e91e63; /* EINFACHE FARBE (Pink) - Funktioniert für sanften Übergang zu anderer Farbe */
 }
+*/
 
 /* NEU: Hintergrund für den Punktevergabe-Bildschirm (mit Gradient) */
 .score-screen-bg {
@@ -306,113 +308,6 @@ body {
     filter: brightness(0.8); /* Dunkler bei Klick */
 }
 
-/* --- Auflösungs-UI --- */
-.resolution-area {
-    position: absolute;
-    top: 50%; /* Vertikal zentrieren */
-    transform: translateY(-50%); /* Exakte vertikale Zentrierung */
-    width: 35%; /* Oder eine feste Breite, je nach Design */
-    padding: 20px;
-    box-sizing: border-box;
-    display: flex; /* Für die Anordnung der Elemente innen */
-    flex-direction: column; /* Elemente untereinander */
-    align-items: center; /* Horizontale Zentrierung der Elemente */
-    gap: 15px; /* Abstand zwischen den Elementen */
-    z-index: 10; /* Über anderen Elementen, aber unter Popups */
-    /* Später fügen wir hier noch left/right für die Spielerpositionierung hinzu */
-}
-
-/* Spezifische Positionierung für Spieler 1 und Spieler 2 */
-.player1-resolution-area {
-    left: 0;
-    /* Optional: background-color: rgba(0, 123, 255, 0.2); /* Ein leichter blauer Schimmer */
-}
-
-.player2-resolution-area {
-    right: 0;
-    /* Optional: background-color: rgba(255, 0, 127, 0.2); /* Ein leichter pinker Schimmer */
-}
-
-
-#resolve-button {
-    font-size: 2.5em; /* Deutlich größer */
-    padding: 20px 40px;
-    border-radius: 15px;
-    background-color: #4CAF50; /* Grün für "Auflösen" */
-    color: white;
-    border: none;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: transform 0.1s ease-out, background-color 0.2s ease-in-out;
-}
-
-#resolve-button:hover {
-    background-color: #45a049;
-    transform: scale(1.02);
-}
-
-#resolve-button.logo-bounce { /* Wiederverwendung deiner Bounce-Klasse für diesen Button */
-    animation: press-down-bounce 0.2s ease-out;
-}
-
-
-.song-details-area {
-    background-color: rgba(0, 0, 0, 0.7); /* Dunkler, leicht transparenter Hintergrund */
-    border-radius: 10px;
-    padding: 20px;
-    text-align: center;
-    width: 90%; /* Nimmt fast die gesamte Breite des resolution-area ein */
-    max-width: 400px; /* Begrenzung für größere Bildschirme */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-}
-
-.resolved-text {
-    font-size: 1.8em;
-    color: white;
-    margin-bottom: 15px;
-    line-height: 1.2;
-}
-
-.resolved-cover {
-    width: 250px; /* Feste Breite für das Cover */
-    height: 250px; /* Feste Höhe, damit es quadratisch bleibt */
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    margin-bottom: 20px;
-}
-
-.resolution-feedback-buttons {
-    display: flex;
-    gap: 15px; /* Abstand zwischen Richtig/Falsch-Buttons */
-    justify-content: center;
-    width: 100%;
-}
-
-.resolution-feedback-buttons .game-button {
-    flex: 1; /* Nehmen gleichen Platz ein */
-    font-size: 1.5em;
-    padding: 15px 10px;
-    border-radius: 10px;
-}
-
-.correct-button {
-    background-color: #28a745; /* Grüner Hintergrund */
-    color: white;
-    border: none;
-}
-
-.correct-button:hover {
-    background-color: #218838;
-}
-
-.wrong-button {
-    background-color: #dc3545; /* Roter Hintergrund */
-    color: white;
-    border: none;
-}
-
-.wrong-button:hover {
-    background-color: #c82333;
-}
 
 /* Media Queries für Orientierung und Desktop */
 @media (orientation: portrait) {
@@ -433,4 +328,47 @@ body {
         width: 40vmin;
         max-width: 400px;
     }
+
+/* --- Hintergrund der Spielerbereiche (NEU) --- */
+/* Diese Stile überschreiben oder ergänzen deine bestehenden .game-container Stile */
+.game-container {
+    position: relative; /* Wichtig für die Positionierung der Pseudo-Elemente */
+    overflow: hidden; /* Verhindert, dass Gradienten überlaufen, falls es Ränder gäbe */
+    /* Behalte deine anderen game-container Stile bei */
+}
+
+.game-container::before,
+.game-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 50%; /* Jedes Pseudo-Element deckt eine Hälfte ab */
+    height: 100%;
+    transition: opacity 1.5s ease-in-out; /* Sanfter Übergang für die Deckkraft */
+    z-index: -1; /* Sorgt dafür, dass der Hintergrund hinter anderen Elementen liegt */
+}
+
+/* Hintergrund für Spieler 1 (Blau zu Schwarz) */
+.game-container::before {
+    left: 0;
+    background: linear-gradient(to right, rgba(0, 0, 255, 0.7), rgba(0, 0, 0, 0.3)); /* Blau zu Schwarz */
+    opacity: 0; /* Standardmäßig inaktiv */
+}
+
+/* Hintergrund für Spieler 2 (Pink zu Schwarz) */
+.game-container::after {
+    right: 0;
+    background: linear-gradient(to left, rgba(255, 0, 255, 0.7), rgba(0, 0, 0, 0.3)); /* Pink zu Schwarz */
+    opacity: 0; /* Standardmäßig inaktiv */
+}
+
+/* Aktiver Spieler - deckt die jeweilige Hälfte auf */
+.player1-active::before {
+    opacity: 1; /* Spieler 1 ist aktiv */
+}
+
+.player2-active::after {
+    opacity: 1; /* Spieler 2 ist aktiv */
+}
+    
 }
