@@ -370,5 +370,46 @@ body {
 .player2-active::after {
     opacity: 1; /* Spieler 2 ist aktiv */
 }
+
+    /* --- Bestehende CSS-Regeln hier oben --- */
+
+
+/* --- Punkteanzeige (NEU) --- */
+#score-display {
+    position: absolute; /* Über anderen Elementen positionieren */
+    top: 20px; /* Abstand vom oberen Rand */
+    left: 50%; /* Zentral ausrichten */
+    transform: translateX(-50%); /* Exakte Zentrierung */
+    display: flex; /* Für die Anordnung der Punkte nebeneinander */
+    gap: 40px; /* Abstand zwischen den Spielerpunkten */
+    font-size: 1.5em; /* Etwas größerer Text */
+    font-weight: bold;
+    z-index: 20; /* Sicherstellen, dass es über dem Hintergrund und den meisten Game-Elementen liegt */
+    color: white; /* Textfarbe */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Leichter Schatten für bessere Lesbarkeit */
+}
+
+#player1-score,
+#player2-score {
+    padding: 10px 15px; /* Innenabstand */
+    border-radius: 8px; /* Abgerundete Ecken */
+    background-color: rgba(0, 0, 0, 0.4); /* Leichter transparenter Hintergrund */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Leichte Rahmenlinie */
+    transition: all 0.3s ease; /* Übergang für Farbwechsel */
+}
+
+/* Optional: Farben für die Punkteanzeige passend zu den Spielern */
+/* Du kannst diese je nach Design anpassen */
+.player1-active-score {
+    color: #3498db; /* Blau für Spieler 1 */
+    border-color: #3498db;
+    transform: scale(1.05); /* Leichter Vergrößerungseffekt für den aktiven Spieler */
+}
+
+.player2-active-score {
+    color: #e91e63; /* Pink für Spieler 2 */
+    border-color: #e91e63;
+    transform: scale(1.05); /* Leichter Vergrößerungseffekt für den aktiven Spieler */
+}
     
 }
