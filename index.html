@@ -27,17 +27,22 @@
                     Log in with Spotify
                 </button>
                 <p id="playback-status" style="margin-top: 10px; font-size: 0.9em; color: #ccc;"></p>
-                   <div id="score-display" class="hidden">
-                      <span id="player1-score">Spieler 1: 0 Punkte</span>
-                      <span id="player2-score">Spieler 2: 0 Punkte</span>
-                   </div>
-            </div>
+                   
+             </div>
         </div>
 
         <div id="logo-container" class="hidden initial-hidden"> 
             <img src="logo3.png" alt="Spiel Logo" id="game-logo" class="active-logo">
         </div>
 
+        <div id="resolution-container" class="hidden">
+            <div id="song-info-display" class="song-info-text"></div>
+            <div id="guess-buttons-container" class="button-group">
+               <button id="correct-button" class="action-button correct-guess-button">Richtig!</button>
+               <button id="wrong-button" class="action-button wrong-guess-button">Falsch!</button>
+            </div>
+        </div>
+        
         <div id="dice-container" class="hidden">
             <img src="w-ani.gif" alt="Würfel Animation" id="dice-animation" class="hidden">
             <div id="dice-buttons" class="hidden">
@@ -47,7 +52,7 @@
                 <img src="w-7.png" alt="Würfel 7" class="dice-button" data-dice-value="7">
             </div>
         </div>
-        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
