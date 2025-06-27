@@ -1123,6 +1123,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("DOMContentLoaded: Logo-Element (ID: game-logo) nicht gefunden, kann Klick-Bounce Listener nicht hinzufügen.");
     }
 
+    // --- NEU: AnimationEnd-Listener für die Würfel-Buttons hinzufügen ---
+    diceButtons.forEach(button => {
+        button.addEventListener('animationend', (event) => {
+            // Auch hier den korrekten Namen deiner @keyframes Animation prüfen!
+            if (event.animationName === 'press-down-bounce') { // <--- HIER MUSS 'press-down-bounce' STEHEN
+                event.target.classList.remove('logo-bounce');
+            }
+        });
+    });
+    console.log("DOMContentLoaded: Würfel-Buttons AnimationEnd Listener für Klick-Bounce hinzugefügt.");
+    // --- ENDE NEU ---
+    
     // Spotify SDK Skript dynamisch laden
     const script = document.createElement('script');
     script.src = 'https://sdk.scdn.co/spotify-player.js';
