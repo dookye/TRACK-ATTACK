@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK42</title>
+    <title>TRACK ATTACK39</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,7 +26,11 @@
                     <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
                     Log in with Spotify
                 </button>
-                <p id="playback-status" style="margin-top: 10px; font-size: 0.9em; color: #ccc;"></p> 
+                <p id="playback-status" style="margin-top: 10px; font-size: 0.9em; color: #ccc;"></p>
+                   <div id="score-display" class="hidden">
+                      <span id="player1-score">Spieler 1: 0 Punkte</span>
+                      <span id="player2-score">Spieler 2: 0 Punkte</span>
+                   </div>
             </div>
         </div>
 
@@ -43,20 +47,7 @@
                 <img src="w-7.png" alt="Würfel 7" class="dice-button" data-dice-value="7">
             </div>
         </div>
-
-        <div id="resolution-area" class="resolution-area hidden">
-           <button id="resolve-button" class="game-button">AUFLÖSEN</button>
-
-           <div id="song-details-area" class="song-details-area hidden">
-               <p id="resolved-artist-title" class="resolved-text"></p>
-               <img id="resolved-album-cover" src="" alt="Album Cover" class="resolved-cover">
-                  <div class="resolution-feedback-buttons">
-                    <button id="correct-button" class="game-button correct-button">RICHTIG</button>
-                    <button id="wrong-button" class="game-button wrong-button">FALSCH</button>
-                  </div>
-            </div>
-         </div>
-    </div>
+        </div>
 
     <script src="script.js"></script>
 </body>
