@@ -248,7 +248,7 @@ body {
 
 /* Inaktiver Zustand des Logos */
 .inactive-logo {
-    filter: brightness(20%); /* Leicht abgedunkelt */
+    filter: brightness(1%); /* Leicht abgedunkelt */
     filter: blur(5px); /* NEU: Das Logo wird unscharf gemacht (5px ist ein guter Startwert) */
     
     cursor: default; /* Zeigt an, dass der Button nicht klickbar ist */
