@@ -18,9 +18,17 @@ const diceButtonsContainer = document.getElementById('dice-buttons');
 const diceButtons = document.querySelectorAll('.dice-button'); // Alle Würfel-Buttons
 
 // NEU: Punkte UI-Elemente
-const scoreDisplay = document.getElementById('score-display'); // <-- NEU (wahrscheinlich um Zeile 16)
-const player1ScoreSpan = document.getElementById('player1-score'); // <-- NEU (wahrscheinlich um Zeile 17)
-const player2ScoreSpan = document.getElementById('player2-score'); // <-- NEU (wahrscheinlich um Zeile 18)
+const scoreDisplay = document.getElementById('score-display');
+const player1ScoreSpan = document.getElementById('player1-score');
+const player2ScoreSpan = document.getElementById('player2-score');
+
+// NEU: Auflösungs UI-Elemente (Füge diese zu deinem HTML hinzu!)
+const resolutionContainer = document.getElementById('resolution-container'); // Container für alle Auflösungselemente
+const songInfoDisplay = document.getElementById('song-info-display'); // Für Titel und Interpret
+const guessButtonsContainer = document.getElementById('guess-buttons-container'); // Container für Richtig/Falsch
+const correctButton = document.getElementById('correct-button'); // Richtig-Button
+const wrongButton = document.getElementById('wrong-button'); // Falsch-Button
+
 
 // --- SPOTIFY KONSTANTEN ---
 const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
@@ -35,9 +43,9 @@ const SCOPES = [
 ];
 
 // --- SPOTIFY API ENDPUNKTE (KORREKTE SPOTIFY-URLS!) ---
-const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
-const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';
-const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1';
+const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // Korrekte Spotify URL
+const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token'; // Korrekte Spotify URL
+const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1'; // Korrekte Spotify URL
 
 
 // --- GLOBALE ZUSTANDSVARIABLEN ---
@@ -437,18 +445,30 @@ async function playSongBasedOnDice() {
             })
         });
 
+        // HIER WIRD DIE LOGIK FÜR HÖRVERSUCHE UND PUNKTE AKTUALISIERT!
+        // Zuerst prüfen, ob es der erste Versuch für den Song ist (currentSongRepetitionsLeft wurde bei Würfelwahl gesetzt).
+        // Wenn es der allererste Play dieses Songs in der Runde ist, dann ziehen wir keine Punkte ab.
+        // Die Punkte werden erst bei *zusätzlichen* Hörversuchen reduziert.
+        if (currentSongRepetitionsLeft < DICE_PARAMETERS[currentDiceRoll].repetitions) {
+            // Wenn dies KEIN Initialplay ist (d.h. eine Wiederholung), ziehe 1 Punkt ab.
+            // Der Initialplay verbraucht keinen "Repeat", da repetitions = 0 zusätzliche Repeats bedeutet 1 Play.
+            // Die Logik ist: repetitions = 0 -> 1 Play (voller Punktwert)
+            // repetitions = 1 -> 1 Play + 1 Repeat (Punktwert - 1)
+            // repetitions = X -> 1 Play + X Repeats (Punktwert - X)
+            currentMaxPointsForSong = Math.max(1, currentMaxPointsForSong - 1); // Mindestens 1 Punkt, auch bei vielen Versuchen
+        }
         currentSongRepetitionsLeft--; // Eine Wiederholung verbraucht
-        currentMaxPointsForSong = Math.max(0, currentMaxPointsForSong - 1); // Punkte abziehen (Minimum 0)
 
         setTimeout(async () => {
             await player.pause();
-            playbackStatus.textContent = `Song beendet. ${currentSongRepetitionsLeft + 1} Hördurchgänge verbleiben.`;
             currentGameState = 'playing'; // Zurück zum Zustand, wo man auf den Logo-Button klicken kann
 
             if (currentSongRepetitionsLeft < 0) { // Alle Versuche aufgebraucht (0 oder weniger, da es runterzählt)
+                playbackStatus.textContent = `Alle Hörversuche aufgebraucht! Zeit zum Auflösen!`;
                 console.log("Alle Hördurchgänge verbraucht. Zeige Auflösen-Buttons.");
                 startResolutionPhase(); // Leite zur Auflösungsphase über
             } else {
+                playbackStatus.textContent = `Song beendet. ${currentSongRepetitionsLeft + 1} Hördurchgänge verbleiben. Akt. Max Punkte: ${currentMaxPointsForSong}`;
                 setLogoAsPlayButton(true); // Logo wieder aktivieren für nächste Wiederholung
             }
         }, playDurationMs);
@@ -503,7 +523,7 @@ function switchPlayer() {
     currentRound++; // Runde erhöhen
     console.log(`Starte Runde ${Math.ceil(currentRound / 2)} für Spieler ${activePlayer}`);
 
-    if (currentRound >= TOTAL_GAME_ROUNDS) {
+    if (currentRound > TOTAL_GAME_ROUNDS) { // ACHTUNG: '>=' statt '>', um sicherzustellen, dass die letzte Runde nicht übersprungen wird
         // Wenn max. Runden erreicht, direkt Spiel beenden
         endGame();
     } else {
@@ -513,6 +533,7 @@ function switchPlayer() {
             startDiceRollPhase(); // Startet die Würfelphase nach dem Hintergrundübergang
         });
     }
+    updatePlayerScoresDisplay(); // Punkteanzeige für den neuen Spieler aktualisieren
 }
 
 /**
@@ -583,7 +604,7 @@ function handleDiceSelection(event) {
         const selectedDiceValue = parseInt(clickedButton.dataset.diceValue, 10);
         currentDiceRoll = selectedDiceValue;
         currentMaxPointsForSong = DICE_PARAMETERS[selectedDiceValue].maxPoints;
-        currentSongRepetitionsLeft = DICE_PARAMETERS[selectedDiceValue].repetitions;
+        currentSongRepetitionsLeft = DICE_PARAMETERS[selectedDiceValue].repetitions; // Speichert die ANZAHL ZUSÄTZLICHER HÖRVERSUCHE
 
         console.log(`Würfel ${selectedDiceValue} gewählt. Max Punkte: ${currentMaxPointsForSong}, Wiederholungen: ${currentSongRepetitionsLeft}`);
 
@@ -615,8 +636,10 @@ function hideAllGameUI() {
     diceAnimation.classList.add('hidden');
     diceButtonsContainer.classList.add('hidden');
 
-    // Beispiel: Auflösen-Button, Richtig/Falsch-Buttons, Titel/Interpret-Anzeige
-    // Diese Elemente werden später implementiert. Füge hier deren `classList.add('hidden');` hinzu.
+    // NEU: Auflösungs-UI ausblenden
+    resolutionContainer.classList.add('hidden');
+    songInfoDisplay.classList.add('hidden');
+    guessButtonsContainer.classList.add('hidden');
 }
 
 // Platzhalter für die Genre-Auswahlphase (noch zu implementieren)
@@ -633,6 +656,8 @@ function startGenreSelectionPhase() {
         setLogoAsPlayButton(true); // Logo wird wieder zum Play-Button
     }, 3000);
 }
+
+// --- NEU: FUNKTIONEN FÜR DIE AUFLÖSUNGSPHASE ---
 
 /**
  * Aktualisiert die Anzeige der Spielerpunkte.
@@ -653,18 +678,27 @@ function updatePlayerScoresDisplay() {
 }
 
 /**
- * Startet die Auflösungsphase, in der der Songtitel und Interpret angezeigt werden.
- * Der Hintergrund wird NICHT hier auf den Score-Screen-Gradienten gewechselt,
- * sondern nur in `endGame()`.
+ * Startet die Auflösungsphase, in der der Songtitel und Interpret angezeigt werden
+ * und der Spieler auf "Richtig" oder "Falsch" klicken kann.
  */
 async function startResolutionPhase() {
     if (isResolvingSong) return; // Verhindert mehrfaches Aufrufen
     isResolvingSong = true;
     currentGameState = 'resolutionPhase';
     setLogoAsPlayButton(false); // Logo inaktiv, da jetzt Auflösung stattfindet
-    console.log("Starte Auflösungsphase. Zeige Titel/Interpret und Richtig/Falsch-Buttons.");
+    hideAllGameUI(); // Stellt sicher, dass andere Game-UI-Elemente ausgeblendet sind
+    resolutionContainer.classList.remove('hidden'); // Auflösungs-Container einblenden
+    songInfoDisplay.classList.remove('hidden'); // Song-Info einblenden
+    guessButtonsContainer.classList.remove('hidden'); // Richtig/Falsch-Buttons einblenden
 
-    playbackStatus.textContent = `Auflösung: ${currentPlayingTrack.track.name} von ${currentPlayingTrack.track.artists.map(a => a.name).join(', ')}`;
+    const trackName = currentPlayingTrack.track.name;
+    const artistName = currentPlayingTrack.track.artists.map(a => a.name).join(', ');
+    songInfoDisplay.textContent = `${trackName} von ${artistName}`;
+    playbackStatus.textContent = `Auflösung: ${trackName} von ${artistName}`;
+    
+    // Event-Listener für die Richtig/Falsch-Buttons hinzufügen
+    correctButton.addEventListener('pointerup', handleGuessCorrect, { once: true });
+    wrongButton.addEventListener('pointerup', handleGuessWrong, { once: true });
 
     // Optional: Song auf halber Lautstärke abspielen lassen ab Sekunde 30
     if (player && currentPlayingTrack.track.duration_ms > 30000) {
@@ -678,24 +712,38 @@ async function startResolutionPhase() {
         await player.resume();
         console.log("Song spielt auf halber Lautstärke ab Beginn.");
     }
-
-    // ACHTUNG: Der Hintergrundwechsel zum Score-Screen-BG erfolgt HIER NICHT MEHR!
-    // Er ist ausschließlich der `endGame()` Funktion vorbehalten.
-    // gameContainer.classList.remove('player1-active-bg', 'player2-active-bg');
-    // gameContainer.classList.add('score-screen-bg'); // DIESE ZEILE WIRD ENTFERNT
-
-    // Hier würden die "Richtig" und "Falsch" Buttons erscheinen
-    // und ihre Klicks würden dann z.B. eine Funktion handleGuess(isCorrect) aufrufen.
-    // Für jetzt simulieren wir einfach einen direkten Übergang
-    setTimeout(() => {
-        console.log("Simuliere Richtig-Klick.");
-        handleGuess(true); // Simuliere einen richtigen Tipp
-    }, 5000); // 5 Sekunden für die Auflösung/Bewertung
+    
+    // Wenn der Spieler nicht innerhalb einer bestimmten Zeit reagiert, wird automatisch "Falsch" angenommen
+    // Du könntest hier einen Timer implementieren, der `handleGuess(false)` aufruft.
+    // Für dieses Beispiel lassen wir es vorerst manuell.
 }
 
+/**
+ * Handler für den "Richtig" Button.
+ * @param {Event} event - Das Klick-Event.
+ */
+function handleGuessCorrect(event) {
+    event.preventDefault();
+    console.log("Richtig-Button geklickt.");
+    // Entferne Listener, um Mehrfachklicks zu verhindern (schon durch {once:true} geschehen, aber gute Praxis)
+    wrongButton.removeEventListener('pointerup', handleGuessWrong); 
+    handleGuess(true); // Ruft die Haupt-HandleGuess-Funktion auf
+}
 
 /**
- * Behandelt die Logik, nachdem der Spieler geraten oder die Zeit abgelaufen ist.
+ * Handler für den "Falsch" Button.
+ * @param {Event} event - Das Klick-Event.
+ */
+function handleGuessWrong(event) {
+    event.preventDefault();
+    console.log("Falsch-Button geklickt.");
+    // Entferne Listener
+    correctButton.removeEventListener('pointerup', handleGuessCorrect);
+    handleGuess(false); // Ruft die Haupt-HandleGuess-Funktion auf
+}
+
+/**
+ * Behandelt die Logik, nachdem der Spieler geraten hat (oder der Timer abgelaufen ist).
  * Aktualisiert Punkte und wechselt den Spieler/beendet das Spiel.
  * @param {boolean} isCorrect - True, wenn der Spieler richtig geraten hat, False sonst.
  */
@@ -709,20 +757,18 @@ async function handleGuess(isCorrect) {
     }
 
     if (isCorrect) {
-        playerScores[activePlayer] += currentMaxPointsForSong;
-        playbackStatus.textContent = `Richtig!`; // Nur "Richtig!" anzeigen
+        playerScores[activePlayer] += currentMaxPointsForSong; // Füge die aktuellen Punkte hinzu
+        playbackStatus.textContent = `Richtig! Spieler ${activePlayer} erhält ${currentMaxPointsForSong} Punkte.`;
     } else {
-        playbackStatus.textContent = `Falsch!`; // Nur "Falsch!" anzeigen
+        playbackStatus.textContent = `Falsch! Leider keine Punkte für Spieler ${activePlayer}.`;
     }
 
-    // UI-Elemente zurücksetzen/ausblenden, die zur Ratephase gehören
-    // z.B. hideResolveButton(), hideGuessButtons() (noch zu implementieren)
-    // songInfo.classList.add('hidden');
+    // Auflösungs-UI ausblenden
+    resolutionContainer.classList.add('hidden');
+    songInfoDisplay.classList.add('hidden');
+    guessButtonsContainer.classList.add('hidden');
 
-    // ACHTUNG: gameContainer.classList.remove('score-screen-bg'); WIRD HIER ENTFERNT!
-    // Der Score-Screen-Hintergrund wird nur in endGame() gesetzt und im resetGame() entfernt.
-
-    updatePlayerScoresDisplay(); // Aktualisiert die Punkteanzeige (muss existieren)
+    updatePlayerScoresDisplay(); // Aktualisiert die Punkteanzeige
 
     currentPlayingTrack = null; // Für die nächste Runde zurücksetzen
     currentDiceRoll = null; // Würfel zurücksetzen
@@ -731,13 +777,12 @@ async function handleGuess(isCorrect) {
 
     // Warte eine kurze Zeit, bevor das Spiel zum nächsten Spieler wechselt oder endet
     setTimeout(() => {
-        // Prüfe hier zusätzlich, ob das Spiel beendet ist.
-        // Die Spielendebedingung TOTAL_GAME_ROUNDS ist hier ausschlaggebend,
-        // da Punkteziel nicht mehr sichtbar ist.
-        if (currentRound >= TOTAL_GAME_ROUNDS || playerScores[1] >= 50 || playerScores[2] >= 50) { // Beispiel: Spielende bei 50 Punkten
+        // Prüfe, ob das Spiel beendet ist.
+        // Die Spielendebedingung TOTAL_GAME_ROUNDS ist hier ausschlaggebend.
+        // Die Punktezielbedingung (playerScores[1] >= 50 || playerScores[2] >= 50) ist nun ein ZUSÄTZLICHER Trigger.
+        if (currentRound >= TOTAL_GAME_ROUNDS || playerScores[1] >= 50 || playerScores[2] >= 50) {
             endGame();
         } else {
-            // KEIN gameContainer.classList.remove('score-screen-bg'); HIER!
             switchPlayer(); // Nächsten Spieler dran
         }
     }, 2000); // 2 Sekunden warten, bevor der Spieler wechselt/Spiel endet
@@ -753,8 +798,15 @@ function endGame() {
     gameContainer.classList.add('score-screen-bg');
     console.log("Hintergrund auf Score-Screen für Spielende gesetzt.");
 
-    // HIER DIE LOGIK FÜR DEN AUSWERTUNGSSCREEN MIT PUNKTEN
-    playbackStatus.textContent = `Spiel beendet! Spieler 1: ${playerScores[1]} Punkte, Spieler 2: ${playerScores[2]} Punkte.`;
+    let winnerMessage = '';
+    if (playerScores[1] > playerScores[2]) {
+        winnerMessage = `Spieler 1 gewinnt mit ${playerScores[1]} zu ${playerScores[2]} Punkten!`;
+    } else if (playerScores[2] > playerScores[1]) {
+        winnerMessage = `Spieler 2 gewinnt mit ${playerScores[2]} zu ${playerScores[1]} Punkten!`;
+    } else {
+        winnerMessage = `Unentschieden! Beide Spieler haben ${playerScores[1]} Punkte!`;
+    }
+    playbackStatus.textContent = `Spiel beendet! ${winnerMessage}`;
 
     // Reset game state for new game
     setTimeout(() => {
@@ -773,13 +825,14 @@ function resetGame() {
     introAnimationPlayed = false;
     isResolvingSong = false;
 
-    // NEU: Punkteanzeige ausblenden beim Reset (wahrscheinlich um Zeile 584)
+    // NEU: Punkteanzeige ausblenden beim Reset
     scoreDisplay.classList.add('hidden'); // Versteckt die Punkteanzeige
+    updatePlayerScoresDisplay(); // Stellt sicher, dass die Anzeige auf 0 zurückgesetzt wird
 
     // UI auf Startzustand zurücksetzen
     showLoginScreen();
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg');
-    gameContainer.style.backgroundColor = 'black';
+    gameContainer.style.backgroundColor = 'black'; // Stelle sicher, dass der Hintergrund initial schwarz ist
     console.log("Spielhintergrund auf Schwarz zurückgesetzt (nach Reset).");
 
     if (isPlayerReady && !document.fullscreenElement) {
@@ -798,7 +851,7 @@ function handlePlayerReady() {
     console.log("handlePlayerReady: Spotify Player ist verbunden. Starte Orientierungs-/Fullscreen-Check.");
     loginArea.classList.add('hidden'); // Login-Bereich ausblenden
 
-     // NEU: Punkteanzeige einblenden und initialisieren (wahrscheinlich um Zeile 614-615)
+    // NEU: Punkteanzeige einblenden und initialisieren
     scoreDisplay.classList.remove('hidden');
     updatePlayerScoresDisplay(); // Erste Anzeige der Punkte
     
@@ -1029,15 +1082,15 @@ function showLogoButton() {
                     // Hinzugefügte Logik für den späteren Song-Play/Repeat
                 else if (currentGameState === 'playing' || currentGameState === 'songPaused') {
                     if (isPlayerReady && currentDiceRoll) {
-                        if (currentSongRepetitionsLeft >= 0) {
-                            playSongBasedOnDice();
-                            setLogoAsPlayButton(false);
-                            currentGameState = 'songPlaying';
-                        } else {
-                            console.log("Keine weiteren Hördurchgänge für diesen Song mehr.");
-                            playbackStatus.textContent = 'Keine weiteren Versuche. Löse den Song auf!';
-                            setLogoAsPlayButton(false);
-                        }
+                        // Der playSongBasedOnDice() wird jetzt nur noch aufgerufen, wenn noch Versuche übrig sind.
+                        // Der Repetitions-Check ist direkt in playSongBasedOnDice() enthalten.
+                        playSongBasedOnDice();
+                        setLogoAsPlayButton(false);
+                        currentGameState = 'songPlaying';
+                    } else {
+                        console.log("Keine weiteren Hördurchgänge für diesen Song mehr oder Player/Würfel nicht bereit.");
+                        playbackStatus.textContent = 'Keine weiteren Versuche. Löse den Song auf!';
+                        setLogoAsPlayButton(false);
                     }
                 }
             };
@@ -1071,17 +1124,12 @@ function setLogoAsPlayButton(activate = true) {
             logo.classList.add('logo-bounce');
 
             if (isPlayerReady && currentDiceRoll) {
-                if (currentSongRepetitionsLeft >= 0) { // Ermöglicht das erste Hören und weitere
-                    playSongBasedOnDice(); // Funktion für die Song-Wiedergabelogik
-                    // Logo direkt nach Klick inaktiv machen, während der Song spielt
-                    setLogoAsPlayButton(false);
-                    currentGameState = 'songPlaying';
-                } else {
-                    console.log("Keine weiteren Hördurchgänge für diesen Song mehr.");
-                    playbackStatus.textContent = 'Keine weiteren Versuche. Löse den Song auf!';
-                    // Logo bleibt inaktiv, da jetzt aufgelöst wird
-                    setLogoAsPlayButton(false);
-                }
+                // Die Logik für `currentSongRepetitionsLeft >= 0` wird jetzt in `playSongBasedOnDice()` gehandhabt.
+                // Hier rufen wir einfach `playSongBasedOnDice()` auf und lassen die Funktion entscheiden,
+                // ob ein weiterer Hörversuch möglich ist oder die Auflösungsphase gestartet werden muss.
+                playSongBasedOnDice();
+                setLogoAsPlayButton(false); // Logo inaktiv machen, während der Song spielt
+                currentGameState = 'songPlaying';
             } else {
                 console.warn("Player ist nicht bereit oder kein Würfelwert gesetzt.");
                 playbackStatus.textContent = 'System nicht bereit oder Würfel fehlt.';
