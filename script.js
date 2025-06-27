@@ -61,11 +61,13 @@ const TOTAL_GAME_ROUNDS = MAX_ROUNDS_PER_PLAYER * 2; // Gesamtrunden (20 Songs)
 
 // NEU für Würfel & Song-Parameter
 const DICE_PARAMETERS = {
-    3: { maxPoints: 3, playDurationSec: 7, repetitions: 2 }, // 3 Hördurchgänge (1. Hören + 2 Wiederholungen)
-    4: { maxPoints: 4, playDurationSec: 7, repetitions: 3 }, // 4 Hördurchgänge
-    5: { maxPoints: 5, playDurationSec: 7, repetitions: 4 }, // 5 Hördurchgänge
-    7: { maxPoints: 7, playDurationSec: 2, repetitions: 7 }  // 8 Hördurchgänge
+    // maxPoints: Punkte bei 1. Rateversuch, playDurationSec: Dauer des Ausschnitts, repetitions: ANZAHL ZUSÄTZLICHER HÖRVERSUCHE
+    3: { maxPoints: 3, playDurationSec: 7, repetitions: 2 }, // 1 regulär + 2 Wiederholungen = 3 Versuche, max 3 Pkt, min 1 Pkt
+    4: { maxPoints: 4, playDurationSec: 7, repetitions: 3 }, // 1 regulär + 3 Wiederholungen = 4 Versuche, max 4 Pkt, min 1 Pkt
+    5: { maxPoints: 5, playDurationSec: 7, repetitions: 4 }, // 1 regulär + 4 Wiederholungen = 5 Versuche, max 5 Pkt, min 1 Pkt
+    7: { maxPoints: 7, playDurationSec: 2, repetitions: 6 }  // 1 regulär + 6 Wiederholungen = 7 Versuche, max 7 Pkt, min 1 Pkt
 };
+
 let currentDiceRoll = null; // Der vom Spieler gewählte Würfelwert für die aktuelle Runde
 let currentSongRepetitionsLeft = 0; // Verbleibende Wiederholungen für den aktuellen Song
 let currentMaxPointsForSong = 0; // Maximale Punkte für den aktuellen Song (passt sich mit Wiederholungen an)
