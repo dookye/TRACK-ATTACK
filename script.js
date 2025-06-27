@@ -79,6 +79,7 @@ let isResolvingSong = false; // Flag für die Auflösungsphase
 
 // Variable, um das aktuell gespielte Song-Objekt zu speichern
 let currentResolvedSong       = null; // Speichert das vollständige Song-Objekt für die Auflösung
+let currentSongPlayingId = null; // NEU: Initialisiert, um den aktuell spielenden Song zu verfolgen
 
 // --- PKCE HELFER-FUNKTIONEN ---
 function generateRandomString(length) {
