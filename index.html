@@ -43,7 +43,20 @@
                 <img src="w-7.png" alt="Würfel 7" class="dice-button" data-dice-value="7">
             </div>
         </div>
-        </div>
+
+        <div id="resolution-area" class="resolution-area hidden">
+           <button id="resolve-button" class="game-button">AUFLÖSEN</button>
+
+           <div id="song-details-area" class="song-details-area hidden">
+               <p id="resolved-artist-title" class="resolved-text"></p>
+               <img id="resolved-album-cover" src="" alt="Album Cover" class="resolved-cover">
+                  <div class="resolution-feedback-buttons">
+                    <button id="correct-button" class="game-button correct-button">RICHTIG</button>
+                    <button id="wrong-button" class="game-button wrong-button">FALSCH</button>
+                  </div>
+            </div>
+         </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
