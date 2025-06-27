@@ -942,7 +942,7 @@ function showLogoButton() {
                 }
             }
         };
-        logo.addEventListener('pointerdown', logoClickListener);
+        logo.addEventListener('pointerup', logoClickListener);
         currentGameState = 'startScreen';
         return; // Funktion hier beenden
     }
