@@ -17,6 +17,10 @@ const diceAnimation = document.getElementById('dice-animation');
 const diceButtonsContainer = document.getElementById('dice-buttons');
 const diceButtons = document.querySelectorAll('.dice-button'); // Alle Würfel-Buttons
 
+// NEU: Punkte UI-Elemente
+const scoreDisplay = document.getElementById('score-display'); // <-- NEU (wahrscheinlich um Zeile 16)
+const player1ScoreSpan = document.getElementById('player1-score'); // <-- NEU (wahrscheinlich um Zeile 17)
+const player2ScoreSpan = document.getElementById('player2-score'); // <-- NEU (wahrscheinlich um Zeile 18)
 
 // --- SPOTIFY KONSTANTEN ---
 const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
@@ -630,15 +634,20 @@ function startGenreSelectionPhase() {
 
 /**
  * Aktualisiert die Anzeige der Spielerpunkte.
- * Diese Funktion muss die HTML-Elemente ansprechen, die die Punkte anzeigen.
- * (Muss noch in HTML und hier implementiert werden)
  */
 function updatePlayerScoresDisplay() {
     console.log(`Spielstand: Spieler 1: ${playerScores[1]}, Spieler 2: ${playerScores[2]}`);
-    // Beispiel: Wenn du P-Tags mit IDs 'player1-score' und 'player2-score' hast:
-    // document.getElementById('player1-score').textContent = `Spieler 1: ${playerScores[1]} Punkte`;
-    // document.getElementById('player2-score').textContent = `Spieler 2: ${playerScores[2]} Punkte`;
-    // FÜGE HIER DIE LOGIK HINZU, UM DEINE PUNKTANZEIGE ZU AKTUALISIEREN
+    player1ScoreSpan.textContent = `Spieler 1: ${playerScores[1]} Punkte`;
+    player2ScoreSpan.textContent = `Spieler 2: ${playerScores[2]} Punkte`;
+
+    // Optional: Hebe den aktiven Spieler farblich hervor
+    if (activePlayer === 1) {
+        player1ScoreSpan.classList.add('player1-active-score');
+        player2ScoreSpan.classList.remove('player2-active-score');
+    } else {
+        player2ScoreSpan.classList.add('player2-active-score');
+        player1ScoreSpan.classList.remove('player1-active-score');
+    }
 }
 
 /**
@@ -756,17 +765,19 @@ function resetGame() {
     console.log("Spiel wird zurückgesetzt.");
     activePlayer = 1;
     playerScores = { 1: 0, 2: 0 };
-    currentRound = 0; // Wichtig: Runden zählen, um endGame zu triggern
+    currentRound = 0;
     currentDiceRoll = null;
     currentPlayingTrack = null;
-    introAnimationPlayed = false; // Animation wieder erlauben
+    introAnimationPlayed = false;
     isResolvingSong = false;
 
+    // NEU: Punkteanzeige ausblenden beim Reset (wahrscheinlich um Zeile 584)
+    scoreDisplay.classList.add('hidden'); // Versteckt die Punkteanzeige
+
     // UI auf Startzustand zurücksetzen
-    showLoginScreen(); // Oder direkt zum Logo, wenn schon eingeloggt
-    // Entferne ALLE Spieler-Hintergrund-Klassen UND den Score-Screen-Hintergrund beim Reset
+    showLoginScreen();
     gameContainer.classList.remove('player1-active-bg', 'player2-active-bg', 'score-screen-bg');
-    gameContainer.style.backgroundColor = 'black'; // Setze den Hintergrund auf schwarz zurück
+    gameContainer.style.backgroundColor = 'black';
     console.log("Spielhintergrund auf Schwarz zurückgesetzt (nach Reset).");
 
     if (isPlayerReady && !document.fullscreenElement) {
@@ -785,6 +796,10 @@ function handlePlayerReady() {
     console.log("handlePlayerReady: Spotify Player ist verbunden. Starte Orientierungs-/Fullscreen-Check.");
     loginArea.classList.add('hidden'); // Login-Bereich ausblenden
 
+     // NEU: Punkteanzeige einblenden und initialisieren (wahrscheinlich um Zeile 614-615)
+    scoreDisplay.classList.remove('hidden');
+    updatePlayerScoresDisplay(); // Erste Anzeige der Punkte
+    
     checkOrientationAndFullscreen(); // Jetzt den Orientierungs- und Fullscreen-Check starten
 }
 
