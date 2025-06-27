@@ -474,6 +474,22 @@ async function playSongBasedOnDice() {
         playbackStatus.textContent = `Fehler beim Abspielen: ${error.message}`;
         // Hier könntest du spezifischere Fehlermeldungen anzeigen, z.B. bei Premium-Fehlern
     }
+         // Prüfen, ob dies der letzte Hördurchgang war
+        if (currentSongRepetitionsLeft === 0) {
+            console.log("Letzter Hördurchgang beendet. Bereite Auflösungsphase vor.");
+            // Logo-Button inaktiv machen und "AUFLÖSEN"-Button anzeigen
+            setLogoAsPlayButton(false, true); // (false = Logo inaktiv, true = AUFLÖSEN-Button zeigen)
+            currentGameState = 'resolution'; // Neuen Spielzustand setzen
+        } else {
+            // Es sind noch Hördurchgänge übrig, Logo bleibt Play-Button
+            setLogoAsPlayButton(true); // Logo ist aktiv zum Weiterhören
+            currentGameState = 'songPlaying'; // Zustand bleibt beim Abspielen
+        }
+    } else {
+        console.error("Track oder Player nicht verfügbar, kann Song nicht abspielen.");
+        playbackStatus.textContent = 'Fehler beim Abspielen des Songs. Probiere es erneut.';
+        setLogoAsPlayButton(false); // Buttons inaktiv machen oder Fehler anzeigen
+    }
 }
 
 // --- UI STEUERUNGSFUNKTIONEN ---
@@ -1098,13 +1114,17 @@ function showLogoButton() {
  */
 function setLogoAsPlayButton(activate = true, showResolveButton = false) {
     if (logoClickListener) {
-        logo.removeEventListener('pointerdown', logoClickListener);
+        logo.removeEventListener('pointerup', logoClickListener);
     }
 
-    if (activate) {
+    if (activate) { // Logo wird als Play-Button aktiviert
         console.log("setLogoAsPlayButton: Logo wird zum aktiven Play-Button.");
         logo.classList.remove('inactive-logo');
         logo.classList.add('active-logo');
+        resolveButton.classList.add('hidden'); // AUFLÖSEN-Button verstecken
+        songDetailsArea.classList.add('hidden'); // Song Details verstecken
+        resolutionArea.classList.add('hidden'); // Haupt-Auflösungsbereich verstecken
+
         logoClickListener = function(event) {
             event.preventDefault();
             console.log("Play/Repeat-Button (Logo) geklickt!");
@@ -1112,37 +1132,35 @@ function setLogoAsPlayButton(activate = true, showResolveButton = false) {
             void logo.offsetWidth;
             logo.classList.add('logo-bounce');
 
-             if (activate) { // Logo wird als Play-Button aktiviert
-               console.log("setLogoAsPlayButton: Logo wird zum aktiven Play-Button.");
-               logo.classList.remove('inactive-logo');
-               logo.classList.add('active-logo');
-               resolveButton.classList.add('hidden'); // 'AUFLÖSEN' Button verstecken
-                 
-            if (isPlayerReady && currentDiceRoll) {
-                if (currentSongRepetitionsLeft >= 0) { // Ermöglicht das erste Hören und weitere
-                    playSongBasedOnDice(); // Funktion für die Song-Wiedergabelogik
-                    // Logo direkt nach Klick inaktiv machen, während der Song spielt
-                    setLogoAsPlayButton(false);
-                    currentGameState = 'songPlaying';
+            // Verzögerung der Aktion, um den Bounce-Effekt zu zeigen
+            setTimeout(() => {
+                if (isPlayerReady && currentDiceRoll) {
+                    if (currentSongRepetitionsLeft > 0) { // Nur spielen, wenn noch Versuche übrig
+                        playSongBasedOnDice();
+                        setLogoAsPlayButton(false); // Logo inaktiv während Song spielt
+                        currentGameState = 'songPlaying';
+                    } else {
+                        // Wenn keine Versuche mehr, direkt zur Auflösung gehen
+                        console.log("Keine weiteren Hördurchgänge. Auflösungsphase starten.");
+                        setLogoAsPlayButton(false, true); // Logo inaktiv, AUFLÖSEN zeigen
+                        currentGameState = 'resolution';
+                    }
                 } else {
-                    console.log("Keine weiteren Hördurchgänge für diesen Song mehr.");
-                    playbackStatus.textContent = 'Keine weiteren Versuche. Löse den Song auf!';
-                    // Logo bleibt inaktiv, da jetzt aufgelöst wird
-                    setLogoAsPlayButton(false);
+                    console.warn("Player ist nicht bereit oder kein Würfelwert gesetzt.");
+                    playbackStatus.textContent = 'System nicht bereit oder Würfel fehlt.';
                 }
-            } else {
-                console.warn("Player ist nicht bereit oder kein Würfelwert gesetzt.");
-                playbackStatus.textContent = 'System nicht bereit oder Würfel fehlt.';
-            }
+            }, 200); // Dauer der Bounce-Animation
         };
         logo.addEventListener('pointerup', logoClickListener);
 
-     } else if (showResolveButton) { // Zeige den AUFLÖSEN-Button an
+    } else if (showResolveButton) { // Zeige den "AUFLÖSEN"-Button an
         console.log("setLogoAsPlayButton: Zeige AUFLÖSEN Button an.");
         logo.classList.remove('active-logo');
         logo.classList.add('inactive-logo'); // Logo inaktiv machen
         resolveButton.classList.remove('hidden'); // AUFLÖSEN-Button anzeigen
-        // Positionierung des resolutionArea hier anpassen
+        songDetailsArea.classList.add('hidden'); // Song Details anfangs verstecken
+
+        // Positioniere den Auflösungsbereich für den aktuellen Spieler
         positionResolutionArea(activePlayer);
 
     } else { // Logo wird inaktiv und AUFLÖSEN-Button auch versteckt (z.B. während Song spielt)
@@ -1151,12 +1169,7 @@ function setLogoAsPlayButton(activate = true, showResolveButton = false) {
         logo.classList.add('inactive-logo');
         resolveButton.classList.add('hidden'); // AUFLÖSEN-Button verstecken
         songDetailsArea.classList.add('hidden'); // Song Details auch verstecken
-        
-    } else {
-        console.log("setLogoAsPlayButton: Logo wird inaktiv.");
-        logo.classList.remove('active-logo');
-        logo.classList.add('inactive-logo');
-        // Klick-Listener bleibt entfernt
+        resolutionArea.classList.add('hidden'); // Haupt-Auflösungsbereich verstecken
     }
 }
 
