@@ -1,6 +1,6 @@
 // --- Globale Variablen ---
-const CLIENT_ID = 'DEINE_CLIENT_ID'; // Spotify Client ID - HIER ERSETZEN!
-const REDIRECT_URI = 'http://localhost:5500/'; // Deine Redirect URI - HIER ERSETZEN!
+const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
+const REDIRECT_URI = 'https://dookye.github.io/TRACK-ATTACK/'; // Deine GitHub Pages URL
 const SCOPES = ['user-read-private', 'user-read-email', 'user-modify-playback-state', 'user-read-playback-state', 'user-read-currently-playing'];
 const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
 const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
