@@ -411,5 +411,39 @@ body {
     border-color: #e91e63;
     transform: scale(1.05); /* Leichter Vergrößerungseffekt für den aktiven Spieler */
 }
+
+#resolution-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    gap: 20px; /* Abstand zwischen Song-Info und Buttons */
+    text-align: center;
+}
+
+.song-info-text {
+    font-size: 2.5em; /* Oder wie groß du es haben möchtest */
+    color: var(--text-color-primary); /* Deine Textfarbe */
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.button-group {
+    display: flex;
+    gap: 30px; /* Abstand zwischen Richtig/Falsch Buttons */
+}
+
+.correct-guess-button {
+    background-color: var(--green-color); /* Deine grüne Farbe */
+}
+
+.wrong-guess-button {
+    background-color: var(--red-color); /* Deine rote Farbe */
+}
     
 }
