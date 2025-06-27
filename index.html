@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK40</title>
+    <title>TRACK ATTACK</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,28 +11,32 @@
     <div id="initial-click-blocker" class="hidden"></div> 
 
     <div id="orientation-message" class="overlay-message hidden">
-        <p>Please rotate your device to landscape mode.</p>
+        <p>Bitte drehe dein Gerät ins Querformat.</p>
     </div>
 
     <div id="fullscreen-message" class="overlay-message hidden">
-        <p>Click to fullscreen mode.</p>
+        <p>Klicke, um in den Vollbildmodus zu wechseln.</p>
     </div>
 
     <div class="game-container"> 
         <div id="login-area"> 
             <div class="spotify-box">
-                <p id="login-hint">Please log in with your Spotify account to play.</p>
+                <p id="login-hint">Bitte melde dich mit deinem Spotify-Konto an, um zu spielen.</p>
                 <button id="spotify-login-button" class="spotify-button">
                     <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
-                    Log in with Spotify
+                    Mit Spotify anmelden
                 </button>
                 <p id="playback-status" style="margin-top: 10px; font-size: 0.9em; color: #ccc;"></p>
-                   
-             </div>
+            </div>
         </div>
 
         <div id="logo-container" class="hidden initial-hidden"> 
             <img src="logo3.png" alt="Spiel Logo" id="game-logo" class="active-logo">
+        </div>
+
+        <div id="score-display" class="hidden">
+            <span id="player1-score" class="player-score">Spieler 1: 0 Punkte</span>
+            <span id="player2-score" class="player-score">Spieler 2: 0 Punkte</span>
         </div>
 
         <div id="resolution-container" class="hidden">
