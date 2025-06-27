@@ -306,6 +306,113 @@ body {
     filter: brightness(0.8); /* Dunkler bei Klick */
 }
 
+/* --- Auflösungs-UI --- */
+.resolution-area {
+    position: absolute;
+    top: 50%; /* Vertikal zentrieren */
+    transform: translateY(-50%); /* Exakte vertikale Zentrierung */
+    width: 35%; /* Oder eine feste Breite, je nach Design */
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex; /* Für die Anordnung der Elemente innen */
+    flex-direction: column; /* Elemente untereinander */
+    align-items: center; /* Horizontale Zentrierung der Elemente */
+    gap: 15px; /* Abstand zwischen den Elementen */
+    z-index: 10; /* Über anderen Elementen, aber unter Popups */
+    /* Später fügen wir hier noch left/right für die Spielerpositionierung hinzu */
+}
+
+/* Spezifische Positionierung für Spieler 1 und Spieler 2 */
+.player1-resolution-area {
+    left: 0;
+    /* Optional: background-color: rgba(0, 123, 255, 0.2); /* Ein leichter blauer Schimmer */
+}
+
+.player2-resolution-area {
+    right: 0;
+    /* Optional: background-color: rgba(255, 0, 127, 0.2); /* Ein leichter pinker Schimmer */
+}
+
+
+#resolve-button {
+    font-size: 2.5em; /* Deutlich größer */
+    padding: 20px 40px;
+    border-radius: 15px;
+    background-color: #4CAF50; /* Grün für "Auflösen" */
+    color: white;
+    border: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.1s ease-out, background-color 0.2s ease-in-out;
+}
+
+#resolve-button:hover {
+    background-color: #45a049;
+    transform: scale(1.02);
+}
+
+#resolve-button.logo-bounce { /* Wiederverwendung deiner Bounce-Klasse für diesen Button */
+    animation: press-down-bounce 0.2s ease-out;
+}
+
+
+.song-details-area {
+    background-color: rgba(0, 0, 0, 0.7); /* Dunkler, leicht transparenter Hintergrund */
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    width: 90%; /* Nimmt fast die gesamte Breite des resolution-area ein */
+    max-width: 400px; /* Begrenzung für größere Bildschirme */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.resolved-text {
+    font-size: 1.8em;
+    color: white;
+    margin-bottom: 15px;
+    line-height: 1.2;
+}
+
+.resolved-cover {
+    width: 250px; /* Feste Breite für das Cover */
+    height: 250px; /* Feste Höhe, damit es quadratisch bleibt */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+}
+
+.resolution-feedback-buttons {
+    display: flex;
+    gap: 15px; /* Abstand zwischen Richtig/Falsch-Buttons */
+    justify-content: center;
+    width: 100%;
+}
+
+.resolution-feedback-buttons .game-button {
+    flex: 1; /* Nehmen gleichen Platz ein */
+    font-size: 1.5em;
+    padding: 15px 10px;
+    border-radius: 10px;
+}
+
+.correct-button {
+    background-color: #28a745; /* Grüner Hintergrund */
+    color: white;
+    border: none;
+}
+
+.correct-button:hover {
+    background-color: #218838;
+}
+
+.wrong-button {
+    background-color: #dc3545; /* Roter Hintergrund */
+    color: white;
+    border: none;
+}
+
+.wrong-button:hover {
+    background-color: #c82333;
+}
 
 /* Media Queries für Orientierung und Desktop */
 @media (orientation: portrait) {
