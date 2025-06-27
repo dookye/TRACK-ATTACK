@@ -35,14 +35,6 @@ const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
 const SPOTIFY_TOKEN_URL     = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_API_BASE_URL  = 'https://api.spotify.com/v1';
 
-// Neue DOM-Elemente für die Auflösungs-UI
-const resolutionArea          = document.getElementById('resolution-area');
-const resolveButton           = document.getElementById('resolve-button');
-const songDetailsArea         = document.getElementById('song-details-area');
-const resolvedArtistTitle     = document.getElementById('resolved-artist-title');
-const resolvedAlbumCover      = document.getElementById('resolved-album-cover');
-const correctButton           = document.getElementById('correct-button');
-const wrongButton             = document.getElementById('wrong-button');
 
 // --- GLOBALE ZUSTANDSVARIABLEN ---
 let accessToken = '';
@@ -77,9 +69,6 @@ let currentPlayingTrack = null; // Speichert den aktuell abgespielten Track (fü
 let currentPlayStartPosition = 0; // Speichert die Startposition des aktuellen Songs
 let isResolvingSong = false; // Flag für die Auflösungsphase
 
-// Variable, um das aktuell gespielte Song-Objekt zu speichern
-let currentResolvedSong       = null; // Speichert das vollständige Song-Objekt für die Auflösung
-let currentSongPlayingId = null; // NEU: Initialisiert, um den aktuell spielenden Song zu verfolgen
 
 // --- PKCE HELFER-FUNKTIONEN ---
 function generateRandomString(length) {
@@ -397,80 +386,71 @@ async function selectRandomSongForRound() {
  * Startet an einer zufälligen Position und spielt für die definierte Dauer.
  */
 async function playSongBasedOnDice() {
-    console.log("playSongBasedOnDice: Starte Songauswahl und -wiedergabe.");
-    playbackStatus.textContent = 'Song wird geladen...';
+    if (!currentPlayingTrack) { // Wenn noch kein Song ausgewählt wurde (erster Durchgang)
+        currentPlayingTrack = await selectRandomSongForRound(); // Holt einen neuen zufälligen Song
+        if (!currentPlayingTrack) {
+            playbackStatus.textContent = 'Fehler: Konnte keinen Song auswählen.';
+            return;
+        }
+    }
 
-    // Sicherstellen, dass das Logo und der Auflösen-Button während des Ladevorgangs inaktiv sind
-    // setLogoAsPlayButton(false); // Macht Logo inaktiv und versteckt AUFLÖSEN-Button
+    if (!isPlayerReady || !player || !activeDeviceId) {
+        playbackStatus.textContent = 'Spotify Player ist noch nicht bereit oder verbunden. Bitte warten...';
+        return;
+    }
 
-    let track = null; // Sicherstellen, dass track hier initialisiert ist
+    playbackStatus.textContent = 'Spiele Song...';
+    logo.classList.remove('active-logo');
+    logo.classList.add('inactive-logo'); // Logo inaktiv machen, während Song läuft
+
+    const trackUri = currentPlayingTrack.track.uri;
+    const trackDurationMs = currentPlayingTrack.track.duration_ms;
+    const playDurationMs = DICE_PARAMETERS[currentDiceRoll].playDurationSec * 1000;
+
+    // Eine neue zufällige Startposition für jede Wiederholung
+    const maxStartPositionMs = trackDurationMs - playDurationMs - 1000; // Mindestens 1 Sekunde Puffer am Ende
+    currentPlayStartPosition = Math.floor(Math.random() * (maxStartPositionMs > 0 ? maxStartPositionMs : 0));
+    if (currentPlayStartPosition < 0) currentPlayStartPosition = 0; // Sicherstellen, dass es nicht negativ wird
+
+
+    console.log(`Spiele ${currentPlayingTrack.track.name} von ${currentPlayingTrack.track.artists[0].name} ` +
+                `ab Position ${currentPlayStartPosition}ms für ${playDurationMs}ms.`);
 
     try {
-        // Zuerst den aktuell gespielten Song pausieren, falls vorhanden
-        if (player && currentSongPlayingId) {
+        await player.activateElement();
+
+        await fetch(`${SPOTIFY_API_BASE_URL}/me/player/play?device_id=${activeDeviceId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+                uris: [trackUri],
+                position_ms: currentPlayStartPosition
+            })
+        });
+
+        currentSongRepetitionsLeft--; // Eine Wiederholung verbraucht
+        currentMaxPointsForSong = Math.max(0, currentMaxPointsForSong - 1); // Punkte abziehen (Minimum 0)
+
+        setTimeout(async () => {
             await player.pause();
-        }
+            playbackStatus.textContent = `Song beendet. ${currentSongRepetitionsLeft + 1} Hördurchgänge verbleiben.`;
+            currentGameState = 'playing'; // Zurück zum Zustand, wo man auf den Logo-Button klicken kann
 
-        // Beispiel: Zufälligen Track aus einer spezifischen Spotify-Playlist abrufen
-        const playlistId = '37i9dQZF1DXcBWIGoYBM5M'; // Beispiel: "Today's Top Hits"
-        const tracks = await getPlaylistTracks(playlistId);
-
-        if (tracks && tracks.length > 0) {
-            const randomIndex = Math.floor(Math.random() * tracks.length);
-            track = tracks[randomIndex].track; // Den Track aus dem Item-Objekt extrahieren
-        } else {
-            console.warn("Keine Tracks aus der Playlist geladen oder Playlist leer.");
-            playbackStatus.textContent = 'Keine Songs gefunden. Probiere eine andere Playlist.';
-            setLogoAsPlayButton(true); // Logo wieder aktivieren, um erneut zu versuchen
-            return; // Funktion beenden, da kein Track zum Abspielen vorhanden ist
-        }
-
-        // --- HIER IST DER ENTSCHEIDENDE CHECK ---
-        if (track && player) { // Sicherstellen, dass track und player definiert sind
-            // Speichere den Song für die Auflösungsphase
-            currentResolvedSong = {
-                id: track.id,
-                uri: track.uri,
-                artist: track.artists.map(artist => artist.name).join(', '),
-                title: track.name,
-                albumCoverUrl: track.album.images[0]?.url || 'placeholder.png',
-            };
-            console.log("Song für Auflösung gespeichert:", currentResolvedSong);
-
-            await player.play({
-                uris: [currentResolvedSong.uri],
-                position_ms: 0,
-            });
-            currentSongPlayingId = currentResolvedSong.id;
-            console.log(`Spiele Song: ${currentResolvedSong.artist} - ${currentResolvedSong.title}`);
-            playbackStatus.textContent = `Spiele ${currentResolvedSong.artist} - ${currentResolvedSong.title}`;
-
-            // Reduziere die verbleibenden Hördurchgänge
-            if (currentSongRepetitionsLeft > 0) {
-                currentSongRepetitionsLeft--;
-                console.log(`Verbleibende Hördurchgänge: ${currentSongRepetitionsLeft}`);
-            }
-
-            // Prüfen, ob dies der letzte Hördurchgang war
-            if (currentSongRepetitionsLeft === 0) {
-                console.log("Letzter Hördurchgang beendet. Bereite Auflösungsphase vor.");
-                setLogoAsPlayButton(false, true); // Logo inaktiv, "AUFLÖSEN"-Button anzeigen
-                currentGameState = 'resolution'; // Spielzustand auf Auflösung setzen
+            if (currentSongRepetitionsLeft < 0) { // Alle Versuche aufgebraucht (0 oder weniger, da es runterzählt)
+                console.log("Alle Hördurchgänge verbraucht. Zeige Auflösen-Buttons.");
+                startResolutionPhase(); // Leite zur Auflösungsphase über
             } else {
-                setLogoAsPlayButton(true); // Logo ist aktiv zum Weiterhören
-                currentGameState = 'songPlaying'; // Zustand bleibt beim Abspielen
+                setLogoAsPlayButton(true); // Logo wieder aktivieren für nächste Wiederholung
             }
-
-        } else {
-            console.warn("Track oder Player nicht verfügbar nach Ladeversuch.");
-            playbackStatus.textContent = 'Fehler beim Abspielen des Songs.';
-            setLogoAsPlayButton(true); // Logo wieder aktivieren, um erneut zu versuchen
-        }
+        }, playDurationMs);
 
     } catch (error) {
-        console.error("Fehler beim Abspielen des Songs:", error);
-        playbackStatus.textContent = 'Ein Fehler ist aufgetreten. Probiere es erneut.';
-        setLogoAsPlayButton(true); // Logo wieder aktivieren
+        console.error('playSongBasedOnDice Fehler:', error);
+        playbackStatus.textContent = `Fehler beim Abspielen: ${error.message}`;
+        // Hier könntest du spezifischere Fehlermeldungen anzeigen, z.B. bei Premium-Fehlern
     }
 }
 
@@ -659,43 +639,6 @@ function updatePlayerScoresDisplay() {
     // document.getElementById('player1-score').textContent = `Spieler 1: ${playerScores[1]} Punkte`;
     // document.getElementById('player2-score').textContent = `Spieler 2: ${playerScores[2]} Punkte`;
     // FÜGE HIER DIE LOGIK HINZU, UM DEINE PUNKTANZEIGE ZU AKTUALISIEREN
-}
-
-/**
- * Behandelt den Klick auf den "AUFLÖSEN"-Button.
- * Zeigt die Song-Details (Interpret, Titel, Cover) und die Richtig/Falsch-Buttons an.
- * @param {Event} event - Das Klick-Event.
- */
-function handleResolveButtonClick(event) {
-    event.preventDefault();
-
-    console.log("AUFLÖSEN Button geklickt.");
-
-    // Bounce-Effekt für den Button
-    resolveButton.classList.remove('logo-bounce');
-    void resolveButton.offsetWidth;
-    resolveButton.classList.add('logo-bounce');
-
-    // Verstecke den "AUFLÖSEN"-Button selbst
-    resolveButton.classList.add('hidden');
-
-    // Zeige den Bereich mit Song-Details und Richtig/Falsch-Buttons an
-    songDetailsArea.classList.remove('hidden');
-
-    // Song-Details befüllen
-    if (currentResolvedSong) {
-        resolvedArtistTitle.textContent = `${currentResolvedSong.artist} - ${currentResolvedSong.title}`;
-        resolvedAlbumCover.src = currentResolvedSong.albumCoverUrl;
-        resolvedAlbumCover.alt = `${currentResolvedSong.title} Album Cover`;
-        console.log(`Songdetails angezeigt: ${currentResolvedSong.artist} - ${currentResolvedSong.title}`);
-    } else {
-        console.warn("Kein Song zum Auflösen verfügbar (currentResolvedSong ist null).");
-        resolvedArtistTitle.textContent = "Song nicht gefunden.";
-        resolvedAlbumCover.src = ""; // Leeres Bild
-    }
-
-    // Hier könnten wir später auch Listener für die Richtig/Falsch-Buttons hinzufügen
-    // Die Logik für die Punktevergabe kommt dann in den Funktionen, die diese Buttons aufrufen.
 }
 
 /**
@@ -1094,19 +1037,15 @@ function showLogoButton() {
  * Konfiguriert den Logo-Button als Play/Pause-Button für das Spiel.
  * @param {boolean} activate - True, um den Button zu aktivieren, False, um ihn zu deaktivieren.
  */
-function setLogoAsPlayButton(activate = true, showResolveButton = false) {
+function setLogoAsPlayButton(activate = true) {
     if (logoClickListener) {
-        logo.removeEventListener('pointerup', logoClickListener);
+        logo.removeEventListener('pointerdown', logoClickListener);
     }
 
-    if (activate) { // Logo wird als Play-Button aktiviert
+    if (activate) {
         console.log("setLogoAsPlayButton: Logo wird zum aktiven Play-Button.");
         logo.classList.remove('inactive-logo');
         logo.classList.add('active-logo');
-        resolveButton.classList.add('hidden'); // AUFLÖSEN-Button verstecken
-        songDetailsArea.classList.add('hidden'); // Song Details verstecken
-        resolutionArea.classList.add('hidden'); // Haupt-Auflösungsbereich verstecken
-
         logoClickListener = function(event) {
             event.preventDefault();
             console.log("Play/Repeat-Button (Logo) geklickt!");
@@ -1114,62 +1053,33 @@ function setLogoAsPlayButton(activate = true, showResolveButton = false) {
             void logo.offsetWidth;
             logo.classList.add('logo-bounce');
 
-            // Verzögerung der Aktion, um den Bounce-Effekt zu zeigen
-            setTimeout(() => {
-                if (isPlayerReady && currentDiceRoll) {
-                    if (currentSongRepetitionsLeft > 0) { // Nur spielen, wenn noch Versuche übrig
-                        playSongBasedOnDice();
-                        setLogoAsPlayButton(false); // Logo inaktiv während Song spielt
-                        currentGameState = 'songPlaying';
-                    } else {
-                        // Wenn keine Versuche mehr, direkt zur Auflösung gehen
-                        console.log("Keine weiteren Hördurchgänge. Auflösungsphase starten.");
-                        setLogoAsPlayButton(false, true); // Logo inaktiv, AUFLÖSEN zeigen
-                        currentGameState = 'resolution';
-                    }
+            if (isPlayerReady && currentDiceRoll) {
+                if (currentSongRepetitionsLeft >= 0) { // Ermöglicht das erste Hören und weitere
+                    playSongBasedOnDice(); // Funktion für die Song-Wiedergabelogik
+                    // Logo direkt nach Klick inaktiv machen, während der Song spielt
+                    setLogoAsPlayButton(false);
+                    currentGameState = 'songPlaying';
                 } else {
-                    console.warn("Player ist nicht bereit oder kein Würfelwert gesetzt.");
-                    playbackStatus.textContent = 'System nicht bereit oder Würfel fehlt.';
+                    console.log("Keine weiteren Hördurchgänge für diesen Song mehr.");
+                    playbackStatus.textContent = 'Keine weiteren Versuche. Löse den Song auf!';
+                    // Logo bleibt inaktiv, da jetzt aufgelöst wird
+                    setLogoAsPlayButton(false);
                 }
-            }, 200); // Dauer der Bounce-Animation
+            } else {
+                console.warn("Player ist nicht bereit oder kein Würfelwert gesetzt.");
+                playbackStatus.textContent = 'System nicht bereit oder Würfel fehlt.';
+            }
         };
-        logo.addEventListener('pointerup', logoClickListener);
-
-    } else if (showResolveButton) { // Zeige den "AUFLÖSEN"-Button an
-        console.log("setLogoAsPlayButton: Zeige AUFLÖSEN Button an.");
-        logo.classList.remove('active-logo');
-        logo.classList.add('inactive-logo'); // Logo inaktiv machen
-        resolveButton.classList.remove('hidden'); // AUFLÖSEN-Button anzeigen
-        songDetailsArea.classList.add('hidden'); // Song Details anfangs verstecken
-
-        // Positioniere den Auflösungsbereich für den aktuellen Spieler
-        positionResolutionArea(activePlayer);
-
-    } else { // Logo wird inaktiv und AUFLÖSEN-Button auch versteckt (z.B. während Song spielt)
-        console.log("setLogoAsPlayButton: Logo wird inaktiv und AUFLÖSEN Button versteckt.");
+        logo.addEventListener('pointerdown', logoClickListener);
+    } else {
+        console.log("setLogoAsPlayButton: Logo wird inaktiv.");
         logo.classList.remove('active-logo');
         logo.classList.add('inactive-logo');
-        resolveButton.classList.add('hidden'); // AUFLÖSEN-Button verstecken
-        songDetailsArea.classList.add('hidden'); // Song Details auch verstecken
-        resolutionArea.classList.add('hidden'); // Haupt-Auflösungsbereich verstecken
+        // Klick-Listener bleibt entfernt
     }
 }
 
-/**
- * Positioniert den Auflösungsbereich basierend auf dem aktiven Spieler.
- * @param {number} playerNum - Die Nummer des aktiven Spielers (1 oder 2).
- */
-function positionResolutionArea(playerNum) {
-    resolutionArea.classList.remove('player1-resolution-area', 'player2-resolution-area');
-    if (playerNum === 1) {
-        resolutionArea.classList.add('player1-resolution-area');
-    } else {
-        resolutionArea.classList.add('player2-resolution-area');
-    }
-    resolutionArea.classList.remove('hidden'); // Sicherstellen, dass der Bereich sichtbar ist
-    console.log(`Resolution Area positioniert für Spieler ${playerNum}`);
-}
-    
+
 // --- Funktion, die den Spotify Login-Status überprüft und den Player initialisiert ---
 // Dies muss vor dem DOMContentLoaded-Listener definiert sein!
 async function checkSpotifyLoginStatus() {
@@ -1224,19 +1134,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("DOMContentLoaded: Logo AnimationEnd Listener für Klick-Bounce hinzugefügt.");
     } else {
         console.error("DOMContentLoaded: Logo-Element (ID: game-logo) nicht gefunden, kann Klick-Bounce Listener nicht hinzufügen.");
-    }
-
-     // Listener für den AUFLÖSEN-Button
-    if (resolveButton) {
-        resolveButton.addEventListener('pointerup', handleResolveButtonClick);
-        resolveButton.addEventListener('animationend', (event) => {
-            if (event.animationName === 'press-down-bounce') {
-                resolveButton.classList.remove('logo-bounce');
-            }
-        });
-        console.log("DOMContentLoaded: 'AUFLÖSEN' Button Listener hinzugefügt.");
-    } else {
-        console.error("DOMContentLoaded: 'AUFLÖSEN' Button (ID: resolve-button) nicht gefunden.");
     }
 
     // --- NEU: AnimationEnd-Listener für die Würfel-Buttons hinzufügen ---
