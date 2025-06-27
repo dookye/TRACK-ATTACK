@@ -396,99 +396,80 @@ async function selectRandomSongForRound() {
  * Startet an einer zufälligen Position und spielt für die definierte Dauer.
  */
 async function playSongBasedOnDice() {
-    if (!currentPlayingTrack) { // Wenn noch kein Song ausgewählt wurde (erster Durchgang)
-        currentPlayingTrack = await selectRandomSongForRound(); // Holt einen neuen zufälligen Song
-        if (!currentPlayingTrack) {
-            playbackStatus.textContent = 'Fehler: Konnte keinen Song auswählen.';
-            return;
-        }
-    }
+    console.log("playSongBasedOnDice: Starte Songauswahl und -wiedergabe.");
+    playbackStatus.textContent = 'Song wird geladen...';
 
-    if (track && player) {
-        // Speichere den Song für die Auflösungsphase
-        currentResolvedSong = {
-            id: track.id,
-            uri: track.uri,
-            artist: track.artists.map(artist => artist.name).join(', '),
-            title: track.name,
-            albumCoverUrl: track.album.images[0]?.url || 'placeholder.png', // Sicherstellen, dass ein Bild da ist
-            // Hier könnten wir später auch Genre und Gefühl speichern
-        };
-        console.log("Song für Auflösung gespeichert:", currentResolvedSong);
-        
-    if (!isPlayerReady || !player || !activeDeviceId) {
-        playbackStatus.textContent = 'Spotify Player ist noch nicht bereit oder verbunden. Bitte warten...';
-        return;
-    }
+    // Sicherstellen, dass das Logo und der Auflösen-Button während des Ladevorgangs inaktiv sind
+    // setLogoAsPlayButton(false); // Macht Logo inaktiv und versteckt AUFLÖSEN-Button
 
-    playbackStatus.textContent = 'Spiele Song...';
-    logo.classList.remove('active-logo');
-    logo.classList.add('inactive-logo'); // Logo inaktiv machen, während Song läuft
-
-    const trackUri = currentPlayingTrack.track.uri;
-    const trackDurationMs = currentPlayingTrack.track.duration_ms;
-    const playDurationMs = DICE_PARAMETERS[currentDiceRoll].playDurationSec * 1000;
-
-    // Eine neue zufällige Startposition für jede Wiederholung
-    const maxStartPositionMs = trackDurationMs - playDurationMs - 1000; // Mindestens 1 Sekunde Puffer am Ende
-    currentPlayStartPosition = Math.floor(Math.random() * (maxStartPositionMs > 0 ? maxStartPositionMs : 0));
-    if (currentPlayStartPosition < 0) currentPlayStartPosition = 0; // Sicherstellen, dass es nicht negativ wird
-
-
-    console.log(`Spiele ${currentPlayingTrack.track.name} von ${currentPlayingTrack.track.artists[0].name} ` +
-                `ab Position ${currentPlayStartPosition}ms für ${playDurationMs}ms.`);
+    let track = null; // Sicherstellen, dass track hier initialisiert ist
 
     try {
-        await player.activateElement();
-
-        await fetch(`${SPOTIFY_API_BASE_URL}/me/player/play?device_id=${activeDeviceId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
-            },
-            body: JSON.stringify({
-                uris: [trackUri],
-                position_ms: currentPlayStartPosition
-            })
-        });
-
-        currentSongRepetitionsLeft--; // Eine Wiederholung verbraucht
-        currentMaxPointsForSong = Math.max(0, currentMaxPointsForSong - 1); // Punkte abziehen (Minimum 0)
-
-        setTimeout(async () => {
+        // Zuerst den aktuell gespielten Song pausieren, falls vorhanden
+        if (player && currentSongPlayingId) {
             await player.pause();
-            playbackStatus.textContent = `Song beendet. ${currentSongRepetitionsLeft + 1} Hördurchgänge verbleiben.`;
-            currentGameState = 'playing'; // Zurück zum Zustand, wo man auf den Logo-Button klicken kann
+        }
 
-            if (currentSongRepetitionsLeft < 0) { // Alle Versuche aufgebraucht (0 oder weniger, da es runterzählt)
-                console.log("Alle Hördurchgänge verbraucht. Zeige Auflösen-Buttons.");
-                startResolutionPhase(); // Leite zur Auflösungsphase über
-            } else {
-                setLogoAsPlayButton(true); // Logo wieder aktivieren für nächste Wiederholung
+        // Beispiel: Zufälligen Track aus einer spezifischen Spotify-Playlist abrufen
+        const playlistId = '37i9dQZF1DXcBWIGoYBM5M'; // Beispiel: "Today's Top Hits"
+        const tracks = await getPlaylistTracks(playlistId);
+
+        if (tracks && tracks.length > 0) {
+            const randomIndex = Math.floor(Math.random() * tracks.length);
+            track = tracks[randomIndex].track; // Den Track aus dem Item-Objekt extrahieren
+        } else {
+            console.warn("Keine Tracks aus der Playlist geladen oder Playlist leer.");
+            playbackStatus.textContent = 'Keine Songs gefunden. Probiere eine andere Playlist.';
+            setLogoAsPlayButton(true); // Logo wieder aktivieren, um erneut zu versuchen
+            return; // Funktion beenden, da kein Track zum Abspielen vorhanden ist
+        }
+
+        // --- HIER IST DER ENTSCHEIDENDE CHECK ---
+        if (track && player) { // Sicherstellen, dass track und player definiert sind
+            // Speichere den Song für die Auflösungsphase
+            currentResolvedSong = {
+                id: track.id,
+                uri: track.uri,
+                artist: track.artists.map(artist => artist.name).join(', '),
+                title: track.name,
+                albumCoverUrl: track.album.images[0]?.url || 'placeholder.png',
+            };
+            console.log("Song für Auflösung gespeichert:", currentResolvedSong);
+
+            await player.play({
+                uris: [currentResolvedSong.uri],
+                position_ms: 0,
+            });
+            currentSongPlayingId = currentResolvedSong.id;
+            console.log(`Spiele Song: ${currentResolvedSong.artist} - ${currentResolvedSong.title}`);
+            playbackStatus.textContent = `Spiele ${currentResolvedSong.artist} - ${currentResolvedSong.title}`;
+
+            // Reduziere die verbleibenden Hördurchgänge
+            if (currentSongRepetitionsLeft > 0) {
+                currentSongRepetitionsLeft--;
+                console.log(`Verbleibende Hördurchgänge: ${currentSongRepetitionsLeft}`);
             }
-        }, playDurationMs);
+
+            // Prüfen, ob dies der letzte Hördurchgang war
+            if (currentSongRepetitionsLeft === 0) {
+                console.log("Letzter Hördurchgang beendet. Bereite Auflösungsphase vor.");
+                setLogoAsPlayButton(false, true); // Logo inaktiv, "AUFLÖSEN"-Button anzeigen
+                currentGameState = 'resolution'; // Spielzustand auf Auflösung setzen
+            } else {
+                setLogoAsPlayButton(true); // Logo ist aktiv zum Weiterhören
+                currentGameState = 'songPlaying'; // Zustand bleibt beim Abspielen
+            }
+
+        } else {
+            console.warn("Track oder Player nicht verfügbar nach Ladeversuch.");
+            playbackStatus.textContent = 'Fehler beim Abspielen des Songs.';
+            setLogoAsPlayButton(true); // Logo wieder aktivieren, um erneut zu versuchen
+        }
 
     } catch (error) {
-        console.error('playSongBasedOnDice Fehler:', error);
-        playbackStatus.textContent = `Fehler beim Abspielen: ${error.message}`;
-        // Hier könntest du spezifischere Fehlermeldungen anzeigen, z.B. bei Premium-Fehlern
-    }
-         // Prüfen, ob dies der letzte Hördurchgang war
-        if (currentSongRepetitionsLeft === 0) {
-            console.log("Letzter Hördurchgang beendet. Bereite Auflösungsphase vor.");
-            // Logo-Button inaktiv machen und "AUFLÖSEN"-Button anzeigen
-            setLogoAsPlayButton(false, true); // (false = Logo inaktiv, true = AUFLÖSEN-Button zeigen)
-            currentGameState = 'resolution'; // Neuen Spielzustand setzen
-        } else {
-            // Es sind noch Hördurchgänge übrig, Logo bleibt Play-Button
-            setLogoAsPlayButton(true); // Logo ist aktiv zum Weiterhören
-            currentGameState = 'songPlaying'; // Zustand bleibt beim Abspielen
-        }
-    } else {
-        console.error("Track oder Player nicht verfügbar, kann Song nicht abspielen.");
-        playbackStatus.textContent = 'Fehler beim Abspielen des Songs. Probiere es erneut.';
-        setLogoAsPlayButton(false); // Buttons inaktiv machen oder Fehler anzeigen
+        console.error("Fehler beim Abspielen des Songs:", error);
+        playbackStatus.textContent = 'Ein Fehler ist aufgetreten. Probiere es erneut.';
+        setLogoAsPlayButton(true); // Logo wieder aktivieren
     }
 }
 
