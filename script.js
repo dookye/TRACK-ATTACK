@@ -538,7 +538,7 @@ function startDiceRollPhase() {
 
         // Event-Listener für die Würfel-Buttons hinzufügen
         diceButtons.forEach(button => {
-            button.addEventListener('pointerdown', handleDiceSelection, { once: true }); // { once: true } sorgt dafür, dass der Listener nach einmaliger Ausführung entfernt wird
+            button.addEventListener('pointerup', handleDiceSelection, { once: true }); // { once: true } sorgt dafür, dass der Listener nach einmaliger Ausführung entfernt wird
         });
 
     }, animationDurationMs);
