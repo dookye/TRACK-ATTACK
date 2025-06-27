@@ -235,6 +235,11 @@ body {
     }
 }
 
+/* Die Klasse, die beim Klick hinzugefügt wird */
+.logo-bounce { /* Behalten wir den Namen bei, aber die Animation ist neu */
+    animation: press-down-bounce 0.2s ease-out; /* Schneller und knackiger */
+}
+
 /* Aktiver Zustand des Logos */
 .active-logo {
     filter: brightness(100%);
@@ -250,12 +255,6 @@ body {
     opacity: 0.5; /* Dein bestehender Opacity-Wert für die Dunkelheit */
     pointer-events: none; /* Macht das Element nicht klickbar */
 }
-
-/* Die Klasse, die beim Klick hinzugefügt wird */
-.logo-bounce { /* Behalten wir den Namen bei, aber die Animation ist neu */
-    animation: press-down-bounce 0.2s ease-out; /* Schneller und knackiger */
-}
-
 
 /* NEU: Würfel-Container */
 #dice-container {
