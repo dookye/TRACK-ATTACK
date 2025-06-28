@@ -1,11 +1,11 @@
-// spotifyAuth.js
 import { CLIENT_ID, REDIRECT_URI, SCOPES, SPOTIFY_AUTHORIZE_URL, SPOTIFY_TOKEN_URL } from './constants.js';
-// Importiere die benötigten Variablen direkt aus gameState.js
-import { setAccessToken, setIsSpotifySDKLoaded, setIsPlayerReady, setPlayer, setActiveDeviceId, accessToken, isSpotifySDKLoaded } from './gameState.js'; // <-- isSpotifySDKLoaded hier hinzugefügt
+// Importiere die benötigten Variablen direkt aus gameState.js, einschließlich isSpotifySDKLoaded
+import { setAccessToken, setIsSpotifySDKLoaded, setIsPlayerReady, setPlayer, setActiveDeviceId, accessToken, isSpotifySDKLoaded } from './gameState.js';
 import { generateCodeChallenge, generateRandomString } from './utils.js';
 import { initializeSpotifyPlayer } from './spotifyPlayer.js';
 import { showLoginScreen } from './uiManager.js';
 import { playbackStatus } from './domElements.js';
+// Importiere handlePlayerReady direkt aus main.js
 import { handlePlayerReady } from './main.js';
 
 /**
@@ -96,7 +96,7 @@ window.onSpotifyWebPlaybackSDKReady = () => {
     console.log('window.onSpotifyWebPlaybackSDKReady: Spotify Web Playback SDK ist bereit.');
     setIsSpotifySDKLoaded(true);
 
-    if (accessToken) {
+    if (accessToken) { // Greift auf den direkt importierten accessToken zu
         console.log("window.onSpotifyWebPlaybackSDKReady: Access Token vorhanden, initialisiere Player.");
         initializeSpotifyPlayer();
     } else {
@@ -119,20 +119,21 @@ export async function checkSpotifyLoginStatus() {
         history.replaceState({}, document.title, REDIRECT_URI); // Code aus URL entfernen
 
         // Korrektur hier: Prüfe direkt die importierte Variable isSpotifySDKLoaded
-        if (success && isSpotifySDKLoaded) { // <-- HIER die Änderung
+        if (success && isSpotifySDKLoaded) {
             console.log("checkSpotifyLoginStatus: Access Token und SDK bereit, initialisiere Player.");
             initializeSpotifyPlayer();
-        } else if (success) {
+        } else if (success) { // Wenn Access Token da, aber SDK noch nicht geladen
             console.log("checkSpotifyLoginStatus: Access Token vorhanden, aber SDK noch nicht geladen. Player-Initialisierung wartet auf SDK Ready.");
+            // initializeSpotifyPlayer wird dann von window.onSpotifyWebPlaybackSDKReady() aufgerufen
         } else {
             console.log("checkSpotifyLoginStatus: Token-Austausch fehlgeschlagen oder kein Access Token.");
-            showLoginScreen();
+            showLoginScreen(); // Zeigt den Login-Screen mit Fehlermeldung
         }
     } else if (localStorage.getItem('access_token') && localStorage.getItem('expires_in') > Date.now()) {
         console.log('checkSpotifyLoginStatus: Vorhandenen Access Token aus localStorage geladen.');
         setAccessToken(localStorage.getItem('access_token'));
         // Korrektur hier: Prüfe direkt die importierte Variable isSpotifySDKLoaded
-        if (isSpotifySDKLoaded) { // <-- HIER die Änderung
+        if (isSpotifySDKLoaded) {
             console.log("checkSpotifyLoginStatus: Vorhandener Token und SDK bereit, initialisiere Player.");
             initializeSpotifyPlayer();
         } else {
@@ -141,6 +142,6 @@ export async function checkSpotifyLoginStatus() {
     } else {
         console.log('checkSpotifyLoginStatus: Kein gültiger Access Token vorhanden. Zeige Login-Screen.');
         playbackStatus.textContent = 'Bitte logge dich mit Spotify ein.';
-        showLoginScreen();
+        showLoginScreen(); // Sicherstellen, dass der Login-Screen aktiv ist
     }
 }
