@@ -1,7 +1,8 @@
 import { logo, logoContainer, loginArea, initialClickBlocker, orientationMessage, fullscreenMessage, gameContainer, diceContainer, diceAnimation, diceButtonsContainer, diceButtons, playbackStatus } from './domElements.js';
-import { currentGameState, introAnimationPlayed, logoClickListener, setLogoClickListener, setIntroAnimationPlayed, currentDiceRoll, isPlayerReady, currentSongRepetitionsLeft, setCurrentGameState, setFullscreenRequested, fullscreenRequested } from './gameState.js';
+import { currentGameState, introAnimationPlayed, logoClickListener, setLogoClickListener, setIntroAnimationPlayed, currentDiceRoll, isPlayerReady, currentSongRepetitionsLeft, setCurrentGameState, setFullscreenRequested, fullscreenRequested, activePlayer, playerScores } from './gameState.js'; // activePlayer und playerScores hinzugefügt
 import { checkOrientationAndFullscreen } from './main.js'; // Main wird importiert für den Check
-import { startDiceRollPhase, playSongBasedOnDice } from './gameLogic.js'; // GameLogic wird importiert
+import { startDiceRollPhase } from './gameLogic.js'; // GameLogic wird importiert
+import { playSongBasedOnDice } from './spotifyPlayer.js'; // KORRIGIERT: playSongBasedOnDice kommt von spotifyPlayer.js
 
 /**
  * Zeigt den Login-Screen an.
@@ -325,9 +326,7 @@ export function hideAllGameUI() {
  */
 export function updatePlayerScoresDisplay() {
     // Importiere playerScores aus gameState.js
-    const activePlayer = window.gameState.activePlayer; // Workaround, da activePlayer in gameLogic.js gesetzt wird
-    const playerScores = window.gameState.playerScores;
-
+    // Da `playerScores` und `activePlayer` nun direkt importiert werden, ist der Workaround `window.gameState` nicht mehr nötig.
     console.log(`Spielstand: Spieler 1: ${playerScores[1]}, Spieler 2: ${playerScores[2]}`);
     // Beispiel: Wenn du P-Tags mit IDs 'player1-score' und 'player2-score' hast:
     // document.getElementById('player1-score').textContent = `Spieler 1: ${playerScores[1]} Punkte`;
