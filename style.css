@@ -35,8 +35,8 @@ body {
     text-align: center;
     /* HIER IST DIE WICHTIGE ZEILE: Transition auf 'background' (um Gradienten zu ermöglichen) */
     /* Aber beachte: Wenn .playerX-active-bg background-color verwendet,
-        ist der Übergang ZWISCHEN background-color und linear-gradient abrupt.
-        Der Übergang ZWISCHEN den background-colors ist sanft. */
+       ist der Übergang ZWISCHEN background-color und linear-gradient abrupt.
+       Der Übergang ZWISCHEN den background-colors ist sanft. */
     transition: background 2s ease-in-out, opacity 2s ease-in-out;
     transition: background 2s ease-in-out;
     opacity: 1; /* Standardmäßig sichtbar */
@@ -55,11 +55,11 @@ body {
 .score-screen-bg {
     background: linear-gradient(to right, #3498db, #e91e63); /* Von Blau nach Pink */
     /* WICHTIG: Da der .game-container seine Transition auf 'background' hat,
-        und diese Klasse 'background' verwendet, sollte der Übergang
-        von der einfachen background-color zu diesem Gradienten ABRUPT sein.
-        Die Transition auf 'background' wirkt sich aber auf den opacity-Übergang und ggf. andere background-Eigenschaften aus,
-        die auch über 'background' gesteuert werden.
-        Wir müssen hier 'background' verwenden, damit der Gradient angezeigt wird. */
+       und diese Klasse 'background' verwendet, sollte der Übergang
+       von der einfachen background-color zu diesem Gradienten ABRUPT sein.
+       Die Transition auf 'background' wirkt sich aber auf den opacity-Übergang und ggf. andere background-Eigenschaften aus,
+       die auch über 'background' gesteuert werden.
+       Wir müssen hier 'background' verwenden, damit der Gradient angezeigt wird. */
 }
 
 
