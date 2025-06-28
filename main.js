@@ -40,7 +40,7 @@ export function checkOrientationAndFullscreen() {
  * Leitet zur Orientierungs-/Fullscreen-Prüfung weiter.
  * Diese Funktion wird vom spotifyPlayer.js aufgerufen.
  */
-export function handlePlayerReady() {
+export function handlePlayerReady() { // <-- DIESE FUNKTION WIRD HIER EXPORTIERT
     console.log("main.js handlePlayerReady: Spotify Player ist verbunden. Starte Orientierungs-/Fullscreen-Check.");
     loginArea.classList.add('hidden'); // Login-Bereich ausblenden
     checkOrientationAndFullscreen(); // Jetzt den Orientierungs- und Fullscreen-Check starten
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     console.log("DOMContentLoaded: Würfel-Buttons AnimationEnd Listener für Klick-Bounce hinzugefügt.");
     // --- ENDE NEU ---
-    
+
     // Spotify SDK Skript dynamisch laden
     const script = document.createElement('script');
     script.src = 'https://sdk.scdn.co/spotify-player.js';
