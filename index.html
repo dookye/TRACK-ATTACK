@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRACK-ATTACK2</title>
+    <title>TRACK-ATTACK3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <style>
@@ -192,8 +192,8 @@
         let player;
         let deviceId;
         let accessToken;
-        let playerSdkReady = false; // Flag for Spotify SDK global callback readiness
-        let playerConnected = false; // Flag for successful player connection
+        let playerSdkReady = false; 
+        let playerConnected = false; 
 
         const gameState = {
             currentPlayer: 1,
@@ -248,7 +248,7 @@
         async function generateCodeChallenge(codeVerifier) {
             const data = new TextEncoder().encode(codeVerifier);
             const digest = await window.crypto.subtle.digest('SHA-256', data);
-            return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+            return btoa(String.fromCharCode.apply(null, [...new Uint9Array(digest)]))
                 .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         }
 
@@ -264,7 +264,7 @@
         loginButton.addEventListener('click', async () => {
             console.log('Login button clicked.');
             showToast('Verbinde mit Spotify...');
-            showScreen(null); // Hide all screens immediately upon click
+            showScreen(null); // Blende alle Bildschirme aus, um einen Übergang anzuzeigen
             
             const codeVerifier = generateRandomString(128);
             const codeChallenge = await generateCodeChallenge(codeVerifier);
@@ -293,7 +293,6 @@
                 console.log('Spotify Player is ready with device ID:', device_id);
                 deviceId = device_id;
                 playerSdkReady = true; 
-                // Wenn Token schon da ist, Player verbinden
                 if (accessToken) {
                     console.log('Access token present on SDK ready, attempting connection...');
                     attemptPlayerConnection();
@@ -344,9 +343,8 @@
                 });
             } else {
                 console.log('Conditions not met for player connection. SDK Ready:', playerSdkReady, 'Access Token:', !!accessToken);
-                // If this is called prematurely (e.g., from handleRedirect before SDK is ready),
-                // it just logs and waits for onSpotifyWebPlaybackSDKReady to fire.
-                // It does *not* explicitly show 'login' here as it might still be loading.
+                // Wenn dies verfrüht aufgerufen wird (z.B. von handleRedirect bevor SDK bereit ist),
+                // wartet es einfach und showToast zeigt "Verbinde Spotify Player..." an.
             }
         }
 
@@ -357,7 +355,7 @@
 
             if (code) {
                 showToast('Verarbeite Spotify-Code...');
-                showScreen(null); // Clear screen while processing
+                showScreen(null); // Bildschirm leeren, während verarbeitet wird
                 
                 const codeVerifier = window.sessionStorage.getItem('code_verifier');
                 const body = new URLSearchParams({
@@ -390,7 +388,7 @@
                 }
             } else if (window.sessionStorage.getItem('access_token')) {
                 showToast('Lade gespeicherten Spotify-Token...');
-                showScreen(null); // Clear screen while processing
+                showScreen(null); // Bildschirm leeren, während verarbeitet wird
                 
                 accessToken = window.sessionStorage.getItem('access_token');
                 console.log('Stored access token found, attempting player connection.');
@@ -457,7 +455,6 @@
             }).catch(err => {
                  showToast('Vollbildmodus konnte nicht gestartet werden.');
                  console.error('Fullscreen request failed:', err);
-                 // Fallback if fullscreen fails: proceed directly to intro or main logo
                  if (!gameState.hasInitialAnimationPlayed) {
                      showScreen('intro');
                      document.getElementById('intro-logo').classList.add('animate-bounce-in');
@@ -502,7 +499,6 @@
             gameState.round = 1;
             gameState.player1Score = 0;
             gameState.player2Score = 0;
-            // gameState.hasInitialAnimationPlayed remains true for subsequent games in same session
         }
 
         function startNewTurn() {
@@ -799,7 +795,6 @@
         function endTurn() {
             console.log('Ending turn.');
             hideResolutionUI();
-            // Der Rundenwechsel wurde in startNewTurn() verschoben, um die Logik zu straffen.
             setTimeout(startNewTurn, 1000);
         }
         
@@ -815,7 +810,6 @@
                      screens.score.classList.remove('animate-fade-out');
                      resetGameState();
                      gameContainer.className = 'h-full w-full transition-colors duration-1000 bg-black';
-                     // Logo-Button für neues Spiel bereitstellen, OHNE erneute Animation
                      logoButton.onclick = () => {
                         logoButton.classList.add('button-bounce');
                         setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
