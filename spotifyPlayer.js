@@ -6,7 +6,7 @@ import { startResolutionPhase } from './gameLogic.js';
 
 // Importiere handlePlayerReady aus main.js, um eine Zirkelabhängigkeit zu vermeiden
 // Diese Funktion wird vom Player aufgerufen, sobald er bereit ist.
-import { handlePlayerReady } from './main.js'; 
+import { handlePlayerReady } from './main.js'; // <-- KEINE EXPORTIERUNG HIER, NUR IMPORT
 
 /**
  * Initialisiert und verbindet den Spotify Player.
@@ -14,7 +14,7 @@ import { handlePlayerReady } from './main.js';
 export async function initializeSpotifyPlayer() {
     console.log('initializeSpotifyPlayer: Versuche Spotify Player zu initialisieren...');
 
-    if (!isPlayerReady) { 
+    if (!isPlayerReady) {
         if (!accessToken || localStorage.getItem('expires_in') < Date.now()) {
             console.warn('initializeSpotifyPlayer: Access Token fehlt oder ist abgelaufen. Zeige Login-Screen.');
             playbackStatus.textContent = 'Fehler: Spotify Session abgelaufen oder nicht angemeldet. Bitte neu anmelden.';
