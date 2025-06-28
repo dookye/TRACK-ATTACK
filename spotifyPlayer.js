@@ -4,13 +4,17 @@ import { playbackStatus, logo } from './domElements.js';
 import { showLoginScreen, setLogoAsPlayButton } from './uiManager.js';
 import { startResolutionPhase } from './gameLogic.js';
 
+// Importiere handlePlayerReady aus main.js, um eine Zirkelabhängigkeit zu vermeiden
+// Diese Funktion wird vom Player aufgerufen, sobald er bereit ist.
+import { handlePlayerReady } from './main.js'; 
+
 /**
  * Initialisiert und verbindet den Spotify Player.
  */
 export async function initializeSpotifyPlayer() {
     console.log('initializeSpotifyPlayer: Versuche Spotify Player zu initialisieren...');
 
-    if (!isPlayerReady) { // Hier ist es wichtiger zu wissen, ob der Player READY ist, nicht nur das SDK geladen
+    if (!isPlayerReady) { 
         if (!accessToken || localStorage.getItem('expires_in') < Date.now()) {
             console.warn('initializeSpotifyPlayer: Access Token fehlt oder ist abgelaufen. Zeige Login-Screen.');
             playbackStatus.textContent = 'Fehler: Spotify Session abgelaufen oder nicht angemeldet. Bitte neu anmelden.';
@@ -21,7 +25,7 @@ export async function initializeSpotifyPlayer() {
         if (player) {
             console.log('initializeSpotifyPlayer: Spotify Player bereits initialisiert. Nichts zu tun.');
             playbackStatus.textContent = 'Spotify Player verbunden!';
-            handlePlayerReady();
+            handlePlayerReady(); // Rufe den globalen Ready-Handler auf
             return;
         }
 
@@ -46,7 +50,7 @@ export async function initializeSpotifyPlayer() {
             playbackStatus.textContent = 'Spotify Player verbunden!';
             transferPlayback(device_id);
             console.log("Spotify Player ready! Du bist jetzt eingeloggt und der Player ist bereit.");
-            handlePlayerReady();
+            handlePlayerReady(); // Rufe den globalen Ready-Handler auf
         });
 
         newPlayer.addListener('not_ready', ({ device_id }) => {
@@ -103,18 +107,8 @@ export async function initializeSpotifyPlayer() {
         });
     } else {
         console.log("initializeSpotifyPlayer: Player ist bereits bereit, überspringe Initialisierung.");
-        handlePlayerReady();
+        handlePlayerReady(); // Rufe den globalen Ready-Handler auf
     }
-}
-
-/**
- * Wird aufgerufen, wenn der Spotify Player erfolgreich initialisiert wurde.
- * Leitet zur Orientierungs-/Fullscreen-Prüfung weiter.
- * Diese Funktion bleibt hier, da sie eng mit der Player-Initialisierung verbunden ist.
- */
-export function handlePlayerReady() {
-    console.log("handlePlayerReady: Spotify Player ist verbunden.");
-    // Wird von main.js aufgerufen, um UI-Manager-Funktionen zu nutzen
 }
 
 /**
