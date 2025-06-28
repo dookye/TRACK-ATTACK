@@ -1,8 +1,8 @@
-import { spotifyLoginButton, logo, diceButtons, gameContainer, loginArea, logoContainer, orientationMessage, fullscreenMessage, playbackStatus } from './domElements.js'; // playbackStatus hier importieren
+import { spotifyLoginButton, logo, diceButtons, gameContainer, loginArea, logoContainer, orientationMessage, fullscreenMessage, playbackStatus } from './domElements.js';
 import { checkSpotifyLoginStatus, redirectToSpotifyAuthorize } from './spotifyAuth.js';
 import { showLoginScreen, showMessage, hideMessage, activateFullscreenAndRemoveListener, showLogoButton, setLogoAsPlayButton } from './uiManager.js';
+// Importiere die benötigten Variablen direkt aus gameState.js
 import { isPlayerReady, currentGameState, setIsPlayerReady, setFullscreenRequested, fullscreenRequested } from './gameState.js';
-// import { DICE_PARAMETERS } from './constants.js'; // Nicht direkt hier benötigt
 
 /**
  * Überprüft die Geräteorientierung und den Fullscreen-Status und zeigt entsprechende Meldungen an.
@@ -106,11 +106,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Event Listener für Orientierungsänderungen und Fenstergrößenänderungen
     window.addEventListener('resize', () => {
+        // Prüfe direkt die importierte Variable isPlayerReady
         if (isPlayerReady) { // Nur prüfen, wenn Player bereit ist (nach Login)
             checkOrientationAndFullscreen();
         }
     });
     window.addEventListener('orientationchange', () => {
+        // Prüfe direkt die importierte Variable isPlayerReady
         if (isPlayerReady) { // Nur prüfen, wenn Player bereit ist (nach Login)
             checkOrientationAndFullscreen();
         }
@@ -121,6 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!document.fullscreenElement) {
             console.log("Fullscreen verlassen.");
             setFullscreenRequested(false);
+            // Prüfe direkt die importierte Variable isPlayerReady
             if (isPlayerReady) {
                 checkOrientationAndFullscreen();
             } else {
@@ -129,6 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             console.log("Fullscreen aktiviert.");
             // Wenn Fullscreen aktiviert wird und wir im Startscreen sind, direkt Logo zeigen
+            // Prüfe direkt die importierte Variable currentGameState
             if (currentGameState === 'startScreen' || currentGameState === 'loading') { // Auch wenn noch 'loading'
                 showLogoButton();
             }
