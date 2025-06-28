@@ -1,4 +1,4 @@
-import { spotifyLoginButton, logo, diceButtons, gameContainer, loginArea, logoContainer, orientationMessage, fullscreenMessage } from './domElements.js';
+import { spotifyLoginButton, logo, diceButtons, gameContainer, loginArea, logoContainer, orientationMessage, fullscreenMessage, playbackStatus } from './domElements.js'; // playbackStatus hier importieren
 import { checkSpotifyLoginStatus, redirectToSpotifyAuthorize } from './spotifyAuth.js';
 import { showLoginScreen, showMessage, hideMessage, activateFullscreenAndRemoveListener, showLogoButton, setLogoAsPlayButton } from './uiManager.js';
 import { isPlayerReady, currentGameState, setIsPlayerReady, setFullscreenRequested, fullscreenRequested } from './gameState.js';
@@ -93,7 +93,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Beim Laden der Seite direkt den Spotify Login-Bereich anzeigen
     loginArea.classList.remove('hidden');
     logoContainer.classList.add('hidden', 'initial-hidden'); // Logo verstecken und initial positionieren
-    playbackStatus.textContent = ''; // Anfangs leer
+    
+    // VERSCHOBEN: playbackStatus Initialisierung in den DOMContentLoaded-Block
+    if (playbackStatus) { // Zusätzliche Prüfung, um Sicherzustellen, dass es existiert
+        playbackStatus.textContent = ''; // Anfangs leer
+    } else {
+        console.error("DOMContentLoaded: playbackStatus-Element nicht gefunden.");
+    }
 
     // Prüfe den Login-Status sofort
     await checkSpotifyLoginStatus();
