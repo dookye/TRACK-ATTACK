@@ -3,18 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRACK-ATTACK</title>
-    <!-- Chosen Palette: Harmonious Black & Player Colors -->
-    <!-- Application Structure Plan: A Single Page Application model using distinct 'screen' divs (e.g., login, game, score) that are shown/hidden with JavaScript. This approach directly maps to the linear, step-by-step user flow of the game, making state management simple and efficient without page reloads. A persistent logo div acts as the central game controller. This structure is chosen for its speed and suitability for a self-contained game application. -->
-    <!-- Visualization & Content Choices: 
-        - Login: Standard Spotify-styled button for user trust and familiarity (HTML/CSS).
-        - Game Flow: Sequential screens managed by JS to guide the user without confusion.
-        - Logo/Buttons: Image-based buttons with CSS keyframe animations for 'bounce' and 'blur' effects to provide tactile feedback and indicate state (active/inactive).
-        - Dice/Genre Selection: Animated sequences (GIF for dice, CSS blink for genres) to build anticipation before player choice.
-        - Speed Round: Large, animated text overlays (CSS animations) and a JS-powered countdown to create urgency and excitement.
-        - Score Screen: A final, impactful display using a two-tone gradient background and large typography to clearly declare the game's outcome.
-        - Library/Method: Vanilla JS for all logic, Spotify Web Playback SDK for audio, Tailwind CSS for styling. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <title>TRACK-ATTACK01</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <style>
@@ -89,7 +78,6 @@
 <body class="h-full w-full overflow-hidden bg-black text-white select-none">
 
     <div id="app-container" class="relative h-full w-full">
-        <!-- Login Screen -->
         <div id="login-screen" class="screen active h-full w-full flex-col justify-center items-center p-4">
             <h1 class="text-3xl md:text-5xl font-bold mb-8 text-center">Willkommen bei TRACK-ATTACK</h1>
             <p class="mb-8 text-center text-gray-300">Bitte logge dich mit deinem Spotify Premium-Account ein, um zu spielen.</p>
@@ -98,29 +86,23 @@
             </button>
         </div>
 
-        <!-- Orientation Screen -->
         <div id="orientation-screen" class="screen h-full w-full flex-col justify-center items-center text-center p-4">
             <h2 class="text-2xl font-bold">Bitte drehe dein Gerät in den Landscape-Modus, um zu spielen.</h2>
         </div>
 
-        <!-- Fullscreen Screen -->
         <div id="fullscreen-screen" class="screen h-full w-full flex-col justify-center items-center cursor-pointer p-4">
             <h2 class="text-3xl font-bold animate-pulse">Klicke, um den Vollbildmodus zu starten</h2>
         </div>
         
-        <!-- Game Screens Container -->
         <div id="game-container" class="h-full w-full transition-colors duration-1000">
-             <!-- Persistent Logo Button -->
-            <div id="logo-container" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 hidden">
+             <div id="logo-container" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 hidden">
                  <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo" id="logo-button" class="logo-button w-32 h-32 md:w-48 md:h-48 cursor-pointer transition-transform duration-200">
             </div>
 
-            <!-- Intro Animation Screen -->
             <div id="intro-screen" class="screen h-full w-full flex-col justify-center items-center">
                  <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo Animation" id="intro-logo" class="w-48 h-48 md:w-64 md:h-64">
             </div>
 
-            <!-- Dice Screen -->
             <div id="dice-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
                 <div id="dice-animation-container" class="mb-12">
                     <img src="https://i.imgur.com/yFpPnR9.gif" alt="Würfel Animation" class="w-48 h-48">
@@ -133,16 +115,13 @@
                 </div>
             </div>
 
-            <!-- Genre Screen -->
             <div id="genre-screen" class="screen h-full w-full flex-col justify-center items-center p-4 gap-4">
                  <h2 id="genre-title" class="text-3xl font-bold mb-8 text-center">Wähle ein Genre</h2>
                  <div id="genre-buttons" class="grid grid-cols-2 gap-4 w-full max-w-2xl">
-                     <!-- Genre buttons will be injected here -->
-                 </div>
+                     </div>
             </div>
             
-             <!-- Rate Screen -->
-            <div id="rate-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
+             <div id="rate-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
                 <div id="resolution-container" class="hidden absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-md p-4 text-center z-10">
                     <img id="album-cover" src="" alt="Album Cover" class="w-40 h-40 mx-auto mb-4 rounded-lg shadow-lg">
                     <h3 id="track-title" class="text-2xl font-bold"></h3>
@@ -155,13 +134,11 @@
                 </div>
             </div>
 
-             <!-- Speed Round/Timer Screen -->
-            <div id="overlay-screen" class="screen absolute inset-0 h-full w-full flex-col justify-center items-center z-40 bg-black/50">
+             <div id="overlay-screen" class="screen absolute inset-0 h-full w-full flex-col justify-center items-center z-40 bg-black/50">
                 <h2 id="overlay-text" class="text-6xl md:text-9xl font-black text-white drop-shadow-lg"></h2>
             </div>
         </div>
 
-        <!-- Score Screen -->
         <div id="score-screen" class="screen h-full w-full flex justify-around items-center score-gradient-bg p-4">
             <div class="text-center">
                 <h2 class="text-3xl md:text-5xl font-bold mb-4">Spieler 1</h2>
@@ -202,7 +179,8 @@
         let player;
         let deviceId;
         let accessToken;
-        let playerReady = false; // Flag to indicate if Spotify player SDK is ready
+        let playerSdkReady = false; // Flag for Spotify SDK global callback readiness
+        let playerConnected = false; // Flag for successful player connection
 
         const gameState = {
             currentPlayer: 1,
@@ -290,22 +268,45 @@
 
             player.addListener('ready', ({ device_id }) => {
                 deviceId = device_id;
-                playerReady = true; // Set flag
-                // If accessToken is already available, connect now
+                playerSdkReady = true; // SDK is ready
+                // Attempt to connect player if token is already available
                 if (accessToken) {
-                    checkDeviceOrientation(); // Proceed to next step after player is ready and token is there
+                    attemptPlayerConnection();
                 }
             });
 
             player.addListener('not_ready', ({ device_id }) => {
                  showToast('Gerät nicht bereit.');
+                 playerConnected = false;
             });
-            player.addListener('initialization_error', ({ message }) => { showToast('Initialisierungsfehler: ' + message); });
-            player.addListener('authentication_error', ({ message }) => { showToast('Authentifizierungsfehler: ' + message); showScreen('login'); });
-            player.addListener('account_error', ({ message }) => { showToast('Account-Fehler: ' + message); });
-            
-            // Do NOT call player.connect() here, call it only after accessToken is confirmed
+            player.addListener('initialization_error', ({ message }) => { showToast('Initialisierungsfehler: ' + message); playerConnected = false; });
+            player.addListener('authentication_error', ({ message }) => { showToast('Authentifizierungsfehler: ' + message); showScreen('login'); playerConnected = false; });
+            player.addListener('account_error', ({ message }) => { showToast('Account-Fehler: ' + message); playerConnected = false; });
         };
+
+        // Function to attempt player connection and proceed
+        function attemptPlayerConnection() {
+            if (playerSdkReady && accessToken) {
+                player.connect().then(success => {
+                    if (success) {
+                        console.log('Spotify Player erfolgreich verbunden!');
+                        playerConnected = true;
+                        checkDeviceOrientation(); // Proceed to next step only after successful connection
+                    } else {
+                        showToast('Verbindung zum Spotify Player fehlgeschlagen.');
+                        playerConnected = false;
+                        showScreen('login'); // Fallback to login if connection fails
+                    }
+                }).catch(err => {
+                    showToast('Fehler beim Verbinden des Spotify Players.');
+                    playerConnected = false;
+                    showScreen('login'); // Fallback to login if connection fails
+                });
+            } else {
+                // If not all conditions are met, wait for them. This might happen if handleRedirect finishes before SDK is ready.
+                showToast('Warte auf Spotify Player Bereitschaft...');
+            }
+        }
 
         async function handleRedirect() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -330,29 +331,17 @@
                     accessToken = data.access_token;
                     window.sessionStorage.setItem('access_token', accessToken);
                     window.history.pushState({}, document.title, window.location.pathname);
-                    // Now that we have the token, connect the player if it's ready
-                    if (playerReady && player) { // Check if player object is initialized and ready flag is set
-                         player.connect().then(() => {
-                             checkDeviceOrientation();
-                         }).catch(err => showToast('Fehler beim Verbinden des Players nach Token-Empfang.'));
-                    } else {
-                        // Player not ready yet, it will connect once onSpotifyWebPlaybackSDKReady fires and sets playerReady
-                        showToast('Spotify Player wird geladen...');
-                    }
+                    attemptPlayerConnection(); // Try connecting now that token is available
                 } catch (error) {
                     showToast('Fehler bei der Authentifizierung.');
                     showScreen('login');
                 }
             } else if (window.sessionStorage.getItem('access_token')) {
                 accessToken = window.sessionStorage.getItem('access_token');
-                // If token exists from previous session, try to connect player
-                if (playerReady && player) {
-                     player.connect().then(() => {
-                         checkDeviceOrientation();
-                     }).catch(err => showToast('Fehler beim Verbinden des Players mit gespeichertem Token.'));
-                } else {
-                    showToast('Spotify Player wird geladen...');
-                }
+                attemptPlayerConnection(); // Try connecting with stored token
+            } else {
+                // No code and no stored token, stay on login
+                showScreen('login');
             }
         }
         
