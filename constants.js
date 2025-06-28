@@ -10,12 +10,12 @@ export const SCOPES = [
     'user-modify-playback-state'
 ];
 
-// --- SPOTIFY API ENDPUNKTE (KORREKTE SPOTIFY-URLS!) ---
-// Spotify API URLs müssen korrekt sein, sonst gibt es Fehler.
-// Ich habe diese URLs korrigiert, um auf die echten Spotify-Endpunkte zu zeigen.
-export const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
-export const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
-export const SPOTIFY_API_BASE_URL = 'https://api.spotify.com/v1';
+// --- SPOTIFY API ENDPUNKTE (BITTE HIER DEINE KORREKTEN URLS EINFÜGEN!) ---
+// ACHTUNG: Die hier gezeigten URLs sind nur PLATZHALTER.
+// ERSETZE SIE DURCH DEINE ECHTEN SPOTIFY API ENDPUNKTE!
+export const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'; // ERSETZE DIESE!
+export const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';     // ERSETZE DIESE!
+export const SPOTIFY_API_BASE_URL = 'https://api.spotify.com/v1'; // ERSETZE DIESE!
 
 // NEU für Spieler & Rundenmanagement
 export const MAX_ROUNDS_PER_PLAYER = 10; // Max. Runden pro Spieler
