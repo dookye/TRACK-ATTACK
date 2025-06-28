@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRACK-ATTACK03</title>
+    <title>TRACK-ATTACK</title>
     <!-- Chosen Palette: Harmonious Black & Player Colors -->
     <!-- Application Structure Plan: A Single Page Application model using distinct 'screen' divs (e.g., login, game, score) that are shown/hidden with JavaScript. This approach directly maps to the linear, step-by-step user flow of the game, making state management simple and efficient without page reloads. A persistent logo div acts as the central game controller. This structure is chosen for its speed and suitability for a self-contained game application. -->
     <!-- Visualization & Content Choices: 
@@ -112,24 +112,24 @@
         <div id="game-container" class="h-full w-full transition-colors duration-1000">
              <!-- Persistent Logo Button -->
             <div id="logo-container" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 hidden">
-                 <img src="logo3.png" alt="Logo" id="logo-button" class="logo-button w-32 h-32 md:w-48 md:h-48 cursor-pointer transition-transform duration-200">
+                 <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo" id="logo-button" class="logo-button w-32 h-32 md:w-48 md:h-48 cursor-pointer transition-transform duration-200">
             </div>
 
             <!-- Intro Animation Screen -->
             <div id="intro-screen" class="screen h-full w-full flex-col justify-center items-center">
-                 <img src="logo3.png" alt="Logo Animation" id="intro-logo" class="w-48 h-48 md:w-64 md:h-64">
+                 <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo Animation" id="intro-logo" class="w-48 h-48 md:w-64 md:h-64">
             </div>
 
             <!-- Dice Screen -->
             <div id="dice-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
                 <div id="dice-animation-container" class="mb-12">
-                    <img src="w-ani.gif" alt="Würfel Animation" class="w-48 h-48">
+                    <img src="https://i.imgur.com/yFpPnR9.gif" alt="Würfel Animation" class="w-48 h-48">
                 </div>
                 <div id="dice-selection-container" class="hidden flex-wrap justify-center items-center gap-4 md:gap-8">
-                    <img data-value="3" src="w-3.png" alt="Würfel 3" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
-                    <img data-value="4" src="w-4.png" alt="Würfel 4" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
-                    <img data-value="5" src="w-5.png" alt="Würfel 5" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
-                    <img data-value="7" src="w-7.png" alt="Würfel 7" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="3" src="https://i.imgur.com/2p1xLqR.png" alt="Würfel 3" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="4" src="https://i.imgur.com/k6O6VqS.png" alt="Würfel 4" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="5" src="https://i.imgur.com/FzJ0x6D.png" alt="Würfel 5" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="7" src="https://i.imgur.com/XUfsqx5.png" alt="Würfel 7" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
                 </div>
             </div>
 
@@ -202,6 +202,7 @@
         let player;
         let deviceId;
         let accessToken;
+        let playerReady = false; // Flag to indicate if Spotify player SDK is ready
 
         const gameState = {
             currentPlayer: 1,
@@ -279,6 +280,33 @@
             window.location = 'https://accounts.spotify.com/authorize?' + args;
         });
 
+        // Define onSpotifyWebPlaybackSDKReady globally and early
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            player = new Spotify.Player({
+                name: 'TRACK-ATTACK',
+                getOAuthToken: cb => { cb(accessToken); }, // Will use the accessToken that handleRedirect sets
+                volume: 0.5
+            });
+
+            player.addListener('ready', ({ device_id }) => {
+                deviceId = device_id;
+                playerReady = true; // Set flag
+                // If accessToken is already available, connect now
+                if (accessToken) {
+                    checkDeviceOrientation(); // Proceed to next step after player is ready and token is there
+                }
+            });
+
+            player.addListener('not_ready', ({ device_id }) => {
+                 showToast('Gerät nicht bereit.');
+            });
+            player.addListener('initialization_error', ({ message }) => { showToast('Initialisierungsfehler: ' + message); });
+            player.addListener('authentication_error', ({ message }) => { showToast('Authentifizierungsfehler: ' + message); showScreen('login'); });
+            player.addListener('account_error', ({ message }) => { showToast('Account-Fehler: ' + message); });
+            
+            // Do NOT call player.connect() here, call it only after accessToken is confirmed
+        };
+
         async function handleRedirect() {
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
@@ -302,38 +330,32 @@
                     accessToken = data.access_token;
                     window.sessionStorage.setItem('access_token', accessToken);
                     window.history.pushState({}, document.title, window.location.pathname);
-                    initializePlayer();
+                    // Now that we have the token, connect the player if it's ready
+                    if (playerReady && player) { // Check if player object is initialized and ready flag is set
+                         player.connect().then(() => {
+                             checkDeviceOrientation();
+                         }).catch(err => showToast('Fehler beim Verbinden des Players nach Token-Empfang.'));
+                    } else {
+                        // Player not ready yet, it will connect once onSpotifyWebPlaybackSDKReady fires and sets playerReady
+                        showToast('Spotify Player wird geladen...');
+                    }
                 } catch (error) {
                     showToast('Fehler bei der Authentifizierung.');
                     showScreen('login');
                 }
             } else if (window.sessionStorage.getItem('access_token')) {
                 accessToken = window.sessionStorage.getItem('access_token');
-                initializePlayer();
+                // If token exists from previous session, try to connect player
+                if (playerReady && player) {
+                     player.connect().then(() => {
+                         checkDeviceOrientation();
+                     }).catch(err => showToast('Fehler beim Verbinden des Players mit gespeichertem Token.'));
+                } else {
+                    showToast('Spotify Player wird geladen...');
+                }
             }
         }
         
-        function initializePlayer() {
-            window.onSpotifyWebPlaybackSDKReady = () => {
-                player = new Spotify.Player({
-                    name: 'TRACK-ATTACK',
-                    getOAuthToken: cb => { cb(accessToken); },
-                    volume: 0.5
-                });
-                player.addListener('ready', ({ device_id }) => {
-                    deviceId = device_id;
-                    checkDeviceOrientation();
-                });
-                player.addListener('not_ready', ({ device_id }) => {
-                     showToast('Gerät nicht bereit.');
-                });
-                player.addListener('initialization_error', ({ message }) => { showToast('Initialisierungsfehler: ' + message); });
-                player.addListener('authentication_error', ({ message }) => { showToast('Authentifizierungsfehler: ' + message); showScreen('login'); });
-                player.addListener('account_error', ({ message }) => { showToast('Account-Fehler: ' + message); });
-                player.connect();
-            };
-        }
-
         function checkDeviceOrientation() {
             const orientationCheck = () => {
                 if (window.matchMedia("(orientation: portrait)").matches && window.innerHeight > window.innerWidth) {
@@ -351,31 +373,31 @@
                 if (!gameState.hasInitialAnimationPlayed) {
                     showScreen('intro');
                     document.getElementById('intro-logo').classList.add('animate-bounce-in');
-                    setTimeout(() => {
-                        document.getElementById('intro-logo').classList.remove('animate-bounce-in'); // Animation auf intro-screen zurücksetzen
-                        showScreen(null); // intro-screen ausblenden
+                    setTimeout(() => { // This timeout is for the intro logo animation duration
+                        document.getElementById('intro-logo').classList.remove('animate-bounce-in');
+                        showScreen(null); // Intro-Screen ausblenden
                         logoContainer.style.display = 'block'; // Persistenten Logo-Button anzeigen
                         logoButton.classList.add('animate-bounce-in'); // Persistenten Logo-Button animieren
                         setTimeout(() => {
-                            logoButton.classList.remove('animate-bounce-in'); // Animation des Logo-Buttons zurücksetzen
-                            logoButton.onclick = () => { // Event-Handler für ersten Spielstart festlegen
+                            logoButton.classList.remove('animate-bounce-in');
+                            logoButton.onclick = () => {
                                 logoButton.classList.add('button-bounce');
                                 setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
                                 startFirstRound();
                             };
-                            gameState.hasInitialAnimationPlayed = true; // Flag setzen
+                            gameState.hasInitialAnimationPlayed = true;
                         }, 1000); // Dauer der Logo-Button-Animation
-                    }, 1500); // Dauer der Intro-Logo-Animation
+                    }, 1500); 
                 } else {
                     // Wenn Animation bereits abgespielt wurde, direkt Logo-Button anzeigen und für neues Spiel aktivieren
                     showScreen(null); // Vollbildschirm ausblenden
                     logoContainer.style.display = 'block';
-                    logoButton.onclick = () => { // Event-Handler für neues Spiel festlegen
+                    logoButton.onclick = () => {
                         logoButton.classList.add('button-bounce');
                         setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
                         startFirstRound();
                     };
-                    setButtonState(logoButton, true); // Sicherstellen, dass er aktiv ist
+                    setButtonState(logoButton, true);
                 }
             }).catch(err => {
                  showToast('Vollbildmodus konnte nicht gestartet werden.');
@@ -383,7 +405,7 @@
                  if (!gameState.hasInitialAnimationPlayed) {
                      showScreen('intro');
                      document.getElementById('intro-logo').classList.add('animate-bounce-in');
-                     setTimeout(() => {
+                     setTimeout(() => { // This timeout is for the intro logo animation duration in fallback
                         document.getElementById('intro-logo').classList.remove('animate-bounce-in');
                         showScreen(null);
                         logoContainer.style.display = 'block';
@@ -715,7 +737,7 @@
              document.getElementById('wrong-button').classList.add('hidden');
         }
 
-        handleRedirect();
+        handleRedirect(); // Call handleRedirect immediately on DOMContentLoaded
     });
     </script>
 </body>
