@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRACK-ATTACK02</title>
+    <title>TRACK-ATTACK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <style>
@@ -70,7 +70,7 @@
             pointer-events: none;
         }
         #toast.show { opacity: 1; }
-        .z-front {
+        .z-front { /* New style for screens that should be in front of the logo */
             z-index: 30; 
         }
     </style>
@@ -78,7 +78,8 @@
 <body class="h-full w-full overflow-hidden bg-black text-white select-none">
 
     <div id="app-container" class="relative h-full w-full">
-        <div id="login-screen" class="screen active h-full w-full flex-col justify-center items-center p-4">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
             <h1 class="text-3xl md:text-5xl font-bold mb-8 text-center">Willkommen bei TRACK-ATTACK</h1>
             <p class="mb-8 text-center text-gray-300">Bitte logge dich mit deinem Spotify Premium-Account ein, um zu spielen.</p>
             <button id="login-button" class="bg-[#1DB954] text-white font-bold py-4 px-8 rounded-full text-lg hover:bg-[#1ed760] transition-colors">
@@ -86,23 +87,29 @@
             </button>
         </div>
 
+        <!-- Orientation Screen -->
         <div id="orientation-screen" class="screen h-full w-full flex-col justify-center items-center text-center p-4">
             <h2 class="text-2xl font-bold">Bitte drehe dein Gerät in den Landscape-Modus, um zu spielen.</h2>
         </div>
 
+        <!-- Fullscreen Screen -->
         <div id="fullscreen-screen" class="screen h-full w-full flex-col justify-center items-center cursor-pointer p-4">
             <h2 class="text-3xl font-bold animate-pulse">Klicke, um den Vollbildmodus zu starten</h2>
         </div>
         
+        <!-- Game Screens Container -->
         <div id="game-container" class="h-full w-full transition-colors duration-1000">
-             <div id="logo-container" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 hidden">
+             <!-- Persistent Logo Button -->
+            <div id="logo-container" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 hidden">
                  <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo" id="logo-button" class="logo-button w-32 h-32 md:w-48 md:h-48 cursor-pointer transition-transform duration-200">
             </div>
 
+            <!-- Intro Animation Screen -->
             <div id="intro-screen" class="screen h-full w-full flex-col justify-center items-center">
                  <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo Animation" id="intro-logo" class="w-48 h-48 md:w-64 md:h-64">
             </div>
 
+            <!-- Dice Screen -->
             <div id="dice-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
                 <div id="dice-animation-container" class="mb-12">
                     <img src="https://i.imgur.com/yFpPnR9.gif" alt="Würfel Animation" class="w-48 h-48">
@@ -115,13 +122,15 @@
                 </div>
             </div>
 
+            <!-- Genre Screen -->
             <div id="genre-screen" class="screen h-full w-full flex-col justify-center items-center p-4 gap-4">
                  <h2 id="genre-title" class="text-3xl font-bold mb-8 text-center">Wähle ein Genre</h2>
                  <div id="genre-buttons" class="grid grid-cols-2 gap-4 w-full max-w-2xl">
                      </div>
             </div>
             
-             <div id="rate-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
+             <!-- Rate Screen -->
+            <div id="rate-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
                 <div id="resolution-container" class="hidden absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-md p-4 text-center z-10">
                     <img id="album-cover" src="" alt="Album Cover" class="w-40 h-40 mx-auto mb-4 rounded-lg shadow-lg">
                     <h3 id="track-title" class="text-2xl font-bold"></h3>
@@ -134,11 +143,13 @@
                 </div>
             </div>
 
-             <div id="overlay-screen" class="screen absolute inset-0 h-full w-full flex-col justify-center items-center z-40 bg-black/50">
+             <!-- Speed Round/Timer Screen -->
+            <div id="overlay-screen" class="screen absolute inset-0 h-full w-full flex-col justify-center items-center z-40 bg-black/50">
                 <h2 id="overlay-text" class="text-6xl md:text-9xl font-black text-white drop-shadow-lg"></h2>
             </div>
         </div>
 
+        <!-- Score Screen -->
         <div id="score-screen" class="screen h-full w-full flex justify-around items-center score-gradient-bg p-4">
             <div class="text-center">
                 <h2 class="text-3xl md:text-5xl font-bold mb-4">Spieler 1</h2>
@@ -206,13 +217,15 @@
         function showScreen(screenName) {
             Object.values(screens).forEach(s => {
                 s.classList.remove('active');
-                s.classList.remove('z-front');
+                s.classList.remove('z-front'); // Remove z-index when not active
             });
             if (screens[screenName]) {
                 screens[screenName].classList.add('active');
+                // Apply z-index for screens that should be in front of the logo
                 if (screenName === 'dice' || screenName === 'genre' || screenName === 'rate') {
                     screens[screenName].classList.add('z-front');
                 }
+                // overlay-screen already has z-40 in its HTML, no need to add z-front here.
             }
         }
 
@@ -256,17 +269,18 @@
             window.location = 'https://accounts.spotify.com/authorize?' + args;
         });
 
+        // Define onSpotifyWebPlaybackSDKReady globally and early
         window.onSpotifyWebPlaybackSDKReady = () => {
             player = new Spotify.Player({
                 name: 'TRACK-ATTACK',
-                getOAuthToken: cb => { cb(accessToken); },
+                getOAuthToken: cb => { cb(accessToken); }, // Will use the accessToken that handleRedirect sets
                 volume: 0.5
             });
 
             player.addListener('ready', ({ device_id }) => {
                 deviceId = device_id;
-                playerSdkReady = true;
-                // Wenn Token schon da ist, Player verbinden
+                playerSdkReady = true; // SDK is ready
+                // Attempt to connect player if token is already available
                 if (accessToken) {
                     attemptPlayerConnection();
                 }
@@ -283,30 +297,34 @@
             player.addListener('account_error', ({ message }) => { showToast('Account-Fehler: ' + message); playerConnected = false; showScreen('login'); });
         };
 
+        // Function to attempt player connection and proceed
         function attemptPlayerConnection() {
-            if (playerSdkReady && accessToken && player) { // Füge player-Prüfung hinzu
+            if (playerSdkReady && accessToken) {
+                // Only connect if not already connected
+                if (playerConnected) { // This condition prevents reconnecting if already connected
+                    checkDeviceOrientation();
+                    return;
+                }
                 player.connect().then(success => {
                     if (success) {
                         console.log('Spotify Player erfolgreich verbunden!');
                         playerConnected = true;
-                        // Kleine Verzögerung, um Rendering-Probleme zu vermeiden
-                        setTimeout(() => {
-                            checkDeviceOrientation(); // Erst hier zum nächsten Screen wechseln
-                        }, 100); 
+                        checkDeviceOrientation(); // Proceed to next step only after successful connection
                     } else {
                         showToast('Verbindung zum Spotify Player fehlgeschlagen.');
                         playerConnected = false;
-                        showScreen('login');
+                        showScreen('login'); // Fallback to login if connection fails
                     }
                 }).catch(err => {
                     showToast('Fehler beim Verbinden des Spotify Players: ' + err.message);
                     playerConnected = false;
-                    showScreen('login');
+                    showScreen('login'); // Fallback to login if connection fails
                 });
             } else {
-                showToast('Warte auf Spotify Player Bereitschaft oder Token...');
-                // Hier keine direkte Bildschirmanzeige, da noch nicht alle Bedingungen erfüllt sind.
-                // showScreen('login'); ist nicht notwendig, da wir hier noch im Wartezustand sind.
+                // If not all conditions are met, wait for them. This might happen if handleRedirect finishes before SDK is ready.
+                // It's better for handleRedirect to be the one that falls back to login if no token is found.
+                // If SDK is not ready yet, we simply wait. The ready listener will call attemptPlayerConnection.
+                console.log('Warte auf Spotify Player Bereitschaft oder Token...');
             }
         }
 
@@ -333,38 +351,30 @@
                     accessToken = data.access_token;
                     window.sessionStorage.setItem('access_token', accessToken);
                     window.history.pushState({}, document.title, window.location.pathname);
-                    attemptPlayerConnection();
+                    attemptPlayerConnection(); // Try connecting now that token is available
                 } catch (error) {
                     showToast('Fehler bei der Authentifizierung.');
                     showScreen('login');
                 }
             } else if (window.sessionStorage.getItem('access_token')) {
                 accessToken = window.sessionStorage.getItem('access_token');
-                attemptPlayerConnection();
+                attemptPlayerConnection(); // Try connecting with stored token
             } else {
-                // Keine Weiterleitung oder gespeicherter Token, bleibe auf Login
+                // No code and no stored token, show login screen immediately
                 showScreen('login');
             }
         }
         
         function checkDeviceOrientation() {
-            // Nur wenn der Player wirklich verbunden ist, weitermachen
-            if (playerConnected) {
-                const orientationCheck = () => {
-                    if (window.matchMedia("(orientation: portrait)").matches && window.innerHeight > window.innerWidth) {
-                        showScreen('orientation');
-                    } else {
-                        showScreen('fullscreen');
-                    }
-                };
-                orientationCheck();
-                window.removeEventListener('resize', orientationCheck); // Alten Listener entfernen, falls vorhanden
-                window.addEventListener('resize', orientationCheck); // Neuen Listener hinzufügen
-            } else {
-                // Sollte nicht passieren, wenn attemptPlayerConnection richtig funktioniert, aber zur Sicherheit
-                showToast('Player nicht verbunden. Bitte neu anmelden.');
-                showScreen('login');
-            }
+            const orientationCheck = () => {
+                if (window.matchMedia("(orientation: portrait)").matches && window.innerHeight > window.innerWidth) {
+                    showScreen('orientation');
+                } else {
+                    showScreen('fullscreen');
+                }
+            };
+            orientationCheck();
+            window.addEventListener('resize', orientationCheck);
         }
 
         screens.fullscreen.addEventListener('click', () => {
@@ -372,11 +382,11 @@
                 if (!gameState.hasInitialAnimationPlayed) {
                     showScreen('intro');
                     document.getElementById('intro-logo').classList.add('animate-bounce-in');
-                    setTimeout(() => {
+                    setTimeout(() => { // This timeout is for the intro logo animation duration
                         document.getElementById('intro-logo').classList.remove('animate-bounce-in');
-                        showScreen(null);
-                        logoContainer.style.display = 'block';
-                        logoButton.classList.add('animate-bounce-in');
+                        showScreen(null); // Intro-Screen ausblenden
+                        logoContainer.style.display = 'block'; // Persistenten Logo-Button anzeigen
+                        logoButton.classList.add('animate-bounce-in'); // Persistenten Logo-Button animieren
                         setTimeout(() => {
                             logoButton.classList.remove('animate-bounce-in');
                             logoButton.onclick = () => {
@@ -385,10 +395,11 @@
                                 startFirstRound();
                             };
                             gameState.hasInitialAnimationPlayed = true;
-                        }, 1000);
+                        }, 1000); // Dauer der Logo-Button-Animation
                     }, 1500); 
                 } else {
-                    showScreen(null);
+                    // Wenn Animation bereits abgespielt wurde, direkt Logo-Button anzeigen und für neues Spiel aktivieren
+                    showScreen(null); // Vollbildschirm ausblenden
                     logoContainer.style.display = 'block';
                     logoButton.onclick = () => {
                         logoButton.classList.add('button-bounce');
@@ -399,10 +410,11 @@
                 }
             }).catch(err => {
                  showToast('Vollbildmodus konnte nicht gestartet werden.');
+                 // Fallback, falls Vollbild fehlschlägt, aber Flag für Animation respektieren
                  if (!gameState.hasInitialAnimationPlayed) {
                      showScreen('intro');
                      document.getElementById('intro-logo').classList.add('animate-bounce-in');
-                     setTimeout(() => {
+                     setTimeout(() => { // This timeout is for the intro logo animation duration in fallback
                         document.getElementById('intro-logo').classList.remove('animate-bounce-in');
                         showScreen(null);
                         logoContainer.style.display = 'block';
@@ -430,9 +442,12 @@
             });
         });
 
+        // Die startGame Funktion wurde in den fullscreen.addEventListener integriert, um die Logik zu straffen.
+        // Sie ist nicht mehr als separate Funktion in der alten Form notwendig.
+
         function startFirstRound() {
-            logoButton.onclick = null;
-            setButtonState(logoButton, false);
+            logoButton.onclick = null; // Den Klick-Handler des Logo-Buttons deaktivieren
+            setButtonState(logoButton, false); // Logo-Button inaktiv setzen
             startNewTurn();
         }
         
@@ -441,13 +456,14 @@
             gameState.round = 1;
             gameState.player1Score = 0;
             gameState.player2Score = 0;
+            // gameState.hasInitialAnimationPlayed bleibt true, da die Seite nicht neu geladen wird
         }
 
         function startNewTurn() {
-            if (gameState.currentPlayer === 2) {
+            if (gameState.currentPlayer === 2) { // Changed from currentPlayer === 1 to 2, so round only increments after player 2 finishes
                 gameState.round++;
             }
-            if (gameState.round > gameState.totalRounds) {
+            if (gameState.round > gameState.totalRounds) { // Check total rounds after incrementing
                 showEndScreen();
                 return;
             }
@@ -540,6 +556,7 @@
                 const data = await response.json();
                 const tracks = data.items.filter(item => item.track && item.track.preview_url !== null);
                 if (tracks.length === 0) {
+                     // Fallback for tracks without preview_url
                     const allTracks = data.items.filter(item => item.track);
                     gameState.currentTrack = allTracks[Math.floor(Math.random() * allTracks.length)].track;
                     showToast('Warnung: Kein Vorschaulink für diesen Song verfügbar, verwende den gesamten Song.');
@@ -607,8 +624,9 @@
                     if (gameState.listeningAttempts > 0) {
                         setButtonState(logoButton, true);
                     } else {
+                        // Nach dem letzten Hörversuch wird der Logo-Button dauerhaft inaktiv und es muss aufgelöst werden
                         setButtonState(logoButton, false); 
-                        handleResolution();
+                        handleResolution(); // Automatische Auflösung nach dem letzten Versuch
                     }
                 }, songDuration);
             } catch(e) {
@@ -623,16 +641,16 @@
                 gameState.speedRoundTimer = null;
              }
             player.pause();
-            setButtonState(logoButton, false);
+            setButtonState(logoButton, false); // Logo-Button inaktiv, sobald aufgelöst wird
             
-            const points = Math.max(1, gameState.selectedDice - (gameState.selectedDice - gameState.listeningAttempts));
+            const points = Math.max(1, gameState.selectedDice - (gameState.selectedDice - gameState.listeningAttempts)); // Korrigierte Punkteberechnung
 
             document.getElementById('resolve-button').classList.add('hidden');
             document.getElementById('correct-button').classList.remove('hidden');
             document.getElementById('wrong-button').classList.remove('hidden');
 
             const resolutionContainer = document.getElementById('resolution-container');
-            document.getElementById('album-cover').src = gameState.currentTrack.album.images[0]?.url || 'https://placehold.co/160x160/000000/FFFFFF?text=No+Cover';
+            document.getElementById('album-cover').src = gameState.currentTrack.album.images[0]?.url || 'https://placehold.co/160x160/000000/FFFFFF?text=No+Cover'; // Fallback
             document.getElementById('track-title').textContent = gameState.currentTrack.name;
             document.getElementById('track-artist').textContent = gameState.currentTrack.artists.map(a => a.name).join(', ');
             resolutionContainer.classList.remove('hidden');
@@ -657,7 +675,7 @@
             showScreen('overlay');
             overlayText.textContent = timeLeft;
             overlayText.classList.remove('animate-zoom-fade');
-            void overlayText.offsetWidth;
+            void overlayText.offsetWidth; // Trigger reflow
             overlayText.style.animation = 'none';
 
             gameState.speedRoundTimer = setInterval(() => {
@@ -666,15 +684,16 @@
                 if (timeLeft <= 0) {
                     clearInterval(gameState.speedRoundTimer);
                     gameState.speedRoundTimer = null;
-                    showScreen(null); // Overlay ausblenden, direkt zum Rate-Bildschirm
-                    handleResolution();
+                    showScreen('rate'); // Zurück zum Rate-Bildschirm
+                    handleResolution(); // Automatische Auflösung
                 }
             }, 1000);
         }
 
         function endTurn() {
-            hideResolutionUI();
-            setTimeout(startNewTurn, 1000);
+            hideResolutionUI(); // UI-Elemente für Auflösung ausblenden
+            // Der Rundenwechsel wurde in startNewTurn() verschoben, um die Logik zu straffen.
+            setTimeout(startNewTurn, 1000); // Eine Sekunde Verzögerung vor dem nächsten Zug
         }
         
         function showEndScreen() {
@@ -688,6 +707,7 @@
                      screens.score.classList.remove('animate-fade-out');
                      resetGameState();
                      gameContainer.className = 'h-full w-full transition-colors duration-1000 bg-black';
+                     // Logo-Button für neues Spiel bereitstellen, OHNE erneute Animation
                      logoButton.onclick = () => {
                         logoButton.classList.add('button-bounce');
                         setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
@@ -702,11 +722,11 @@
             const overlayText = document.getElementById('overlay-text');
             overlayText.textContent = text;
             overlayText.classList.remove('animate-zoom-fade');
-            void overlayText.offsetWidth;
+            void overlayText.offsetWidth; // Trigger reflow
             overlayText.classList.add('animate-zoom-fade');
             showScreen('overlay');
             setTimeout(() => {
-                showScreen(null);
+                showScreen(null); // Overlay ausblenden
                 if (callback) callback();
             }, duration);
         }
@@ -726,7 +746,7 @@
              document.getElementById('wrong-button').classList.add('hidden');
         }
 
-        handleRedirect();
+        handleRedirect(); // Call handleRedirect immediately on DOMContentLoaded
     });
     </script>
 </body>
