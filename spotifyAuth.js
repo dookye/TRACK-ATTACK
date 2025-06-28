@@ -1,9 +1,11 @@
 import { CLIENT_ID, REDIRECT_URI, SCOPES, SPOTIFY_AUTHORIZE_URL, SPOTIFY_TOKEN_URL } from './constants.js';
 import { setAccessToken, setIsSpotifySDKLoaded, setIsPlayerReady, setPlayer, setActiveDeviceId, accessToken } from './gameState.js';
 import { generateCodeChallenge, generateRandomString } from './utils.js';
-import { initializeSpotifyPlayer, handlePlayerReady } from './spotifyPlayer.js';
+import { initializeSpotifyPlayer } from './spotifyPlayer.js';
 import { showLoginScreen } from './uiManager.js';
 import { playbackStatus } from './domElements.js';
+// Importiere handlePlayerReady direkt aus main.js
+import { handlePlayerReady } from './main.js'; // <-- KORREKTUR HIER
 
 /**
  * Leitet den Benutzer zum Spotify-Login weiter (PKCE Flow).
@@ -115,7 +117,7 @@ export async function checkSpotifyLoginStatus() {
         const success = await exchangeCodeForTokens(code); // Warte auf Erfolg
         history.replaceState({}, document.title, REDIRECT_URI); // Code aus URL entfernen
 
-        if (success && accessToken && setIsSpotifySDKLoaded) { // access token ist immer da, wenn success true ist
+        if (success && window.gameState.isSpotifySDKLoaded) { // access token ist immer da, wenn success true ist UND SDK geladen
             console.log("checkSpotifyLoginStatus: Access Token und SDK bereit, initialisiere Player.");
             initializeSpotifyPlayer();
         } else if (success) { // Wenn Access Token da, aber SDK noch nicht geladen
@@ -128,7 +130,7 @@ export async function checkSpotifyLoginStatus() {
     } else if (localStorage.getItem('access_token') && localStorage.getItem('expires_in') > Date.now()) {
         console.log('checkSpotifyLoginStatus: Vorhandenen Access Token aus localStorage geladen.');
         setAccessToken(localStorage.getItem('access_token'));
-        if (setIsSpotifySDKLoaded) { // Prüfe isSpotifySDKLoaded anstelle der globalen Variable
+        if (window.gameState.isSpotifySDKLoaded) { // Prüfe isSpotifySDKLoaded aus gameState
             console.log("checkSpotifyLoginStatus: Vorhandener Token und SDK bereit, initialisiere Player.");
             initializeSpotifyPlayer();
         } else {
