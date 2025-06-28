@@ -1,12 +1,11 @@
+// spotifyPlayer.js
 import { SPOTIFY_API_BASE_URL, PLAYLIST_ID, DICE_PARAMETERS } from './constants.js';
-import { player, accessToken, activeDeviceId, isPlayerReady, currentPlaylistTracks, currentPlayingTrack, currentDiceRoll, currentSongRepetitionsLeft, currentMaxPointsForSong, currentPlayStartPosition, setPlayer, setActiveDeviceId, setIsPlayerReady, setCurrentPlaylistTracks, setCurrentPlayingTrack, setCurrentSongRepetitionsLeft, setCurrentMaxPointsForSong, setCurrentPlayStartPosition, setIsResolvingSong } from './gameState.js';
+// Importiere benötigte Variablen direkt aus gameState.js
+import { player, accessToken, activeDeviceId, isPlayerReady, currentPlaylistTracks, currentPlayingTrack, currentDiceRoll, currentSongRepetitionsLeft, currentMaxPointsForSong, currentPlayStartPosition, setPlayer, setActiveDeviceId, setIsPlayerReady, setCurrentPlaylistTracks, setCurrentPlayingTrack, setCurrentSongRepetitionsLeft, setCurrentMaxPointsForSong, setCurrentPlayStartPosition, setIsResolvingSong, isSpotifySDKLoaded } from './gameState.js'; // <-- isSpotifySDKLoaded hier hinzugefügt
 import { playbackStatus, logo } from './domElements.js';
 import { showLoginScreen, setLogoAsPlayButton } from './uiManager.js';
 import { startResolutionPhase } from './gameLogic.js';
-
-// Importiere handlePlayerReady aus main.js, um eine Zirkelabhängigkeit zu vermeiden
-// Diese Funktion wird vom Player aufgerufen, sobald er bereit ist.
-import { handlePlayerReady } from './main.js'; // <-- KEINE EXPORTIERUNG HIER, NUR IMPORT
+import { handlePlayerReady } from './main.js';
 
 /**
  * Initialisiert und verbindet den Spotify Player.
@@ -110,6 +109,25 @@ export async function initializeSpotifyPlayer() {
         handlePlayerReady(); // Rufe den globalen Ready-Handler auf
     }
 }
+
+/**
+ * Globaler Callback für das Spotify Web Playback SDK.
+ * WIRD VOM SDK AUFGERUFEN, SOBALD ES GELADEN IST.
+ * Muss global am Window-Objekt sein, damit das SDK es finden kann.
+ */
+window.onSpotifyWebPlaybackSDKReady = () => {
+    console.log('window.onSpotifyWebPlaybackSDKReady: Spotify Web Playback SDK ist bereit.');
+    setIsSpotifySDKLoaded(true); // Setze den Zustand hier
+
+    // Prüfe direkt die importierte Variable accessToken
+    if (accessToken) { // <-- HIER die Änderung (falls hier auch window.gameState.accessToken stand)
+        console.log("window.onSpotifyWebPlaybackSDKReady: Access Token vorhanden, initialisiere Player.");
+        initializeSpotifyPlayer();
+    } else {
+        console.log("window.onSpotifyWebPlaybackSDKReady: Kein Access Token vorhanden. Warte auf Login.");
+        showLoginScreen();
+    }
+};
 
 /**
  * Überträgt die Wiedergabe auf den neu erstellten Web Playback SDK Player.
