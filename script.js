@@ -60,7 +60,7 @@ const DICE_PARAMETERS = {
     3: { maxPoints: 3, playDurationSec: 7, repetitions: 2 }, // 3 Hördurchgänge (1. Hören + 2 Wiederholungen)
     4: { maxPoints: 4, playDurationSec: 7, repetitions: 3 }, // 4 Hördurchgänge
     5: { maxPoints: 5, playDurationSec: 7, repetitions: 4 }, // 5 Hördurchgänge
-    7: { maxPoints: 7, playDurationSec: 2, repetitions: 7 }  // 8 Hördurchgänge
+    7: { maxPoints: 7, playDurationSec: 2, repetitions: 6 }  // 7 Hördurchgänge
 };
 let currentDiceRoll = null; // Der vom Spieler gewählte Würfelwert für die aktuelle Runde
 let currentSongRepetitionsLeft = 0; // Verbleibende Wiederholungen für den aktuellen Song
