@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRACK-ATTACK</title>
+    <title>TRACK-ATTACK1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <style>
@@ -16,10 +16,13 @@
             display: none;
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
+            /* Ensure screens that are not 'active' don't block interaction or show */
+            pointer-events: none;
         }
         .screen.active {
             display: flex;
             opacity: 1;
+            pointer-events: auto; /* Enable interactions when active */
         }
         .player1-bg { background-color: #3b82f6; }
         .player2-bg { background-color: #ec4899; }
@@ -70,7 +73,8 @@
             pointer-events: none;
         }
         #toast.show { opacity: 1; }
-        .z-front { /* New style for screens that should be in front of the logo */
+        /* z-front is applied dynamically for game screens to be above logo-container (z-20) */
+        .z-front { 
             z-index: 30; 
         }
     </style>
@@ -93,7 +97,7 @@
         </div>
 
         <!-- Fullscreen Screen -->
-        <div id="fullscreen-screen" class="screen h-full w-full flex-col justify-center items-center cursor-pointer p-4">
+        <div id="fullscreen-screen" class="screen h-full w-full flex-col justify-center items-center cursor-pointer p-4 z-30">
             <h2 class="text-3xl font-bold animate-pulse">Klicke, um den Vollbildmodus zu starten</h2>
         </div>
         
@@ -217,15 +221,15 @@
         function showScreen(screenName) {
             Object.values(screens).forEach(s => {
                 s.classList.remove('active');
-                s.classList.remove('z-front'); // Remove z-index when not active
+                s.classList.remove('z-front'); // Entferne z-front von allen Bildschirmen
             });
             if (screens[screenName]) {
                 screens[screenName].classList.add('active');
-                // Apply z-index for screens that should be in front of the logo
+                // Füge z-front nur für Bildschirme hinzu, die über dem Logo sein sollen
                 if (screenName === 'dice' || screenName === 'genre' || screenName === 'rate') {
                     screens[screenName].classList.add('z-front');
                 }
-                // overlay-screen already has z-40 in its HTML, no need to add z-front here.
+                // Der fullscreen-screen hat z-30 bereits im HTML, daher hier nicht nötig.
             }
         }
 
@@ -269,18 +273,18 @@
             window.location = 'https://accounts.spotify.com/authorize?' + args;
         });
 
-        // Define onSpotifyWebPlaybackSDKReady globally and early
+        // Definiere onSpotifyWebPlaybackSDKReady global und frühzeitig
         window.onSpotifyWebPlaybackSDKReady = () => {
             player = new Spotify.Player({
                 name: 'TRACK-ATTACK',
-                getOAuthToken: cb => { cb(accessToken); }, // Will use the accessToken that handleRedirect sets
+                getOAuthToken: cb => { cb(accessToken); },
                 volume: 0.5
             });
 
             player.addListener('ready', ({ device_id }) => {
                 deviceId = device_id;
-                playerSdkReady = true; // SDK is ready
-                // Attempt to connect player if token is already available
+                playerSdkReady = true; // SDK ist bereit
+                // Versuche Player zu verbinden, wenn Token bereits verfügbar ist
                 if (accessToken) {
                     attemptPlayerConnection();
                 }
@@ -289,19 +293,18 @@
             player.addListener('not_ready', ({ device_id }) => {
                  showToast('Gerät nicht bereit.');
                  playerConnected = false;
-                 // Eventuell hier zum Login-Screen zurück, falls keine Wiederherstellung möglich
-                 showScreen('login');
+                 showScreen('login'); // Fallback zum Login-Bildschirm
             });
             player.addListener('initialization_error', ({ message }) => { showToast('Initialisierungsfehler: ' + message); playerConnected = false; showScreen('login'); });
             player.addListener('authentication_error', ({ message }) => { showToast('Authentifizierungsfehler: ' + message); showScreen('login'); playerConnected = false; });
             player.addListener('account_error', ({ message }) => { showToast('Account-Fehler: ' + message); playerConnected = false; showScreen('login'); });
         };
 
-        // Function to attempt player connection and proceed
+        // Funktion, um Player-Verbindung zu versuchen und fortzufahren
         function attemptPlayerConnection() {
             if (playerSdkReady && accessToken) {
-                // Only connect if not already connected
-                if (playerConnected) { // This condition prevents reconnecting if already connected
+                // Nur verbinden, wenn nicht bereits verbunden
+                if (playerConnected) {
                     checkDeviceOrientation();
                     return;
                 }
@@ -309,22 +312,21 @@
                     if (success) {
                         console.log('Spotify Player erfolgreich verbunden!');
                         playerConnected = true;
-                        checkDeviceOrientation(); // Proceed to next step only after successful connection
+                        checkDeviceOrientation(); // Erst hier zum nächsten Schritt wechseln nach erfolgreicher Verbindung
                     } else {
                         showToast('Verbindung zum Spotify Player fehlgeschlagen.');
                         playerConnected = false;
-                        showScreen('login'); // Fallback to login if connection fails
+                        showScreen('login'); // Fallback zum Login bei Verbindungsfehler
                     }
                 }).catch(err => {
                     showToast('Fehler beim Verbinden des Spotify Players: ' + err.message);
                     playerConnected = false;
-                    showScreen('login'); // Fallback to login if connection fails
+                    showScreen('login'); // Fallback zum Login bei Verbindungsfehler
                 });
             } else {
-                // If not all conditions are met, wait for them. This might happen if handleRedirect finishes before SDK is ready.
-                // It's better for handleRedirect to be the one that falls back to login if no token is found.
-                // If SDK is not ready yet, we simply wait. The ready listener will call attemptPlayerConnection.
                 console.log('Warte auf Spotify Player Bereitschaft oder Token...');
+                // Hier keine direkte Bildschirmanzeige, da noch nicht alle Bedingungen erfüllt sind.
+                // handleRedirect kümmert sich um den initialen login-screen bei Bedarf.
             }
         }
 
@@ -350,17 +352,18 @@
                     const data = await response.json();
                     accessToken = data.access_token;
                     window.sessionStorage.setItem('access_token', accessToken);
-                    window.history.pushState({}, document.title, window.location.pathname);
-                    attemptPlayerConnection(); // Try connecting now that token is available
+                    // Entferne den Code aus der URL, um saubere URLs zu gewährleisten
+                    window.history.replaceState({}, document.title, window.location.pathname); 
+                    attemptPlayerConnection(); // Versuche jetzt die Verbindung, da der Token verfügbar ist
                 } catch (error) {
                     showToast('Fehler bei der Authentifizierung.');
                     showScreen('login');
                 }
             } else if (window.sessionStorage.getItem('access_token')) {
                 accessToken = window.sessionStorage.getItem('access_token');
-                attemptPlayerConnection(); // Try connecting with stored token
+                attemptPlayerConnection(); // Versuche Verbindung mit gespeichertem Token
             } else {
-                // No code and no stored token, show login screen immediately
+                // Kein Code und kein gespeicherter Token, zeige sofort den Login-Bildschirm
                 showScreen('login');
             }
         }
@@ -374,6 +377,9 @@
                 }
             };
             orientationCheck();
+            // Nur einmal einen Event-Listener hinzufügen, um Duplikate zu vermeiden
+            // removeEventListener vor addEventListener ist gute Praxis
+            window.removeEventListener('resize', orientationCheck); 
             window.addEventListener('resize', orientationCheck);
         }
 
@@ -382,7 +388,7 @@
                 if (!gameState.hasInitialAnimationPlayed) {
                     showScreen('intro');
                     document.getElementById('intro-logo').classList.add('animate-bounce-in');
-                    setTimeout(() => { // This timeout is for the intro logo animation duration
+                    setTimeout(() => { // Dieser Timeout ist für die Dauer der Intro-Logo-Animation
                         document.getElementById('intro-logo').classList.remove('animate-bounce-in');
                         showScreen(null); // Intro-Screen ausblenden
                         logoContainer.style.display = 'block'; // Persistenten Logo-Button anzeigen
@@ -414,7 +420,7 @@
                  if (!gameState.hasInitialAnimationPlayed) {
                      showScreen('intro');
                      document.getElementById('intro-logo').classList.add('animate-bounce-in');
-                     setTimeout(() => { // This timeout is for the intro logo animation duration in fallback
+                     setTimeout(() => { // Dieser Timeout ist für die Dauer der Intro-Logo-Animation im Fallback
                         document.getElementById('intro-logo').classList.remove('animate-bounce-in');
                         showScreen(null);
                         logoContainer.style.display = 'block';
@@ -460,10 +466,10 @@
         }
 
         function startNewTurn() {
-            if (gameState.currentPlayer === 2) { // Changed from currentPlayer === 1 to 2, so round only increments after player 2 finishes
+            if (gameState.currentPlayer === 2) {
                 gameState.round++;
             }
-            if (gameState.round > gameState.totalRounds) { // Check total rounds after incrementing
+            if (gameState.round > gameState.totalRounds) {
                 showEndScreen();
                 return;
             }
@@ -746,7 +752,7 @@
              document.getElementById('wrong-button').classList.add('hidden');
         }
 
-        handleRedirect(); // Call handleRedirect immediately on DOMContentLoaded
+        handleRedirect(); // Rufe handleRedirect sofort beim DOMContentLoaded auf
     });
     </script>
 </body>
