@@ -1,8 +1,9 @@
+import { logo, logoContainer, loginArea, initialClickBlocker, orientationMessage, fullscreenMessage, gameContainer, diceContainer, diceAnimation, diceButtonsContainer, diceButtons, playbackStatus } from './domElements.js';
 import { currentGameState, isPlayerReady, player, isSpotifySDKLoaded, introAnimationPlayed, currentScore, currentRound, currentPlayer, currentDiceRoll, TOTAL_GAME_ROUNDS, MAX_ROUNDS_PER_PLAYER, setIntroAnimationPlayed, setCurrentGameState, setFullscreenRequested } from './gameState.js';
-import { initialClickBlocker, spotifyLoginButton, loginArea, logo, logoContainer, orientationMessage, fullscreenMessage, playbackStatus, scoreDisplay, roundDisplay, resolutionButtonsContainer, correctButton, passButton, skipButton, diceAnimation, diceButtons } from './domElements.js';
-import { ANIMATION_DURATIONS } from './constants.js';
-import { playSongBasedOnDice } from './spotifyPlayer.js';
-import { handleResolution, handlePass, handleSkip } from './gameLogic.js';
+import { checkOrientationAndFullscreen } from './main.js'; // Main wird importiert für den Check
+import { startDiceRollPhase } from './gameLogic.js'; // GameLogic wird importiert
+import { playSongBasedOnDice } from './spotifyPlayer.js'; // KORRIGIERT: playSongBasedOnDice kommt von spotifyPlayer.js
+
 
 /**
  * Zeigt den Login-Screen an.
