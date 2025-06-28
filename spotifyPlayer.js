@@ -1,10 +1,11 @@
-// spotifyPlayer.js
 import { SPOTIFY_API_BASE_URL, PLAYLIST_ID, DICE_PARAMETERS } from './constants.js';
 // Importiere benötigte Variablen direkt aus gameState.js
-import { player, accessToken, activeDeviceId, isPlayerReady, currentPlaylistTracks, currentPlayingTrack, currentDiceRoll, currentSongRepetitionsLeft, currentMaxPointsForSong, currentPlayStartPosition, setPlayer, setActiveDeviceId, setIsPlayerReady, setCurrentPlaylistTracks, setCurrentPlayingTrack, setCurrentSongRepetitionsLeft, setCurrentMaxPointsForSong, setCurrentPlayStartPosition, setIsResolvingSong, isSpotifySDKLoaded } from './gameState.js'; // <-- isSpotifySDKLoaded hier hinzugefügt
+import { player, accessToken, activeDeviceId, isPlayerReady, currentPlaylistTracks, currentPlayingTrack, currentDiceRoll, currentSongRepetitionsLeft, currentMaxPointsForSong, currentPlayStartPosition, setPlayer, setActiveDeviceId, setIsPlayerReady, setCurrentPlaylistTracks, setCurrentPlayingTrack, setCurrentSongRepetitionsLeft, setCurrentMaxPointsForSong, setCurrentPlayStartPosition, setIsResolvingSong, isSpotifySDKLoaded } from './gameState.js'; // isSpotifySDKLoaded hier hinzugefügt
 import { playbackStatus, logo } from './domElements.js';
 import { showLoginScreen, setLogoAsPlayButton } from './uiManager.js';
 import { startResolutionPhase } from './gameLogic.js';
+
+// Importiere handlePlayerReady aus main.js, um eine Zirkelabhängigkeit zu vermeiden
 import { handlePlayerReady } from './main.js';
 
 /**
@@ -13,7 +14,9 @@ import { handlePlayerReady } from './main.js';
 export async function initializeSpotifyPlayer() {
     console.log('initializeSpotifyPlayer: Versuche Spotify Player zu initialisieren...');
 
+    // Prüfe direkt die importierte Variable isPlayerReady
     if (!isPlayerReady) {
+        // Prüfe direkt die importierte Variable accessToken
         if (!accessToken || localStorage.getItem('expires_in') < Date.now()) {
             console.warn('initializeSpotifyPlayer: Access Token fehlt oder ist abgelaufen. Zeige Login-Screen.');
             playbackStatus.textContent = 'Fehler: Spotify Session abgelaufen oder nicht angemeldet. Bitte neu anmelden.';
@@ -21,6 +24,7 @@ export async function initializeSpotifyPlayer() {
             return;
         }
 
+        // Prüfe direkt die importierte Variable player
         if (player) {
             console.log('initializeSpotifyPlayer: Spotify Player bereits initialisiert. Nichts zu tun.');
             playbackStatus.textContent = 'Spotify Player verbunden!';
@@ -37,7 +41,7 @@ export async function initializeSpotifyPlayer() {
         playbackStatus.textContent = 'Spotify Player wird verbunden...';
         const newPlayer = new Spotify.Player({
             name: 'TRACK ATTACK Player',
-            getOAuthToken: cb => { cb(accessToken); },
+            getOAuthToken: cb => { cb(accessToken); }, // Greift auf den direkt importierten accessToken zu
             volume: 0.5
         });
         setPlayer(newPlayer); // Setze den Player im globalen Zustand
@@ -111,25 +115,6 @@ export async function initializeSpotifyPlayer() {
 }
 
 /**
- * Globaler Callback für das Spotify Web Playback SDK.
- * WIRD VOM SDK AUFGERUFEN, SOBALD ES GELADEN IST.
- * Muss global am Window-Objekt sein, damit das SDK es finden kann.
- */
-window.onSpotifyWebPlaybackSDKReady = () => {
-    console.log('window.onSpotifyWebPlaybackSDKReady: Spotify Web Playback SDK ist bereit.');
-    setIsSpotifySDKLoaded(true); // Setze den Zustand hier
-
-    // Prüfe direkt die importierte Variable accessToken
-    if (accessToken) { // <-- HIER die Änderung (falls hier auch window.gameState.accessToken stand)
-        console.log("window.onSpotifyWebPlaybackSDKReady: Access Token vorhanden, initialisiere Player.");
-        initializeSpotifyPlayer();
-    } else {
-        console.log("window.onSpotifyWebPlaybackSDKReady: Kein Access Token vorhanden. Warte auf Login.");
-        showLoginScreen();
-    }
-};
-
-/**
  * Überträgt die Wiedergabe auf den neu erstellten Web Playback SDK Player.
  * @param {string} deviceId - Die ID des Players, auf den übertragen werden soll.
  */
@@ -140,7 +125,7 @@ export async function transferPlayback(deviceId) {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+                'Authorization': `Bearer ${accessToken}` // Greift auf den direkt importierten accessToken zu
             },
             body: JSON.stringify({
                 device_ids: [deviceId],
@@ -165,6 +150,7 @@ export async function transferPlayback(deviceId) {
  * @returns {Promise<Array>} Ein Array von Track-Objekten.
  */
 export async function getPlaylistTracks() {
+    // Prüfe direkt die importierte Variable currentPlaylistTracks
     if (currentPlaylistTracks.length > 0) {
         return currentPlaylistTracks;
     }
@@ -176,7 +162,7 @@ export async function getPlaylistTracks() {
         while (nextUrl) {
             const response = await fetch(nextUrl, {
                 headers: {
-                    'Authorization': `Bearer ${accessToken}`
+                    'Authorization': `Bearer ${accessToken}` // Greift auf den direkt importierten accessToken zu
                 }
             });
 
@@ -227,6 +213,7 @@ export async function selectRandomSongForRound() {
  * Startet an einer zufälligen Position und spielt für die definierte Dauer.
  */
 export async function playSongBasedOnDice() {
+    // Prüfe direkt die importierte Variable currentPlayingTrack
     if (!currentPlayingTrack) { // Wenn noch kein Song ausgewählt wurde (erster Durchgang)
         const track = await selectRandomSongForRound(); // Holt einen neuen zufälligen Song
         setCurrentPlayingTrack(track);
@@ -236,6 +223,7 @@ export async function playSongBasedOnDice() {
         }
     }
 
+    // Prüfe direkt die importierten Variablen isPlayerReady, player, activeDeviceId
     if (!isPlayerReady || !player || !activeDeviceId) {
         playbackStatus.textContent = 'Spotify Player ist noch nicht bereit oder verbunden. Bitte warten...';
         return;
@@ -252,6 +240,7 @@ export async function playSongBasedOnDice() {
     // Eine neue zufällige Startposition für jede Wiederholung
     const maxStartPositionMs = trackDurationMs - playDurationMs - 1000; // Mindestens 1 Sekunde Puffer am Ende
     setCurrentPlayStartPosition(Math.floor(Math.random() * (maxStartPositionMs > 0 ? maxStartPositionMs : 0)));
+    // Prüfe direkt die importierte Variable currentPlayStartPosition
     if (currentPlayStartPosition < 0) setCurrentPlayStartPosition(0); // Sicherstellen, dass es nicht negativ wird
 
     console.log(`Spiele ${currentPlayingTrack.track.name} von ${currentPlayingTrack.track.artists[0].name} ` +
@@ -264,7 +253,7 @@ export async function playSongBasedOnDice() {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+                'Authorization': `Bearer ${accessToken}` // Greift auf den direkt importierten accessToken zu
             },
             body: JSON.stringify({
                 uris: [trackUri],
@@ -280,6 +269,7 @@ export async function playSongBasedOnDice() {
             playbackStatus.textContent = `Song beendet. ${currentSongRepetitionsLeft + 1} Hördurchgänge verbleiben.`;
             // currentGameState = 'playing'; // Zurück zum Zustand, wo man auf den Logo-Button klicken kann
 
+            // Prüfe direkt die importierte Variable currentSongRepetitionsLeft
             if (currentSongRepetitionsLeft < 0) { // Alle Versuche aufgebraucht (0 oder weniger, da es runterzählt)
                 console.log("Alle Hördurchgänge verbraucht. Zeige Auflösen-Buttons.");
                 startResolutionPhase(); // Leite zur Auflösungsphase über
