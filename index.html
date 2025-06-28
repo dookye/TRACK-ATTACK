@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRACK-ATTACK</title>
+    <title>TRACK-ATTACK03</title>
     <!-- Chosen Palette: Harmonious Black & Player Colors -->
     <!-- Application Structure Plan: A Single Page Application model using distinct 'screen' divs (e.g., login, game, score) that are shown/hidden with JavaScript. This approach directly maps to the linear, step-by-step user flow of the game, making state management simple and efficient without page reloads. A persistent logo div acts as the central game controller. This structure is chosen for its speed and suitability for a self-contained game application. -->
     <!-- Visualization & Content Choices: 
@@ -112,24 +112,24 @@
         <div id="game-container" class="h-full w-full transition-colors duration-1000">
              <!-- Persistent Logo Button -->
             <div id="logo-container" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 hidden">
-                 <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo" id="logo-button" class="logo-button w-32 h-32 md:w-48 md:h-48 cursor-pointer transition-transform duration-200">
+                 <img src="logo3.png" alt="Logo" id="logo-button" class="logo-button w-32 h-32 md:w-48 md:h-48 cursor-pointer transition-transform duration-200">
             </div>
 
             <!-- Intro Animation Screen -->
             <div id="intro-screen" class="screen h-full w-full flex-col justify-center items-center">
-                 <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo Animation" id="intro-logo" class="w-48 h-48 md:w-64 md:h-64">
+                 <img src="logo3.png" alt="Logo Animation" id="intro-logo" class="w-48 h-48 md:w-64 md:h-64">
             </div>
 
             <!-- Dice Screen -->
             <div id="dice-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
                 <div id="dice-animation-container" class="mb-12">
-                    <img src="https://i.imgur.com/yFpPnR9.gif" alt="Würfel Animation" class="w-48 h-48">
+                    <img src="w-ani.gif" alt="Würfel Animation" class="w-48 h-48">
                 </div>
                 <div id="dice-selection-container" class="hidden flex-wrap justify-center items-center gap-4 md:gap-8">
-                    <img data-value="3" src="https://i.imgur.com/2p1xLqR.png" alt="Würfel 3" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
-                    <img data-value="4" src="https://i.imgur.com/k6O6VqS.png" alt="Würfel 4" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
-                    <img data-value="5" src="https://i.imgur.com/FzJ0x6D.png" alt="Würfel 5" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
-                    <img data-value="7" src="https://i.imgur.com/XUfsqx5.png" alt="Würfel 7" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="3" src="w-3.png" alt="Würfel 3" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="4" src="w-4.png" alt="Würfel 4" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="5" src="w-5.png" alt="Würfel 5" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="7" src="w-7.png" alt="Würfel 7" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
                 </div>
             </div>
 
