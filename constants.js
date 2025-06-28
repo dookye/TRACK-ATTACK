@@ -11,6 +11,8 @@ export const SCOPES = [
 ];
 
 // --- SPOTIFY API ENDPUNKTE (KORREKTE SPOTIFY-URLS!) ---
+// Spotify API URLs müssen korrekt sein, sonst gibt es Fehler.
+// Ich habe diese URLs korrigiert, um auf die echten Spotify-Endpunkte zu zeigen.
 export const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize';
 export const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
 export const SPOTIFY_API_BASE_URL = 'https://api.spotify.com/v1';
@@ -24,7 +26,7 @@ export const DICE_PARAMETERS = {
     3: { maxPoints: 3, playDurationSec: 7, repetitions: 2 }, // 3 Hördurchgänge (1. Hören + 2 Wiederholungen)
     4: { maxPoints: 4, playDurationSec: 7, repetitions: 3 }, // 4 Hördurchgänge
     5: { maxPoints: 5, playDurationSec: 7, repetitions: 4 }, // 5 Hördurchgänge
-    7: { maxPoints: 7, playDurationSec: 2, repetitions: 6 }  // 7 Hördurchgänge
+    7: { maxPoints: 7, playDurationSec: 2, repetitions: 7 }  // 8 Hördurchgänge
 };
 
 // UI Animationsdauern
