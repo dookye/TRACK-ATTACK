@@ -1,9 +1,9 @@
 import { currentGameState, activePlayer, playerScores, currentRound, currentDiceRoll, currentMaxPointsForSong, currentSongRepetitionsLeft, currentPlayingTrack, isResolvingSong, player, currentPlayStartPosition, setCurrentGameState, setActivePlayer, setPlayerScores, setCurrentRound, setCurrentDiceRoll, setCurrentMaxPointsForSong, setCurrentSongRepetitionsLeft, setCurrentPlayingTrack, setIsResolvingSong } from './gameState.js';
 import { DICE_PARAMETERS, TOTAL_GAME_ROUNDS } from './constants.js';
 import { playbackStatus, diceContainer, diceAnimation, diceButtonsContainer, diceButtons } from './domElements.js';
-import { updatePlayerBackground, hideAllGameUI, setLogoAsPlayButton, showLoginScreen } from './uiManager.js';
+import { updatePlayerBackground, hideAllGameUI, setLogoAsPlayButton, showLoginScreen, updatePlayerScoresDisplay } from './uiManager.js'; // updatePlayerScoresDisplay hinzugefügt
 import { playSongBasedOnDice } from './spotifyPlayer.js';
-import { checkOrientationAndFullscreen } from './main.js'; // Für resetGame()
+import { checkOrientationAndFullscreen } from './main.js'; // checkOrientationAndFullscreen direkt aus main.js importiert
 
 /**
  * Wechselt den aktiven Spieler von 1 zu 2 oder umgekehrt.
@@ -249,12 +249,8 @@ export function resetGame() {
     gameContainer.style.backgroundColor = 'black'; // Setze den Hintergrund auf schwarz zurück
     console.log("Spielhintergrund auf Schwarz zurückgesetzt (nach Reset).");
 
-    if (window.gameState.isPlayerReady && !document.fullscreenElement) {
-        checkOrientationAndFullscreen();
-    } else if (window.gameState.isPlayerReady) {
-        // window.gameState.isPlayerReady ist nötig, da isPlayerReady im globalen Scope aktualisiert wird
-        // und checkOrientationAndFullscreen im globalen Scope benötigt.
-        // Diese Zeile sollte eigentlich in uiManager oder main.js, aber um die 1:1 Funktionalität zu wahren...
-        window.uiManager.showLogoButton(); // Workaround für Zirkelabhängigkeit
-    }
+    // Diese Logik gehört eigentlich in main.js
+    // Da wir aber eine saubere Trennung anstreben und checkOrientationAndFullscreen
+    // global im Main-Modul verfügbar ist, können wir es direkt importieren und aufrufen.
+    checkOrientationAndFullscreen();
 }
