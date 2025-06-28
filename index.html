@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full bg-black">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRACK-ATTACK</title>
+    <!-- Chosen Palette: Harmonious Black & Player Colors -->
+    <!-- Application Structure Plan: A Single Page Application model using distinct 'screen' divs (e.g., login, game, score) that are shown/hidden with JavaScript. This approach directly maps to the linear, step-by-step user flow of the game, making state management simple and efficient without page reloads. A persistent logo div acts as the central game controller. This structure is chosen for its speed and suitability for a self-contained game application. -->
+    <!-- Visualization & Content Choices: 
+        - Login: Standard Spotify-styled button for user trust and familiarity (HTML/CSS).
+        - Game Flow: Sequential screens managed by JS to guide the user without confusion.
+        - Logo/Buttons: Image-based buttons with CSS keyframe animations for 'bounce' and 'blur' effects to provide tactile feedback and indicate state (active/inactive).
+        - Dice/Genre Selection: Animated sequences (GIF for dice, CSS blink for genres) to build anticipation before player choice.
+        - Speed Round: Large, animated text overlays (CSS animations) and a JS-powered countdown to create urgency and excitement.
+        - Score Screen: A final, impactful display using a two-tone gradient background and large typography to clearly declare the game's outcome.
+        - Library/Method: Vanilla JS for all logic, Spotify Web Playback SDK for audio, Tailwind CSS for styling. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .screen.active {
+            display: flex;
+            opacity: 1;
+        }
+        .player1-bg { background-color: #3b82f6; }
+        .player2-bg { background-color: #ec4899; }
+        .score-gradient-bg { background-image: linear-gradient(to right, #3b82f6, #ec4899); }
+        .logo-button.inactive {
+            filter: blur(3px);
+            pointer-events: none;
+            transform: scale(1.0);
+        }
+        @keyframes bounce-in {
+            0% { transform: translateY(-200%) scale(0.8); opacity: 0; }
+            60% { transform: translateY(10%) scale(1.05); opacity: 1; }
+            80% { transform: translateY(-5%) scale(0.95); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        .animate-bounce-in { animation: bounce-in 1s ease-out forwards; }
+        @keyframes bounce-click {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+        }
+        .button-bounce { animation: bounce-click 0.3s ease-in-out; }
+        @keyframes genre-blink {
+            50% { opacity: 0.5; }
+        }
+        .genre-blinking { animation: genre-blink 0.3s infinite; }
+        @keyframes zoom-fade {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .animate-zoom-fade { animation: zoom-fade 4s ease-in-out forwards; }
+        @keyframes fade-out {
+            from { opacity: 1; } to { opacity: 0; }
+        }
+        .animate-fade-out { animation: fade-out 1s ease-in-out forwards; }
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+        #toast.show { opacity: 1; }
+    </style>
+</head>
+<body class="h-full w-full overflow-hidden bg-black text-white select-none">
+
+    <div id="app-container" class="relative h-full w-full">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen active h-full w-full flex-col justify-center items-center p-4">
+            <h1 class="text-3xl md:text-5xl font-bold mb-8 text-center">Willkommen bei TRACK-ATTACK</h1>
+            <p class="mb-8 text-center text-gray-300">Bitte logge dich mit deinem Spotify Premium-Account ein, um zu spielen.</p>
+            <button id="login-button" class="bg-[#1DB954] text-white font-bold py-4 px-8 rounded-full text-lg hover:bg-[#1ed760] transition-colors">
+                Login mit Spotify
+            </button>
+        </div>
+
+        <!-- Orientation Screen -->
+        <div id="orientation-screen" class="screen h-full w-full flex-col justify-center items-center text-center p-4">
+            <h2 class="text-2xl font-bold">Bitte drehe dein Gerät in den Landscape-Modus, um zu spielen.</h2>
+        </div>
+
+        <!-- Fullscreen Screen -->
+        <div id="fullscreen-screen" class="screen h-full w-full flex-col justify-center items-center cursor-pointer p-4">
+            <h2 class="text-3xl font-bold animate-pulse">Klicke, um den Vollbildmodus zu starten</h2>
+        </div>
+        
+        <!-- Game Screens Container -->
+        <div id="game-container" class="h-full w-full transition-colors duration-1000">
+             <!-- Persistent Logo Button -->
+            <div id="logo-container" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 hidden">
+                 <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo" id="logo-button" class="logo-button w-32 h-32 md:w-48 md:h-48 cursor-pointer transition-transform duration-200">
+            </div>
+
+            <!-- Intro Animation Screen -->
+            <div id="intro-screen" class="screen h-full w-full flex-col justify-center items-center">
+                 <img src="https://i.imgur.com/uRiiG6h.png" alt="Logo Animation" id="intro-logo" class="w-48 h-48 md:w-64 md:h-64">
+            </div>
+
+            <!-- Dice Screen -->
+            <div id="dice-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
+                <div id="dice-animation-container" class="mb-12">
+                    <img src="https://i.imgur.com/yFpPnR9.gif" alt="Würfel Animation" class="w-48 h-48">
+                </div>
+                <div id="dice-selection-container" class="hidden flex-wrap justify-center items-center gap-4 md:gap-8">
+                    <img data-value="3" src="https://i.imgur.com/2p1xLqR.png" alt="Würfel 3" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="4" src="https://i.imgur.com/k6O6VqS.png" alt="Würfel 4" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="5" src="https://i.imgur.com/FzJ0x6D.png" alt="Würfel 5" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                    <img data-value="7" src="https://i.imgur.com/XUfsqx5.png" alt="Würfel 7" class="dice-option w-24 h-24 md:w-32 md:h-32 cursor-pointer hover:scale-110 transition-transform">
+                </div>
+            </div>
+
+            <!-- Genre Screen -->
+            <div id="genre-screen" class="screen h-full w-full flex-col justify-center items-center p-4 gap-4">
+                 <h2 id="genre-title" class="text-3xl font-bold mb-8 text-center">Wähle ein Genre</h2>
+                 <div id="genre-buttons" class="grid grid-cols-2 gap-4 w-full max-w-2xl">
+                     <!-- Genre buttons will be injected here -->
+                 </div>
+            </div>
+            
+             <!-- Rate Screen -->
+            <div id="rate-screen" class="screen h-full w-full flex-col justify-center items-center p-4">
+                <div id="resolution-container" class="hidden absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-md p-4 text-center z-10">
+                    <img id="album-cover" src="" alt="Album Cover" class="w-40 h-40 mx-auto mb-4 rounded-lg shadow-lg">
+                    <h3 id="track-title" class="text-2xl font-bold"></h3>
+                    <p id="track-artist" class="text-xl"></p>
+                </div>
+                <div id="action-buttons" class="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-4 z-30">
+                     <button id="resolve-button" class="hidden bg-yellow-500 text-black font-bold py-3 px-6 rounded-full hover:bg-yellow-400">AUFLÖSEN</button>
+                     <button id="correct-button" class="hidden bg-green-500 text-white font-bold py-3 px-6 rounded-full hover:bg-green-400">RICHTIG</button>
+                     <button id="wrong-button" class="hidden bg-red-500 text-white font-bold py-3 px-6 rounded-full hover:bg-red-400">FALSCH</button>
+                </div>
+            </div>
+
+             <!-- Speed Round/Timer Screen -->
+            <div id="overlay-screen" class="screen absolute inset-0 h-full w-full flex-col justify-center items-center z-40 bg-black/50">
+                <h2 id="overlay-text" class="text-6xl md:text-9xl font-black text-white drop-shadow-lg"></h2>
+            </div>
+        </div>
+
+        <!-- Score Screen -->
+        <div id="score-screen" class="screen h-full w-full flex justify-around items-center score-gradient-bg p-4">
+            <div class="text-center">
+                <h2 class="text-3xl md:text-5xl font-bold mb-4">Spieler 1</h2>
+                <p id="player1-score" class="text-7xl md:text-9xl font-black"></p>
+            </div>
+            <div class="text-center">
+                <h2 class="text-3xl md:text-5xl font-bold mb-4">Spieler 2</h2>
+                <p id="player2-score" class="text-7xl md:text-9xl font-black"></p>
+            </div>
+        </div>
+
+    </div>
+    
+    <div id="toast"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
+        const REDIRECT_URI = 'https://dookye.github.io/TRACK-ATTACK/';
+        
+        const screens = {
+            login: document.getElementById('login-screen'),
+            orientation: document.getElementById('orientation-screen'),
+            fullscreen: document.getElementById('fullscreen-screen'),
+            intro: document.getElementById('intro-screen'),
+            dice: document.getElementById('dice-screen'),
+            genre: document.getElementById('genre-screen'),
+            rate: document.getElementById('rate-screen'),
+            score: document.getElementById('score-screen'),
+            overlay: document.getElementById('overlay-screen'),
+        };
+
+        const gameContainer = document.getElementById('game-container');
+        const logoContainer = document.getElementById('logo-container');
+        const logoButton = document.getElementById('logo-button');
+        const loginButton = document.getElementById('login-button');
+
+        let player;
+        let deviceId;
+        let accessToken;
+
+        const gameState = {
+            currentPlayer: 1,
+            round: 1,
+            player1Score: 0,
+            player2Score: 0,
+            selectedDice: 0,
+            listeningAttempts: 0,
+            currentTrack: null,
+            isSpeedRound: false,
+            speedRoundTimer: null,
+            totalRounds: 10,
+            hasInitialAnimationPlayed: false, // Neuer Zustand für die initiale Animation
+        };
+        
+        const genres = [
+            { name: "Punk Rock (90's & 00')", playlists: ['39sVxPTg7BKwrf2MfgrtcD', '7ITmaFa2rOhXAmKmUUCG9E'] },
+            { name: 'Pop Hits 2000-2025', playlists: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'] },
+            { name: 'Die größten Hits aller Zeiten', playlists: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'] },
+            { name: 'Disney Songs', playlists: ['3Bilb56eeS7db5f3DTEwMR', '2bhbwexk7c6yJrEB4CtuY8'] }
+        ];
+
+        function showScreen(screenName) {
+            Object.values(screens).forEach(s => s.classList.remove('active'));
+            if (screens[screenName]) {
+                screens[screenName].classList.add('active');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        async function generateCodeChallenge(codeVerifier) {
+            const data = new TextEncoder().encode(codeVerifier);
+            const digest = await window.crypto.subtle.digest('SHA-256', data);
+            return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+                .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        function generateRandomString(length) {
+            let text = '';
+            const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            for (let i = 0; i < length; i++) {
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+            }
+            return text;
+        }
+
+        loginButton.addEventListener('click', async () => {
+            const codeVerifier = generateRandomString(128);
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
+            window.sessionStorage.setItem('code_verifier', codeVerifier);
+            const args = new URLSearchParams({
+                response_type: 'code',
+                client_id: CLIENT_ID,
+                scope: 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state playlist-read-private playlist-read-collaborative',
+                redirect_uri: REDIRECT_URI,
+                code_challenge_method: 'S256',
+                code_challenge: codeChallenge,
+            });
+            window.location = 'https://accounts.spotify.com/authorize?' + args;
+        });
+
+        async function handleRedirect() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            if (code) {
+                const codeVerifier = window.sessionStorage.getItem('code_verifier');
+                const body = new URLSearchParams({
+                    grant_type: 'authorization_code',
+                    code: code,
+                    redirect_uri: REDIRECT_URI,
+                    client_id: CLIENT_ID,
+                    code_verifier: codeVerifier,
+                });
+                try {
+                    const response = await fetch('https://accounts.spotify.com/api/token', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: body,
+                    });
+                    if (!response.ok) { throw new Error('HTTP status ' + response.status); }
+                    const data = await response.json();
+                    accessToken = data.access_token;
+                    window.sessionStorage.setItem('access_token', accessToken);
+                    window.history.pushState({}, document.title, window.location.pathname);
+                    initializePlayer();
+                } catch (error) {
+                    showToast('Fehler bei der Authentifizierung.');
+                    showScreen('login');
+                }
+            } else if (window.sessionStorage.getItem('access_token')) {
+                accessToken = window.sessionStorage.getItem('access_token');
+                initializePlayer();
+            }
+        }
+        
+        function initializePlayer() {
+            window.onSpotifyWebPlaybackSDKReady = () => {
+                player = new Spotify.Player({
+                    name: 'TRACK-ATTACK',
+                    getOAuthToken: cb => { cb(accessToken); },
+                    volume: 0.5
+                });
+                player.addListener('ready', ({ device_id }) => {
+                    deviceId = device_id;
+                    checkDeviceOrientation();
+                });
+                player.addListener('not_ready', ({ device_id }) => {
+                     showToast('Gerät nicht bereit.');
+                });
+                player.addListener('initialization_error', ({ message }) => { showToast('Initialisierungsfehler: ' + message); });
+                player.addListener('authentication_error', ({ message }) => { showToast('Authentifizierungsfehler: ' + message); showScreen('login'); });
+                player.addListener('account_error', ({ message }) => { showToast('Account-Fehler: ' + message); });
+                player.connect();
+            };
+        }
+
+        function checkDeviceOrientation() {
+            const orientationCheck = () => {
+                if (window.matchMedia("(orientation: portrait)").matches && window.innerHeight > window.innerWidth) {
+                    showScreen('orientation');
+                } else {
+                    showScreen('fullscreen');
+                }
+            };
+            orientationCheck();
+            window.addEventListener('resize', orientationCheck);
+        }
+
+        screens.fullscreen.addEventListener('click', () => {
+            document.documentElement.requestFullscreen().then(() => {
+                if (!gameState.hasInitialAnimationPlayed) {
+                    showScreen('intro');
+                    document.getElementById('intro-logo').classList.add('animate-bounce-in');
+                    setTimeout(() => {
+                        document.getElementById('intro-logo').classList.remove('animate-bounce-in'); // Animation auf intro-screen zurücksetzen
+                        showScreen(null); // intro-screen ausblenden
+                        logoContainer.style.display = 'block'; // Persistenten Logo-Button anzeigen
+                        logoButton.classList.add('animate-bounce-in'); // Persistenten Logo-Button animieren
+                        setTimeout(() => {
+                            logoButton.classList.remove('animate-bounce-in'); // Animation des Logo-Buttons zurücksetzen
+                            logoButton.onclick = () => { // Event-Handler für ersten Spielstart festlegen
+                                logoButton.classList.add('button-bounce');
+                                setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
+                                startFirstRound();
+                            };
+                            gameState.hasInitialAnimationPlayed = true; // Flag setzen
+                        }, 1000); // Dauer der Logo-Button-Animation
+                    }, 1500); // Dauer der Intro-Logo-Animation
+                } else {
+                    // Wenn Animation bereits abgespielt wurde, direkt Logo-Button anzeigen und für neues Spiel aktivieren
+                    showScreen(null); // Vollbildschirm ausblenden
+                    logoContainer.style.display = 'block';
+                    logoButton.onclick = () => { // Event-Handler für neues Spiel festlegen
+                        logoButton.classList.add('button-bounce');
+                        setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
+                        startFirstRound();
+                    };
+                    setButtonState(logoButton, true); // Sicherstellen, dass er aktiv ist
+                }
+            }).catch(err => {
+                 showToast('Vollbildmodus konnte nicht gestartet werden.');
+                 // Fallback, falls Vollbild fehlschlägt, aber Flag für Animation respektieren
+                 if (!gameState.hasInitialAnimationPlayed) {
+                     showScreen('intro');
+                     document.getElementById('intro-logo').classList.add('animate-bounce-in');
+                     setTimeout(() => {
+                        document.getElementById('intro-logo').classList.remove('animate-bounce-in');
+                        showScreen(null);
+                        logoContainer.style.display = 'block';
+                        logoButton.classList.add('animate-bounce-in');
+                        setTimeout(() => {
+                            logoButton.classList.remove('animate-bounce-in');
+                            logoButton.onclick = () => {
+                                logoButton.classList.add('button-bounce');
+                                setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
+                                startFirstRound();
+                            };
+                            gameState.hasInitialAnimationPlayed = true;
+                        }, 1000);
+                     }, 1500);
+                 } else {
+                    showScreen(null);
+                    logoContainer.style.display = 'block';
+                    logoButton.onclick = () => {
+                        logoButton.classList.add('button-bounce');
+                        setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
+                        startFirstRound();
+                    };
+                    setButtonState(logoButton, true);
+                 }
+            });
+        });
+
+        // Die startGame Funktion wurde in den fullscreen.addEventListener integriert, um die Logik zu straffen.
+        // Sie ist nicht mehr als separate Funktion in der alten Form notwendig.
+
+        function startFirstRound() {
+            logoButton.onclick = null; // Den Klick-Handler des Logo-Buttons deaktivieren
+            setButtonState(logoButton, false); // Logo-Button inaktiv setzen
+            startNewTurn();
+        }
+        
+        function resetGameState() {
+            gameState.currentPlayer = 1;
+            gameState.round = 1;
+            gameState.player1Score = 0;
+            gameState.player2Score = 0;
+            // gameState.hasInitialAnimationPlayed bleibt true, da die Seite nicht neu geladen wird
+        }
+
+        function startNewTurn() {
+            if (gameState.currentPlayer === 1 && gameState.round > gameState.totalRounds) {
+                showEndScreen();
+                return;
+            }
+
+            gameState.isSpeedRound = (gameState.round === 3 && gameState.currentPlayer === 1) || (gameState.round === 7 && gameState.currentPlayer === 2);
+            
+            showToast(`Spieler ${gameState.currentPlayer}, Runde ${gameState.round}`);
+            gameContainer.className = `h-full w-full transition-colors duration-1000 ${gameState.currentPlayer === 1 ? 'player1-bg' : 'player2-bg'}`;
+
+            setTimeout(() => showDiceScreen(), 1000);
+        }
+
+        function showDiceScreen() {
+            showScreen('dice');
+            const diceAnim = document.getElementById('dice-animation-container');
+            const diceSelect = document.getElementById('dice-selection-container');
+            diceAnim.style.display = 'block';
+            diceSelect.style.display = 'none';
+
+            setTimeout(() => {
+                diceAnim.style.display = 'none';
+                diceSelect.style.display = 'flex';
+            }, 4000);
+        }
+
+        document.querySelectorAll('.dice-option').forEach(dice => {
+            dice.addEventListener('click', (e) => {
+                e.target.classList.add('button-bounce');
+                setTimeout(() => e.target.classList.remove('button-bounce'), 300);
+                gameState.selectedDice = parseInt(e.target.dataset.value);
+                gameState.listeningAttempts = gameState.selectedDice;
+                setTimeout(showGenreScreen, 500);
+            });
+        });
+
+        function showGenreScreen() {
+            showScreen('genre');
+            const genreButtonsContainer = document.getElementById('genre-buttons');
+            genreButtonsContainer.innerHTML = '';
+            genres.forEach((genre, index) => {
+                const button = document.createElement('button');
+                button.textContent = genre.name;
+                button.dataset.index = index;
+                button.className = 'genre-button bg-white/20 text-white font-bold p-4 rounded-lg text-center hover:bg-white/40 transition-colors text-sm md:text-lg';
+                genreButtonsContainer.appendChild(button);
+            });
+
+            const genreTitle = document.getElementById('genre-title');
+            const allGenreButtons = document.querySelectorAll('.genre-button');
+
+            if (gameState.selectedDice === 7) {
+                genreTitle.textContent = "Wähle dein Genre";
+                allGenreButtons.forEach(button => {
+                    button.onclick = (e) => handleGenreSelection(e.target, e.target.dataset.index);
+                });
+            } else {
+                genreTitle.textContent = "Genre wird gewählt...";
+                const randomIndex = Math.floor(Math.random() * genres.length);
+                const selectedButton = allGenreButtons[randomIndex];
+
+                allGenreButtons.forEach(b => b.classList.add('genre-blinking'));
+
+                setTimeout(() => {
+                    allGenreButtons.forEach(b => {
+                        b.classList.remove('genre-blinking');
+                        if (b !== selectedButton) {
+                            b.disabled = true;
+                            b.style.opacity = '0.5';
+                        }
+                    });
+                    genreTitle.textContent = "Dein Genre ist:";
+                    selectedButton.onclick = (e) => handleGenreSelection(e.target, randomIndex);
+                }, 4000);
+            }
+        }
+        
+        async function handleGenreSelection(button, genreIndex) {
+            button.classList.add('button-bounce');
+            setTimeout(() => button.classList.remove('button-bounce'), 300);
+            
+            showToast('Lade Song...');
+            const selectedGenre = genres[genreIndex];
+            const playlistId = selectedGenre.playlists[Math.floor(Math.random() * selectedGenre.playlists.length)];
+            
+            try {
+                const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const data = await response.json();
+                const tracks = data.items.filter(item => item.track && item.track.preview_url !== null);
+                if (tracks.length === 0) {
+                     // Fallback for tracks without preview_url
+                    const allTracks = data.items.filter(item => item.track);
+                    gameState.currentTrack = allTracks[Math.floor(Math.random() * allTracks.length)].track;
+                } else {
+                    gameState.currentTrack = tracks[Math.floor(Math.random() * tracks.length)].track;
+                }
+                setTimeout(startRatePhase, 500);
+            } catch (error) {
+                showToast('Fehler beim Laden der Playlist.');
+                startNewTurn();
+            }
+        }
+
+        function startRatePhase() {
+            if (gameState.isSpeedRound) {
+                showOverlay("Speed-Round", 4000, () => {
+                    showRateScreen();
+                    startSpeedRoundTimer();
+                });
+            } else {
+                showRateScreen();
+            }
+        }
+
+        function showRateScreen() {
+            showScreen('rate');
+            setButtonState(logoButton, true);
+
+            logoButton.onclick = () => {
+                if (gameState.listeningAttempts > 0) {
+                    logoButton.classList.add('button-bounce');
+                    setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
+                    playTrackSnippet();
+                }
+            };
+
+            const resolveBtn = document.getElementById('resolve-button');
+            resolveBtn.classList.remove('hidden');
+            resolveBtn.onclick = () => {
+                resolveBtn.classList.add('button-bounce');
+                setTimeout(() => resolveBtn.classList.remove('button-bounce'), 300);
+                handleResolution();
+            };
+        }
+
+        async function playTrackSnippet() {
+            if (!gameState.currentTrack) return;
+            setButtonState(logoButton, false);
+            gameState.listeningAttempts--;
+            showToast(`Hörversuche übrig: ${gameState.listeningAttempts}`);
+
+            const songDuration = gameState.selectedDice === 7 ? 2000 : 7000;
+            const trackDurationMs = gameState.currentTrack.duration_ms;
+            const randomPosition = Math.floor(Math.random() * (trackDurationMs - songDuration));
+            
+            try {
+                await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ uris: [gameState.currentTrack.uri], position_ms: randomPosition }),
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+
+                setTimeout(async () => {
+                    await player.pause();
+                    if (gameState.listeningAttempts > 0) {
+                        setButtonState(logoButton, true);
+                    }
+                }, songDuration);
+            } catch(e) {
+                 showToast('Fehler bei der Wiedergabe.');
+                 setButtonState(logoButton, true);
+            }
+        }
+
+        function handleResolution() {
+             if(gameState.isSpeedRound && gameState.speedRoundTimer) {
+                clearInterval(gameState.speedRoundTimer);
+                gameState.speedRoundTimer = null;
+             }
+            player.pause();
+            setButtonState(logoButton, false);
+            
+            const points = Math.max(1, gameState.selectedDice - (gameState.selectedDice - gameState.listeningAttempts) + 1);
+
+            document.getElementById('resolve-button').classList.add('hidden');
+            document.getElementById('correct-button').classList.remove('hidden');
+            document.getElementById('wrong-button').classList.remove('hidden');
+
+            const resolutionContainer = document.getElementById('resolution-container');
+            document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
+            document.getElementById('track-title').textContent = gameState.currentTrack.name;
+            document.getElementById('track-artist').textContent = gameState.currentTrack.artists.map(a => a.name).join(', ');
+            resolutionContainer.classList.remove('hidden');
+
+            document.getElementById('correct-button').onclick = (e) => {
+                 e.target.classList.add('button-bounce');
+                setTimeout(() => e.target.classList.remove('button-bounce'), 300);
+                if (gameState.currentPlayer === 1) gameState.player1Score += points;
+                else gameState.player2Score += points;
+                endTurn();
+            };
+            document.getElementById('wrong-button').onclick = (e) => {
+                e.target.classList.add('button-bounce');
+                setTimeout(() => e.target.classList.remove('button-bounce'), 300);
+                endTurn();
+            };
+        }
+
+        function startSpeedRoundTimer() {
+            let timeLeft = 10;
+            const overlayText = document.getElementById('overlay-text');
+            showScreen('overlay');
+            overlayText.textContent = timeLeft;
+            overlayText.classList.remove('animate-zoom-fade');
+            void overlayText.offsetWidth; // Trigger reflow
+            overlayText.style.animation = 'none';
+
+            gameState.speedRoundTimer = setInterval(() => {
+                timeLeft--;
+                overlayText.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(gameState.speedRoundTimer);
+                    gameState.speedRoundTimer = null;
+                    showScreen('rate');
+                    handleResolution();
+                }
+            }, 1000);
+        }
+
+        function endTurn() {
+            if (gameState.currentPlayer === 2) {
+                gameState.round++;
+            }
+            gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+            
+            hideResolutionUI();
+            setTimeout(startNewTurn, 1000);
+        }
+        
+        function showEndScreen() {
+            showScreen('score');
+            document.getElementById('player1-score').textContent = gameState.player1Score;
+            document.getElementById('player2-score').textContent = gameState.player2Score;
+            
+            setTimeout(() => {
+                screens.score.classList.add('animate-fade-out');
+                setTimeout(() => {
+                     screens.score.classList.remove('animate-fade-out');
+                     resetGameState();
+                     gameContainer.className = 'h-full w-full transition-colors duration-1000 bg-black';
+                     // Logo-Button für neues Spiel bereitstellen, OHNE erneute Animation
+                     logoButton.onclick = () => {
+                        logoButton.classList.add('button-bounce');
+                        setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
+                        startFirstRound();
+                     };
+                     setButtonState(logoButton, true);
+                }, 1000);
+            }, 7000);
+        }
+
+        function showOverlay(text, duration, callback) {
+            const overlayText = document.getElementById('overlay-text');
+            overlayText.textContent = text;
+            overlayText.classList.remove('animate-zoom-fade');
+            void overlayText.offsetWidth; // Trigger reflow
+            overlayText.classList.add('animate-zoom-fade');
+            showScreen('overlay');
+            setTimeout(() => {
+                showScreen(null);
+                if (callback) callback();
+            }, duration);
+        }
+
+        function setButtonState(button, isActive) {
+            if (isActive) {
+                button.classList.remove('inactive');
+            } else {
+                button.classList.add('inactive');
+            }
+        }
+
+        function hideResolutionUI() {
+             document.getElementById('resolution-container').classList.add('hidden');
+             document.getElementById('resolve-button').classList.add('hidden');
+             document.getElementById('correct-button').classList.add('hidden');
+             document.getElementById('wrong-button').classList.add('hidden');
+        }
+
+        handleRedirect();
+    });
+    </script>
+</body>
+</html>
