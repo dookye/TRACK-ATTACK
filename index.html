@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRACK-ATTACK01</title>
+    <title>TRACK-ATTACK02</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <style>
@@ -70,7 +70,7 @@
             pointer-events: none;
         }
         #toast.show { opacity: 1; }
-        .z-front { /* New style for screens that should be in front of the logo */
+        .z-front {
             z-index: 30; 
         }
     </style>
@@ -193,7 +193,7 @@
             isSpeedRound: false,
             speedRoundTimer: null,
             totalRounds: 10,
-            hasInitialAnimationPlayed: false, // Neuer Zustand für die initiale Animation
+            hasInitialAnimationPlayed: false,
         };
         
         const genres = [
@@ -206,15 +206,13 @@
         function showScreen(screenName) {
             Object.values(screens).forEach(s => {
                 s.classList.remove('active');
-                s.classList.remove('z-front'); // Remove z-index when not active
+                s.classList.remove('z-front');
             });
             if (screens[screenName]) {
                 screens[screenName].classList.add('active');
-                // Apply z-index for screens that should be in front of the logo
                 if (screenName === 'dice' || screenName === 'genre' || screenName === 'rate') {
                     screens[screenName].classList.add('z-front');
                 }
-                // overlay-screen already has z-40 in its HTML, no need to add z-front here.
             }
         }
 
@@ -258,18 +256,17 @@
             window.location = 'https://accounts.spotify.com/authorize?' + args;
         });
 
-        // Define onSpotifyWebPlaybackSDKReady globally and early
         window.onSpotifyWebPlaybackSDKReady = () => {
             player = new Spotify.Player({
                 name: 'TRACK-ATTACK',
-                getOAuthToken: cb => { cb(accessToken); }, // Will use the accessToken that handleRedirect sets
+                getOAuthToken: cb => { cb(accessToken); },
                 volume: 0.5
             });
 
             player.addListener('ready', ({ device_id }) => {
                 deviceId = device_id;
-                playerSdkReady = true; // SDK is ready
-                // Attempt to connect player if token is already available
+                playerSdkReady = true;
+                // Wenn Token schon da ist, Player verbinden
                 if (accessToken) {
                     attemptPlayerConnection();
                 }
@@ -278,33 +275,38 @@
             player.addListener('not_ready', ({ device_id }) => {
                  showToast('Gerät nicht bereit.');
                  playerConnected = false;
+                 // Eventuell hier zum Login-Screen zurück, falls keine Wiederherstellung möglich
+                 showScreen('login');
             });
-            player.addListener('initialization_error', ({ message }) => { showToast('Initialisierungsfehler: ' + message); playerConnected = false; });
+            player.addListener('initialization_error', ({ message }) => { showToast('Initialisierungsfehler: ' + message); playerConnected = false; showScreen('login'); });
             player.addListener('authentication_error', ({ message }) => { showToast('Authentifizierungsfehler: ' + message); showScreen('login'); playerConnected = false; });
-            player.addListener('account_error', ({ message }) => { showToast('Account-Fehler: ' + message); playerConnected = false; });
+            player.addListener('account_error', ({ message }) => { showToast('Account-Fehler: ' + message); playerConnected = false; showScreen('login'); });
         };
 
-        // Function to attempt player connection and proceed
         function attemptPlayerConnection() {
-            if (playerSdkReady && accessToken) {
+            if (playerSdkReady && accessToken && player) { // Füge player-Prüfung hinzu
                 player.connect().then(success => {
                     if (success) {
                         console.log('Spotify Player erfolgreich verbunden!');
                         playerConnected = true;
-                        checkDeviceOrientation(); // Proceed to next step only after successful connection
+                        // Kleine Verzögerung, um Rendering-Probleme zu vermeiden
+                        setTimeout(() => {
+                            checkDeviceOrientation(); // Erst hier zum nächsten Screen wechseln
+                        }, 100); 
                     } else {
                         showToast('Verbindung zum Spotify Player fehlgeschlagen.');
                         playerConnected = false;
-                        showScreen('login'); // Fallback to login if connection fails
+                        showScreen('login');
                     }
                 }).catch(err => {
-                    showToast('Fehler beim Verbinden des Spotify Players.');
+                    showToast('Fehler beim Verbinden des Spotify Players: ' + err.message);
                     playerConnected = false;
-                    showScreen('login'); // Fallback to login if connection fails
+                    showScreen('login');
                 });
             } else {
-                // If not all conditions are met, wait for them. This might happen if handleRedirect finishes before SDK is ready.
-                showToast('Warte auf Spotify Player Bereitschaft...');
+                showToast('Warte auf Spotify Player Bereitschaft oder Token...');
+                // Hier keine direkte Bildschirmanzeige, da noch nicht alle Bedingungen erfüllt sind.
+                // showScreen('login'); ist nicht notwendig, da wir hier noch im Wartezustand sind.
             }
         }
 
@@ -331,30 +333,38 @@
                     accessToken = data.access_token;
                     window.sessionStorage.setItem('access_token', accessToken);
                     window.history.pushState({}, document.title, window.location.pathname);
-                    attemptPlayerConnection(); // Try connecting now that token is available
+                    attemptPlayerConnection();
                 } catch (error) {
                     showToast('Fehler bei der Authentifizierung.');
                     showScreen('login');
                 }
             } else if (window.sessionStorage.getItem('access_token')) {
                 accessToken = window.sessionStorage.getItem('access_token');
-                attemptPlayerConnection(); // Try connecting with stored token
+                attemptPlayerConnection();
             } else {
-                // No code and no stored token, stay on login
+                // Keine Weiterleitung oder gespeicherter Token, bleibe auf Login
                 showScreen('login');
             }
         }
         
         function checkDeviceOrientation() {
-            const orientationCheck = () => {
-                if (window.matchMedia("(orientation: portrait)").matches && window.innerHeight > window.innerWidth) {
-                    showScreen('orientation');
-                } else {
-                    showScreen('fullscreen');
-                }
-            };
-            orientationCheck();
-            window.addEventListener('resize', orientationCheck);
+            // Nur wenn der Player wirklich verbunden ist, weitermachen
+            if (playerConnected) {
+                const orientationCheck = () => {
+                    if (window.matchMedia("(orientation: portrait)").matches && window.innerHeight > window.innerWidth) {
+                        showScreen('orientation');
+                    } else {
+                        showScreen('fullscreen');
+                    }
+                };
+                orientationCheck();
+                window.removeEventListener('resize', orientationCheck); // Alten Listener entfernen, falls vorhanden
+                window.addEventListener('resize', orientationCheck); // Neuen Listener hinzufügen
+            } else {
+                // Sollte nicht passieren, wenn attemptPlayerConnection richtig funktioniert, aber zur Sicherheit
+                showToast('Player nicht verbunden. Bitte neu anmelden.');
+                showScreen('login');
+            }
         }
 
         screens.fullscreen.addEventListener('click', () => {
@@ -362,11 +372,11 @@
                 if (!gameState.hasInitialAnimationPlayed) {
                     showScreen('intro');
                     document.getElementById('intro-logo').classList.add('animate-bounce-in');
-                    setTimeout(() => { // This timeout is for the intro logo animation duration
+                    setTimeout(() => {
                         document.getElementById('intro-logo').classList.remove('animate-bounce-in');
-                        showScreen(null); // Intro-Screen ausblenden
-                        logoContainer.style.display = 'block'; // Persistenten Logo-Button anzeigen
-                        logoButton.classList.add('animate-bounce-in'); // Persistenten Logo-Button animieren
+                        showScreen(null);
+                        logoContainer.style.display = 'block';
+                        logoButton.classList.add('animate-bounce-in');
                         setTimeout(() => {
                             logoButton.classList.remove('animate-bounce-in');
                             logoButton.onclick = () => {
@@ -375,11 +385,10 @@
                                 startFirstRound();
                             };
                             gameState.hasInitialAnimationPlayed = true;
-                        }, 1000); // Dauer der Logo-Button-Animation
+                        }, 1000);
                     }, 1500); 
                 } else {
-                    // Wenn Animation bereits abgespielt wurde, direkt Logo-Button anzeigen und für neues Spiel aktivieren
-                    showScreen(null); // Vollbildschirm ausblenden
+                    showScreen(null);
                     logoContainer.style.display = 'block';
                     logoButton.onclick = () => {
                         logoButton.classList.add('button-bounce');
@@ -390,11 +399,10 @@
                 }
             }).catch(err => {
                  showToast('Vollbildmodus konnte nicht gestartet werden.');
-                 // Fallback, falls Vollbild fehlschlägt, aber Flag für Animation respektieren
                  if (!gameState.hasInitialAnimationPlayed) {
                      showScreen('intro');
                      document.getElementById('intro-logo').classList.add('animate-bounce-in');
-                     setTimeout(() => { // This timeout is for the intro logo animation duration in fallback
+                     setTimeout(() => {
                         document.getElementById('intro-logo').classList.remove('animate-bounce-in');
                         showScreen(null);
                         logoContainer.style.display = 'block';
@@ -422,12 +430,9 @@
             });
         });
 
-        // Die startGame Funktion wurde in den fullscreen.addEventListener integriert, um die Logik zu straffen.
-        // Sie ist nicht mehr als separate Funktion in der alten Form notwendig.
-
         function startFirstRound() {
-            logoButton.onclick = null; // Den Klick-Handler des Logo-Buttons deaktivieren
-            setButtonState(logoButton, false); // Logo-Button inaktiv setzen
+            logoButton.onclick = null;
+            setButtonState(logoButton, false);
             startNewTurn();
         }
         
@@ -436,14 +441,13 @@
             gameState.round = 1;
             gameState.player1Score = 0;
             gameState.player2Score = 0;
-            // gameState.hasInitialAnimationPlayed bleibt true, da die Seite nicht neu geladen wird
         }
 
         function startNewTurn() {
-            if (gameState.currentPlayer === 2) { // Changed from currentPlayer === 1 to 2, so round only increments after player 2 finishes
+            if (gameState.currentPlayer === 2) {
                 gameState.round++;
             }
-            if (gameState.round > gameState.totalRounds) { // Check total rounds after incrementing
+            if (gameState.round > gameState.totalRounds) {
                 showEndScreen();
                 return;
             }
@@ -536,7 +540,6 @@
                 const data = await response.json();
                 const tracks = data.items.filter(item => item.track && item.track.preview_url !== null);
                 if (tracks.length === 0) {
-                     // Fallback for tracks without preview_url
                     const allTracks = data.items.filter(item => item.track);
                     gameState.currentTrack = allTracks[Math.floor(Math.random() * allTracks.length)].track;
                     showToast('Warnung: Kein Vorschaulink für diesen Song verfügbar, verwende den gesamten Song.');
@@ -604,9 +607,8 @@
                     if (gameState.listeningAttempts > 0) {
                         setButtonState(logoButton, true);
                     } else {
-                        // Nach dem letzten Hörversuch wird der Logo-Button dauerhaft inaktiv und es muss aufgelöst werden
                         setButtonState(logoButton, false); 
-                        handleResolution(); // Automatische Auflösung nach dem letzten Versuch
+                        handleResolution();
                     }
                 }, songDuration);
             } catch(e) {
@@ -621,16 +623,16 @@
                 gameState.speedRoundTimer = null;
              }
             player.pause();
-            setButtonState(logoButton, false); // Logo-Button inaktiv, sobald aufgelöst wird
+            setButtonState(logoButton, false);
             
-            const points = Math.max(1, gameState.selectedDice - (gameState.selectedDice - gameState.listeningAttempts)); // Korrigierte Punkteberechnung
+            const points = Math.max(1, gameState.selectedDice - (gameState.selectedDice - gameState.listeningAttempts));
 
             document.getElementById('resolve-button').classList.add('hidden');
             document.getElementById('correct-button').classList.remove('hidden');
             document.getElementById('wrong-button').classList.remove('hidden');
 
             const resolutionContainer = document.getElementById('resolution-container');
-            document.getElementById('album-cover').src = gameState.currentTrack.album.images[0]?.url || 'https://placehold.co/160x160/000000/FFFFFF?text=No+Cover'; // Fallback
+            document.getElementById('album-cover').src = gameState.currentTrack.album.images[0]?.url || 'https://placehold.co/160x160/000000/FFFFFF?text=No+Cover';
             document.getElementById('track-title').textContent = gameState.currentTrack.name;
             document.getElementById('track-artist').textContent = gameState.currentTrack.artists.map(a => a.name).join(', ');
             resolutionContainer.classList.remove('hidden');
@@ -655,7 +657,7 @@
             showScreen('overlay');
             overlayText.textContent = timeLeft;
             overlayText.classList.remove('animate-zoom-fade');
-            void overlayText.offsetWidth; // Trigger reflow
+            void overlayText.offsetWidth;
             overlayText.style.animation = 'none';
 
             gameState.speedRoundTimer = setInterval(() => {
@@ -664,16 +666,15 @@
                 if (timeLeft <= 0) {
                     clearInterval(gameState.speedRoundTimer);
                     gameState.speedRoundTimer = null;
-                    showScreen('rate'); // Zurück zum Rate-Bildschirm
-                    handleResolution(); // Automatische Auflösung
+                    showScreen(null); // Overlay ausblenden, direkt zum Rate-Bildschirm
+                    handleResolution();
                 }
             }, 1000);
         }
 
         function endTurn() {
-            hideResolutionUI(); // UI-Elemente für Auflösung ausblenden
-            // Der Rundenwechsel wurde in startNewTurn() verschoben, um die Logik zu straffen.
-            setTimeout(startNewTurn, 1000); // Eine Sekunde Verzögerung vor dem nächsten Zug
+            hideResolutionUI();
+            setTimeout(startNewTurn, 1000);
         }
         
         function showEndScreen() {
@@ -687,7 +688,6 @@
                      screens.score.classList.remove('animate-fade-out');
                      resetGameState();
                      gameContainer.className = 'h-full w-full transition-colors duration-1000 bg-black';
-                     // Logo-Button für neues Spiel bereitstellen, OHNE erneute Animation
                      logoButton.onclick = () => {
                         logoButton.classList.add('button-bounce');
                         setTimeout(() => logoButton.classList.remove('button-bounce'), 300);
@@ -702,11 +702,11 @@
             const overlayText = document.getElementById('overlay-text');
             overlayText.textContent = text;
             overlayText.classList.remove('animate-zoom-fade');
-            void overlayText.offsetWidth; // Trigger reflow
+            void overlayText.offsetWidth;
             overlayText.classList.add('animate-zoom-fade');
             showScreen('overlay');
             setTimeout(() => {
-                showScreen(null); // Overlay ausblenden
+                showScreen(null);
                 if (callback) callback();
             }, duration);
         }
@@ -726,7 +726,7 @@
              document.getElementById('wrong-button').classList.add('hidden');
         }
 
-        handleRedirect(); // Call handleRedirect immediately on DOMContentLoaded
+        handleRedirect();
     });
     </script>
 </body>
