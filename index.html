@@ -2,57 +2,64 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK49</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TRACK ATTACK</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="game-container" class="game-container">
+        <div id="login-area" class="login-area">
+            <h1 class="game-title">TRACK ATTACK</h1>
+            <p id="playback-status" class="status-message"></p>
+            <button id="spotify-login-button" class="action-button">Mit Spotify einloggen</button>
+            <p class="login-info">Benötigt einen Spotify Premium Account.</p>
+        </div>
 
-    <div id="initial-click-blocker" class="hidden"></div> 
+        <div id="orientation-message" class="overlay-message hidden">
+            <p>Bitte drehe dein Gerät ins Querformat (Landscape).</p>
+        </div>
+        <div id="fullscreen-message" class="overlay-message hidden">
+            <p>Klicke irgendwo, um den Vollbildmodus zu aktivieren.</p>
+            <p class="small-text">(Für bestes Spielerlebnis)</p>
+        </div>
 
-    <div id="orientation-message" class="overlay-message hidden">
-        <p>Please rotate your device to landscape mode.</p>
-    </div>
+        <div id="logo-container" class="logo-container hidden initial-hidden">
+            <img id="game-logo" src="img/track_attack_logo.png" alt="TRACK ATTACK Logo" class="game-logo">
+        </div>
 
-    <div id="fullscreen-message" class="overlay-message hidden">
-        <p>Click to fullscreen mode.</p>
-    </div>
+        <div id="initial-click-blocker" class="overlay hidden"></div>
 
-    <div class="game-container"> 
-        <div id="login-area"> 
-            <div class="spotify-box">
-                <p id="login-hint">Please log in with your Spotify account to play.</p>
-                <button id="spotify-login-button" class="spotify-button">
-                    <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
-                    Log in with Spotify
-                </button>
-                <p id="playback-status" style="margin-top: 10px; font-size: 0.9em; color: #ccc;"></p> 
+        <div id="game-elements-container" class="game-elements-container hidden">
+            <p id="player-display" class="game-info"></p>
+            <p id="round-display" class="game-info"></p>
+            <p id="score-display" class="game-info"></p>
+            <div id="dice-area" class="dice-area hidden">
+                <div id="dice-animation" class="dice-animation hidden"></div>
+                <div class="dice-buttons">
+                    <button id="dice-button-3" class="dice-button">3</button>
+                    <button id="dice-button-4" class="dice-button">4</button>
+                    <button id="dice-button-5" class="dice-button">5</button>
+                    <button id="dice-button-7" class="dice-button">7</button>
+                </div>
+            </div>
+            <div id="resolution-buttons-container" class="resolution-buttons hidden">
+                <button id="correct-button" class="resolution-button correct">Richtig!</button>
+                <button id="pass-button" class="resolution-button pass">Pass</button>
+                <button id="skip-button" class="resolution-button skip">Überspringen</button>
             </div>
         </div>
 
-        <div id="logo-container" class="hidden initial-hidden"> 
-            <img src="logo3.png" alt="Spiel Logo" id="game-logo" class="active-logo">
-        </div>
-
-        <div id="dice-container" class="hidden">
-            <img src="w-ani.gif" alt="Würfel Animation" id="dice-animation" class="hidden">
-            <div id="dice-buttons" class="hidden">
-                <img src="w-3.png" alt="Würfel 3" class="dice-button" data-dice-value="3">
-                <img src="w-4.png" alt="Würfel 4" class="dice-button" data-dice-value="4">
-                <img src="w-5.png" alt="Würfel 5" class="dice-button" data-dice-value="5">
-                <img src="w-7.png" alt="Würfel 7" class="dice-button" data-dice-value="7">
-            </div>
-        </div>
     </div>
 
-    <script type="module" src="constants.js"></script>
-    <script type="module" src="domElements.js"></script>
-    <script type="module" src="gameState.js"></script>
-    <script type="module" src="utils.js"></script>
-    <script type="module" src="spotifyAuth.js"></script>
-    <script type="module" src="spotifyPlayer.js"></script>
-    <script type="module" src="uiManager.js"></script>
-    <script type="module" src="gameLogic.js"></script>
-    <script type="module" src="main.js"></script>
+    <script type="module" src="js/constants.js"></script>
+    <script type="module" src="js/gameState.js"></script>
+    <script type="module" src="js/domElements.js"></script>
+    <script type="module" src="js/utils.js"></script>
+    <script type="module" src="js/uiManager.js"></script>
+    <script type="module" src="js/spotifyAuth.js"></script>
+    <script type="module" src="js/spotifyPlayer.js"></script>
+    <script type="module" src="js/gameLogic.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
