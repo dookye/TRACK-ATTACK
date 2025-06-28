@@ -1,17 +1,8 @@
-import { spotifyLoginButton, logo, diceButtons, gameContainer, loginArea, logoContainer } from './domElements.js';
+import { spotifyLoginButton, logo, diceButtons, gameContainer, loginArea, logoContainer, orientationMessage, fullscreenMessage } from './domElements.js';
 import { checkSpotifyLoginStatus, redirectToSpotifyAuthorize } from './spotifyAuth.js';
-import { handlePlayerReady as handlePlayerReadyFromSpotifyPlayer } from './spotifyPlayer.js';
 import { showLoginScreen, showMessage, hideMessage, activateFullscreenAndRemoveListener, showLogoButton, setLogoAsPlayButton } from './uiManager.js';
 import { isPlayerReady, currentGameState, setIsPlayerReady, setFullscreenRequested, fullscreenRequested } from './gameState.js';
-import { DICE_PARAMETERS } from './constants.js';
-
-// Exponiere die gameState und uiManager für Workarounds bei Zirkelabhängigkeiten
-// Dies ist eine praktikable Lösung für den aktuellen Umfang und die Notwendigkeit,
-// 1:1 Funktionalität zu gewährleisten, auch wenn es nicht die "reinste" Architektur ist.
-// Für größere Projekte würde man hier eventuell einen globalen Event-Bus oder
-// einen zentralen State-Management-Store in Betracht ziehen.
-window.gameState = await import('./gameState.js');
-window.uiManager = await import('./uiManager.js');
+// import { DICE_PARAMETERS } from './constants.js'; // Nicht direkt hier benötigt
 
 /**
  * Überprüft die Geräteorientierung und den Fullscreen-Status und zeigt entsprechende Meldungen an.
@@ -47,7 +38,7 @@ export function checkOrientationAndFullscreen() {
 /**
  * Wird aufgerufen, wenn der Spotify Player erfolgreich initialisiert wurde.
  * Leitet zur Orientierungs-/Fullscreen-Prüfung weiter.
- * Diese Funktion wird vom spotifyPlayer.js aufgerufen, um auf UI-Elemente zugreifen zu können.
+ * Diese Funktion wird vom spotifyPlayer.js aufgerufen.
  */
 export function handlePlayerReady() {
     console.log("main.js handlePlayerReady: Spotify Player ist verbunden. Starte Orientierungs-/Fullscreen-Check.");
