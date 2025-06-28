@@ -1,8 +1,9 @@
-import { currentRound, currentScore, currentPlayer, currentDiceRoll, currentSongRepetitionsLeft, currentMaxPointsForSong, isPlayerReady, player, currentPlayingTrack, isResolvingSong, currentPlaylistTracks, currentPlayStartPosition, setCurrentRound, setCurrentScore, setCurrentPlayer, setCurrentDiceRoll, setCurrentSongRepetitionsLeft, setCurrentMaxPointsForSong, setIsResolvingSong, setCurrentPlayingTrack, setIntroAnimationPlayed, currentGameState, setCurrentGameState } from './gameState.js';
-import { MAX_ROUNDS_PER_PLAYER, TOTAL_GAME_ROUNDS, DICE_PARAMETERS } from './constants.js';
-import { playSongBasedOnDice, selectRandomSongForRound } from './spotifyPlayer.js';
-import { showDice, hideDice, showLogoButton, showResolutionButtons, updateScoreDisplay, updateRoundDisplay, hideResolutionButtons, setLogoAsPlayButton, showInitialClickBlocker, hideInitialClickBlocker } from './uiManager.js';
-import { logo, diceAnimation, diceButtons, spotifyLoginButton } from './domElements.js';
+import { currentGameState, currentPlayer, playerScores, currentRound, currentDiceRoll, currentMaxPointsForSong, currentSongRepetitionsLeft, currentPlayingTrack, isResolvingSong, player, currentPlayStartPosition, setCurrentGameState, setActivePlayer, setPlayerScores, setCurrentRound, setCurrentDiceRoll, setCurrentMaxPointsForSong, setCurrentSongRepetitionsLeft, setCurrentPlayingTrack, setIsResolvingSong } from './gameState.js';
+import { DICE_PARAMETERS, TOTAL_GAME_ROUNDS } from './constants.js';
+import { playbackStatus, diceContainer, diceAnimation, diceButtonsContainer, diceButtons } from './domElements.js';
+import { updatePlayerBackground, hideAllGameUI, setLogoAsPlayButton, showLoginScreen, updatePlayerScoresDisplay } from './uiManager.js'; // updatePlayerScoresDisplay hinzugefügt
+import { playSongBasedOnDice } from './spotifyPlayer.js';
+import { checkOrientationAndFullscreen } from './main.js'; // checkOrientationAndFullscreen direkt aus main.js importiert
 
 /**
  * Wechselt den aktiven Spieler von 1 zu 2 oder umgekehrt.
