@@ -1,0 +1,463 @@
+// Wichtiger Hinweis: Dieser Code muss von einem Webserver bereitgestellt werden (z.B. über "Live Server" in VS Code).
+// Ein direktes Öffnen der HTML-Datei im Browser funktioniert wegen der Sicherheitsrichtlinien (CORS) bei API-Anfragen nicht.
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- DOM-Elemente ---
+    const appContainer = document.getElementById('app-container');
+    const loginScreen = document.getElementById('login-screen');
+    const fullscreenScreen = document.getElementById('fullscreen-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const rotateDeviceOverlay = document.getElementById('rotate-device-overlay');
+    const logoButton = document.getElementById('logo-button');
+    const diceContainer = document.getElementById('dice-container');
+    const diceAnimation = document.getElementById('dice-animation');
+    const diceSelection = document.getElementById('dice-selection');
+    const genreContainer = document.getElementById('genre-container');
+    const revealButton = document.getElementById('reveal-button');
+    const revealContainer = document.getElementById('reveal-container');
+    const scoreScreen = document.getElementById('score-screen');
+    const speedRoundIndicator = document.getElementById('speed-round-indicator');
+    const speedRoundTimer = document.getElementById('speed-round-timer');
+
+    // --- Spotify-Parameter (Phase 1.1) ---
+    const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
+    const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
+
+    // --- Spielstatus-Variablen ---
+    let player;
+    let spotifyPlayer;
+    let deviceId;
+    let accessToken;
+    let gameState = {
+        player1Score: 0,
+        player2Score: 0,
+        currentPlayer: 1,
+        totalRounds: 20,
+        currentRound: 0,
+        diceValue: 0,
+        attemptsMade: 0,
+        maxAttempts: 0,
+        trackDuration: 0,
+        currentTrack: null,
+        player1SpeedRound: Math.floor(Math.random() * 10) + 1,
+        player2SpeedRound: Math.floor(Math.random() * 10) + 1,
+        isSpeedRound: false,
+        speedRoundTimeout: null,
+    };
+
+    const playlists = {
+        punk: ['39sVxPTg7BKwrf2MfgrtcD', '7ITmaFa2rOhXAmKmUUCG9E'],
+        pop: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
+        alltime: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
+        disney: ['3Bilb56eeS7db5f3DTEwMR', '2bhbwexk7c6yJrEB4CtuY8']
+    };
+
+    //=======================================================================
+    // Phase 1: Setup, Authentifizierung & Initialisierung
+    //=======================================================================
+
+    // 1.4: Querformat-Prüfung
+    function checkOrientation() {
+        if (window.innerHeight > window.innerWidth) {
+            rotateDeviceOverlay.classList.remove('hidden');
+        } else {
+            rotateDeviceOverlay.classList.add('hidden');
+        }
+    }
+
+    window.addEventListener('resize', checkOrientation);
+    checkOrientation();
+
+    // 1.2: PKCE-Flow Helferfunktionen
+    async function generateCodeChallenge(codeVerifier) {
+        const data = new TextEncoder().encode(codeVerifier);
+        const digest = await window.crypto.subtle.digest('SHA-256', data);
+        return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function generateRandomString(length) {
+        let text = '';
+        let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        for (let i = 0; i < length; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return text;
+    }
+
+    // 1.2: Login-Prozess starten
+    async function redirectToAuthCodeFlow() {
+        const verifier = generateRandomString(128);
+        const challenge = await generateCodeChallenge(verifier);
+        localStorage.setItem("verifier", verifier);
+        const params = new URLSearchParams();
+        params.append("client_id", CLIENT_ID);
+        params.append("response_type", "code");
+        params.append("redirect_uri", REDIRECT_URI);
+        params.append("scope", "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state");
+        params.append("code_challenge_method", "S256");
+        params.append("code_challenge", challenge);
+        document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
+    }
+
+    // 1.2: Access Token abrufen
+    async function getAccessToken(code) {
+        const verifier = localStorage.getItem("verifier");
+        const params = new URLSearchParams();
+        params.append("client_id", CLIENT_ID);
+        params.append("grant_type", "authorization_code");
+        params.append("code", code);
+        params.append("redirect_uri", REDIRECT_URI);
+        params.append("code_verifier", verifier);
+
+        const result = await fetch("https://accounts.spotify.com/api/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params
+        });
+
+        const { access_token } = await result.json();
+        return access_token;
+    }
+
+    // Initialisierung nach dem Laden der Seite
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
+    if (code) {
+        // Wir kommen von der Spotify-Weiterleitung zurück
+        window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
+        getAccessToken(code).then(token => {
+            accessToken = token;
+            loginScreen.classList.add('hidden');
+            fullscreenScreen.classList.remove('hidden');
+            initializePlayer();
+        });
+    } else {
+        // Standard-Ansicht
+        loginScreen.classList.remove('hidden');
+        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+    }
+
+    // 1.3: Spotify Web Player SDK laden und initialisieren
+    function initializePlayer() {
+        const script = document.createElement('script');
+        script.src = "https://sdk.scdn.co/spotify-player.js";
+        script.async = true;
+        document.body.appendChild(script);
+
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            spotifyPlayer = new Spotify.Player({
+                name: 'TRACK ATTACK',
+                getOAuthToken: cb => { cb(accessToken); }
+            });
+
+            spotifyPlayer.addListener('ready', ({ device_id }) => {
+                console.log('Ready with Device ID', device_id);
+                deviceId = device_id;
+            });
+
+            spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+                console.log('Device ID has gone offline', device_id);
+            });
+
+            spotifyPlayer.connect();
+        };
+    }
+
+    // 1.4: Vollbild-Modus aktivieren
+    fullscreenScreen.addEventListener('click', () => {
+        document.documentElement.requestFullscreen().then(() => {
+            fullscreenScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            logoButton.classList.remove('hidden');
+            logoButton.classList.add('initial-fly-in');
+            // Der erste Klick auf den Logo-Button startet das Spiel
+            logoButton.addEventListener('click', startGame, { once: true });
+        });
+    });
+
+    //=======================================================================
+    // Phase 2: Spielstart & UI-Grundlagen
+    //=======================================================================
+
+    function triggerBounce(element) {
+        element.classList.remove('bounce');
+        void element.offsetWidth; // Trigger reflow
+        element.classList.add('bounce');
+    }
+
+    function startGame() {
+        triggerBounce(logoButton);
+        logoButton.classList.add('inactive');
+        
+        setTimeout(() => {
+            appContainer.style.backgroundColor = 'var(--player1-color)';
+            logoButton.classList.add('hidden');
+            showDiceScreen();
+        }, 800); // Warten, bis Bounce-Effekt und Blur sichtbar sind
+    }
+    
+    //=======================================================================
+    // Phase 3: Würfel- & Genre-Auswahl
+    //=======================================================================
+
+    function showDiceScreen() {
+        resetRoundUI();
+        gameState.currentRound++;
+        gameState.isSpeedRound = false;
+
+        // Check für Spielende
+        if (gameState.currentRound > gameState.totalRounds) {
+            endGame();
+            return;
+        }
+
+        diceContainer.classList.remove('hidden');
+        diceAnimation.classList.remove('hidden');
+        diceSelection.classList.add('hidden');
+        
+        setTimeout(() => {
+            diceAnimation.classList.add('hidden');
+            diceSelection.classList.remove('hidden');
+        }, 4000);
+    }
+
+    document.querySelectorAll('.dice-option').forEach(dice => {
+        dice.addEventListener('click', (e) => {
+            gameState.diceValue = parseInt(e.target.dataset.value);
+            
+            // 3.2: Spieldauer, Punkte, Versuche festlegen
+            gameState.trackDuration = gameState.diceValue === 7 ? 2000 : 7000; // in ms
+            gameState.maxAttempts = gameState.diceValue;
+            gameState.attemptsMade = 0;
+
+            diceContainer.classList.add('hidden');
+            showGenreScreen();
+        });
+    });
+
+    function showGenreScreen() {
+        genreContainer.classList.remove('hidden');
+        const buttons = document.querySelectorAll('.genre-button');
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove('random-blink');
+        });
+
+        // 3.4: Genre-Auswahl-Logik
+        if (gameState.diceValue === 7) { // Fall B: Spieler wählt
+            buttons.forEach(btn => btn.addEventListener('click', handleGenreSelection));
+        } else { // Fall A: Zufällige Auswahl
+            buttons.forEach(btn => btn.disabled = true);
+            const blinkInterval = setInterval(() => {
+                buttons.forEach(btn => btn.classList.toggle('random-blink'));
+            }, 200);
+
+            setTimeout(() => {
+                clearInterval(blinkInterval);
+                const randomIndex = Math.floor(Math.random() * buttons.length);
+                buttons.forEach((btn, index) => {
+                    btn.classList.remove('random-blink');
+                    if (index !== randomIndex) {
+                        btn.disabled = true;
+                    } else {
+                        btn.disabled = false;
+                        btn.addEventListener('click', handleGenreSelection, { once: true });
+                    }
+                });
+            }, 4000);
+        }
+    }
+
+    async function handleGenreSelection(e) {
+        const selectedGenre = e.target.dataset.genre;
+        genreContainer.classList.add('hidden');
+        document.querySelectorAll('.genre-button').forEach(btn => btn.removeEventListener('click', handleGenreSelection));
+        
+        // Phase 6: Speed-Round Check
+        const playerRound = Math.ceil(gameState.currentRound / 2);
+        if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
+            (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
+            gameState.isSpeedRound = true;
+            await showSpeedRoundAnimation();
+        }
+
+        await prepareAndShowRateScreen(selectedGenre);
+    }
+
+    //=======================================================================
+    // Phase 4: Rate-Bildschirm & Spielerwechsel
+    //=======================================================================
+    
+    async function getTrack(genre) {
+        const playlistPool = playlists[genre];
+        const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
+        
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${randomPlaylistId}/tracks`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        const data = await response.json();
+        
+        const randomTrack = data.items[Math.floor(Math.random() * data.items.length)].track;
+        return randomTrack;
+    }
+
+    async function prepareAndShowRateScreen(genre) {
+        gameState.currentTrack = await getTrack(genre);
+        console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
+
+        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+        logoButton.addEventListener('click', playTrackSnippet);
+
+        if (gameState.isSpeedRound) {
+            startSpeedRoundTimer();
+        }
+    }
+
+    function playTrackSnippet() {
+        if (gameState.attemptsMade >= gameState.maxAttempts) return;
+
+        triggerBounce(logoButton);
+        logoButton.classList.add('inactive');
+        gameState.attemptsMade++;
+
+        const trackDurationMs = gameState.currentTrack.duration_ms;
+        const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
+
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                uris: [gameState.currentTrack.uri],
+                position_ms: randomStartPosition
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        }).then(() => {
+            setTimeout(() => {
+                spotifyPlayer.pause();
+                if (gameState.attemptsMade < gameState.maxAttempts && !gameState.isSpeedRound) {
+                    logoButton.classList.remove('inactive');
+                }
+            }, gameState.trackDuration);
+        });
+        
+        // 4.3: "AUFLÖSEN"-Button nach 1. Versuch anzeigen
+        if (gameState.attemptsMade === 1) {
+            revealButton.classList.remove('hidden');
+        }
+    }
+
+    function showResolution() {
+        clearTimeout(gameState.speedRoundTimeout); // Timer stoppen, falls vorhanden
+        logoButton.classList.add('inactive', 'hidden');
+        revealButton.classList.add('hidden');
+        speedRoundIndicator.classList.add('hidden');
+
+        // Track-Infos anzeigen
+        document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
+        document.getElementById('track-title').innerText = gameState.currentTrack.name;
+        document.getElementById('track-artist').innerText = gameState.currentTrack.artists.map(a => a.name).join(', ');
+        
+        revealContainer.classList.remove('hidden');
+    }
+
+    revealButton.addEventListener('click', showResolution);
+
+    function handleFeedback(isCorrect) {
+        if (isCorrect) {
+            // 5.1: Punkte berechnen und speichern
+            const points = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1));
+            if (gameState.currentPlayer === 1) {
+                gameState.player1Score += points;
+            } else {
+                gameState.player2Score += points;
+            }
+        }
+        
+        // 4.4: Spieler wechseln
+        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+        appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
+
+        setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
+    }
+
+    document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
+    document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
+
+    function resetRoundUI() {
+        revealContainer.classList.add('hidden');
+        logoButton.classList.add('hidden');
+        genreContainer.classList.add('hidden');
+        diceContainer.classList.add('hidden');
+        logoButton.removeEventListener('click', playTrackSnippet);
+    }
+    
+    //=======================================================================
+    // Phase 5: Spielende & Reset
+    //=======================================================================
+    
+    function endGame() {
+        gameScreen.classList.add('hidden');
+        scoreScreen.classList.remove('hidden');
+        appContainer.style.backgroundColor = 'transparent';
+
+        const p1ScoreEl = document.getElementById('player1-score-display');
+        const p2ScoreEl = document.getElementById('player2-score-display');
+        p1ScoreEl.innerText = gameState.player1Score;
+        p2ScoreEl.innerText = gameState.player2Score;
+        p1ScoreEl.style.opacity = '1';
+        p2ScoreEl.style.opacity = '1';
+
+        setTimeout(() => {
+            p1ScoreEl.style.opacity = '0';
+            p2ScoreEl.style.opacity = '0';
+        }, 7000);
+
+        setTimeout(resetGame, 8000); // Nach Fade-Out
+    }
+
+    function resetGame() {
+        scoreScreen.classList.add('hidden');
+        appContainer.style.backgroundColor = 'var(--black)';
+        
+        // Spielstatus zurücksetzen
+        gameState.player1Score = 0;
+        gameState.player2Score = 0;
+        gameState.currentPlayer = 1;
+        gameState.currentRound = 0;
+        gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
+        gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
+
+        // Zurück zum Start (ohne Einflug-Animation)
+        gameScreen.classList.remove('hidden');
+        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+        logoButton.addEventListener('click', startGame, { once: true });
+    }
+
+    //=======================================================================
+    // Phase 6: Sonderfunktion "Speed-Round"
+    //=======================================================================
+
+    function showSpeedRoundAnimation() {
+        return new Promise(resolve => {
+            speedRoundIndicator.classList.remove('hidden');
+            setTimeout(() => {
+                speedRoundIndicator.classList.add('hidden');
+                resolve();
+            }, 4000);
+        });
+    }
+
+    function startSpeedRoundTimer() {
+        speedRoundTimer.style.transition = 'none';
+        speedRoundTimer.style.transform = 'scaleX(1)';
+        void speedRoundTimer.offsetWidth; // Reflow
+        speedRoundTimer.style.transition = 'transform 10s linear';
+        speedRoundTimer.style.transform = 'scaleX(0)';
+
+        gameState.speedRoundTimeout = setTimeout(() => {
+            showResolution();
+        }, 10000);
+    }
+});
