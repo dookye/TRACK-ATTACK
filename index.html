@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK1</title>
+    <title>TRACK ATTACK</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
         /* Allgemeine Stile und Mobile-First-Design */
@@ -78,31 +78,6 @@
         }
 
         #orientation-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Fullscreen-Screen */
-        #fullscreen-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-            font-size: 2em;
-            cursor: pointer;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease;
-        }
-
-        #fullscreen-screen.active {
             opacity: 1;
             visibility: visible;
         }
@@ -467,7 +442,7 @@
             #login-screen p {
                 font-size: 1.2em;
             }
-            #orientation-overlay, #fullscreen-screen {
+            #orientation-overlay {
                 font-size: 1.5em;
             }
             #speed-round-text {
@@ -497,10 +472,6 @@
 
         <div id="orientation-overlay">
             <p>Please rotate your device to landscape mode</p>
-        </div>
-
-        <div id="fullscreen-screen">
-            <p>Click to Fullscreen</p>
         </div>
 
         <!-- Phase 2: Spielstart & UI-Grundlagen -->
@@ -638,7 +609,7 @@
         const appContainer = document.getElementById('app-container');
         const loginScreen = document.getElementById('login-screen');
         const orientationOverlay = document.getElementById('orientation-overlay');
-        const fullscreenScreen = document.getElementById('fullscreen-screen');
+        // const fullscreenScreen = document.getElementById('fullscreen-screen'); // Entfernt
         const startScreen = document.getElementById('start-screen');
         const logoButton = document.getElementById('logo-button');
         const loginButton = document.getElementById('login-button');
@@ -840,7 +811,7 @@
                     deviceId = device_id;
                     console.log('Ready with Device ID', deviceId);
                     // Nach erfolgreicher Initialisierung zur Ausrichtungsprüfung
-                    checkOrientationAndFullscreen();
+                    checkOrientation(); // Geändert von checkOrientationAndFullscreen
                 });
 
                 spotifyPlayer.addListener('not_ready', ({ device_id }) => {
@@ -870,59 +841,18 @@
         }
 
         /**
-         * Überprüft die Geräteausrichtung und erzwingt den Vollbildmodus.
+         * Überprüft die Geräteausrichtung.
          */
-        function checkOrientationAndFullscreen() {
+        function checkOrientation() {
             const isLandscape = window.matchMedia("(orientation: landscape)").matches;
 
             if (!isLandscape) {
                 orientationOverlay.classList.add('active');
-                fullscreenScreen.classList.remove('active');
                 appContainer.style.display = 'none'; // Verbirgt den Rest der App
             } else {
                 orientationOverlay.classList.remove('active');
                 appContainer.style.display = 'flex'; // Zeigt den Rest der App
-                // Wenn im Querformat, dann zum Vollbildschirm, falls nicht bereits im Vollbild
-                if (!document.fullscreenElement) {
-                    showScreen(fullscreenScreen);
-                } else {
-                    // Wenn bereits im Vollbild, direkt zur Startanimation
-                    if (!animationShown) {
-                        showWelcomeAnimation();
-                    } else {
-                        showScreen(startScreen);
-                        logoButton.classList.remove('inactive');
-                    }
-                }
-            }
-        }
-
-        /**
-         * Aktiviert den Vollbildmodus.
-         */
-        function activateFullscreen() {
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            } else if (document.documentElement.mozRequestFullScreen) { /* Firefox */
-                document.documentElement.mozRequestFullScreen();
-            } else if (document.documentElement.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-                document.documentElement.webkitRequestFullscreen();
-            } else if (document.documentElement.msRequestFullscreen) { /* IE/Edge */
-                document.documentElement.msRequestFullscreen();
-            }
-        }
-
-        /**
-         * Überwacht den Vollbildmodus.
-         */
-        function monitorFullscreen() {
-            if (!document.fullscreenElement) {
-                // Wenn Vollbild verlassen wurde, und Gerät im Querformat ist, zeige Fullscreen-Screen erneut
-                if (window.matchMedia("(orientation: landscape)").matches) {
-                    showScreen(fullscreenScreen);
-                }
-            } else {
-                // Wenn Vollbild aktiv, und Welcome Animation noch nicht gezeigt wurde
+                // Wenn im Querformat, direkt zur Startanimation
                 if (!animationShown) {
                     showWelcomeAnimation();
                 } else {
@@ -1203,16 +1133,9 @@
         // Phase 1: Login
         loginButton.addEventListener('click', redirectToSpotifyAuth);
 
-        // Phase 1: Fullscreen
-        fullscreenScreen.addEventListener('click', activateFullscreen);
-        document.addEventListener('fullscreenchange', monitorFullscreen);
-        document.addEventListener('webkitfullscreenchange', monitorFullscreen);
-        document.addEventListener('mozfullscreenchange', monitorFullscreen);
-        document.addEventListener('MSFullscreenChange', monitorFullscreen);
-
         // Phase 1 & 2: Geräteausrichtung und Start-Screen
-        window.addEventListener('resize', checkOrientationAndFullscreen);
-        window.addEventListener('orientationchange', checkOrientationAndFullscreen);
+        window.addEventListener('resize', checkOrientation); // Geändert von checkOrientationAndFullscreen
+        window.addEventListener('orientationchange', checkOrientation); // Geändert von checkOrientationAndFullscreen
 
         // Phase 2: Start-Screen Logo-Button
         logoButton.addEventListener('click', () => {
@@ -1376,8 +1299,8 @@
                 showScreen(loginScreen);
             }
 
-            // Initialen Check für Ausrichtung und Vollbild
-            checkOrientationAndFullscreen();
+            // Initialen Check für Ausrichtung
+            checkOrientation(); // Geändert von checkOrientationAndFullscreen
         };
 
         // Message Box (Ersatz für alert())
