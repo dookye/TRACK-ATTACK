@@ -5,74 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRACK ATTACK</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="spotify_icon.png" type="image/x-icon">
+    <link rel="icon" type="image/png" href="logo3.png">
 </head>
 <body>
-    <div id="app">
-        <div id="login-screen" class="screen active">
-            <p>Please log in with your Spotify-Premium-Account</p>
-            <button id="login-button" class="spotify-button">
-                <img src="spotify_icon.png" alt="Spotify Icon" class="spotify-icon">
-                LOG IN
-            </button>
-        </div>
 
-        <div id="orientation-overlay" class="overlay">
-            <p>please rotate your device to landscape mode</p>
-        </div>
-
-        <div id="fullscreen-screen" class="screen">
-            <p>click to Fullscreen</p>
-        </div>
-
-        <div id="game-start-screen" class="screen">
-            <button id="logo-button" class="logo-button"></button>
-        </div>
-
-        <div id="dice-screen" class="screen">
-            <img src="w-ani.gif" alt="Dice Animation" id="dice-animation" class="hidden">
-            <div id="dice-buttons" class="hidden">
-                <button class="dice-choice-button" data-dice="3"><img src="w-3.png" alt="Dice 3"></button>
-                <button class="dice-choice-button" data-dice="4"><img src="w-4.png" alt="Dice 4"></button>
-                <button class="dice-choice-button" data-dice="5"><img src="w-5.png" alt="Dice 5"></button>
-                <button class="dice-choice-button" data-dice="7"><img src="w-7.png" alt="Dice 7"></button>
-            </div>
-        </div>
-
-        <div id="genre-screen" class="screen">
-            <div id="genre-buttons-container">
-                </div>
-        </div>
-
-        <div id="guess-screen" class="screen">
-            <button id="guess-logo-button" class="logo-button"></button>
-            <button id="reveal-button" class="action-button hidden">AUFLÖSEN</button>
-            <div id="song-info" class="hidden">
-                <img id="album-cover" src="" alt="Album Cover">
-                <p id="song-title"></p>
-                <p id="song-artist"></p>
-                <div id="judgement-buttons" class="hidden">
-                    <button id="correct-button" class="action-button">RICHTIG</button>
-                    <button id="wrong-button" class="action-button">FALSCH</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="score-screen" class="screen">
-            <div class="score-display player1-score"></div>
-            <div class="score-display player2-score"></div>
-        </div>
-
-        <div id="speed-round-overlay" class="overlay">
-            <p id="speed-round-text">Speed-Round</p>
-        </div>
-
-        <div id="countdown-overlay" class="overlay">
-            <p id="countdown-number"></p>
-        </div>
+    <div id="login-screen" class="screen active">
+        <p>Please log in with your Spotify-Premium-Account</p>
+        <button id="spotify-login-button" class="spotify-button">
+            <img src="spotify_icon.png" alt="Spotify Icon">
+            LOG IN
+        </button>
     </div>
 
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <div id="rotate-device-screen" class="screen">
+        <p>please rotate your device to landscape mode</p>
+    </div>
+
+    <div id="fullscreen-screen" class="screen">
+        <p>click to Fullscreen</p>
+    </div>
+
+    <div id="game-screen" class="screen">
+        </div>
+
     <script src="script.js"></script>
 </body>
 </html>
