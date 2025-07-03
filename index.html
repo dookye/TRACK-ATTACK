@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRACK ATTACK</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Allgemeine Stile */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000; /* Standardhintergrund schwarz */
+            color: #fff;
+            overflow: hidden; /* Verhindert Scrollen */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 1s ease-in-out; /* Hintergrundfarb-Transition */
+            -webkit-tap-highlight-color: transparent; /* Für Webkit-Browser (iOS, Android Chrome) */
+            -webkit-touch-callout: none; /* Deaktiviert das Kontextmenü bei langem Drücken auf iOS */
+            -webkit-user-select: none; /* Verhindert Textauswahl */
+            -moz-user-select: none; /* Für Firefox */
+            -ms-user-select: none; /* Für Internet Explorer/Edge */
+            user-select: none; /* Standard für andere Browser */
+            outline: none !important; /* Entfernt den Fokus-Outline */
+        }
+
+        /* Container für die App-Inhalte */
+        #app-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Overlay für Geräteausrichtung */
+        #orientation-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 2rem;
+            z-index: 1000;
+            display: none; /* Standardmäßig versteckt */
+        }
+
+        /* Fullscreen-Screen */
+        #fullscreen-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 2rem;
+            z-index: 999;
+            display: none; /* Standardmäßig versteckt */
+            cursor: pointer;
+        }
+
+        /* Spotify Login Button Styling */
+        .spotify-login-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #1DB954; /* Spotify Grün */
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 9999px; /* Abgerundete Ecken */
+            font-size: 1.25rem;
+            font-weight: bold;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .spotify-login-button:hover {
+            background-color: #1ed760;
+        }
+
+        .spotify-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 0.75rem;
+        }
+
+        /* Logo Button Styling */
+        #logo-button {
+            width: 80vmin; /* Responsive Größe */
+            height: 80vmin; /* Responsive Größe */
+            max-width: 400px;
+            max-height: 400px;
+            cursor: pointer;
+            transition: filter 0.3s ease;
+            border-radius: 50%; /* Rundes Logo */
+            object-fit: contain;
+        }
+
+        #logo-button.inactive {
+            filter: blur(5px);
+            pointer-events: none;
+        }
+
+        /* Bounce Animation */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-30px);
+            }
+            60% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .bounce-animation {
+            animation: bounce 1s ease-in-out;
+        }
+
+        /* Würfel- und Genre-Bildschirm */
+        .dice-container, .genre-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .dice-button img {
+            width: 20vmin;
+            height: 20vmin;
+            max-width: 150px;
+            max-height: 150px;
+            cursor: pointer;
+            transition: transform 0.2s ease, filter 0.3s ease;
+        }
+
+        .dice-button img:hover {
+            transform: scale(1.05);
+        }
+
+        .genre-button {
+            background-color: #000;
+            color: #fff;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border: 3px solid transparent;
+            border-image: linear-gradient(to right, #00f, #f0f, #fff) 1;
+            transition: background-color 0.3s ease, transform 0.2s ease, border-image 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .genre-button:hover:not(.inactive) {
+            background-color: rgba(0, 0, 0, 0.7);
+            transform: scale(1.02);
+        }
+
+        .genre-button.inactive {
+            filter: grayscale(80%) blur(2px);
+            pointer-events: none;
+            cursor: default;
+            opacity: 0.6;
+        }
+
+        .genre-button.active-selection {
+            border-image: linear-gradient(to right, #00f, #f0f, #fff) 1;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            animation: pulse-border 1s infinite alternate;
+        }
+
+        @keyframes pulse-border {
+            0% {
+                border-image: linear-gradient(to right, #00f, #f0f, #fff) 1;
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            }
+            100% {
+                border-image: linear-gradient(to right, #00a, #a0a, #aaa) 1;
+                box-shadow: 0 0 25px rgba(0, 255, 255, 1);
+            }
+        }
+
+        /* Guess Screen */
+        #guess-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        #album-cover {
+            width: 40vmin;
+            height: 40vmin;
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            display: none; /* Versteckt bis zur Auflösung */
+        }
+
+        #song-info {
+            text-align: center;
+            margin-top: 1rem;
+            display: none; /* Versteckt bis zur Auflösung */
+        }
+
+        #song-info h3 {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        #song-info p {
+            font-size: 1.2rem;
+            opacity: 0.8;
+        }
+
+        .action-button {
+            background-color: #000;
+            color: #fff;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border: 3px solid transparent;
+            border-image: linear-gradient(to right, #00f, #f0f, #fff) 1;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .action-button:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+            transform: scale(1.02);
+        }
+
+        #resolve-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Speed Round */
+        #speed-round-text {
+            font-size: 4rem;
+            font-weight: bold;
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            animation: zoom-in-fade-out 4s forwards;
+            z-index: 100;
+        }
+
+        @keyframes zoom-in-fade-out {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            25% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            75% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+        }
+
+        #countdown-timer {
+            font-size: 6rem;
+            font-weight: bold;
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            display: none;
+        }
+
+        /* Score Screen */
+        #score-screen {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            justify-content: space-around;
+            align-items: center;
+            font-size: 8rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(to right, #00f, #f0f); /* Initial gradient */
+            transition: background 1s ease-in-out;
+        }
+
+        #player1-score, #player2-score {
+            flex: 1;
+            text-align: center;
+        }
+
+        /* Utility classes for hiding/showing */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <!-- Phase 1: Authentication & Geräte-Einrichtung -->
+        <div id="login-screen" class="flex flex-col items-center justify-center h-full w-full text-center">
+            <h2 class="text-2xl mb-8">Please log in with your Spotify-Premium-Account</h2>
+            <button id="spotify-login-button" class="spotify-login-button">
+                <img src="https://placehold.co/24x24/1DB954/FFFFFF?text=S" alt="Spotify Icon" class="spotify-icon">
+                LOG IN
+            </button>
+        </div>
+
+        <div id="orientation-overlay" class="hidden">
+            <p>Please rotate your device to landscape mode</p>
+        </div>
+
+        <div id="fullscreen-screen" class="hidden">
+            <p>Click to Fullscreen</p>
+        </div>
+
+        <!-- Phase 2: Spielstart & UI-Grundlagen -->
+        <div id="start-screen" class="hidden flex flex-col items-center justify-center h-full w-full">
+            <img id="logo-button" src="https://placehold.co/400x400/000000/FFFFFF?text=TRACK+ATTACK+LOGO" alt="TRACK ATTACK Logo">
+        </div>
+
+        <!-- Phase 3: Würfel- & Genre-Auswahl -->
+        <div id="dice-screen" class="hidden flex flex-col items-center justify-center h-full w-full">
+            <img id="dice-animation" src="https://placehold.co/300x300/000000/FFFFFF?text=DICE+ANIMATION" alt="Würfel Animation" class="mb-8">
+            <div id="dice-selection" class="dice-container hidden">
+                <button class="dice-button"><img src="https://placehold.co/150x150/000000/FFFFFF?text=W3" alt="Würfel 3" data-dice="3"></button>
+                <button class="dice-button"><img src="https://placehold.co/150x150/000000/FFFFFF?text=W4" alt="Würfel 4" data-dice="4"></button>
+                <button class="dice-button"><img src="https://placehold.co/150x150/000000/FFFFFF?text=W5" alt="Würfel 5" data-dice="5"></button>
+                <button class="dice-button"><img src="https://placehold.co/150x150/000000/FFFFFF?text=W7" alt="Würfel 7" data-dice="7"></button>
+            </div>
+        </div>
+
+        <div id="genre-screen" class="hidden flex flex-col items-center justify-center h-full w-full">
+            <h2 class="text-3xl mb-8">Choose your Genre</h2>
+            <div id="genre-selection" class="genre-container">
+                <button class="genre-button" data-genre="Punk Rock">Punk Rock (90's & 00')</button>
+                <button class="genre-button" data-genre="Pop Hits">Pop Hits 2000-2025</button>
+                <button class="genre-button" data-genre="Greatest Hits">Die größten Hits aller Zeiten</button>
+                <button class="genre-button" data-genre="Disney Songs">Disney Songs</button>
+            </div>
+        </div>
+
+        <!-- Phase 4: Rate-Bildschirm & Spielerwechsel -->
+        <div id="guess-screen" class="hidden flex-col items-center justify-center h-full w-full">
+            <p id="current-player-text" class="text-xl mb-4"></p>
+            <img id="logo-button-guess" src="https://placehold.co/400x400/000000/FFFFFF?text=PLAY" alt="Play Button" class="mb-8">
+            <img id="album-cover" class="hidden" src="" alt="Album Cover">
+            <div id="song-info" class="hidden">
+                <h3 id="song-title"></h3>
+                <p id="song-artist"></p>
+            </div>
+            <button id="resolve-button" class="action-button hidden">AUFLÖSEN</button>
+            <div id="resolve-buttons" class="hidden">
+                <button id="correct-button" class="action-button">RICHTIG</button>
+                <button id="wrong-button" class="action-button">FALSCH</button>
+            </div>
+            <div id="speed-round-text" class="hidden">Speed-Round</div>
+            <div id="countdown-timer" class="hidden"></div>
+        </div>
+
+        <!-- Phase 5: Punkte-System & Spielende -->
+        <div id="score-screen" class="hidden">
+            <div id="player1-score"></div>
+            <div id="player2-score"></div>
+        </div>
+    </div>
+
+    <!-- Spotify Web Playback SDK -->
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+
+    <script>
+        // Globale Konstanten und Variablen
+        const CLIENT_ID = '53257f6a1c144d3f929a60d691a0c6f6';
+        const REDIRECT_URI = 'https://dookye.github.io/TRACK-ATTACK/';
+        const SCOPES = 'streaming user-read-email user-read-private';
+
+        let accessToken = null;
+        let refreshToken = null;
+        let codeVerifier = null;
+        let spotifyPlayer = null;
+        let currentDeviceId = null;
+        let currentTrack = null;
+        let currentTrackDuration = 0;
+        let playbackInterval = null;
+        let currentPlaybackPosition = 0; // Track current playback position for resuming
+
+        // Game State Variables
+        let gameStarted = false;
+        let player1Score = 0;
+        let player2Score = 0;
+        let currentPlayer = 1; // 1 or 2
+        let currentRound = 1; // Total rounds for player 1 and player 2 combined
+        const MAX_ROUNDS_PER_PLAYER = 10; // 10 rounds per player, total 20 songs
+        let selectedDiceValue = 0;
+        let listenAttemptsRemaining = 0;
+        let maxListenAttempts = 0;
+        let gameDuration = 0; // in seconds
+        let selectedGenre = null;
+        let speedRoundActive = false;
+        let speedRoundTimer = null;
+        let speedRoundCountdown = 0;
+        let speedRoundInterval = null;
+
+        // Store speed round for each player
+        let player1SpeedRound = Math.floor(Math.random() * MAX_ROUNDS_PER_PLAYER) + 1;
+        let player2SpeedRound = Math.floor(Math.random() * MAX_ROUNDS_PER_PLAYER) + 1;
+
+        // UI Elements
+        const appContainer = document.getElementById('app-container');
+        const loginScreen = document.getElementById('login-screen');
+        const spotifyLoginButton = document.getElementById('spotify-login-button');
+        const orientationOverlay = document.getElementById('orientation-overlay');
+        const fullscreenScreen = document.getElementById('fullscreen-screen');
+        const startScreen = document.getElementById('start-screen');
+        const logoButton = document.getElementById('logo-button');
+        const diceScreen = document.getElementById('dice-screen');
+        const diceAnimation = document.getElementById('dice-animation');
+        const diceSelection = document.getElementById('dice-selection');
+        const diceButtons = document.querySelectorAll('.dice-button img');
+        const genreScreen = document.getElementById('genre-screen');
+        const genreSelection = document.getElementById('genre-selection');
+        const genreButtons = document.querySelectorAll('.genre-button');
+        const guessScreen = document.getElementById('guess-screen');
+        const logoButtonGuess = document.getElementById('logo-button-guess');
+        const albumCover = document.getElementById('album-cover');
+        const songInfo = document.getElementById('song-info');
+        const songTitle = document.getElementById('song-title');
+        const songArtist = document.getElementById('song-artist');
+        const resolveButton = document.getElementById('resolve-button');
+        const resolveButtonsContainer = document.getElementById('resolve-buttons');
+        const correctButton = document.getElementById('correct-button');
+        const wrongButton = document.getElementById('wrong-button');
+        const speedRoundText = document.getElementById('speed-round-text');
+        const countdownTimer = document.getElementById('countdown-timer');
+        const scoreScreen = document.getElementById('score-screen');
+        const player1ScoreDisplay = document.getElementById('player1-score');
+        const player2ScoreDisplay = document.getElementById('player2-score');
+        const currentPlayerText = document.getElementById('current-player-text');
+
+        // Spotify Playlist IDs for each genre
+        const genrePlaylists = {
+            'Punk Rock': ['39sVxPTg7BKwrf2MfgrtcD', '7ITmaFa2rOhXAmKmUUCG9E'],
+            'Pop Hits': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
+            'Greatest Hits': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
+            'Disney Songs': ['3Bilb56eeS7db5f3DTEwMR', '2bhbwexk7c6yJrEB4CtuY8']
+        };
+
+        // --- Hilfsfunktionen ---
+
+        /**
+         * Generiert einen zufälligen String für PKCE.
+         * @param {number} length Die Länge des zu generierenden Strings.
+         * @returns {string} Der zufällige String.
+         */
+        function generateRandomString(length) {
+            let text = '';
+            const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            for (let i = 0; i < length; i++) {
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+            }
+            return text;
+        }
+
+        /**
+         * Generiert den SHA256 Hash für PKCE.
+         * @param {string} plain Der zu hashende String.
+         * @returns {Promise<ArrayBuffer>} Der gehashte ArrayBuffer.
+         */
+        async function sha256(plain) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(plain);
+            return window.crypto.subtle.digest('SHA-256', data);
+        }
+
+        /**
+         * Konvertiert einen ArrayBuffer in einen Base64-URL-sicheren String.
+         * @param {ArrayBuffer} buffer Der zu konvertierende ArrayBuffer.
+         * @returns {string} Der Base64-URL-sichere String.
+         */
+        function base64urlencode(input) {
+            return btoa(String.fromCharCode(...new Uint8Array(input)))
+                .replace(/=/g, '')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_');
+        }
+
+        /**
+         * Generiert den Code Challenge für PKCE.
+         * @param {string} verifier Der Code Verifier.
+         * @returns {Promise<string>} Der Code Challenge.
+         */
+        async function generateCodeChallenge(verifier) {
+            const hashed = await sha256(verifier);
+            return base64urlencode(hashed);
+        }
+
+        /**
+         * Zeigt einen bestimmten Bildschirm an und versteckt alle anderen.
+         * @param {HTMLElement} screenToShow Der anzuzeigende Bildschirm-Element.
+         */
+        function showScreen(screenToShow) {
+            const screens = [loginScreen, orientationOverlay, fullscreenScreen, startScreen, diceScreen, genreScreen, guessScreen, scoreScreen];
+            screens.forEach(screen => {
+                if (screen === screenToShow) {
+                    screen.classList.remove('hidden');
+                } else {
+                    screen.classList.add('hidden');
+                }
+            });
+        }
+
+        /**
+         * Fügt eine Bounce-Animation zu einem Element hinzu.
+         * @param {HTMLElement} element Das Element, das animiert werden soll.
+         */
+        function addBounceAnimation(element) {
+            element.classList.remove('bounce-animation'); // Entfernen, falls schon vorhanden
+            void element.offsetWidth; // Reflow erzwingen
+            element.classList.add('bounce-animation');
+        }
+
+        /**
+         * Berechnet die Punkte basierend auf Würfelwert und Versuchen.
+         * @param {number} diceValue Der Wert des gewählten Würfels.
+         * @param {number} attemptsMade Die Anzahl der genutzten Hörversuche.
+         * @returns {number} Die berechneten Punkte.
+         */
+        function calculatePoints(diceValue, attemptsMade) {
+            const points = diceValue - (attemptsMade - 1);
+            return Math.max(1, points); // Mindestpunktzahl ist 1
+        }
+
+        /**
+         * Setzt die Hintergrundfarbe des Bodys.
+         * @param {string} color Die CSS-Farbe.
+         */
+        function setBackgroundColor(color) {
+            document.body.style.backgroundColor = color;
+        }
+
+        /**
+         * Setzt den Hintergrund auf einen Gradienten.
+         * @param {string} gradient Die CSS-Gradienten-Definition.
+         */
+        function setBackgroundGradient(gradient) {
+            document.body.style.background = gradient;
+        }
+
+        // --- Phasen-Management ---
+
+        /**
+         * Initialisiert die App nach dem Laden des DOM.
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            // Überprüfe, ob ein Access Token in der URL ist (nach Spotify Redirect)
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+
+            if (code) {
+                // Code vorhanden, tausche ihn gegen ein Access Token
+                exchangeCodeForToken(code);
+                // Entferne den Code aus der URL, um sie sauber zu halten
+                window.history.replaceState({}, document.title, REDIRECT_URI);
+            } else if (sessionStorage.getItem('access_token')) {
+                // Token bereits im Session Storage, direkt fortfahren
+                accessToken = sessionStorage.getItem('access_token');
+                refreshToken = sessionStorage.getItem('refresh_token');
+                initializeSpotifySDK();
+            } else {
+                // Kein Code und kein Token, zeige Login-Screen
+                showScreen(loginScreen);
+            }
+        });
+
+        /**
+         * Startet den Spotify OAuth 2.0 Flow.
+         */
+        spotifyLoginButton.addEventListener('click', async () => {
+            codeVerifier = generateRandomString(128);
+            sessionStorage.setItem('code_verifier', codeVerifier); // Speichern für späteren Gebrauch
+
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+            const authUrl = new URL('https://accounts.spotify.com/authorize');
+            authUrl.searchParams.append('client_id', CLIENT_ID);
+            authUrl.searchParams.append('response_type', 'code');
+            authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
+            authUrl.searchParams.append('scope', SCOPES);
+            authUrl.searchParams.append('code_challenge_method', 'S256');
+            authUrl.searchParams.append('code_challenge', codeChallenge);
+
+            window.location.href = authUrl.toString();
+        });
+
+        /**
+         * Tauscht den Autorisierungscode gegen ein Access Token.
+         * @param {string} code Der Autorisierungscode von Spotify.
+         */
+        async function exchangeCodeForToken(code) {
+            const verifier = sessionStorage.getItem('code_verifier');
+
+            const tokenUrl = 'https://accounts.spotify.com/api/token';
+            const body = new URLSearchParams({
+                grant_type: 'authorization_code',
+                code: code,
+                redirect_uri: REDIRECT_URI,
+                client_id: CLIENT_ID,
+                code_verifier: verifier
+            });
+
+            try {
+                const response = await fetch(tokenUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: body.toString()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                accessToken = data.access_token;
+                refreshToken = data.refresh_token;
+
+                sessionStorage.setItem('access_token', accessToken);
+                sessionStorage.setItem('refresh_token', refreshToken);
+                sessionStorage.removeItem('code_verifier'); // Verifier wird nicht mehr benötigt
+
+                console.log('Access Token:', accessToken);
+                initializeSpotifySDK();
+
+            } catch (error) {
+                console.error('Error exchanging code for token:', error);
+                alert('Fehler beim Login. Bitte versuchen Sie es erneut.');
+                showScreen(loginScreen);
+            }
+        }
+
+        /**
+         * Initialisiert das Spotify Web Playback SDK.
+         */
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            initializeSpotifySDK();
+        };
+
+        function initializeSpotifySDK() {
+            if (!accessToken) {
+                console.error('Access Token nicht verfügbar für SDK-Initialisierung.');
+                showScreen(loginScreen);
+                return;
+            }
+
+            spotifyPlayer = new Spotify.Player({
+                name: 'TRACK ATTACK Player',
+                getOAuthToken: cb => { cb(accessToken); },
+                volume: 0.5
+            });
+
+            // Connect to the player!
+            spotifyPlayer.connect().then(success => {
+                if (success) {
+                    console.log('Spotify Web Playback SDK verbunden!');
+                    // Fahren Sie mit der Geräteausrichtung fort
+                    checkOrientationAndFullscreen();
+                } else {
+                    console.error('Verbindung zum Spotify Web Playback SDK fehlgeschlagen.');
+                    alert('Verbindung zu Spotify fehlgeschlagen. Stellen Sie sicher, dass Sie Spotify Premium haben und versuchen Sie es erneut.');
+                    showScreen(loginScreen);
+                }
+            }).catch(error => {
+                console.error('Fehler beim Verbinden mit Spotify SDK:', error);
+                alert('Fehler beim Verbinden zu Spotify. Stellen Sie sicher, dass Sie Spotify Premium haben und versuchen Sie es erneut.');
+                showScreen(loginScreen);
+            });
+
+            // Ready
+            spotifyPlayer.addListener('ready', ({ device_id }) => {
+                console.log('Bereit mit Device ID', device_id);
+                currentDeviceId = device_id;
+            });
+
+            // Not Ready
+            spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+                console.log('Gerät ist offline', device_id);
+                alert('Ihr Spotify-Gerät ist offline. Bitte öffnen Sie Spotify und versuchen Sie es erneut.');
+                showScreen(loginScreen);
+            });
+
+            // Playback Status Changed
+            spotifyPlayer.addListener('player_state_changed', state => {
+                if (!state) {
+                    return;
+                }
+                // Update current playback position if track is playing
+                if (!state.paused && state.position !== undefined) {
+                    currentPlaybackPosition = state.position;
+                }
+            });
+
+            // Error handling
+            spotifyPlayer.addListener('initialization_error', ({ message }) => { console.error('Initialisierungsfehler:', message); });
+            spotifyPlayer.addListener('authentication_error', ({ message }) => {
+                console.error('Authentifizierungsfehler:', message);
+                alert('Ihre Spotify-Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+                showScreen(loginScreen);
+            });
+            spotifyPlayer.addListener('account_error', ({ message }) => { console.error('Konto-Fehler:', message); });
+            spotifyPlayer.addListener('playback_error', ({ message }) => { console.error('Wiedergabefehler:', message); });
+        }
+
+
+        /**
+         * Überprüft die Geräteausrichtung und erzwingt den Vollbildmodus.
+         */
+        function checkOrientationAndFullscreen() {
+            const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+
+            if (!isLandscape) {
+                showScreen(orientationOverlay);
+                // Verstecke alle anderen Inhalte, wenn Overlay sichtbar ist
+                appContainer.querySelectorAll(':scope > div:not(#orientation-overlay)').forEach(el => el.classList.add('hidden'));
+            } else {
+                orientationOverlay.classList.add('hidden');
+                // Zeige den Vollbild-Screen, wenn noch nicht im Vollbild
+                if (!document.fullscreenElement) {
+                    showScreen(fullscreenScreen);
+                } else {
+                    // Wenn bereits im Vollbild und korrekt ausgerichtet, gehe zur Startanimation
+                    startWelcomeAnimation();
+                }
+            }
+        }
+
+        // Event Listener für Orientierungsänderungen
+        window.addEventListener('orientationchange', checkOrientationAndFullscreen);
+        window.addEventListener('resize', checkOrientationAndFullscreen); // Auch bei Resize prüfen
+
+        // Event Listener für Fullscreen-Screen Klick
+        fullscreenScreen.addEventListener('click', () => {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.mozRequestFullScreen) { /* Firefox */
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) { /* IE/Edge */
+                document.documentElement.msRequestFullscreen();
+            }
+        });
+
+        // Event Listener für Fullscreen-Änderungen
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                console.log('Vollbildmodus aktiviert.');
+                // Wenn Vollbild aktiviert, starte die Begrüßungsanimation
+                startWelcomeAnimation();
+            } else {
+                console.log('Vollbildmodus deaktiviert.');
+                // Wenn Vollbild deaktiviert, zeige den Fullscreen-Screen erneut an,
+                // es sei denn, das Gerät ist im Hochformat (dann hat Orientation-Overlay Vorrang)
+                checkOrientationAndFullscreen();
+            }
+        });
+
+        /**
+         * Startet die einmalige Begrüßungsanimation.
+         */
+        function startWelcomeAnimation() {
+            if (sessionStorage.getItem('welcome_animation_played')) {
+                // Animation wurde bereits gezeigt, direkt zum Startbildschirm
+                showStartScreen();
+                return;
+            }
+
+            // Zeige den Startbildschirm und spiele die Animation ab
+            showScreen(startScreen);
+            logoButton.classList.add('bounce-animation');
+            logoButton.classList.remove('inactive'); // Sicherstellen, dass es aktiv ist
+
+            // Nach der Animation
+            logoButton.addEventListener('animationend', () => {
+                logoButton.classList.remove('bounce-animation');
+                sessionStorage.setItem('welcome_animation_played', 'true');
+                // Der Logo-Button ist nun aktiv und klickbar für den Spielstart
+            }, { once: true });
+        }
+
+        /**
+         * Zeigt den Startbildschirm an und bereitet den Spielstart vor.
+         */
+        function showStartScreen() {
+            showScreen(startScreen);
+            logoButton.classList.remove('inactive'); // Logo-Button ist aktiv für Spielstart
+            setBackgroundColor('#000'); // Hintergrund schwarz
+            // Event Listener für den Spielstart
+            logoButton.onclick = handleGameStart;
+        }
+
+        /**
+         * Behandelt den Klick auf den Logo-Button zum Spielstart.
+         */
+        function handleGameStart() {
+            addBounceAnimation(logoButton);
+            logoButton.classList.add('inactive'); // Logo-Button inaktiv während des Starts
+
+            // Kurzes Timeout, damit die Bounce-Animation abgeschlossen ist
+            setTimeout(() => {
+                setBackgroundColor('#00f'); // Hintergrund zu Spieler 1 Farbe (Blau)
+                gameStarted = true;
+                currentPlayer = 1;
+                currentRound = 1;
+                player1Score = 0;
+                player2Score = 0;
+                player1SpeedRound = Math.floor(Math.random() * MAX_ROUNDS_PER_PLAYER) + 1;
+                player2SpeedRound = Math.floor(Math.random() * MAX_ROUNDS_PER_PLAYER) + 1;
+                console.log(`Player 1 Speed Round: ${player1SpeedRound}, Player 2 Speed Round: ${player2SpeedRound}`);
+                showDiceScreen();
+            }, 500); // Angepasstes Timeout für Bounce-Effekt
+        }
+
+        /**
+         * Zeigt den Würfel-Bildschirm an.
+         */
+        function showDiceScreen() {
+            showScreen(diceScreen);
+            diceAnimation.classList.remove('hidden');
+            diceSelection.classList.add('hidden');
+
+            // Zeige Würfel-Animation für 4 Sekunden
+            setTimeout(() => {
+                diceAnimation.classList.add('hidden');
+                diceSelection.classList.remove('hidden');
+            }, 4000);
+        }
+
+        // Event Listener für Würfel-Auswahl
+        diceButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                addBounceAnimation(event.target);
+                selectedDiceValue = parseInt(event.target.dataset.dice);
+                console.log('Würfel gewählt:', selectedDiceValue);
+
+                // Setze Spieldauer, maximale Punkte und Hörversuche basierend auf Würfelwert
+                if (selectedDiceValue === 7) {
+                    gameDuration = 2; // 2 Sekunden für Würfel 7
+                } else {
+                    gameDuration = 7; // 7 Sekunden für Würfel 3, 4, 5
+                }
+                maxListenAttempts = selectedDiceValue;
+                listenAttemptsRemaining = maxListenAttempts;
+
+                setTimeout(showGenreScreen, 500); // Kurzes Timeout für Bounce-Effekt
+            });
+        });
+
+        /**
+         * Zeigt den Genre-Bildschirm an.
+         */
+        function showGenreScreen() {
+            showScreen(genreScreen);
+            genreButtons.forEach(button => {
+                button.classList.remove('inactive', 'active-selection');
+                button.onclick = null; // Entferne alte Event Listener
+            });
+
+            const currentRoundForPlayer = (currentPlayer === 1) ? currentRound : (currentRound - MAX_ROUNDS_PER_PLAYER);
+            speedRoundActive = (currentPlayer === 1 && currentRoundForPlayer === player1SpeedRound) ||
+                               (currentPlayer === 2 && currentRoundForPlayer === player2SpeedRound);
+
+            if (selectedDiceValue === 7) {
+                // Fall B (Würfel 7): Alle Genre-Buttons sind aktiv, Spieler wählt selbst
+                genreButtons.forEach(button => {
+                    button.onclick = (event) => selectGenre(event.target.dataset.genre);
+                });
+            } else {
+                // Fall A (Würfel 3, 4, 5): Zufällige Auswahl nach Animation
+                genreButtons.forEach(button => button.classList.add('inactive')); // Alle inaktiv machen
+                let blinkInterval;
+                let blinkCount = 0;
+                const totalBlinks = 20; // Für 4 Sekunden Animation (5 Blinks/Sekunde)
+
+                blinkInterval = setInterval(() => {
+                    genreButtons.forEach(button => button.classList.toggle('active-selection'));
+                    blinkCount++;
+                    if (blinkCount >= totalBlinks) {
+                        clearInterval(blinkInterval);
+                        // Nach der Animation: Zufälliges Genre auswählen
+                        const randomGenreIndex = Math.floor(Math.random() * genreButtons.length);
+                        const selectedRandomGenreButton = genreButtons[randomGenreIndex];
+
+                        genreButtons.forEach(button => {
+                            button.classList.add('inactive');
+                            button.classList.remove('active-selection');
+                        });
+                        selectedRandomGenreButton.classList.remove('inactive');
+                        selectedRandomGenreButton.classList.add('active-selection'); // Visuell hervorheben
+                        selectedRandomGenreButton.onclick = () => selectGenre(selectedRandomGenreButton.dataset.genre);
+                    }
+                }, 200); // Blinkt alle 200ms
+            }
+        }
+
+        /**
+         * Wählt ein Genre aus und geht zum Rate-Bildschirm.
+         * @param {string} genre Das gewählte Genre.
+         */
+        function selectGenre(genre) {
+            selectedGenre = genre;
+            console.log('Genre gewählt:', selectedGenre);
+            addBounceAnimation(event.target);
+            setTimeout(showGuessScreen, 500); // Kurzes Timeout für Bounce-Effekt
+        }
+
+        /**
+         * Zeigt den Rate-Bildschirm an.
+         */
+        function showGuessScreen() {
+            showScreen(guessScreen);
+            logoButtonGuess.classList.remove('inactive'); // Logo-Button ist aktiv als Play-Button
+            logoButtonGuess.onclick = playSongSnippet;
+            albumCover.classList.add('hidden');
+            songInfo.classList.add('hidden');
+            resolveButton.classList.add('hidden');
+            resolveButtonsContainer.classList.add('hidden');
+            speedRoundText.classList.add('hidden');
+            countdownTimer.classList.add('hidden');
+            listenAttemptsRemaining = maxListenAttempts; // Setze Versuche zurück
+
+            const currentRoundForPlayer = (currentPlayer === 1) ? currentRound : (currentRound - MAX_ROUNDS_PER_PLAYER);
+            currentPlayerText.textContent = `Player ${currentPlayer} - Round ${currentRoundForPlayer}`;
+
+            if (speedRoundActive) {
+                speedRoundText.classList.remove('hidden');
+                setTimeout(() => {
+                    speedRoundText.classList.add('hidden');
+                    startSpeedRoundCountdown();
+                }, 4000); // "Speed-Round" Anzeige für 4 Sekunden
+            }
+        }
+
+        /**
+         * Startet den Countdown für die Speed-Round.
+         */
+        function startSpeedRoundCountdown() {
+            countdownTimer.classList.remove('hidden');
+            speedRoundCountdown = 10;
+            countdownTimer.textContent = speedRoundCountdown;
+
+            speedRoundInterval = setInterval(() => {
+                speedRoundCountdown--;
+                countdownTimer.textContent = speedRoundCountdown;
+                if (speedRoundCountdown <= 0) {
+                    clearInterval(speedRoundInterval);
+                    countdownTimer.classList.add('hidden');
+                    // Automatische Auflösung, wenn der Timer abläuft
+                    resolveRound();
+                }
+            }, 1000);
+        }
+
+        /**
+         * Spielt einen zufälligen Songausschnitt ab.
+         */
+        async function playSongSnippet() {
+            if (!spotifyPlayer || !currentDeviceId) {
+                alert('Spotify Player ist nicht bereit. Bitte warten Sie oder melden Sie sich erneut an.');
+                return;
+            }
+
+            if (listenAttemptsRemaining <= 0) {
+                alert('Keine Hörversuche mehr übrig.');
+                return;
+            }
+
+            addBounceAnimation(logoButtonGuess);
+            logoButtonGuess.classList.add('inactive'); // Inaktiv während der Wiedergabe
+
+            // Wenn es der erste Versuch ist oder ein neuer Song geladen werden muss
+            if (!currentTrack || listenAttemptsRemaining === maxListenAttempts) {
+                try {
+                    const playlists = genrePlaylists[selectedGenre];
+                    const randomPlaylistId = playlists[Math.floor(Math.random() * playlists.length)];
+
+                    // Fetch Tracks from Playlist
+                    const response = await fetch(`https://api.spotify.com/v1/playlists/${randomPlaylistId}/tracks?limit=50`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            // Token abgelaufen, versuche zu aktualisieren
+                            await refreshAccessToken();
+                            // Erneut versuchen, nachdem Token aktualisiert wurde
+                            return playSongSnippet();
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    const tracks = data.items.filter(item => item.track && item.track.preview_url); // Nur Tracks mit Preview-URL
+
+                    if (tracks.length === 0) {
+                        alert('Keine spielbaren Songs in dieser Playlist gefunden.');
+                        logoButtonGuess.classList.remove('inactive');
+                        return;
+                    }
+
+                    const randomTrack = tracks[Math.floor(Math.random() * tracks.length)].track;
+                    currentTrack = randomTrack;
+                    currentTrackDuration = gameDuration * 1000; // Dauer in Millisekunden
+
+                    // Übertrage die Wiedergabe auf den Web Playback SDK Player
+                    await fetch(`https://api.spotify.com/v1/me/player`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify({
+                            device_ids: [currentDeviceId],
+                            play: false // Nicht sofort abspielen
+                        })
+                    });
+
+                } catch (error) {
+                    console.error('Fehler beim Abrufen des Songs:', error);
+                    alert('Fehler beim Laden des Songs. Bitte versuchen Sie es erneut.');
+                    logoButtonGuess.classList.remove('inactive');
+                    return;
+                }
+            }
+
+            // Spiele den Song ab
+            if (currentTrack) {
+                try {
+                    const startMs = Math.floor(Math.random() * (currentTrack.duration_ms - currentTrackDuration));
+                    currentPlaybackPosition = startMs; // Setze die Startposition für den Player
+
+                    await spotifyPlayer.resume(); // Stelle sicher, dass der Player nicht pausiert ist
+                    await spotifyPlayer.seek(startMs); // Springe zur zufälligen Startposition
+
+                    // Spiele den Track
+                    await fetch(`https://api.spotify.com/v1/me/player/play`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify({
+                            uris: [currentTrack.uri],
+                            position_ms: startMs
+                        })
+                    });
+
+                    console.log(`Playing ${currentTrack.name} from ${startMs}ms for ${gameDuration}s`);
+
+                    listenAttemptsRemaining--;
+                    console.log('Verbleibende Hörversuche:', listenAttemptsRemaining);
+
+                    // Aktiviere den AUFLÖSEN-Button nach dem ersten Hören
+                    if (listenAttemptsRemaining < maxListenAttempts) {
+                        resolveButton.classList.remove('hidden');
+                        resolveButton.onclick = resolveRound;
+                    }
+
+                    // Stoppe nach gameDuration Sekunden
+                    if (playbackInterval) clearInterval(playbackInterval);
+                    playbackInterval = setTimeout(async () => {
+                        await spotifyPlayer.pause();
+                        console.log('Playback paused.');
+                        if (listenAttemptsRemaining > 0) {
+                            logoButtonGuess.classList.remove('inactive'); // Logo-Button wieder aktiv, wenn Versuche übrig
+                        } else {
+                            logoButtonGuess.classList.add('inactive'); // Dauerhaft inaktiv, wenn keine Versuche mehr
+                            // Wenn keine Versuche mehr und nicht Speed-Round, automatisch auflösen
+                            if (!speedRoundActive) {
+                                resolveRound();
+                            }
+                        }
+                    }, currentTrackDuration);
+
+                } catch (error) {
+                    console.error('Fehler beim Abspielen des Songs:', error);
+                    alert('Fehler beim Abspielen des Songs. Bitte versuchen Sie es erneut.');
+                    logoButtonGuess.classList.remove('inactive');
+                }
+            }
+        }
+
+        /**
+         * Aktualisiert das Access Token mit dem Refresh Token.
+         */
+        async function refreshAccessToken() {
+            const tokenUrl = 'https://accounts.spotify.com/api/token';
+            const body = new URLSearchParams({
+                grant_type: 'refresh_token',
+                refresh_token: refreshToken,
+                client_id: CLIENT_ID
+            });
+
+            try {
+                const response = await fetch(tokenUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: body.toString()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                accessToken = data.access_token;
+                if (data.refresh_token) { // Refresh Token kann sich auch ändern
+                    refreshToken = data.refresh_token;
+                }
+
+                sessionStorage.setItem('access_token', accessToken);
+                sessionStorage.setItem('refresh_token', refreshToken);
+                console.log('Access Token aktualisiert.');
+
+            } catch (error) {
+                console.error('Fehler beim Aktualisieren des Tokens:', error);
+                alert('Ihre Spotify-Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+                showScreen(loginScreen);
+                throw error; // Wirf den Fehler weiter, um den ursprünglichen Vorgang abzubrechen
+            }
+        }
+
+        /**
+         * Löst die Runde auf und zeigt die Song-Informationen an.
+         */
+        async function resolveRound() {
+            if (playbackInterval) clearInterval(playbackInterval);
+            if (speedRoundInterval) clearInterval(speedRoundInterval); // Stoppe Speed-Round Timer
+
+            await spotifyPlayer.pause(); // Stoppe die Wiedergabe
+
+            logoButtonGuess.classList.add('hidden'); // Verstecke den Play-Button
+            resolveButton.classList.add('hidden'); // Verstecke den Auflösen-Button
+
+            if (currentTrack) {
+                albumCover.src = currentTrack.album.images[0]?.url || 'https://placehold.co/300x300/000000/FFFFFF?text=NO+COVER';
+                songTitle.textContent = currentTrack.name;
+                songArtist.textContent = currentTrack.artists.map(artist => artist.name).join(', ');
+                albumCover.classList.remove('hidden');
+                songInfo.classList.remove('hidden');
+            }
+
+            resolveButtonsContainer.classList.remove('hidden');
+            correctButton.onclick = () => handleResolution(true);
+            wrongButton.onclick = () => handleResolution(false);
+        }
+
+        /**
+         * Behandelt die Auflösung der Runde (Richtig/Falsch).
+         * @param {boolean} isCorrect Ob der Spieler richtig geraten hat.
+         */
+        function handleResolution(isCorrect) {
+            addBounceAnimation(isCorrect ? correctButton : wrongButton);
+
+            if (isCorrect) {
+                const points = calculatePoints(selectedDiceValue, maxListenAttempts - listenAttemptsRemaining);
+                if (currentPlayer === 1) {
+                    player1Score += points;
+                } else {
+                    player2Score += points;
+                }
+                console.log(`Player ${currentPlayer} got ${points} points. Total score: P1=${player1Score}, P2=${player2Score}`);
+            } else {
+                console.log(`Player ${currentPlayer} was wrong.`);
+            }
+
+            // Kurzes Timeout für Bounce-Effekt, dann Spielerwechsel
+            setTimeout(nextPlayerOrEndGame, 500);
+        }
+
+        /**
+         * Wechselt zum nächsten Spieler oder beendet das Spiel.
+         */
+        function nextPlayerOrEndGame() {
+            currentRound++; // Nächste Runde
+
+            if (currentRound > MAX_ROUNDS_PER_PLAYER * 2) { // 20 Runden insgesamt
+                showScoreScreen();
+            } else {
+                // Spielerwechsel
+                currentPlayer = (currentPlayer === 1) ? 2 : 1;
+                setBackgroundColor(currentPlayer === 1 ? '#00f' : '#f0f'); // Hintergrundfarbe wechseln
+                setTimeout(showDiceScreen, 1000); // Verzögerung für Hintergrund-Transition
+            }
+        }
+
+        /**
+         * Zeigt den Punktestand-Bildschirm an.
+         */
+        function showScoreScreen() {
+            showScreen(scoreScreen);
+            setBackgroundGradient('linear-gradient(to right, #00f, #f0f)'); // Gradient
+            player1ScoreDisplay.textContent = player1Score;
+            player2ScoreDisplay.textContent = player2Score;
+
+            setTimeout(() => {
+                // Spiel-Reset nach 7 Sekunden
+                setBackgroundColor('#000'); // Hintergrund zurück zu schwarz
+                showStartScreen(); // Zurück zum Startbildschirm (ohne Begrüßungsanimation)
+            }, 7000);
+        }
+
+        // Initialisiere die App beim Laden der Seite (wird durch DOMContentLoaded getriggert)
+        // Die `checkOrientationAndFullscreen()` wird nach erfolgreicher Spotify SDK Initialisierung aufgerufen.
+
+    </script>
+</body>
+</html>
