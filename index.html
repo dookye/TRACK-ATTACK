@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK</title>
+    <title>TRACK ATTACK67</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -534,6 +534,7 @@
          * @param {HTMLElement} screenToShow Der anzuzeigende Bildschirm-Element.
          */
         function showScreen(screenToShow) {
+            // Alle Hauptbildschirme, die von showScreen verwaltet werden
             const screens = [loginScreen, orientationOverlay, fullscreenScreen, startScreen, diceScreen, genreScreen, guessScreen, scoreScreen];
             screens.forEach(screen => {
                 if (screen === screenToShow) {
@@ -587,22 +588,23 @@
          * Initialisiert die App nach dem Laden des DOM.
          */
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded fired.');
             // Überprüfe, ob ein Access Token in der URL ist (nach Spotify Redirect)
             const params = new URLSearchParams(window.location.search);
             const code = params.get('code');
 
             if (code) {
-                // Code vorhanden, tausche ihn gegen ein Access Token
+                console.log('Code found in URL, exchanging for token.');
                 exchangeCodeForToken(code);
                 // Entferne den Code aus der URL, um sie sauber zu halten
                 window.history.replaceState({}, document.title, REDIRECT_URI);
             } else if (sessionStorage.getItem('access_token')) {
-                // Token bereits im Session Storage, direkt fortfahren
+                console.log('Access token found in session storage.');
                 accessToken = sessionStorage.getItem('access_token');
                 refreshToken = sessionStorage.getItem('refresh_token');
                 initializeSpotifySDK();
             } else {
-                // Kein Code und kein Token, zeige Login-Screen
+                console.log('No code or access token, showing login screen.');
                 showScreen(loginScreen);
             }
         });
@@ -678,10 +680,12 @@
          * Initialisiert das Spotify Web Playback SDK.
          */
         window.onSpotifyWebPlaybackSDKReady = () => {
+            console.log('Spotify Web Playback SDK is ready.');
             initializeSpotifySDK();
         };
 
         function initializeSpotifySDK() {
+            console.log('initializeSpotifySDK called. AccessToken:', accessToken ? 'present' : 'missing');
             if (!accessToken) {
                 console.error('Access Token nicht verfügbar für SDK-Initialisierung.');
                 showScreen(loginScreen);
@@ -697,8 +701,7 @@
             // Connect to the player!
             spotifyPlayer.connect().then(success => {
                 if (success) {
-                    console.log('Spotify Web Playback SDK verbunden!');
-                    // Fahren Sie mit der Geräteausrichtung fort
+                    console.log('Spotify Web Playback SDK verbunden! Calling checkOrientationAndFullscreen.');
                     checkOrientationAndFullscreen();
                 } else {
                     console.error('Verbindung zum Spotify Web Playback SDK fehlgeschlagen.');
@@ -751,20 +754,22 @@
          * Überprüft die Geräteausrichtung und erzwingt den Vollbildmodus.
          */
         function checkOrientationAndFullscreen() {
+            console.log('checkOrientationAndFullscreen called.');
             const isLandscape = window.matchMedia("(orientation: landscape)").matches;
 
+            // Zuerst alle Hauptinhaltsbildschirme ausblenden, um sicherzustellen, dass die Overlays sichtbar sind
+            const allContentScreens = [loginScreen, startScreen, diceScreen, genreScreen, guessScreen, scoreScreen];
+            allContentScreens.forEach(screen => screen.classList.add('hidden'));
+
             if (!isLandscape) {
-                showScreen(orientationOverlay);
-                // Verstecke alle anderen Inhalte, wenn Overlay sichtbar ist
-                appContainer.querySelectorAll(':scope > div:not(#orientation-overlay)').forEach(el => el.classList.add('hidden'));
+                showScreen(orientationOverlay); // Zeigt das Orientierungs-Overlay an
+                fullscreenScreen.classList.add('hidden'); // Stellt sicher, dass der Vollbild-Screen ausgeblendet ist
             } else {
-                orientationOverlay.classList.add('hidden');
-                // Zeige den Vollbild-Screen, wenn noch nicht im Vollbild
+                orientationOverlay.classList.add('hidden'); // Stellt sicher, dass das Orientierungs-Overlay ausgeblendet ist
                 if (!document.fullscreenElement) {
-                    showScreen(fullscreenScreen);
+                    showScreen(fullscreenScreen); // Zeigt den Vollbild-Screen an
                 } else {
-                    // Wenn bereits im Vollbild und korrekt ausgerichtet, gehe zur Startanimation
-                    startWelcomeAnimation();
+                    startWelcomeAnimation(); // Wenn bereits im Vollbild und korrekt ausgerichtet, starte die Begrüßungsanimation
                 }
             }
         }
