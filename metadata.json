@@ -1,5 +1,0 @@
-{
-  "name": "TRACK ATTACK",
-  "description": "A 2-player browser-based music quiz app using the Spotify API and Web Playback SDK. Players test their music knowledge in a fast-paced, head-to-head challenge.",
-  "requestFramePermissions": []
-}
