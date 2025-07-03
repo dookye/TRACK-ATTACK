@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACK ATTACK67</title>
+    <title>TRACK ATTACK</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -472,6 +472,9 @@
         const player2ScoreDisplay = document.getElementById('player2-score');
         const currentPlayerText = document.getElementById('current-player-text');
 
+        // Variable to track the last active game screen (not an overlay)
+        let currentActiveGameScreenId = 'login-screen';
+
         // Spotify Playlist IDs for each genre
         const genrePlaylists = {
             'Punk Rock': ['39sVxPTg7BKwrf2MfgrtcD', '7ITmaFa2rOhXAmKmUUCG9E'],
@@ -539,6 +542,10 @@
             screens.forEach(screen => {
                 if (screen === screenToShow) {
                     screen.classList.remove('hidden');
+                    // Update the current active game screen if it's not an overlay
+                    if (screenToShow !== orientationOverlay && screenToShow !== fullscreenScreen) {
+                        currentActiveGameScreenId = screenToShow.id;
+                    }
                 } else {
                     screen.classList.add('hidden');
                 }
@@ -752,24 +759,47 @@
 
         /**
          * Überprüft die Geräteausrichtung und erzwingt den Vollbildmodus.
+         * Stellt sicher, dass immer der korrekte Bildschirm angezeigt wird.
          */
         function checkOrientationAndFullscreen() {
-            console.log('checkOrientationAndFullscreen called.');
+            console.log('checkOrientationAndFullscreen called. Current active game screen ID:', currentActiveGameScreenId);
             const isLandscape = window.matchMedia("(orientation: landscape)").matches;
 
-            // Zuerst alle Hauptinhaltsbildschirme ausblenden, um sicherzustellen, dass die Overlays sichtbar sind
-            const allContentScreens = [loginScreen, startScreen, diceScreen, genreScreen, guessScreen, scoreScreen];
-            allContentScreens.forEach(screen => screen.classList.add('hidden'));
-
+            // Priorität 1: Orientierung
             if (!isLandscape) {
-                showScreen(orientationOverlay); // Zeigt das Orientierungs-Overlay an
-                fullscreenScreen.classList.add('hidden'); // Stellt sicher, dass der Vollbild-Screen ausgeblendet ist
+                showScreen(orientationOverlay);
+                return; // Stoppen Sie hier, die Ausrichtung ist falsch
+            }
+
+            // Orientierung ist korrekt, Orientierungs-Overlay ausblenden
+            orientationOverlay.classList.add('hidden');
+
+            // Priorität 2: Vollbild
+            if (!document.fullscreenElement) {
+                showScreen(fullscreenScreen);
+                return; // Stoppen Sie hier, der Vollbildmodus ist nicht aktiv
+            }
+
+            // Vollbild ist korrekt, Fullscreen-Screen ausblenden
+            fullscreenScreen.classList.add('hidden');
+
+            // Wenn hier angekommen, sind Orientierung und Vollbild korrekt.
+            // Jetzt den korrekten Spielbildschirm anzeigen.
+            if (!gameStarted && !sessionStorage.getItem('welcome_animation_played')) {
+                // Initialer Start: Begrüßungsanimation abspielen
+                startWelcomeAnimation();
+            } else if (!gameStarted && sessionStorage.getItem('welcome_animation_played')) {
+                // Spiel noch nicht gestartet, aber Animation schon gezeigt (z.B. nach Reset)
+                showScreen(startScreen);
             } else {
-                orientationOverlay.classList.add('hidden'); // Stellt sicher, dass das Orientierungs-Overlay ausgeblendet ist
-                if (!document.fullscreenElement) {
-                    showScreen(fullscreenScreen); // Zeigt den Vollbild-Screen an
+                // Spiel ist bereits gestartet, zum zuletzt aktiven Spielbildschirm zurückkehren
+                const screenToRestore = document.getElementById(currentActiveGameScreenId);
+                // Sicherstellen, dass es ein gültiger Spielbildschirm ist und kein Overlay
+                if (screenToRestore && screenToRestore !== loginScreen && screenToRestore !== orientationOverlay && screenToRestore !== fullscreenScreen) {
+                    showScreen(screenToRestore);
                 } else {
-                    startWelcomeAnimation(); // Wenn bereits im Vollbild und korrekt ausgerichtet, starte die Begrüßungsanimation
+                    // Fallback, falls currentActiveGameScreenId ungültig ist (sollte selten vorkommen)
+                    showScreen(startScreen);
                 }
             }
         }
@@ -795,8 +825,8 @@
         document.addEventListener('fullscreenchange', () => {
             if (document.fullscreenElement) {
                 console.log('Vollbildmodus aktiviert.');
-                // Wenn Vollbild aktiviert, starte die Begrüßungsanimation
-                startWelcomeAnimation();
+                // Wenn Vollbild aktiviert, rufe checkOrientationAndFullscreen auf, um den Spielfluss fortzusetzen
+                checkOrientationAndFullscreen();
             } else {
                 console.log('Vollbildmodus deaktiviert.');
                 // Wenn Vollbild deaktiviert, zeige den Fullscreen-Screen erneut an,
