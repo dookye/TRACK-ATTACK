@@ -3,61 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRACK ATTACK854</title>
+    <title>TRACK ATTACK001</title>
     <style>
         /* Grundlegende Stile und Resets */
         :root {
-            --player1-color: #007bff; /* Blau */
-            --player2-color: #ff00ff; /* Pink */
-            --black: #000000;
-            --white: #ffffff;
-            --transition-speed: 0.8s;
+            --player1-color: #0077ff; /* Leuchtendes Blau */
+            --player2-color: #ff1493; /* Leuchtendes Pink */
+            --border-gradient: linear-gradient(45deg, var(--player1-color), var(--player2-color), white);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none; /* Verhindert Textauswahl */
+            -webkit-tap-highlight-color: transparent; /* Entfernt Klick-Highlight auf Mobilgeräten */
+            outline: none; /* Entfernt den Fokus-Rahmen */
         }
 
         html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: var(--black);
-            color: var(--white);
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #000;
+            color: white;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             text-align: center;
+            transition: background-color 0.8s ease;
         }
 
-        /* Entfernt das Aufleuchten von Links beim Klicken */
         a, button {
-            -webkit-tap-highlight-color: transparent;
             text-decoration: none;
             outline: none;
         }
 
-        /* Versteck-Klasse */
+        /* Verstecktes Element */
         .hidden {
             display: none !important;
         }
 
-        /* Haupt-Container */
-        #game-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            transition: background-color var(--transition-speed) ease-in-out, background-image var(--transition-speed) ease-in-out;
-        }
-
-        /* Overlays (Querformat, Vollbild) */
+        /* Overlays (Fullscreen, Rotate) */
         .overlay {
             position: fixed;
             top: 0;
@@ -65,46 +53,76 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.95);
-            color: var(--white);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 1.5rem;
+            flex-direction: column;
             z-index: 1000;
+            cursor: pointer;
+        }
+
+        .overlay h1 {
+            font-size: 2.5rem;
             padding: 20px;
         }
 
-        /* Login-Bereich */
+        /* Login-Bildschirm */
         #login-screen {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 30px;
+        }
+
+        #login-screen p {
+            font-size: 1.2rem;
         }
 
         #login-button {
             background-color: #1DB954;
-            color: var(--white);
+            color: white;
             border: none;
             border-radius: 500px;
             padding: 15px 30px;
             font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.2s ease;
         }
 
         #login-button:hover {
-            background-color: #1ED760;
             transform: scale(1.05);
         }
 
-        /* Logo-Animationen und Button-Stil */
+        #login-button img {
+            width: 30px;
+            height: 30px;
+        }
+
+        /* Spiel-Container */
+        #game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Logo-spezifische Stile */
+        #logo-container {
+            position: relative;
+        }
+
         #logo-button {
-            width: 200px; /* Normale Größe */
+            width: 200px;
             height: auto;
             cursor: pointer;
-            transition: filter 0.3s, transform 0.3s;
+            transition: filter 0.3s ease, transform 0.2s ease;
         }
 
         #logo-button.inactive {
@@ -112,45 +130,55 @@
             pointer-events: none;
         }
         
-        /* Initiale Logo-Einflug-Animation */
-        @keyframes logo-intro {
+        #logo-button.playing {
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        /* Animationen */
+        @keyframes initial-logo-animation {
             0% {
-                transform: scale(5) translateZ(0); /* Start groß */
+                transform: scale(4);
                 opacity: 0;
             }
             80% {
-                transform: scale(1) translateZ(0);
+                transform: scale(0.95);
                 opacity: 1;
             }
             90% {
-                transform: scale(1.1) translateZ(0); /* Aufprall-Vorbereitung */
+                transform: scale(1.05);
             }
             100% {
-                transform: scale(1) translateZ(0); /* Endposition */
+                transform: scale(1);
                 opacity: 1;
             }
         }
 
-        .logo-intro-animate {
-            animation: logo-intro 2s ease-out forwards;
+        .initial-animation {
+            animation: initial-logo-animation 1.5s ease-out forwards;
         }
 
-        /* Wiederverwendbare Bounce-Animation für Klicks */
         @keyframes bounce {
             0%, 100% {
                 transform: scale(1);
             }
             50% {
-                transform: scale(1.15);
+                transform: scale(1.1);
             }
         }
 
         .bounce-animation {
-            animation: bounce 0.4s ease-in-out;
+            animation: bounce 0.4s ease;
         }
         
-        /* Würfel-Bildschirm */
-        #dice-screen {
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Würfel- und Genre-Bildschirme */
+        .choice-screen {
+            display: flex;
             flex-direction: column;
             align-items: center;
             gap: 20px;
@@ -158,334 +186,328 @@
 
         #dice-animation {
             width: 250px;
-            height: auto;
         }
 
-        #dice-selection {
+        #dice-buttons, #genre-buttons {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             flex-wrap: wrap;
             justify-content: center;
         }
 
-        .dice-option {
-            width: 100px;
-            height: 100px;
+        .dice-btn {
+            background: none;
+            border: none;
             cursor: pointer;
-            transition: transform 0.2s;
         }
 
-        .dice-option:hover {
+        .dice-btn img {
+            width: 100px;
+            transition: transform 0.2s ease;
+        }
+        
+        .dice-btn:hover img {
             transform: scale(1.1);
         }
 
-        /* Genre-Bildschirm */
-        #genre-screen {
-            flex-direction: column;
-            gap: 20px;
-            width: 80%;
-        }
-        
-        #genre-selection {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            width: 100%;
-        }
-
-        .genre-button {
-            background-color: var(--black);
-            color: var(--white);
-            border: 3px solid;
-            border-image: linear-gradient(45deg, var(--player1-color), var(--player2-color), var(--white)) 1;
-            padding: 20px;
-            font-size: 1.2rem;
+        .genre-btn {
+            background-color: #000;
+            color: #fff;
+            border: 3px solid transparent;
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s;
-            opacity: 1;
-        }
-
-        .genre-button:hover:not(.inactive) {
-            transform: scale(1.05);
-            background-color: #333;
+            background-clip: padding-box;
+            position: relative;
+            transition: transform 0.2s ease, opacity 0.3s ease;
         }
         
-        .genre-button.inactive {
+        .genre-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            z-index: -1;
+            margin: -3px;
+            border-radius: inherit;
+            background: var(--border-gradient);
+        }
+
+        .genre-btn.inactive {
             opacity: 0.5;
             pointer-events: none;
-            border-image: none;
-            border-color: grey;
         }
         
-        @keyframes blink {
-            50% { opacity: 0.6; }
+        .genre-btn.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--player1-color), 0 0 20px var(--player2-color);
+        }
+
+        @keyframes blink-genre {
+            50% {
+                opacity: 0.6;
+            }
         }
 
         .blinking {
-            animation: blink 0.5s infinite;
+            animation: blink-genre 0.5s infinite;
         }
 
         /* Rate-Bildschirm */
-        #guess-screen {
-            flex-direction: column;
+        #action-buttons {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
             gap: 20px;
         }
 
-        #action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
+        .action-btn {
+            background-color: #000;
+            color: #fff;
+            border: 3px solid transparent;
+            border-radius: 500px;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            background-clip: padding-box;
+            position: relative;
         }
         
-        .action-button {
-            background-color: var(--black);
-            color: var(--white);
-            border: 3px solid;
-            border-image: linear-gradient(45deg, var(--player1-color), var(--player2-color), var(--white)) 1;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            cursor: pointer;
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            z-index: -1;
+            margin: -3px;
+            border-radius: inherit;
+            background: var(--border-gradient);
         }
-
-        /* Auflösungs-Anzeige */
-        #resolution-screen {
+        
+        /* Auflösungs-Bildschirm */
+        #reveal-screen {
+            display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
+            background-color: rgba(0,0,0,0.7);
+            padding: 30px;
+            border-radius: 20px;
         }
-        
+
         #album-cover {
             width: 200px;
             height: 200px;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        #song-info {
-            font-size: 1.5rem;
-            font-weight: bold;
         }
         
-        #artist-info {
-            font-size: 1.2rem;
+        #song-info h2 {
+            font-size: 2rem;
         }
-
+        
+        #song-info p {
+            font-size: 1.5rem;
+            color: #ccc;
+        }
+        
         #judgement-buttons {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             margin-top: 20px;
         }
+        
+        /* Speed-Round / Countdown Anzeige */
+        #special-message-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 500;
+            font-size: 8rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 20px black;
+            pointer-events: none;
+            opacity: 0;
+        }
 
-        /* Punkte-Bildschirm */
-        #score-screen {
+        @keyframes special-message-animation {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        @keyframes fade-out {
+            to { opacity: 0; }
+        }
+
+        /* End-Bildschirm */
+        #end-screen {
             width: 100%;
             height: 100%;
             display: flex;
             justify-content: space-around;
             align-items: center;
+            background: linear-gradient(90deg, var(--player1-color), var(--player2-color));
         }
-
+        
         .score-display {
-            font-size: 10rem;
+            font-size: 15rem;
             font-weight: bold;
-            text-shadow: 3px 3px 10px rgba(0,0,0,0.5);
-        }
-
-        /* Speed-Round & Countdown-Anzeige */
-        .centered-text-animation {
-            position: absolute;
-            font-size: 5rem;
-            font-weight: bold;
-            animation: text-zoom-fade 4s forwards;
-            z-index: 500;
+            opacity: 0;
+            animation: fade-in 1s forwards;
         }
         
-        .countdown-animation {
-            position: absolute;
-            font-size: 12rem;
-            font-weight: bold;
-            animation: countdown-zoom 1s linear infinite;
-            z-index: 500;
-        }
-
-        @keyframes text-zoom-fade {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); opacity: 0; }
-        }
-        
-        @keyframes countdown-zoom {
-            0% { transform: scale(1); opacity: 1; }
-            99% { transform: scale(1.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 0; }
+        @keyframes fade-in {
+            to { opacity: 1; }
         }
 
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <!-- Phase 1.1: Login-Bildschirm -->
-        <div id="login-screen">
-            <p>Please log in with your Spotify-Premium-Account</p>
-            <button id="login-button">LOG IN WITH SPOTIFY</button>
+    <!-- Login-Bildschirm -->
+    <div id="login-screen">
+        <p>Please log in with your Spotify-Premium-Account.</p>
+        <button id="login-button">
+            <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Icon_RGB_White.png" alt="Spotify Logo">
+            <span>LOG IN</span>
+        </button>
+    </div>
+
+    <!-- Haupt-Spielcontainer -->
+    <div id="game-container" class="hidden">
+        
+        <!-- Logo als zentraler Button -->
+        <div id="logo-container">
+             <img src="https://raw.githubusercontent.com/Dookye/TRACK-ATTACK/main/logo3.png" alt="Track Attack Logo" id="logo-button">
         </div>
 
-        <!-- Phase 1.4: Logo-Animation (wird per JS gesteuert) -->
-        <img id="logo-button" src="logo3.png" alt="TRACK ATTACK Logo" class="hidden">
-
-        <!-- Phase 3.1: Würfel-Bildschirm -->
-        <div id="dice-screen" class="hidden">
-            <img id="dice-animation" src="w-ani.gif" alt="Würfel Animation">
-            <div id="dice-selection" class="hidden">
-                <img src="w-3.png" alt="Würfel 3" class="dice-option" data-value="3">
-                <img src="w-4.png" alt="Würfel 4" class="dice-option" data-value="4">
-                <img src="w-5.png" alt="Würfel 5" class="dice-option" data-value="5">
-                <img src="w-7.png" alt="Würfel 7" class="dice-option" data-value="7">
+        <!-- Würfel-Bildschirm -->
+        <div id="dice-screen" class="choice-screen hidden">
+            <img src="https://raw.githubusercontent.com/Dookye/TRACK-ATTACK/main/w-ani.gif" alt="Dice Animation" id="dice-animation">
+            <div id="dice-buttons" class="hidden">
+                <button class="dice-btn" data-value="3"><img src="https://raw.githubusercontent.com/Dookye/TRACK-ATTACK/main/w-3.png" alt="Dice 3"></button>
+                <button class="dice-btn" data-value="4"><img src="https://raw.githubusercontent.com/Dookye/TRACK-ATTACK/main/w-4.png" alt="Dice 4"></button>
+                <button class="dice-btn" data-value="5"><img src="https://raw.githubusercontent.com/Dookye/TRACK-ATTACK/main/w-5.png" alt="Dice 5"></button>
+                <button class="dice-btn" data-value="7"><img src="https://raw.githubusercontent.com/Dookye/TRACK-ATTACK/main/w-7.png" alt="Dice 7"></button>
             </div>
         </div>
 
-        <!-- Phase 3.3: Genre-Bildschirm -->
-        <div id="genre-screen" class="hidden">
-            <h2>Wähle ein Genre</h2>
-            <div id="genre-selection">
-                <button class="genre-button" data-genre="punk">Punk Rock (90's & 00')</button>
-                <button class="genre-button" data-genre="pop">Pop Hits 2000-2025</button>
-                <button class="genre-button" data-genre="alltime">Die größten Hits aller Zeiten</button>
-                <button class="genre-button" data-genre="disney">Disney Songs</button>
+        <!-- Genre-Bildschirm -->
+        <div id="genre-screen" class="choice-screen hidden">
+            <div id="genre-buttons">
+                <button class="genre-btn" data-genre="punk">Punk Rock (90's & 00')</button>
+                <button class="genre-btn" data-genre="pop">Pop Hits 2000-2025</button>
+                <button class="genre-btn" data-genre="alltime">Die größten Hits aller Zeiten</button>
+                <button class="genre-btn" data-genre="disney">Disney Songs</button>
             </div>
         </div>
         
-        <!-- Phase 4.1: Rate-Bildschirm -->
-        <div id="guess-screen" class="hidden">
-            <!-- Logo-Button wird hier wiederverwendet -->
-            <div id="action-buttons">
-                 <button id="resolve-button" class="action-button hidden">AUFLÖSEN</button>
-            </div>
-        </div>
-
-        <!-- Phase 4.3: Auflösungs-Bildschirm -->
-        <div id="resolution-screen" class="hidden">
+        <!-- Auflösungs-Bildschirm -->
+        <div id="reveal-screen" class="hidden">
             <img id="album-cover" src="" alt="Album Cover">
-            <p id="song-info">Song: Titel</p>
-            <p id="artist-info">Interpret: Name</p>
+            <div id="song-info">
+                <h2 id="song-title"></h2>
+                <p id="song-artist"></p>
+            </div>
             <div id="judgement-buttons">
-                <button id="correct-button" class="action-button">RICHTIG</button>
-                <button id="wrong-button" class="action-button">FALSCH</button>
+                 <button class="action-btn" id="correct-btn">RICHTIG</button>
+                 <button class="action-btn" id="wrong-btn">FALSCH</button>
             </div>
         </div>
 
-        <!-- Phase 5.2: Punkte-Bildschirm -->
-        <div id="score-screen" class="hidden">
-            <div id="player1-score" class="score-display">0</div>
-            <div id="player2-score" class="score-display">0</div>
+        <!-- Buttons am unteren Rand (Auflösen) -->
+        <div id="action-buttons">
+            <button class="action-btn hidden" id="reveal-btn">AUFLÖSEN</button>
         </div>
+        
+        <!-- Container für Speed-Round / Countdown Nachrichten -->
+        <div id="special-message-container"></div>
 
-    </div>
-
-    <!-- Phase 1.4: Overlays -->
-    <div id="rotate-device-overlay" class="overlay hidden">
-        <p>Please rotate your device to landscape mode.</p>
-    </div>
-    <div id="fullscreen-overlay" class="overlay hidden">
-        <p>Click to enter Fullscreen</p>
     </div>
     
-    <!-- Phase 6: Speed-Round & Countdown Anzeige -->
-    <div id="speed-round-text" class="centered-text-animation hidden">Speed-Round</div>
-    <div id="countdown-display" class="countdown-animation hidden">10</div>
+    <!-- End-Bildschirm -->
+    <div id="end-screen" class="hidden">
+        <div id="player1-final-score" class="score-display"></div>
+        <div id="player2-final-score" class="score-display"></div>
+    </div>
+
+    <!-- Overlay für Geräte-Ausrichtung -->
+    <div id="rotate-device-overlay" class="overlay hidden">
+        <h1>Please rotate your device to landscape mode</h1>
+    </div>
+
+    <!-- Overlay für Vollbild-Aufforderung -->
+    <div id="fullscreen-overlay" class="overlay hidden">
+        <h1>Click to enter Fullscreen</h1>
+    </div>
 
 
     <script>
-        // Wichtige Parameter
+        // --- KONSTANTEN UND VARIABLEN ---
         const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
         const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
         const SCOPES = "streaming user-read-email user-read-private";
 
-        const PLAYLISTS = {
+        const playlists = {
             punk: ['39sVxPTg7BKwrf2MfgrtcD', '7ITmaFa2rOhXAmKmUUCG9E'],
             pop: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
             alltime: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
             disney: ['3Bilb56eeS7db5f3DTEwMR', '2bhbwexk7c6yJrEB4CtuY8']
         };
 
-        // Spielstatus-Variablen
-        let accessToken = null;
-        let player = null;
-        let deviceId = null;
         let gameState = {
             player1Score: 0,
             player2Score: 0,
-            currentPlayer: 1, // 1 oder 2
-            currentRound: 1, // 1 bis 10 pro Spieler
+            currentPlayer: 1,
+            currentRound: 1,
             totalRounds: 20,
+            player1SpeedRound: -1,
+            player2SpeedRound: -1,
+            isGameActive: false
+        };
+
+        let roundState = {
             diceValue: 0,
             attemptsMade: 0,
             maxAttempts: 0,
-            playDuration: 0,
+            songDuration: 0,
+            selectedGenre: null,
             currentTrack: null,
-            speedRoundPlayer1: Math.floor(Math.random() * 10) + 1,
-            speedRoundPlayer2: Math.floor(Math.random() * 10) + 1,
-            isSpeedRound: false,
-            speedRoundTimer: null,
+            speedRoundTimer: null
         };
 
-        // DOM-Elemente
-        const dom = {
-            gameContainer: document.getElementById('game-container'),
-            loginScreen: document.getElementById('login-screen'),
-            loginButton: document.getElementById('login-button'),
-            logoButton: document.getElementById('logo-button'),
-            rotateOverlay: document.getElementById('rotate-device-overlay'),
-            fullscreenOverlay: document.getElementById('fullscreen-overlay'),
-            diceScreen: document.getElementById('dice-screen'),
-            diceAnimation: document.getElementById('dice-animation'),
-            diceSelection: document.getElementById('dice-selection'),
-            genreScreen: document.getElementById('genre-screen'),
-            genreButtons: document.querySelectorAll('.genre-button'),
-            guessScreen: document.getElementById('guess-screen'),
-            resolveButton: document.getElementById('resolve-button'),
-            resolutionScreen: document.getElementById('resolution-screen'),
-            albumCover: document.getElementById('album-cover'),
-            songInfo: document.getElementById('song-info'),
-            artistInfo: document.getElementById('artist-info'),
-            correctButton: document.getElementById('correct-button'),
-            wrongButton: document.getElementById('wrong-button'),
-            scoreScreen: document.getElementById('score-screen'),
-            player1Score: document.getElementById('player1-score'),
-            player2Score: document.getElementById('player2-score'),
-            speedRoundText: document.getElementById('speed-round-text'),
-            countdownDisplay: document.getElementById('countdown-display'),
-        };
+        let spotifyPlayer = null;
+        let deviceId = null;
+        let accessToken = null;
 
-        // Hilfsfunktionen
-        const showScreen = (screen) => {
-            [dom.loginScreen, dom.logoButton, dom.diceScreen, dom.genreScreen, dom.guessScreen, dom.resolutionScreen, dom.scoreScreen].forEach(s => s.classList.add('hidden'));
-            if (screen) screen.classList.remove('hidden');
-            if (screen === dom.guessScreen) {
-                dom.logoButton.classList.remove('hidden');
-            }
-        };
+        // --- DOM-ELEMENTE ---
+        const loginScreen = document.getElementById('login-screen');
+        const gameContainer = document.getElementById('game-container');
+        const loginButton = document.getElementById('login-button');
+        const rotateOverlay = document.getElementById('rotate-device-overlay');
+        const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+        const logoButton = document.getElementById('logo-button');
+        const diceScreen = document.getElementById('dice-screen');
+        const diceAnimation = document.getElementById('dice-animation');
+        const diceButtons = document.getElementById('dice-buttons');
+        const genreScreen = document.getElementById('genre-screen');
+        const genreButtons = document.querySelectorAll('.genre-btn');
+        const revealBtn = document.getElementById('reveal-btn');
+        const revealScreen = document.getElementById('reveal-screen');
+        const correctBtn = document.getElementById('correct-btn');
+        const wrongBtn = document.getElementById('wrong-btn');
+        const specialMessageContainer = document.getElementById('special-message-container');
+        const endScreen = document.getElementById('end-screen');
 
-        const applyBounce = (element) => {
-            element.classList.add('bounce-animation');
-            element.addEventListener('animationend', () => {
-                element.classList.remove('bounce-animation');
-            }, { once: true });
-        };
 
-        // Phase 1: Setup, Authentifizierung & Initialisierung
+        // --- AUTHENTIFIZIERUNG (PKCE Flow) ---
 
-        // 1.2 Spotify OAuth PKCE-Flow
-        async function generateCodeChallenge(codeVerifier) {
-            const data = new TextEncoder().encode(codeVerifier);
-            const digest = await window.crypto.subtle.digest('SHA-256', data);
-            return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_')
-                .replace(/=+$/, '');
-        }
-
+        // Generiert einen zufälligen String für den Code Verifier
         function generateRandomString(length) {
             let text = '';
             const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -495,25 +517,45 @@
             return text;
         }
 
-        dom.loginButton.addEventListener('click', async () => {
-            const codeVerifier = generateRandomString(128);
-            const codeChallenge = await generateCodeChallenge(codeVerifier);
-            window.localStorage.setItem('code_verifier', codeVerifier);
+        // Erstellt einen SHA256 Hash
+        async function sha256(plain) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(plain);
+            return window.crypto.subtle.digest('SHA-256', data);
+        }
 
-            const args = new URLSearchParams({
+        // Base64-URL-kodiert den Hash
+        function base64encode(input) {
+            return btoa(String.fromCharCode(...new Uint8Array(input)))
+                .replace(/=/g, '')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_');
+        }
+
+        // Startet den Login-Prozess
+        async function redirectToSpotifyAuth() {
+            const codeVerifier = generateRandomString(64);
+            window.localStorage.setItem('code_verifier', codeVerifier);
+            const hashed = await sha256(codeVerifier);
+            const codeChallenge = base64encode(hashed);
+
+            const authUrl = new URL("https://accounts.spotify.com/authorize");
+            const params = {
                 response_type: 'code',
                 client_id: CLIENT_ID,
                 scope: SCOPES,
-                redirect_uri: REDIRECT_URI,
                 code_challenge_method: 'S256',
                 code_challenge: codeChallenge,
-            });
-            window.location = 'https://accounts.spotify.com/authorize?' + args;
-        });
+                redirect_uri: REDIRECT_URI,
+            };
+            authUrl.search = new URLSearchParams(params).toString();
+            window.location.href = authUrl.toString();
+        }
 
-        async function getAccessToken(code) {
+        // Tauscht den Authorization Code gegen ein Access Token
+        async function fetchAccessToken(code) {
             const codeVerifier = localStorage.getItem('code_verifier');
-            const response = await fetch('https://accounts.spotify.com/api/token', {
+            const response = await fetch("https://accounts.spotify.com/api/token", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
@@ -524,429 +566,423 @@
                     code_verifier: codeVerifier,
                 }),
             });
-            const data = await response.json();
-            if (data.access_token) {
-                accessToken = data.access_token;
-                localStorage.removeItem('code_verifier');
-                initializeGame();
-            } else {
-                console.error("Authentication failed:", data);
-                alert("Login failed. Please try again.");
-                window.location.href = REDIRECT_URI; // Zurück zur Startseite
+            if (!response.ok) {
+                throw new Error('Failed to fetch access token');
             }
+            const data = await response.json();
+            accessToken = data.access_token;
+            // Hier sollte auch das refresh_token gespeichert werden für längere Sessions
+            initializeWebPlayer();
         }
 
-        // 1.3 Spotify Web Player SDK laden
-        function initializeGame() {
+        // --- SPOTIFY WEB PLAYBACK SDK ---
+
+        function initializeWebPlayer() {
             const script = document.createElement('script');
             script.src = "https://sdk.scdn.co/spotify-player.js";
             script.async = true;
             document.body.appendChild(script);
 
             window.onSpotifyWebPlaybackSDKReady = () => {
-                player = new Spotify.Player({
+                spotifyPlayer = new Spotify.Player({
                     name: 'TRACK ATTACK',
                     getOAuthToken: cb => { cb(accessToken); },
-                    volume: 0.8
+                    volume: 0.5
                 });
 
-                player.addListener('ready', ({ device_id }) => {
+                spotifyPlayer.addListener('ready', ({ device_id }) => {
                     console.log('Ready with Device ID', device_id);
                     deviceId = device_id;
-                    // Nach dem Login kommt die Geräte- und Bildschirmeinrichtung
-                    setupDeviceAndScreen();
+                    // Login erfolgreich, UI vorbereiten
+                    loginScreen.classList.add('hidden');
+                    gameContainer.classList.remove('hidden');
+                    checkOrientation(); // Erste Prüfung nach dem Login
                 });
 
-                player.addListener('not_ready', ({ device_id }) => {
+                spotifyPlayer.addListener('not_ready', ({ device_id }) => {
                     console.log('Device ID has gone offline', device_id);
                 });
                 
-                player.addListener('player_state_changed', state => {
+                spotifyPlayer.addListener('player_state_changed', state => {
                     if (!state) return;
                     
-                    // Logik um zu erkennen, wann ein Song zu Ende gespielt hat
-                    if (gameState.currentTrack && state.track_window.current_track.id === gameState.currentTrack.id && state.paused && state.position === 0) {
-                        // Verhindert, dass die Logik erneut ausgelöst wird, wenn der Player manuell pausiert wird
-                        if (Date.now() - gameState.playStartTime > (gameState.playDuration * 1000 - 500)) {
-                             handleSongEnd();
-                        }
+                    // Logik, wenn Song zu Ende ist (oder pausiert wird)
+                    if (state.paused && roundState.currentTrack && !state.track_window.next_tracks.length) {
+                        // Dies ist eine sehr einfache Prüfung. Besser wäre es, den Timer zu nutzen.
                     }
                 });
 
-                player.connect();
+                spotifyPlayer.connect().then(success => {
+                    if (success) {
+                        console.log('The Web Playback SDK successfully connected to Spotify!');
+                    }
+                });
             };
         }
 
-        // 1.4 Geräte- und Bildschirmeinrichtung
-        function setupDeviceAndScreen() {
-            showScreen(null); // Alles ausblenden
-            checkOrientation();
-            window.addEventListener('resize', checkOrientation);
-            
-            // Vollbild-Prüfung
-            checkFullscreen();
-            document.addEventListener('fullscreenchange', checkFullscreen);
-            dom.fullscreenOverlay.addEventListener('click', () => {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-                });
-            });
-        }
+        // --- BILDSCHIRM- & GERÄTE-SETUP ---
 
         function checkOrientation() {
-            if (window.innerHeight > window.innerWidth) {
-                dom.rotateOverlay.classList.remove('hidden');
-            } else {
-                dom.rotateOverlay.classList.add('hidden');
+            if (window.innerHeight > window.innerWidth) { // Portrait-Modus
+                rotateOverlay.classList.remove('hidden');
+                fullscreenOverlay.classList.add('hidden'); // Verstecke Fullscreen, falls sichtbar
+            } else { // Landscape-Modus
+                rotateOverlay.classList.add('hidden');
+                // Wenn nicht im Vollbild, zeige den Vollbild-Button
+                if (!document.fullscreenElement) {
+                    fullscreenOverlay.classList.remove('hidden');
+                } else {
+                    fullscreenOverlay.classList.add('hidden');
+                }
             }
         }
         
-        function checkFullscreen() {
+        function enterFullscreen() {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        }
+
+        function handleFullscreenChange() {
             if (!document.fullscreenElement) {
-                dom.fullscreenOverlay.classList.remove('hidden');
+                // User hat Vollbild verlassen, zeige Aufforderung erneut (nur im Landscape)
+                checkOrientation();
             } else {
-                dom.fullscreenOverlay.classList.add('hidden');
-                // Wenn wir im Vollbild sind und das Spiel noch nicht gestartet hat, zeige die Logo-Animation
-                if (dom.logoButton.classList.contains('hidden')) {
-                    startInitialLogoAnimation();
+                 // User ist im Vollbild, starte ggf. die Intro-Animation
+                if (!gameState.isGameActive) {
+                    fullscreenOverlay.classList.add('hidden');
+                    logoButton.classList.add('initial-animation');
                 }
             }
         }
-        
-        function startInitialLogoAnimation() {
-            dom.logoButton.classList.remove('hidden');
-            dom.logoButton.classList.add('logo-intro-animate');
-            dom.logoButton.addEventListener('animationend', () => {
-                // Nach der Animation ist der Logo-Button bereit für den Spielstart
-                dom.logoButton.classList.remove('logo-intro-animate');
-                dom.logoButton.onclick = startGame;
-            }, { once: true });
-        }
 
-
-        // Phase 2: Spielstart & UI-Grundlagen
-        function startGame() {
-            applyBounce(dom.logoButton);
-            dom.logoButton.classList.add('inactive');
-            dom.logoButton.onclick = null; // Klick deaktivieren
-
-            setTimeout(() => {
-                dom.gameContainer.style.backgroundColor = 'var(--player1-color)';
-                startRound();
-            }, 500); // Warten bis Bounce-Effekt vorbei ist
-        }
-        
-        function startRound() {
-            // Rundenlogik
-            gameState.isSpeedRound = false;
-            if (gameState.currentPlayer === 1 && gameState.currentRound === gameState.speedRoundPlayer1) {
-                gameState.isSpeedRound = true;
-            }
-            if (gameState.currentPlayer === 2 && gameState.currentRound === gameState.speedRoundPlayer2) {
-                gameState.isSpeedRound = true;
-            }
-
-            // UI zurücksetzen
-            dom.resolveButton.classList.add('hidden');
-            dom.logoButton.classList.remove('inactive');
-            
-            // Zum Würfel-Bildschirm
-            showDiceScreen();
-        }
-
-        // Phase 3: Würfel- & Genre-Auswahl
-        function showDiceScreen() {
-            showScreen(dom.diceScreen);
-            dom.diceAnimation.classList.remove('hidden');
-            dom.diceSelection.classList.add('hidden');
-            
-            // Würfel-Animation zeigen
-            setTimeout(() => {
-                dom.diceAnimation.classList.add('hidden');
-                dom.diceSelection.classList.remove('hidden');
-            }, 4000);
-        }
-
-        document.querySelectorAll('.dice-option').forEach(dice => {
-            dice.addEventListener('click', (e) => {
-                applyBounce(e.target);
-                gameState.diceValue = parseInt(e.target.dataset.value);
-                
-                // Spieldauer und Versuche festlegen
-                gameState.playDuration = gameState.diceValue === 7 ? 2 : 7;
-                gameState.maxAttempts = gameState.diceValue;
-                gameState.attemptsMade = 0;
-                
-                setTimeout(showGenreScreen, 400);
-            });
-        });
-
-        function showGenreScreen() {
-            showScreen(dom.genreScreen);
-            dom.genreButtons.forEach(b => {
-                b.classList.remove('inactive', 'blinking');
-                b.style.opacity = '1';
-            });
-
-            if (gameState.diceValue === 7) {
-                // Spieler wählt selbst
-                dom.genreButtons.forEach(b => b.onclick = (e) => handleGenreSelection(e.target.dataset.genre));
-            } else {
-                // Zufällige Auswahl
-                dom.genreButtons.forEach(b => b.onclick = null); // Klicks erst deaktivieren
-                
-                const genreKeys = Object.keys(PLAYLISTS);
-                const randomGenre = genreKeys[Math.floor(Math.random() * genreKeys.length)];
-                const targetButton = document.querySelector(`.genre-button[data-genre="${randomGenre}"]`);
-
-                // Blink-Animation
-                dom.genreButtons.forEach(b => b.classList.add('blinking'));
-                setTimeout(() => {
-                    dom.genreButtons.forEach(b => {
-                        b.classList.remove('blinking');
-                        if (b !== targetButton) {
-                            b.classList.add('inactive');
-                        }
-                    });
-                    targetButton.onclick = () => handleGenreSelection(randomGenre);
-                }, 4000);
-            }
-        }
-        
-        async function handleGenreSelection(genre) {
-            applyBounce(document.querySelector(`.genre-button[data-genre="${genre}"]`));
-            
-            if (gameState.isSpeedRound) {
-                await showSpeedRoundAnimation();
-            }
-
-            // Song holen und zum Rate-Bildschirm
-            await fetchAndPrepareTrack(genre);
-        }
-        
-        async function showSpeedRoundAnimation() {
-            return new Promise(resolve => {
-                dom.speedRoundText.classList.remove('hidden');
-                setTimeout(() => {
-                    dom.speedRoundText.classList.add('hidden');
-                    startSpeedRoundCountdown();
-                    resolve();
-                }, 4000);
-            });
-        }
-
-        function startSpeedRoundCountdown() {
-            let count = 10;
-            dom.countdownDisplay.textContent = count;
-            dom.countdownDisplay.classList.remove('hidden');
-            
-            gameState.speedRoundTimer = setInterval(() => {
-                count--;
-                dom.countdownDisplay.textContent = count;
-                if (count <= 0) {
-                    clearInterval(gameState.speedRoundTimer);
-                    dom.countdownDisplay.classList.add('hidden');
-                    // Zeit abgelaufen, automatisch auflösen
-                    forceResolve();
-                }
-            }, 1000);
-        }
-
-        // Phase 4: Rate-Bildschirm & Spielerwechsel
-        async function fetchAndPrepareTrack(genre) {
-            // UI für Raten vorbereiten
-            showScreen(dom.guessScreen);
-            dom.logoButton.classList.remove('inactive');
-            dom.logoButton.onclick = playSongSnippet;
-
-            try {
-                // Playlist auswählen
-                const playlistId = PLAYLISTS[genre][Math.floor(Math.random() * 2)];
-                
-                // Tracks aus Playlist holen
-                const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-                const data = await response.json();
-                const tracks = data.items.filter(item => item.track && item.track.preview_url); // Nur Tracks mit Vorschau
-                
-                if (tracks.length === 0) {
-                    alert("Konnte keine spielbaren Tracks in dieser Playlist finden. Bitte wähle ein anderes Genre.");
-                    showGenreScreen();
-                    return;
-                }
-                
-                // Zufälligen Track auswählen
-                const randomTrack = tracks[Math.floor(Math.random() * tracks.length)].track;
-                gameState.currentTrack = randomTrack;
-                
-                console.log(`Ausgewählter Song: ${randomTrack.name} von ${randomTrack.artists[0].name}`);
-
-            } catch (error) {
-                console.error("Fehler beim Holen des Tracks:", error);
-                alert("Ein Fehler ist aufgetreten. Versuche es erneut.");
-                startRound();
-            }
-        }
-        
-        function playSongSnippet() {
-            if (!player || !deviceId || !gameState.currentTrack) return;
-            if (gameState.attemptsMade >= gameState.maxAttempts) return;
-
-            applyBounce(dom.logoButton);
-            dom.logoButton.classList.add('inactive');
-            dom.logoButton.onclick = null; // Klick während des Spielens verhindern
-
-            gameState.attemptsMade++;
-
-            const trackDurationMs = gameState.currentTrack.duration_ms;
-            // Stelle sicher, dass die Startposition genug Zeit für den Ausschnitt lässt
-            const maxStartPosition = trackDurationMs - (gameState.playDuration * 1000);
-            const randomStartPosition = Math.floor(Math.random() * Math.max(0, maxStartPosition));
-
-            fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    uris: [gameState.currentTrack.uri],
-                    position_ms: randomStartPosition
-                }),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-            }).then(() => {
-                 gameState.playStartTime = Date.now();
-                 // Player pausiert nach der eingestellten Zeit
-                 setTimeout(() => {
-                     player.pause().then(() => {
-                        handleSongEnd();
-                     });
-                 }, gameState.playDuration * 1000);
-            }).catch(e => console.error(e));
-        }
-        
-        function handleSongEnd() {
-            // Nach dem 1. Hören "Auflösen" anzeigen
-            if (gameState.attemptsMade >= 1) {
-                dom.resolveButton.classList.remove('hidden');
-            }
-            
-            // Logo wieder aktivieren, wenn noch Versuche übrig sind
-            if (gameState.attemptsMade < gameState.maxAttempts) {
-                dom.logoButton.classList.remove('inactive');
-                dom.logoButton.onclick = playSongSnippet;
-            } else {
-                // Keine Versuche mehr, Logo bleibt inaktiv
-                dom.logoButton.classList.add('inactive');
-                dom.logoButton.onclick = null;
-            }
-        }
-        
-        dom.resolveButton.addEventListener('click', () => {
-            applyBounce(dom.resolveButton);
-            if (gameState.isSpeedRound) {
-                clearInterval(gameState.speedRoundTimer);
-                dom.countdownDisplay.classList.add('hidden');
-            }
-            setTimeout(showResolution, 400);
-        });
-        
-        function forceResolve() {
-            player.pause();
-            showResolution();
-        }
-
-        function showResolution() {
-            showScreen(dom.resolutionScreen);
-            
-            const track = gameState.currentTrack;
-            dom.albumCover.src = track.album.images[0].url;
-            dom.songInfo.textContent = `Titel: ${track.name}`;
-            dom.artistInfo.textContent = `Interpret: ${track.artists.map(a => a.name).join(', ')}`;
-        }
-
-        // Phase 5: Punkte-System & Spielende
-        function calculatePoints(diceValue, attemptsMade) {
-            if (attemptsMade === 0) return 0; // Falls falsch geraten wird ohne zu hören
-            const points = diceValue - (attemptsMade - 1);
-            return Math.max(1, points); // Mindestens 1 Punkt bei "RICHTIG"
-        }
-        
-        dom.correctButton.addEventListener('click', () => {
-            const points = calculatePoints(gameState.diceValue, gameState.attemptsMade);
-            if (gameState.currentPlayer === 1) {
-                gameState.player1Score += points;
-            } else {
-                gameState.player2Score += points;
-            }
-            endTurn();
-        });
-
-        dom.wrongButton.addEventListener('click', () => {
-            endTurn();
-        });
-
-        function endTurn() {
-            // Nächster Spieler oder nächste Runde
-            if (gameState.currentPlayer === 1) {
-                gameState.currentPlayer = 2;
-                dom.gameContainer.style.backgroundColor = 'var(--player2-color)';
-            } else {
-                gameState.currentPlayer = 1;
-                gameState.currentRound++;
-                dom.gameContainer.style.backgroundColor = 'var(--player1-color)';
-            }
-            
-            const totalTurns = (gameState.currentRound - 1) * 2 + (gameState.currentPlayer - 1);
-            if (totalTurns >= gameState.totalRounds) {
-                endGame();
-            } else {
-                setTimeout(startRound, 800); // Warten auf Farbwechsel
-            }
-        }
-
-        function endGame() {
-            showScreen(dom.scoreScreen);
-            dom.player1Score.textContent = gameState.player1Score;
-            dom.player2Score.textContent = gameState.player2Score;
-            dom.gameContainer.style.backgroundImage = 'linear-gradient(to right, var(--player1-color), var(--player2-color))';
-            dom.gameContainer.style.backgroundColor = ''; // Wichtig, um Gradient zu zeigen
-
-            setTimeout(resetGame, 7000);
-        }
+        // --- SPIEL-LOGIK ---
         
         function resetGame() {
-            showScreen(null); // Alles ausblenden
-            dom.gameContainer.style.backgroundImage = '';
-            dom.gameContainer.style.backgroundColor = 'var(--black)';
-            
-            // Spielstatus zurücksetzen
-            gameState = { ...gameState, // Behalte speed-round Nummern für die nächste Runde
+            gameState = {
                 player1Score: 0,
                 player2Score: 0,
                 currentPlayer: 1,
                 currentRound: 1,
-                diceValue: 0,
-                attemptsMade: 0,
+                totalRounds: 20,
+                player1SpeedRound: Math.ceil(Math.random() * (gameState.totalRounds / 2)),
+                player2SpeedRound: Math.ceil(Math.random() * (gameState.totalRounds / 2)),
+                isGameActive: true
+            };
+            document.body.style.backgroundColor = '#000';
+            endScreen.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            logoButton.classList.remove('inactive');
+            logoButton.classList.remove('initial-animation');
+            startGame();
+        }
+        
+        function startGame() {
+            gameState.isGameActive = true;
+            gameState.player1SpeedRound = Math.ceil(Math.random() * (gameState.totalRounds / 2));
+            gameState.player2SpeedRound = Math.ceil(Math.random() * (gameState.totalRounds / 2));
+            console.log(`P1 Speed Round: ${gameState.player1SpeedRound}, P2 Speed Round: ${gameState.player2SpeedRound}`);
+
+            logoButton.classList.add('bounce-animation');
+            logoButton.classList.add('inactive');
+            
+            setTimeout(() => {
+                logoButton.classList.remove('bounce-animation');
+                document.body.style.backgroundColor = 'var(--player1-color)';
+                showDiceScreen();
+            }, 500);
+        }
+        
+        function showDiceScreen() {
+            // Verstecke alles andere
+            logoButton.classList.add('hidden');
+            genreScreen.classList.add('hidden');
+            revealScreen.classList.add('hidden');
+            revealBtn.classList.add('hidden');
+
+            // Zeige Würfel-Animation
+            diceScreen.classList.remove('hidden');
+            diceAnimation.classList.remove('hidden');
+            diceButtons.classList.add('hidden');
+            
+            // Re-trigger GIF animation
+            const diceSrc = diceAnimation.src;
+            diceAnimation.src = '';
+            diceAnimation.src = diceSrc;
+
+            setTimeout(() => {
+                diceAnimation.classList.add('hidden');
+                diceButtons.classList.remove('hidden');
+            }, 4000);
+        }
+        
+        function handleDiceChoice(e) {
+            const target = e.target.closest('.dice-btn');
+            if (!target) return;
+            
+            target.classList.add('bounce-animation');
+            
+            roundState.diceValue = parseInt(target.dataset.value, 10);
+            roundState.attemptsMade = 0;
+
+            if (roundState.diceValue === 7) {
+                roundState.songDuration = 2000; // 2 Sekunden
+                roundState.maxAttempts = 7;
+            } else {
+                roundState.songDuration = 7000; // 7 Sekunden
+                roundState.maxAttempts = roundState.diceValue;
+            }
+            
+            setTimeout(() => {
+                target.classList.remove('bounce-animation');
+                diceScreen.classList.add('hidden');
+                showGenreScreen();
+            }, 500);
+        }
+        
+        function showGenreScreen() {
+            genreScreen.classList.remove('hidden');
+            genreButtons.forEach(btn => {
+                btn.classList.remove('inactive', 'selected', 'blinking');
+            });
+
+            if (roundState.diceValue === 7) {
+                // Spieler wählt selbst
+            } else {
+                // Zufällige Auswahl
+                genreButtons.forEach(btn => btn.classList.add('blinking'));
+                setTimeout(() => {
+                    genreButtons.forEach(btn => btn.classList.remove('blinking'));
+                    const randomIndex = Math.floor(Math.random() * genreButtons.length);
+                    genreButtons.forEach((btn, index) => {
+                        if (index !== randomIndex) {
+                            btn.classList.add('inactive');
+                        } else {
+                            btn.classList.add('selected');
+                        }
+                    });
+                }, 4000);
+            }
+        }
+        
+        function handleGenreChoice(e) {
+            const target = e.target;
+            if (!target.matches('.genre-btn') || target.classList.contains('inactive')) return;
+            
+            // Wenn eine Auswahl getroffen werden musste (nicht Würfel 7)
+            if (roundState.diceValue !== 7 && !target.classList.contains('selected')) return;
+            
+            roundState.selectedGenre = target.dataset.genre;
+            target.classList.add('bounce-animation');
+            
+            setTimeout(() => {
+                genreScreen.classList.add('hidden');
+                startRatingPhase();
+            }, 500);
+        }
+        
+        async function startRatingPhase() {
+            // Prüfen, ob es eine Speed-Round ist
+            const currentPlayerRound = Math.ceil(gameState.currentRound / 2);
+            const isSpeedRound = (gameState.currentPlayer === 1 && currentPlayerRound === gameState.player1SpeedRound) ||
+                                 (gameState.currentPlayer === 2 && currentPlayerRound === gameState.player2SpeedRound);
+
+            if (isSpeedRound) {
+                await showSpecialMessage("Speed-Round", 4000);
+                startSpeedRoundCountdown();
+            }
+            
+            prepareSong();
+        }
+        
+        function showSpecialMessage(text, duration) {
+            return new Promise(resolve => {
+                specialMessageContainer.textContent = text;
+                specialMessageContainer.style.animation = 'special-message-animation 1s forwards';
+                setTimeout(() => {
+                    specialMessageContainer.style.animation = 'fade-out 1s forwards';
+                    setTimeout(() => {
+                        specialMessageContainer.textContent = '';
+                        specialMessageContainer.style.opacity = 0; // Reset for next use
+                        resolve();
+                    }, 1000);
+                }, duration - 1000);
+            });
+        }
+        
+        function startSpeedRoundCountdown() {
+            let count = 10;
+            specialMessageContainer.style.animation = ''; // Clear previous animation
+            
+            const updateCountdown = () => {
+                specialMessageContainer.textContent = count;
+                specialMessageContainer.style.opacity = 1;
+                specialMessageContainer.style.animation = 'pulse 1s';
+                
+                setTimeout(() => {
+                     specialMessageContainer.style.animation = '';
+                }, 950);
+
+                count--;
+
+                if (count < 0) {
+                    clearInterval(roundState.speedRoundTimer);
+                    specialMessageContainer.textContent = '';
+                    revealRound(true); // true = force reveal
+                }
             };
             
-            // Zurück zum Startbildschirm (Logo-Button), aber ohne Intro-Animation
-            dom.logoButton.classList.remove('hidden', 'inactive');
-            dom.logoButton.onclick = startGame;
+            updateCountdown();
+            roundState.speedRoundTimer = setInterval(updateCountdown, 1000);
+        }
+        
+        async function prepareSong() {
+            logoButton.classList.remove('hidden');
+            logoButton.classList.add('inactive'); // Inaktiv, bis Song geladen ist
+            
+            try {
+                const playlistId = playlists[roundState.selectedGenre][Math.floor(Math.random() * 2)];
+                const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                const data = await response.json();
+                const items = data.items.filter(item => item.track && item.track.preview_url); // Filter für Tracks mit Preview
+                const randomTrack = items[Math.floor(Math.random() * items.length)].track;
+                roundState.currentTrack = randomTrack;
+                
+                logoButton.classList.remove('inactive'); // Jetzt klickbar
+            } catch (error) {
+                console.error("Error preparing song:", error);
+                // Hier könnte man eine Fehlermeldung anzeigen und die Runde neu starten
+            }
+        }
+        
+        function playSongSnippet() {
+            if (!deviceId || !roundState.currentTrack || roundState.attemptsMade >= roundState.maxAttempts) return;
+            
+            roundState.attemptsMade++;
+            logoButton.classList.add('inactive', 'playing');
+            
+            const trackDurationMs = roundState.currentTrack.duration_ms;
+            // Starte nicht zu nah am Ende
+            const randomPosition = Math.floor(Math.random() * (trackDurationMs - roundState.songDuration - 5000));
+            
+            fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                    uris: [roundState.currentTrack.uri],
+                    position_ms: randomPosition
+                })
+            });
+            
+            // Zeige Auflösen-Button nach dem ersten Hören
+            if (roundState.attemptsMade === 1) {
+                revealBtn.classList.remove('hidden');
+            }
+
+            setTimeout(() => {
+                spotifyPlayer.pause();
+                logoButton.classList.remove('playing');
+                if (roundState.attemptsMade < roundState.maxAttempts) {
+                    logoButton.classList.remove('inactive');
+                }
+            }, roundState.songDuration);
+        }
+        
+        function revealRound(isForced = false) {
+             if (roundState.speedRoundTimer) {
+                clearInterval(roundState.speedRoundTimer);
+                specialMessageContainer.textContent = '';
+            }
+            
+            spotifyPlayer.pause();
+            logoButton.classList.add('inactive', 'hidden');
+            revealBtn.classList.add('hidden');
+            
+            const track = roundState.currentTrack;
+            document.getElementById('album-cover').src = track.album.images[0].url;
+            document.getElementById('song-title').textContent = track.name;
+            document.getElementById('song-artist').textContent = track.artists.map(a => a.name).join(', ');
+            
+            revealScreen.classList.remove('hidden');
+        }
+        
+        function calculatePoints() {
+            const points = roundState.diceValue - (roundState.attemptsMade - 1);
+            return Math.max(1, points); // Mindestens 1 Punkt
+        }
+        
+        function handleJudgement(isCorrect) {
+            if (isCorrect) {
+                const points = calculatePoints();
+                if (gameState.currentPlayer === 1) {
+                    gameState.player1Score += points;
+                } else {
+                    gameState.player2Score += points;
+                }
+            }
+            
+            gameState.currentRound++;
+            
+            if (gameState.currentRound > gameState.totalRounds) {
+                showEndScreen();
+            } else {
+                // Spielerwechsel
+                gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+                const nextPlayerColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
+                document.body.style.backgroundColor = nextPlayerColor;
+                
+                revealScreen.classList.add('hidden');
+                showDiceScreen();
+            }
+        }
+        
+        function showEndScreen() {
+            gameContainer.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            document.body.style.backgroundColor = '#000'; // Reset für Gradient
+            
+            document.getElementById('player1-final-score').textContent = gameState.player1Score;
+            document.getElementById('player2-final-score').textContent = gameState.player2Score;
+            
+            setTimeout(() => {
+                resetGame();
+            }, 7000);
         }
 
-        // Initialer Ladevorgang
-        window.onload = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
 
-            if (code) {
-                dom.loginScreen.classList.add('hidden');
-                getAccessToken(code);
-            } else {
-                showScreen(dom.loginScreen);
+        // --- EVENT LISTENERS ---
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('code')) {
+                fetchAccessToken(params.get('code'));
             }
-        };
+            checkOrientation();
+        });
+
+        loginButton.addEventListener('click', redirectToSpotifyAuth);
+        
+        window.addEventListener('resize', checkOrientation);
+        fullscreenOverlay.addEventListener('click', enterFullscreen);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+        logoButton.addEventListener('click', () => {
+            if (!gameState.isGameActive) {
+                startGame();
+            } else {
+                playSongSnippet();
+            }
+        });
+        
+        diceButtons.addEventListener('click', handleDiceChoice);
+        genreScreen.addEventListener('click', handleGenreChoice);
+        revealBtn.addEventListener('click', () => revealRound(false));
+        correctBtn.addEventListener('click', () => handleJudgement(true));
+        wrongBtn.addEventListener('click', () => handleJudgement(false));
 
     </script>
 </body>
