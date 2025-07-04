@@ -170,6 +170,26 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Fullscreen dauerhaft abfragen:
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            // Vollbildmodus wurde verlassen
+            gameScreen.classList.add('hidden');
+            revealContainer.classList.add('hidden'); // Falls offen
+            diceContainer.classList.add('hidden'); // Falls offen
+            genreContainer.classList.add('hidden'); // Falls offen
+            logoButton.classList.add('hidden'); // Logo ausblenden
+            speedRoundIndicator.classList.add('hidden'); // Falls offen
+            
+            // WICHTIG: Hier musst du eventuell den Spotify-Player pausieren
+            if (spotifyPlayer) {
+                spotifyPlayer.pause();
+            }
+
+            fullscreenScreen.classList.remove('hidden');
+        }
+    });
+    
     // 1.4: Vollbild-Modus aktivieren
     fullscreenScreen.addEventListener('click', () => {
         document.documentElement.requestFullscreen().then(() => {
