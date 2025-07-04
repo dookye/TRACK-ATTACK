@@ -1,88 +1,282 @@
-body {
+/* Grundlegende Stile & Variablen */
+:root {
+    --player1-color: #007bff; /* Blau */
+    --player2-color: #e83e8c; /* Pink */
+    --black: #000;
+    --white: #fff;
+    --transition-speed: 0.8s;
+}
+
+/* Phase 1.1: Body & Seiten-Setup */
+body, html {
     margin: 0;
-    overflow: hidden; /* Verhindert Scrollbalken */
-    font-family: sans-serif;
-    color: white;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: var(--black);
+    color: var(--white);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background-color: black;
-    transition: background-color 0.5s ease; /* Für spätere Hintergrundwechsel */
+    text-align: center;
 }
 
-/* Deaktiviert das Aufleuchten von Links/Buttons bei Klick */
-button, a, div {
-    -webkit-tap-highlight-color: transparent; /* Für Webkit-Browser (iOS, Android Chrome) */
-    -webkit-touch-callout: none; /* Deaktiviert das Kontextmenü bei langem Drücken auf iOS */
-    -webkit-user-select: none; /* Verhindert Textauswahl */
-    -moz-user-select: none; /* Für Firefox */
-    -ms-user-select: none; /* Für Internet Explorer/Edge */
-    user-select: none; /* Standard für andere Browser */
-    outline: none !important; /* Entfernt den Fokus-Outline */
+#app-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: background-color var(--transition-speed) ease-in-out;
 }
 
 .screen {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color: black;
-    z-index: 10; /* Stellt sicher, dass die Bildschirme übereinander liegen */
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.5s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
-.screen.active {
-    opacity: 1;
-    visibility: visible;
-    z-index: 20; /* Der aktive Screen liegt obenauf */
+.hidden {
+    display: none !important;
 }
 
-/* Spotify Login Button Style */
-.spotify-button {
-    background-color: #1DB954; /* Spotify Grün */
-    color: white;
+/* Overlay für Hochformat & Vollbild */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--black);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+}
+
+#fullscreen-screen {
+    cursor: pointer;
+    font-size: 2em;
+}
+
+/* Login-Button (Phase 1.1) */
+#login-button {
+    background-color: #1DB954;
+    color: var(--white);
     border: none;
     padding: 15px 30px;
-    font-size: 1.2em;
+    border-radius: 50px;
+    font-size: 1em;
     font-weight: bold;
-    border-radius: 50px; /* Stark abgerundete Ecken */
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
     margin-top: 20px;
-    transition: transform 0.2s ease;
 }
-
-.spotify-button:hover {
-    transform: scale(1.05);
-}
-
-.spotify-button img {
+#login-button img {
     height: 24px;
-    width: auto;
 }
 
-/* Rotate Device Screen Overlay Style */
-#rotate-device-screen {
-    background-color: rgba(0, 0, 0, 0.95); /* Dunkles Overlay */
-    color: white;
-    font-size: 1.8em;
-    text-align: center;
+/* Logo-Button & Animationen (Phase 1.4 & 2.1) */
+#logo-button {
+    width: 200px;
+    height: auto;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
 }
 
-/* Fullscreen Screen Style */
-#fullscreen-screen {
-    background-color: black;
+.initial-fly-in {
+    animation: fly-in 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+               bounce-end 0.5s 1.5s ease-out forwards;
+}
+
+@keyframes fly-in {
+    from {
+        top: -50%;
+        transform: translate(-50%, -50%);
+    }
+    to {
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+}
+
+.bounce {
+    animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@keyframes bounce-end {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+#logo-button.inactive {
+    filter: blur(5px);
+    pointer-events: none;
+}
+
+/* Würfel & Genre Container (Phase 3) */
+#dice-container, #genre-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+#dice-animation {
+    width: 250px;
+}
+
+.dice-option {
+    width: 100px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.dice-option:hover {
+    transform: scale(1.1);
+}
+
+.genre-button {
+    padding: 20px 30px;
+    font-size: 1.2em;
+    cursor: pointer;
+    border: 2px solid var(--white);
+    background: transparent;
+    color: var(--white);
+    transition: background-color 0.3s, color 0.3s;
+}
+.genre-button:hover:not(:disabled) {
+    background-color: var(--white);
+    color: var(--black);
+}
+.genre-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.random-blink {
+    animation: blink 0.2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Rate-Bildschirm & Auflösung (Phase 4) */
+#reveal-button {
+    position: absolute;
+    bottom: 5%;
+    padding: 15px 40px;
+    font-size: 1.5em;
+    background-color: #1DB954;
     color: white;
-    font-size: 1.8em;
-    cursor: pointer; /* Zeigt an, dass es klickbar ist */
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+}
+
+#reveal-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+#track-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(0,0,0,0.5);
+    padding: 20px;
+    border-radius: 10px;
+}
+#album-cover {
+    width: 150px;
+    height: 150px;
+}
+#track-title {
+    font-size: 2em;
+    font-weight: bold;
+    margin: 0;
+}
+#track-artist {
+    font-size: 1.2em;
+    margin: 0;
+}
+
+#feedback-buttons button {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    margin: 0 10px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    min-width: 150px;
+}
+#correct-button { background-color: #28a745; color: white; }
+#wrong-button { background-color: #dc3545; color: white; }
+
+/* Punkte-Bildschirm (Phase 5) */
+#score-screen {
+    flex-direction: row;
+    background: linear-gradient(90deg, var(--player1-color) 0%, var(--player1-color) 50%, var(--player2-color) 50%, var(--player2-color) 100%);
+}
+#player1-score-display, #player2-score-display {
+    width: 50%;
+    font-size: 15vw;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+}
+
+/* Speed-Round (Phase 6) */
+#speed-round-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 5em;
+    font-weight: bold;
+    z-index: 20;
+    animation: zoom-fade-in 4s forwards;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#speed-round-timer {
+    margin-top: 20px;
+    width: 200px;
+    height: 20px;
+    background: white;
+    border: 1px solid black;
+    transform-origin: left;
+    transform: scaleX(1);
+    transition: transform 10s linear;
+}
+
+@keyframes zoom-fade-in {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
 }
