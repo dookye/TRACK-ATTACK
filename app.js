@@ -66,8 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    window.addEventListener('resize', checkOrientation);
-    checkOrientation();
+    // alte rotations abfrage
+    // window.addEventListener('resize', checkOrientation);
+    // checkOrientation();
 
     // 1.2: PKCE-Flow Helferfunktionen
     async function generateCodeChallenge(codeVerifier) {
@@ -133,6 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
             loginScreen.classList.add('hidden');
             fullscreenScreen.classList.remove('hidden');
             initializePlayer();
+            // NEU: Orientierungsprüfung und Listener nach erfolgreichem Login aktivieren
+            window.addEventListener('resize', checkOrientation);
+            checkOrientation();
         });
     } else {
         // Standard-Ansicht
