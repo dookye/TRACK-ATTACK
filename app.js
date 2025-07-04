@@ -396,8 +396,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const trackDurationMs = gameState.currentTrack.duration_ms;
         const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        // alt fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-        fetch(`${SPOTIFY_PLAY_URL}${deviceId}`, { // KORRIGIERT
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        // ??? fetch(`${SPOTIFY_PLAY_URL}${deviceId}`, { // KORRIGIERT
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
