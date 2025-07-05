@@ -273,6 +273,18 @@ body, html {
     transform: scaleX(1);
     transition: transform 10s linear;
 }
+/* NEU: Countdown-Anzeige */
+#countdown-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20vw; /* Sehr groß und responsiv */
+    font-weight: bold;
+    color: var(--white);
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* Leichter Glow */
+    z-index: 30; /* Über den meisten anderen Elementen */
+}
 
 @keyframes zoom-fade-in {
     0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
