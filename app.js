@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const scoreScreen = document.getElementById('score-screen');
     const speedRoundIndicator = document.getElementById('speed-round-indicator');
     const speedRoundTimer = document.getElementById('speed-round-timer');
+    const countdownDisplay = document.getElementById('countdown-display');
 
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
@@ -44,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         player2SpeedRound: Math.floor(Math.random() * 10) + 1,
         isSpeedRound: false,
         speedRoundTimeout: null,
+        countdownInterval: null,
     };
 
     // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
@@ -376,13 +378,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
 
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+        logoButton.removeEventListener('click', playTrackSnippet);
         logoButton.addEventListener('click', playTrackSnippet);
 
         // Speichere den Zustand: Raten-Bildschirm
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
 
+        // Der Speed-Round Indicator soll kurz angezeigt werden, bevor der Countdown kommt
         if (gameState.isSpeedRound) {
-            startSpeedRoundTimer();
+            await showSpeedRoundAnimation(); // Zeigt "Speed-Round" an
+            // Countdown startet ERST wenn playTrackSnippet aufgerufen wird
         }
     }
 
@@ -405,12 +410,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }),
             headers: { 'Authorization': `Bearer ${accessToken}` }
         }).then(() => {
-            setTimeout(() => {
-                spotifyPlayer.pause();
-                if (gameState.attemptsMade < gameState.maxAttempts && !gameState.isSpeedRound) {
-                    logoButton.classList.remove('inactive');
-                }
-            }, gameState.trackDuration);
+            // Wenn der Track erfolgreich gestartet wurde
+            if (gameState.isSpeedRound) {
+                // Hier startet der visuelle Countdown und der Timer für die Auflösung
+                startVisualSpeedRoundCountdown(); 
+            } else {
+                // Normaler Modus: Track stoppt nach trackDuration
+                setTimeout(() => {
+                    spotifyPlayer.pause();
+                    if (gameState.attemptsMade < gameState.maxAttempts) { // Prüfen, ob noch Versuche übrig sind
+                        logoButton.classList.remove('inactive');
+                    }
+                }, gameState.trackDuration);
         });
         
         // 4.3: "AUFLÖSEN"-Button nach 1. Versuch anzeigen
@@ -420,10 +431,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showResolution() {
-        clearTimeout(gameState.speedRoundTimeout); // Timer stoppen, falls vorhanden
+        clearTimeout(gameState.speedRoundTimeout); // Sicherstellen, dass Timer gestoppt ist
+        clearInterval(gameState.countdownInterval); // Sicherstellen, dass visueller Countdown stoppt
+        countdownDisplay.classList.add('hidden'); // Countdown ausblenden
+
         logoButton.classList.add('inactive', 'hidden');
         revealButton.classList.add('hidden');
-        speedRoundIndicator.classList.add('hidden');
+        speedRoundIndicator.classList.add('hidden'); // Speed Round Indicator ausblenden
 
         // Track-Infos anzeigen
         document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
@@ -543,15 +557,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function startSpeedRoundTimer() {
-        speedRoundTimer.style.transition = 'none';
-        speedRoundTimer.style.transform = 'scaleX(1)';
-        void speedRoundTimer.offsetWidth; // Reflow
-        speedRoundTimer.style.transition = 'transform 10s linear';
-        speedRoundTimer.style.transform = 'scaleX(0)';
+     // NEU: Visueller Countdown für Speed-Round
+    function startVisualSpeedRoundCountdown() {
+        let timeLeft = 10;
+        countdownDisplay.classList.remove('hidden');
+        countdownDisplay.innerText = timeLeft;
 
+        // Timer für die Auflösung nach 10 Sekunden (wenn der Countdown endet)
         gameState.speedRoundTimeout = setTimeout(() => {
             showResolution();
         }, 10000);
+
+        // Interval für den visuellen Countdown
+        gameState.countdownInterval = setInterval(() => {
+            timeLeft--;
+            countdownDisplay.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(gameState.countdownInterval);
+                countdownDisplay.classList.add('hidden');
+                // showResolution wird bereits durch speedRoundTimeout aufgerufen
+            }
+        }, 1000); // Aktualisiert jede Sekunde
     }
 });
