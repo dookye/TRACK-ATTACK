@@ -422,6 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         logoButton.classList.remove('inactive');
                     }
                 }, gameState.trackDuration);
+            }
         });
         
         // 4.3: "AUFLÖSEN"-Button nach 1. Versuch anzeigen
