@@ -434,6 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(gameState.speedRoundTimeout); // Sicherstellen, dass Timer gestoppt ist
         clearInterval(gameState.countdownInterval); // Sicherstellen, dass visueller Countdown stoppt
         countdownDisplay.classList.add('hidden'); // Countdown ausblenden
+        countdownDisplay.innerText = ''; // Inhalt leeren
 
         logoButton.classList.add('inactive', 'hidden');
         revealButton.classList.add('hidden');
@@ -561,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function startVisualSpeedRoundCountdown() {
         let timeLeft = 10;
         countdownDisplay.classList.remove('hidden');
-        countdownDisplay.innerText = timeLeft;
+        // ??? countdownDisplay.innerText = timeLeft;
 
         // Timer für die Auflösung nach 10 Sekunden (wenn der Countdown endet)
         gameState.speedRoundTimeout = setTimeout(() => {
@@ -570,12 +571,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Interval für den visuellen Countdown
         gameState.countdownInterval = setInterval(() => {
+            countdownDisplay.innerText = timeLeft; // Zahl setzen
+
+            // Trigger Animation neu
+            countdownDisplay.classList.remove('countdown-pulse'); // Animation entfernen
+            void countdownDisplay.offsetWidth; // Reflow erzwingen
+            countdownDisplay.classList.add('countdown-pulse'); // Animation hinzufügen
+            
             timeLeft--;
-            countdownDisplay.innerText = timeLeft;
-            if (timeLeft <= 0) {
+            
+            // ??? countdownDisplay.innerText = timeLeft;
+            if (timeLeft < 0) { // Bei 0 stoppen, da wir von 10 runterzählen und bei 0 die Auflösung kommt
                 clearInterval(gameState.countdownInterval);
                 countdownDisplay.classList.add('hidden');
-                // showResolution wird bereits durch speedRoundTimeout aufgerufen
+                countdownDisplay.innerText = ''; // Leeren, falls nicht schon durch showResolution geschehen
             }
         }, 1000); // Aktualisiert jede Sekunde
     }
