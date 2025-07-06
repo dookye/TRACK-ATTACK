@@ -58,7 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pop: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         alltime: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
         disney: ['3Bilb56eeS7db5f3DTEwMR', '2bhbwexk7c6yJrEB4CtuY8'],
-        schlager: ['5lS5fb5u4xAL0qhcuJRVpm', '37i9dQZF1DX6uHioFvkN7A']
+        schlager: ['5lS5fb5u4xAL0qhcuJRVpm', '37i9dQZF1DX6uHioFvkN7A'],
+        boygirlgroup: ['27zCFz4kdJIXGxIhUrZvIq']
     };
 
     //=======================================================================
