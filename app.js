@@ -57,7 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
         punk: ['39sVxPTg7BKwrf2MfgrtcD', '7ITmaFa2rOhXAmKmUUCG9E'],
         pop: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         alltime: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
-        disney: ['3Bilb56eeS7db5f3DTEwMR', '2bhbwexk7c6yJrEB4CtuY8']
+        disney: ['3Bilb56eeS7db5f3DTEwMR', '2bhbwexk7c6yJrEB4CtuY8'],
+        schlager: ['5lS5fb5u4xAL0qhcuJRVpm', '37i9dQZF1DX6uHioFvkN7A']
     };
 
     //=======================================================================
