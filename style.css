@@ -250,21 +250,24 @@ body, html {
 }
 
 /* Speed-Round (Phase 6) */
-#speed-round-indicator {
-    position: absolute; /* Sicherstellen, dass es absolut positioniert ist */
-    top: 15%; /* Weiter oben positionieren, damit der Countdown darunter passt */
+#speed-round-indicator {  /* und speed-round-timer */
+    position: absolute;
+    top: 50%; /* Zentral mittig */
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 5em; /* Behalte die Größe bei oder passe sie an */
+    font-size: 20vw; /* Riesengroß, wie der Countdown */
     font-weight: bold;
-    z-index: 20;
-    animation: zoom-fade-in 4s forwards;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    color: var(--white);
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* Gleicher Glow wie Countdown */
+    z-index: 20; /* Sichtbar über anderen Elementen */
+    animation: zoom-fade-in 4s forwards; /* Bestehende Animation beibehalten */
+    /* Kein flex-direction: column mehr, da der timer div entfernt wurde */
+    display: flex; /* Oder display: block; wenn du nur den Text willst */
+    justify-content: center; /* Zentriert den Text, falls display: flex; */
+    align-items: center; /* Zentriert den Text, falls display: flex; */
 }
 
-#speed-round-timer {
+/* #speed-round-timer {
     margin-top: 20px;
     width: 200px;
     height: 20px;
@@ -273,7 +276,7 @@ body, html {
     transform-origin: left;
     transform: scaleX(1);
     transition: transform 10s linear;
-}
+} */
 
 /* Klasse für die Animation, die wir per JS hinzufügen und entfernen */
 .countdown-animated {
