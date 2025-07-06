@@ -161,7 +161,9 @@ body, html {
     background: transparent;
     color: var(--white);
     transition: background-color 0.3s, color 0.3s;
+    border-radius: 10px;
 }
+
 .genre-button:hover:not(:disabled) {
     background-color: var(--white);
     color: var(--black);
@@ -256,10 +258,10 @@ body, html {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 8em; /* Beispiel: Deutlich größer als normal, aber kleiner als 20vw */
+    font-size: 9em; /* Beispiel: Deutlich größer als normal, aber kleiner als 20vw */
     font-weight: bold;
     color: var(--white);
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     z-index: 20; /* Liegt unter dem Countdown, aber über dem Spielbildschirm */
     animation: zoom-fade-in 4s forwards; /* Die Animation bleibt hier */
     white-space: nowrap; /* Verhindert Zeilenumbruch bei langen Texten */
