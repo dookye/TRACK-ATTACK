@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const revealButton = document.getElementById('reveal-button');
     const revealContainer = document.getElementById('reveal-container');
     const scoreScreen = document.getElementById('score-screen');
-    const speedRoundIndicator = document.getElementById('speed-round-indicator');
+    const speedRoundTextDisplay = document.getElementById('speed-round-text-display'); // NEU: Referenz auf das Text-Element
     const speedRoundTimer = document.getElementById('speed-round-timer');
     const countdownDisplay = document.getElementById('countdown-display');
 
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
             diceContainer.classList.add('hidden');
             genreContainer.classList.add('hidden');
             logoButton.classList.add('hidden');
-            speedRoundIndicator.classList.add('hidden');
+            speedRoundTextDisplay.classList.add('hidden');
             revealButton.classList.add('hidden'); // AUFLÖSEN Button auch verstecken
 
             // Spotify-Player pausieren
@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         logoButton.classList.add('inactive', 'hidden');
         revealButton.classList.add('hidden');
-        speedRoundIndicator.classList.add('hidden'); // Der Speed-Round Text sollte auch weg
+        speedRoundTextDisplay.classList.add('hidden'); // Der Speed-Round Text sollte auch weg
 
         // Track-Infos anzeigen
         document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
@@ -517,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
         genreContainer.classList.add('hidden');
         diceContainer.classList.add('hidden');
         revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
-        speedRoundIndicator.classList.add('hidden'); // Stellen Sie sicher, dass der Speed-Round-Indikator versteckt ist
+        speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
         
         // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
         // wenn der Logo-Button wieder verwendet wird.
@@ -586,14 +586,14 @@ document.addEventListener('DOMContentLoaded', () => {
     //=======================================================================
 
     function showSpeedRoundAnimation() {
-        return new Promise(resolve => {
-            speedRoundIndicator.classList.remove('hidden');
-            setTimeout(() => {
-                speedRoundIndicator.classList.add('hidden');
-                resolve();
-            }, 4000);
-        });
-    }
+    return new Promise(resolve => {
+        speedRoundTextDisplay.classList.remove('hidden'); // Jetzt das neue Element
+        setTimeout(() => {
+            speedRoundTextDisplay.classList.add('hidden'); // Und hier
+            resolve();
+        }, 4000);
+    });
+}
 
      // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
     function startVisualSpeedRoundCountdown() {
