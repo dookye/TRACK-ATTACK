@@ -132,12 +132,22 @@ body, html {
     pointer-events: none;
 }
 
-/* Würfel & Genre Container (Phase 3) */
-#dice-container, #genre-container {
+/* Würfel Container */
+#dice-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 40px;
+    gap: 40px; /* Dieser Wert gilt dann nur für die Würfel-Buttons */
+}
+
+/* Genre Container (Phase 3) - Jetzt separat stylen */
+#genre-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px; /* Abstand zwischen den Genre-Buttons */
+    flex-wrap: wrap; /* NEU: Lässt die Elemente in die nächste Zeile umbrechen */
+    max-width: 80%; /* Optional: Begrenze die Breite des Containers, damit der Umbruch früher erfolgt */
 }
 
 #dice-animation {
