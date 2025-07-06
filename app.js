@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
 
     // --- Spielstatus-Variablen ---
-    let player;
+    // let player;
     let spotifyPlayer;
     let deviceId;
     let accessToken;
@@ -46,6 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
         isSpeedRound: false,
         speedRoundTimeout: null,
         countdownInterval: null,
+        spotifyPlayTimeout: null, // NEU: Timeout für das Pausieren des Songs
+        isSongPlaying: false, // NEU: Flag, ob Song gerade spielt
     };
 
     // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
@@ -345,11 +347,12 @@ document.addEventListener('DOMContentLoaded', () => {
         genreContainer.classList.add('hidden');
         document.querySelectorAll('.genre-button').forEach(btn => btn.removeEventListener('click', handleGenreSelection));
         
-        // Phase 6: Speed-Round Check
+         // NEU: Speed-Round Check NACHDEM Genre gewählt wurde, aber VOR dem Track-Laden
         const playerRound = Math.ceil(gameState.currentRound / 2);
         if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
             (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
             gameState.isSpeedRound = true;
+            // Zeige die "Speed-Round" Animation, bevor der Track geladen wird
             await showSpeedRoundAnimation();
         }
 
@@ -367,6 +370,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const response = await fetch(`https://api.spotify.com/v1/playlists/${randomPlaylistId}/tracks`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
+        if (!response.ok) { // Fehlerbehandlung für API-Anfrage
+            console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText);
+            alert("Fehler beim Laden der Songs. Bitte versuchen Sie es erneut.");
+            // Fallback: Zurück zum Genre-Bildschirm oder Fehler anzeigen
+            showGenreScreen();
+            return null;
+        }
         const data = await response.json();
         
         const randomTrack = data.items[Math.floor(Math.random() * data.items.length)].track;
@@ -383,19 +393,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Speichere den Zustand: Raten-Bildschirm
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
-
-        // Der Speed-Round Indicator soll kurz angezeigt werden, bevor der Countdown kommt
-        if (gameState.isSpeedRound) {
-            await showSpeedRoundAnimation(); // Zeigt "Speed-Round" an
-            // Countdown startet ERST wenn playTrackSnippet aufgerufen wird
-        }
     }
 
     function playTrackSnippet() {
-        if (gameState.attemptsMade >= gameState.maxAttempts) return;
+        if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+            // Im normalen Modus: Keine weiteren Versuche
+            return;
+        }
+        if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
+            // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
+            return;
+        }
 
         triggerBounce(logoButton);
-        logoButton.classList.add('inactive');
+        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
         gameState.attemptsMade++;
 
         const trackDurationMs = gameState.currentTrack.duration_ms;
@@ -409,37 +420,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 position_ms: randomStartPosition
             }),
             headers: { 'Authorization': `Bearer ${accessToken}` }
-        }).then(() => {
-            // Wenn der Track erfolgreich gestartet wurde
+        }).then(response => {
+            if (!response.ok) { // Fehlerbehandlung für Play-Request
+                console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+                alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
+                logoButton.classList.remove('inactive'); // Button wieder aktiv machen
+                return;
+            }
+            gameState.isSongPlaying = true; // Song spielt
+
             if (gameState.isSpeedRound) {
-                // Hier startet der visuelle Countdown und der Timer für die Auflösung
-                startVisualSpeedRoundCountdown(); 
+                startVisualSpeedRoundCountdown(); // Startet den 10s Countdown
+                // Der Song wird nur einmal gespielt. Nach 10s wird aufgelöst.
+                // spotifyPlayer.pause() wird im countdown-timer gemacht oder durch showResolution
             } else {
-                // Normaler Modus: Track stoppt nach trackDuration
-                setTimeout(() => {
+                // Normaler Modus: Song pausiert nach trackDuration
+                gameState.spotifyPlayTimeout = setTimeout(() => {
                     spotifyPlayer.pause();
-                    if (gameState.attemptsMade < gameState.maxAttempts) { // Prüfen, ob noch Versuche übrig sind
-                        logoButton.classList.remove('inactive');
+                    gameState.isSongPlaying = false;
+                    if (gameState.attemptsMade < gameState.maxAttempts) {
+                        logoButton.classList.remove('inactive'); // Wieder aktiv, wenn noch Versuche da sind
                     }
                 }, gameState.trackDuration);
             }
+        }).catch(error => { // Fehlerbehandlung für den Fetch-Request selbst
+            console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
+            alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+            logoButton.classList.remove('inactive');
         });
-        
-        // 4.3: "AUFLÖSEN"-Button nach 1. Versuch anzeigen
+
+        // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
         if (gameState.attemptsMade === 1) {
             revealButton.classList.remove('hidden');
         }
     }
 
     function showResolution() {
-        clearTimeout(gameState.speedRoundTimeout); // Sicherstellen, dass Timer gestoppt ist
-        clearInterval(gameState.countdownInterval); // Sicherstellen, dass visueller Countdown stoppt
-        countdownDisplay.classList.add('hidden'); // Countdown ausblenden
+        // Alle Timer und Intervalle der Speed-Round stoppen
+        clearTimeout(gameState.speedRoundTimeout);
+        clearInterval(gameState.countdownInterval);
+        clearTimeout(gameState.spotifyPlayTimeout); // Auch den Song-Pause-Timer stoppen
+       
+        // Spotify Player pausieren, falls noch aktiv
+        if (gameState.isSongPlaying && spotifyPlayer) {
+            spotifyPlayer.pause();
+            gameState.isSongPlaying = false;
+        }
+
+        // UI-Elemente ausblenden
+        countdownDisplay.classList.add('hidden');
+        countdownDisplay.classList.remove('countdown-animated'); // Animationsklasse entfernen
         countdownDisplay.innerText = ''; // Inhalt leeren
 
         logoButton.classList.add('inactive', 'hidden');
         revealButton.classList.add('hidden');
-        speedRoundIndicator.classList.add('hidden'); // Speed Round Indicator ausblenden
+        speedRoundIndicator.classList.add('hidden'); // Der Speed-Round Text sollte auch weg
 
         // Track-Infos anzeigen
         document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
@@ -539,6 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Zurück zum Start (ohne Einflug-Animation)
         gameScreen.classList.remove('hidden');
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+        logoButton.removeEventListener('click', startGame); // Sicherstellen, dass kein alter Listener hängt
         logoButton.addEventListener('click', startGame, { once: true });
 
         // Setze den letzten sichtbaren Screen zurück, da das Spiel neu startet
@@ -559,34 +595,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-     // NEU: Visueller Countdown für Speed-Round
+     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
     function startVisualSpeedRoundCountdown() {
-        let timeLeft = 10;
-        countdownDisplay.classList.remove('hidden');
-        // ??? countdownDisplay.innerText = timeLeft;
+        let timeLeft = 10; // Startwert des Countdowns
+        countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
 
-        // Timer für die Auflösung nach 10 Sekunden (wenn der Countdown endet)
+        // Timer für die automatische Auflösung nach 10 Sekunden
         gameState.speedRoundTimeout = setTimeout(() => {
-            showResolution();
+            showResolution(); // Auflösung nach 10 Sekunden
         }, 10000);
 
-        // Interval für den visuellen Countdown
-        gameState.countdownInterval = setInterval(() => {
-            countdownDisplay.innerText = timeLeft; // Zahl setzen
+        // Sofort die erste Zahl anzeigen und animieren
+        countdownDisplay.innerText = timeLeft;
+        countdownDisplay.classList.remove('countdown-animated');
+        void countdownDisplay.offsetWidth; // Reflow
+        countdownDisplay.classList.add('countdown-animated');
 
-            // Trigger Animation neu
-            countdownDisplay.classList.remove('countdown-pulse'); // Animation entfernen
-            void countdownDisplay.offsetWidth; // Reflow erzwingen
-            countdownDisplay.classList.add('countdown-pulse'); // Animation hinzufügen
-            
-            timeLeft--;
-            
-            // ??? countdownDisplay.innerText = timeLeft;
-            if (timeLeft < 0) { // Bei 0 stoppen, da wir von 10 runterzählen und bei 0 die Auflösung kommt
-                clearInterval(gameState.countdownInterval);
-                countdownDisplay.classList.add('hidden');
-                countdownDisplay.innerText = ''; // Leeren, falls nicht schon durch showResolution geschehen
+        // Interval für den visuellen Countdown jede Sekunde
+        gameState.countdownInterval = setInterval(() => {
+            timeLeft--; // Zahl verringern
+
+            if (timeLeft >= 0) { // Solange die Zahl 0 oder größer ist
+                countdownDisplay.innerText = timeLeft; // Zahl aktualisieren
+                countdownDisplay.classList.remove('countdown-animated'); // Animation entfernen
+                void countdownDisplay.offsetWidth; // Reflow erzwingen
+                countdownDisplay.classList.add('countdown-animated'); // Animation hinzufügen
             }
-        }, 1000); // Aktualisiert jede Sekunde
+
+            if (timeLeft < 0) { // Wenn Countdown abgelaufen ist (nach 0)
+                clearInterval(gameState.countdownInterval); // Interval stoppen
+                countdownDisplay.classList.add('hidden'); // Countdown ausblenden
+                countdownDisplay.innerText = ''; // Inhalt leeren
+                // showResolution wird bereits durch speedRoundTimeout ausgelöst
+            }
+        }, 1000); // Jede Sekunde aktualisieren
     }
-});
+
+}); // Ende DOMContentLoaded
