@@ -250,39 +250,22 @@ body, html {
 }
 
 /* Speed-Round (Phase 6) */
-#speed-round-indicator {  /* und speed-round-timer */
+/* NEU: Styling für das Wort "SPEED-ROUND" */
+#speed-round-text-display {
     position: absolute;
-    top: 50%; /* Zentral mittig */
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 20vw; /* Riesengroß, wie der Countdown */
+    font-size: 8em; /* Beispiel: Deutlich größer als normal, aber kleiner als 20vw */
     font-weight: bold;
     color: var(--white);
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* Gleicher Glow wie Countdown */
-    z-index: 20; /* Sichtbar über anderen Elementen */
-    animation: zoom-fade-in 4s forwards; /* Bestehende Animation beibehalten */
-    /* Kein flex-direction: column mehr, da der timer div entfernt wurde */
-    display: flex; /* Oder display: block; wenn du nur den Text willst */
-    justify-content: center; /* Zentriert den Text, falls display: flex; */
-    align-items: center; /* Zentriert den Text, falls display: flex; */
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    z-index: 20; /* Liegt unter dem Countdown, aber über dem Spielbildschirm */
+    animation: zoom-fade-in 4s forwards; /* Die Animation bleibt hier */
+    white-space: nowrap; /* Verhindert Zeilenumbruch bei langen Texten */
 }
 
-/* #speed-round-timer {
-    margin-top: 20px;
-    width: 200px;
-    height: 20px;
-    background: white;
-    border: 1px solid black;
-    transform-origin: left;
-    transform: scaleX(1);
-    transition: transform 10s linear;
-} */
-
-/* Klasse für die Animation, die wir per JS hinzufügen und entfernen */
-.countdown-animated {
-    animation: countdown-pulse 1s ease-in-out forwards;
-}
-
+/* Countdown-Anzeige (bleibt so groß und animiert) */
 #countdown-display {
     position: absolute;
     top: 50%;
@@ -294,6 +277,11 @@ body, html {
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* Leichter Glow */
     z-index: 30; /* Über den meisten anderen Elementen */
     /* Animation wird über JavaScript hinzugefügt/entfernt, damit sie jedes Mal neu startet */
+}
+
+/* Klasse für die Animation, die wir per JS hinzufügen und entfernen */
+.countdown-animated {
+    animation: countdown-pulse 1s ease-in-out forwards;
 }
 
 /* Angepasste Keyframes für den Countdown-Puls */
