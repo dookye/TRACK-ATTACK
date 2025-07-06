@@ -251,11 +251,11 @@ body, html {
 
 /* Speed-Round (Phase 6) */
 #speed-round-indicator {
-    position: absolute;
-    top: 50%;
+    position: absolute; /* Sicherstellen, dass es absolut positioniert ist */
+    top: 15%; /* Weiter oben positionieren, damit der Countdown darunter passt */
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 5em;
+    font-size: 5em; /* Behalte die Größe bei oder passe sie an */
     font-weight: bold;
     z-index: 20;
     animation: zoom-fade-in 4s forwards;
@@ -263,6 +263,7 @@ body, html {
     flex-direction: column;
     align-items: center;
 }
+
 #speed-round-timer {
     margin-top: 20px;
     width: 200px;
@@ -274,7 +275,11 @@ body, html {
     transition: transform 10s linear;
 }
 
-/* NEU: Countdown-Anzeige */
+/* Klasse für die Animation, die wir per JS hinzufügen und entfernen */
+.countdown-animated {
+    animation: countdown-pulse 1s ease-in-out forwards;
+}
+
 #countdown-display {
     position: absolute;
     top: 50%;
@@ -285,14 +290,15 @@ body, html {
     color: var(--white);
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* Leichter Glow */
     z-index: 30; /* Über den meisten anderen Elementen */
-    animation: countdown-pulse 1s ease-in-out forwards; /* 1s für jede Zahl, kein Unendlich */
+    /* Animation wird über JavaScript hinzugefügt/entfernt, damit sie jedes Mal neu startet */
 }
 
 /* Angepasste Keyframes für den Countdown-Puls */
 @keyframes countdown-pulse {
     0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } /* Fade out am Ende der 1 Sekunde */
+    20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } /* Kurz größer werden und sichtbar */
+    80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } /* Wieder kleiner werden und ausblenden */
 }
 
 @keyframes zoom-fade-in {
