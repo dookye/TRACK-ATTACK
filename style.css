@@ -152,9 +152,9 @@ body, html {
     /* gap: 20px; */
 }
 
-* Würfel Auswahl (Die Würfel-Buttons selbst) */
+/* Würfel Auswahl (Die Würfel-Buttons selbst) */
 #dice-selection {
-    display: flex !important; /* <<< TEMPORÄR HINZUFÜGEN ZUM TESTEN */
+    display: flex;
     justify-content: center;
     align-items: center;
     gap: 80px !important; /* <<< TEMPORÄR HINZUFÜGEN ZUM TESTEN */
