@@ -157,7 +157,7 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 80px !important; /* <<< TEMPORÄR HINZUFÜGEN ZUM TESTEN */
+    gap: 30px; /* ändert den Abstand zwischen den Würfeln */
 }
 
 .dice-option {
