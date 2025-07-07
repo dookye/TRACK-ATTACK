@@ -597,6 +597,31 @@ async function playSongForResolution() {
         // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
         // wenn der Logo-Button wieder verwendet wird.
         logoButton.removeEventListener('click', playTrackSnippet);
+
+        //NEU:
+        // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
+    clearTimeout(gameState.speedRoundTimeout);
+    clearInterval(gameState.countdownInterval);
+    clearTimeout(gameState.spotifyPlayTimeout);
+    clearInterval(gameState.fadeInterval);
+
+    // Spotify Player pausieren, falls noch aktiv
+    if (gameState.isSongPlaying && spotifyPlayer) {
+        spotifyPlayer.pause();
+        gameState.isSongPlaying = false;
+    }
+
+    // NEU: Lautstärke auf 100% zurücksetzen, BEVOR der nächste Song startet
+    if (spotifyPlayer) { // Prüfen, ob der Player initialisiert ist
+        spotifyPlayer.setVolume(1.0) // 1.0 entspricht 100%
+            .then(() => {
+                console.log("Lautstärke für Rateteil auf 100% zurückgesetzt.");
+            })
+            .catch(error => {
+                console.error("Fehler beim Zurücksetzen der Lautstärke:", error);
+            });
+       }
+
     }
     
     //=======================================================================
