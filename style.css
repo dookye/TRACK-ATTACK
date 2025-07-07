@@ -10,6 +10,33 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
     outline: none;
 }
 
+/* Genereller Stil für interaktive Buttons für den Pulldown-Effekt */
+/* Betrifft AUFLÖSEN, RICHTIG, FALSCH und alle GENRE-BUTTONS */
+
+/* WICHTIG: Füge eine Transition hinzu, damit die Skalierung weich erfolgt */
+/* Dies kannst du entweder global für alle Buttons oder spezifisch tun */
+
+/* Beispiel für alle Buttons, die diesen Effekt haben sollen */
+.genre-button,
+#reveal-button, /* AUFLÖSEN-Button */
+#feedback-correct-button, /* RICHTIG-Button */
+#feedback-wrong-button, /* FALSCH-Button */
+.dice-option /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
+{
+    transition: transform 0.1s ease-out; /* Kurze, sanfte Animation */
+    cursor: pointer; /* Zeigt an, dass das Element klickbar ist */
+}
+
+/* Der eigentliche Pulldown-Effekt beim Klicken */
+.genre-button:active,
+#reveal-button:active,
+#feedback-correct-button:active,
+#feedback-wrong-button:active,
+.dice-option:active /* Optional: Für die Würfel-Bilder */
+{
+    transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
+}
+
 /* Grundlegende Stile & Variablen */
 :root {
     --player1-color: #007bff; /* Blau */
