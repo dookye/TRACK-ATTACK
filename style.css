@@ -160,6 +160,21 @@ body, html {
     gap: 100px; /* <--- HIER DEN ABSTAND ÄNDERN! Dieser Wert wirkt sich auf die einzelnen Würfel aus. */
 }
 
+.dice-option {
+    width: 100px;
+    height: auto;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#dice-animation {
+    width: 250px;
+}
+
+.dice-option:hover {
+    transform: scale(1.1);
+}
+
 /* Genre Container (Phase 3) - Jetzt separat stylen */
 #genre-container {
     display: flex;
@@ -168,19 +183,6 @@ body, html {
     gap: 20px; /* Abstand zwischen den Genre-Buttons */
     flex-wrap: wrap; /* NEU: Lässt die Elemente in die nächste Zeile umbrechen */
     max-width: 80%; /* Optional: Begrenze die Breite des Containers, damit der Umbruch früher erfolgt */
-}
-
-#dice-animation {
-    width: 250px;
-}
-
-.dice-option {
-    width: 100px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-.dice-option:hover {
-    transform: scale(1.1);
 }
 
 .genre-button {
