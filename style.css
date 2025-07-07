@@ -157,7 +157,7 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 60px; /* <--- HIER DEN ABSTAND ÄNDERN! Dieser Wert wirkt sich auf die einzelnen Würfel aus. */
+    gap: 100px; /* <--- HIER DEN ABSTAND ÄNDERN! Dieser Wert wirkt sich auf die einzelnen Würfel aus. */
 }
 
 /* Genre Container (Phase 3) - Jetzt separat stylen */
