@@ -1,3 +1,15 @@
+/* Globale Entfernung des Tap-Highlights und der Outline */
+* {
+    -webkit-tap-highlight-color: transparent; /* Für WebKit-Browser (iOS Safari, Android Chrome) */
+    outline: none; /* Entfernt den Fokus-Rahmen */
+}
+
+/* Optional: Spezifisch für Buttons, falls das globale * nicht ausreicht oder unerwünschte Nebeneffekte hat */
+button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
 /* Grundlegende Stile & Variablen */
 :root {
     --player1-color: #007bff; /* Blau */
