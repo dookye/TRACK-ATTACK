@@ -149,7 +149,15 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 100px; /* Dieser Wert gilt dann nur für die Würfel-Buttons */
+    gap: 20px;
+}
+
+* Würfel Auswahl (Die Würfel-Buttons selbst) */
+#dice-selection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 60px; /* <--- HIER DEN ABSTAND ÄNDERN! Dieser Wert wirkt sich auf die einzelnen Würfel aus. */
 }
 
 /* Genre Container (Phase 3) - Jetzt separat stylen */
