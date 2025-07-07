@@ -555,6 +555,7 @@ async function playSongForResolution() {
     });
 }
 
+
     revealButton.addEventListener('click', showResolution);
 
     function handleFeedback(isCorrect) {
