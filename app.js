@@ -614,6 +614,7 @@ function fadeAudioOut() {
         lastGameScreenVisible = '';
         setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
     }
+  }
 
     document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
     document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
