@@ -19,8 +19,8 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 /* Beispiel für alle Buttons, die diesen Effekt haben sollen */
 .genre-button,
 #reveal-button, /* AUFLÖSEN-Button */
-#feedback-correct-button, /* RICHTIG-Button */
-#feedback-wrong-button, /* FALSCH-Button */
+#correct-button, /* RICHTIG-Button */
+#wrong-button, /* FALSCH-Button */
 .dice-option /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
 {
     transition: transform 0.1s ease-out; /* Kurze, sanfte Animation */
@@ -30,8 +30,8 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 /* Der eigentliche Pulldown-Effekt beim Klicken */
 .genre-button:active,
 #reveal-button:active,
-#feedback-correct-button:active,
-#feedback-wrong-button:active,
+#correct-button:active,
+#wrong-button:active,
 .dice-option:active /* Optional: Für die Würfel-Bilder */
 {
     transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
