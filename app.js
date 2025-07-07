@@ -299,6 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.dice-option').forEach(dice => {
         dice.addEventListener('click', (e) => {
             gameState.diceValue = parseInt(e.target.dataset.value);
+
+            setTimeout(() => { 
             
             // 3.2: Spieldauer, Punkte, Versuche festlegen
             gameState.trackDuration = gameState.diceValue === 7 ? 2000 : 7000; // in ms
@@ -307,6 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             diceContainer.classList.add('hidden');
             showGenreScreen();
+
+             }, 150); 
         });
     });
 
