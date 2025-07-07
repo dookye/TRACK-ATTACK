@@ -555,17 +555,48 @@ async function playSongForResolution() {
     });
 }
 
+    // NEU: Funktion für Fade-Out
+function fadeAudioOut() {
+    return new Promise(resolve => {
+        if (!spotifyPlayer || !gameState.isSongPlaying) {
+            resolve(); // Nichts zu faden oder Song spielt nicht
+            return;
+        }
+
+        clearInterval(gameState.fadeInterval); // Sicherstellen, dass kein Fade-In mehr läuft
+
+        const fadeDuration = 500; // Fade-Out Dauer in Millisekunden (z.B. 0.5 Sekunden)
+        const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
+        const currentVolumePercent = gameState.currentSongVolume; // Letzte Lautstärke vom Fade-In
+
+        // Berechne die Intervallzeit basierend auf der aktuellen Lautstärke
+        const intervalTime = fadeDuration / (currentVolumePercent / fadeStep);
+
+        gameState.fadeInterval = setInterval(() => {
+            if (gameState.currentSongVolume > 0) {
+                gameState.currentSongVolume = Math.max(0, gameState.currentSongVolume - fadeStep);
+                spotifyPlayer.setVolume(gameState.currentSongVolume / 100);
+            } else {
+                clearInterval(gameState.fadeInterval);
+                gameState.fadeInterval = null;
+                resolve(); // Fade-Out abgeschlossen
+            }
+        }, intervalTime);
+    });
+}
 
     revealButton.addEventListener('click', showResolution);
 
     function handleFeedback(isCorrect) {
-        // NEU: Song stoppen, wenn Feedback gegeben wird
-        if (gameState.isSongPlaying && spotifyPlayer) {
-        spotifyPlayer.pause();
-        gameState.isSongPlaying = false;
+        // NEU: Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
+        fadeAudioOut().then(() => {
+            // Dieser Code wird ausgeführt, NACHDEM der Fade-Out beendet ist
+            if (gameState.isSongPlaying && spotifyPlayer) {
+                spotifyPlayer.pause();
+                gameState.isSongPlaying = false;
         }
-        clearInterval(gameState.fadeInterval); // Auch hier den Fade-In-Intervall stoppen
-        if (isCorrect) {
+        
+            if (isCorrect) {
             // 5.1: Punkte berechnen und speichern
             const points = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1));
             if (gameState.currentPlayer === 1) {
