@@ -512,7 +512,8 @@ async function playSongForResolution() {
         gameState.currentSongVolume = 0; // Setze interne Volume auf 0
 
         // Song bei Sekunde 30 starten
-        fetch(`${SPOTIFY_PLAYER_BASE}play?device_id=${deviceId}`, { // Korrigierte URL, falls nötig
+        // fetch(`${SPOTIFY_PLAYER_BASE}play?device_id=${deviceId}`, { // Korrigierte URL, falls nötig
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
