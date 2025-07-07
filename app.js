@@ -613,7 +613,7 @@ function fadeAudioOut() {
         // Setze den Zustand zurück, bevor die nächste Runde beginnt
         lastGameScreenVisible = '';
          setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
-         }
+         
     }); 
 }
 
