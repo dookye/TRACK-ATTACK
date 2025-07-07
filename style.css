@@ -154,10 +154,10 @@ body, html {
 
 * Würfel Auswahl (Die Würfel-Buttons selbst) */
 #dice-selection {
-    display: flex;
+    display: flex !important; /* <<< TEMPORÄR HINZUFÜGEN ZUM TESTEN */
     justify-content: center;
     align-items: center;
-    gap: 100px; /* <--- HIER DEN ABSTAND ÄNDERN! Dieser Wert wirkt sich auf die einzelnen Würfel aus. */
+    gap: 80px !important; /* <<< TEMPORÄR HINZUFÜGEN ZUM TESTEN */
 }
 
 .dice-option {
