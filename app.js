@@ -612,9 +612,20 @@ function fadeAudioOut() {
 
         // Setze den Zustand zurück, bevor die nächste Runde beginnt
         lastGameScreenVisible = '';
-        setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
-    }
-  }
+        // setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
+        // }
+
+            // Überprüfen, ob das Spielende erreicht ist (WICHTIG: diese Logik fehlte im von dir geposteten Snippet!)
+        if (gameState.currentRound >= gameState.totalRounds) {
+            endGame();
+        } else {
+            // setTimeout(showDiceScreen, 500); // Diese Zeile würde hier die resetRoundUI-Logik überschreiben
+                                                // Du hast in vorherigen Beispielen resetRoundUI() aufgerufen.
+                                                // Ich nehme an, das ist der gewünschte Pfad.
+            resetRoundUI(); // Führt zum Würfeln oder zur Genre-Auswahl
+        }
+    }); 
+}
 
     document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
     document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
