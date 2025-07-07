@@ -48,6 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
         countdownInterval: null,
         spotifyPlayTimeout: null, // NEU: Timeout für das Pausieren des Songs
         isSongPlaying: false, // NEU: Flag, ob Song gerade spielt
+        fadeInterval: null, // NEU: Für den Fade-In-Intervall
+        currentSongVolume: 0, // NEU: Aktuelle Lautstärke für Fade-In
     };
 
     // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
@@ -462,6 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(gameState.speedRoundTimeout);
         clearInterval(gameState.countdownInterval);
         clearTimeout(gameState.spotifyPlayTimeout); // Auch den Song-Pause-Timer stoppen
+        clearInterval(gameState.fadeInterval); // WICHTIG: Fade-In-Intervall stoppen
        
         // Spotify Player pausieren, falls noch aktiv
         if (gameState.isSongPlaying && spotifyPlayer) {
@@ -486,11 +489,80 @@ document.addEventListener('DOMContentLoaded', () => {
         revealContainer.classList.remove('hidden');
         // Speichere den Zustand: Auflösung-Bildschirm
         lastGameScreenVisible = 'reveal-container';
+         
+        // NEU: Song bei Auflösung abspielen
+        playSongForResolution();
     }
+
+    // NEU: Funktion zum Abspielen des Songs bei Auflösung
+async function playSongForResolution() {
+    if (!gameState.currentTrack || !deviceId) {
+        console.warn("Kein Track oder Gerät verfügbar, kann Song nicht abspielen.");
+        return;
+    }
+
+    const startPositionMs = 30 * 1000; // 30 Sekunden in Millisekunden
+    const targetVolume = 80; // Ziel-Lautstärke in %
+    const fadeDuration = 2000; // Fade-In Dauer in Millisekunden (z.B. 2 Sekunden)
+    const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
+    const intervalTime = fadeDuration / (targetVolume / fadeStep); // Intervallzeit für jeden Schritt
+
+    // Sicherstellen, dass die Lautstärke auf 0 gesetzt ist, bevor wir starten
+    spotifyPlayer.setVolume(0).then(() => {
+        gameState.currentSongVolume = 0; // Setze interne Volume auf 0
+
+        // Song bei Sekunde 30 starten
+        fetch(`${SPOTIFY_PLAYER_BASE}play?device_id=${deviceId}`, { // Korrigierte URL, falls nötig
+            method: 'PUT',
+            body: JSON.stringify({
+                uris: [gameState.currentTrack.uri],
+                position_ms: startPositionMs
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        }).then(response => {
+            if (!response.ok) {
+                console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
+                return;
+            }
+            gameState.isSongPlaying = true; // Song spielt jetzt
+
+            // Starte Fade-In
+            gameState.fadeInterval = setInterval(() => {
+                if (gameState.currentSongVolume < targetVolume) {
+                    gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
+                    spotifyPlayer.setVolume(gameState.currentSongVolume / 100); // Spotify Volume erwartet 0.0 bis 1.0
+                } else {
+                    clearInterval(gameState.fadeInterval); // Fade-In beendet
+                }
+            }, intervalTime); // Intervall für den Fade-In
+
+            // Optional: Timer, um den Song am Ende zu pausieren, falls nicht geklickt wird
+            // Dies ist nicht unbedingt nötig, da Spotify den Track automatisch beendet.
+            // Wenn der Track sehr lang ist und du ihn explizit pausieren willst:
+            // const remainingTime = gameState.currentTrack.duration_ms - startPositionMs;
+            // gameState.spotifyPlayTimeout = setTimeout(() => {
+            //     if (gameState.isSongPlaying && spotifyPlayer) {
+            //         spotifyPlayer.pause();
+            //         gameState.isSongPlaying = false;
+            //     }
+            // }, remainingTime + 1000); // Kleine Pufferzeit
+        }).catch(error => {
+            console.error("Netzwerkfehler beim Starten des Songs für Auflösung:", error);
+        });
+    }).catch(error => {
+        console.error("Fehler beim Setzen der Initiallautstärke auf 0:", error);
+    });
+}
 
     revealButton.addEventListener('click', showResolution);
 
     function handleFeedback(isCorrect) {
+        // NEU: Song stoppen, wenn Feedback gegeben wird
+        if (gameState.isSongPlaying && spotifyPlayer) {
+        spotifyPlayer.pause();
+        gameState.isSongPlaying = false;
+        }
+        clearInterval(gameState.fadeInterval); // Auch hier den Fade-In-Intervall stoppen
         if (isCorrect) {
             // 5.1: Punkte berechnen und speichern
             const points = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1));
