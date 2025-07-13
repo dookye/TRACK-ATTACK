@@ -25,6 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
     const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
 
+    // NEU: Konfiguration für jeden Würfelwert
+const diceConfig = {
+    1: { attempts: 1, duration: 7000 },
+    2: { attempts: 2, duration: 7000 },
+    3: { attempts: 3, duration: 7000 },
+    4: { attempts: 4, duration: 7000 },
+    5: { attempts: 5, duration: 7000 },
+    7: { attempts: 7, duration: 2000 }
+};
+    
     // --- Spielstatus-Variablen ---
     // let player;
     let spotifyPlayer;
@@ -297,23 +307,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.querySelectorAll('.dice-option').forEach(dice => {
-        dice.addEventListener('click', (e) => {
-            gameState.diceValue = parseInt(e.target.dataset.value);
+    dice.addEventListener('click', (e) => {
+        const selectedValue = parseInt(e.target.dataset.value);
+        gameState.diceValue = selectedValue;
 
-            setTimeout(() => { 
-            
-            // 3.2: Spieldauer, Punkte, Versuche festlegen
-            gameState.trackDuration = gameState.diceValue === 7 ? 2000 : 7000; // in ms
-            gameState.maxAttempts = gameState.diceValue;
+        // Prüfen, ob der ausgewählte Würfel in unserer Konfiguration existiert
+        const config = diceConfig[selectedValue];
+        if (!config) {
+            console.error(`Konfiguration für Würfelwert ${selectedValue} nicht gefunden!`);
+            return; // Beende die Funktion, um Fehler zu vermeiden
+        }
+
+        setTimeout(() => {
+            // Die Werte werden jetzt direkt aus dem Konfigurationsobjekt ausgelesen
+            gameState.trackDuration = config.duration;
+            gameState.maxAttempts = config.attempts;
             gameState.attemptsMade = 0;
 
             diceContainer.classList.add('hidden');
             showGenreScreen();
 
-             }, 150); 
-        });
+        }, 150);
     });
-
+});
+    
     function showGenreScreen() {
         genreContainer.classList.remove('hidden');
         const buttons = document.querySelectorAll('.genre-button');
