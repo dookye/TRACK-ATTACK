@@ -219,6 +219,12 @@ body, html {
     max-width: 80%; /* Optional: Begrenze die Breite des Containers, damit der Umbruch früher erfolgt */
 }
 
+/* NEU: Klasse zur Deaktivierung der Buttons während der Animation */
+.no-interaction {
+    pointer-events: none; /* Verhindert alle Maus- und Klick-Events */
+    cursor: default;     /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
+}
+
 .genre-button {
     padding: 20px 30px;
     font-size: 1.2em;
