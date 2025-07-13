@@ -326,6 +326,17 @@ body, html {
     white-space: nowrap; /* Verhindert Zeilenumbruch bei langen Texten */
 }
 
+/* --- Media Query für mobile Geräte --- */
+/* Dies wird auf Bildschirmen mit einer Breite von 768px oder weniger angewendet */
+@media screen and (max-width: 768px) {
+    #speed-round-text-display {
+        font-size: 30px; /* Anpassung für Handys, verringert die Schriftgröße */
+        line-height: 1.2; /* Sorgt dafür, dass der Text eng beieinander steht, falls er umbricht */
+        padding: 0 10px; /* Fügt links und rechts etwas Platz hinzu */
+        box-sizing: border-box; /* Stellt sicher, dass das Padding die Gesamtbreite nicht erhöht */
+    }
+}
+
 /* Countdown-Anzeige (bleibt so groß und animiert) */
 #countdown-display {
     position: absolute;
