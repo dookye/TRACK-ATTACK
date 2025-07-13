@@ -149,13 +149,15 @@ body, html {
 }
 
 @keyframes fly-in {
-    from {
-        top: -50%;
-        transform: translate(-50%, -50%);
+    0% {
+        /* Start: Groß und unsichtbar */
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
     }
-    to {
-        top: 50%;
-        transform: translate(-50%, -50%);
+    100% {
+        /* Ende: Normale Größe und sichtbar */
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
     }
 }
 
