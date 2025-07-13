@@ -331,41 +331,73 @@ const diceConfig = {
     });
 });
     
-    function showGenreScreen() {
-        genreContainer.classList.remove('hidden');
-        const buttons = document.querySelectorAll('.genre-button');
+    // NEU: Funktion zur Ausführung der Blink-Animation
+function runGenreAnimation(buttons) {
+    return new Promise(resolve => {
+        const blinkInterval = setInterval(() => {
+            buttons.forEach(btn => btn.classList.toggle('random-blink'));
+        }, 200);
+
+        setTimeout(() => {
+            clearInterval(blinkInterval);
+            buttons.forEach(btn => btn.classList.remove('random-blink'));
+            resolve(); // Löst das Promise auf, wenn die Animation fertig ist
+        }, 4000);
+    });
+}
+    
+    async function showGenreScreen() {
+    genreContainer.classList.remove('hidden');
+    const buttons = document.querySelectorAll('.genre-button');
+    
+    buttons.forEach(btn => {
+        btn.disabled = false;
+        btn.classList.remove('random-blink');
+    });
+
+    // Speichere den Zustand: Genre-Bildschirm
+    lastGameScreenVisible = 'genre-container';
+
+    // Führe die gleiche Blink-Animation für beide Fälle aus
+    await runGenreAnimation(buttons);
+
+    // Die Logik für die Button-Aktivierung/-Deaktivierung kommt jetzt NACH der Animation
+    if (gameState.diceValue === 7) { // Fall B: WÜRFEL 7
+        
+        // 1. Alle Buttons sind klickbar (standardmäßig)
+        buttons.forEach(btn => btn.disabled = false);
+
+        // 2. Wähle ein zufälliges Genre aus, das inaktiv sein soll
+        const randomIndex = Math.floor(Math.random() * buttons.length);
+        const disabledButton = buttons[randomIndex];
+        
+        // 3. Deaktiviere das ausgewählte Genre
+        disabledButton.disabled = true;
+        // Optional: Füge eine visuelle Klasse hinzu, um es zu markieren
+        disabledButton.classList.add('disabled-genre');
+        
+        // Füge Event-Listener für alle Buttons hinzu
         buttons.forEach(btn => {
-            btn.disabled = false;
-            btn.classList.remove('random-blink');
+             btn.addEventListener('click', handleGenreSelection, { once: true });
         });
 
-         // Speichere den Zustand: Genre-Bildschirm
-        lastGameScreenVisible = 'genre-container';
+    } else { // Fall A: WÜRFEL 1-5
+        
+        // 1. Erst alle Buttons deaktivieren
+        buttons.forEach(btn => btn.disabled = true);
+        
+        // 2. Dann ein zufälliges Genre auswählen und aktivieren
+        const randomIndex = Math.floor(Math.random() * buttons.length);
+        const activeButton = buttons[randomIndex];
 
-        // 3.4: Genre-Auswahl-Logik
-        if (gameState.diceValue === 7) { // Fall B: Spieler wählt
-            buttons.forEach(btn => btn.addEventListener('click', handleGenreSelection));
-        } else { // Fall A: Zufällige Auswahl
-            buttons.forEach(btn => btn.disabled = true);
-            const blinkInterval = setInterval(() => {
-                buttons.forEach(btn => btn.classList.toggle('random-blink'));
-            }, 200);
+        activeButton.disabled = false;
+        // Optional: Entferne eine mögliche visuelle Klasse
+        activeButton.classList.remove('disabled-genre');
 
-            setTimeout(() => {
-                clearInterval(blinkInterval);
-                const randomIndex = Math.floor(Math.random() * buttons.length);
-                buttons.forEach((btn, index) => {
-                    btn.classList.remove('random-blink');
-                    if (index !== randomIndex) {
-                        btn.disabled = true;
-                    } else {
-                        btn.disabled = false;
-                        btn.addEventListener('click', handleGenreSelection, { once: true });
-                    }
-                });
-            }, 4000);
-        }
+        // Füge den Event-Listener nur für den aktiven Button hinzu
+        activeButton.addEventListener('click', handleGenreSelection, { once: true });
     }
+}
 
     async function handleGenreSelection(e) {
         const selectedGenre = e.target.dataset.genre;
