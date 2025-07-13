@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
-  "description": "Ein Song-Quiz-Spiel",
+  "description": "MUSIC GUESSING GAME",
   "icons": [
     {
       "src": "assets/logo-icon.png",
