@@ -1,7 +1,7 @@
 {
   "name": "TRACK ATTACK",
   "short_name": "TRACK ATTACK",
-  "start_url": "https://dookye.github.io/TRACK-ATTACK/index.html",
+  "start_url": "https://dookye.github.io/TRACK-ATTACK/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
