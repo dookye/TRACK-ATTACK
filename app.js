@@ -336,7 +336,7 @@ function runGenreAnimation(buttons) {
     return new Promise(resolve => {
         const blinkInterval = setInterval(() => {
             buttons.forEach(btn => btn.classList.toggle('random-blink'));
-        }, 200);
+        }, 100);
 
         setTimeout(() => {
             clearInterval(blinkInterval);
