@@ -67,11 +67,13 @@ const diceConfig = {
     
     const playlists = {
         punk: ['39sVxPTg7BKwrf2MfgrtcD', '7ITmaFa2rOhXAmKmUUCG9E'],
+        dpunk: ['5ERIFUXWnLkXOABWjOOzo8', '3ci8gzflBxm0juHjeApzOu'],
         pop: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         alltime: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
         disney: ['3Bilb56eeS7db5f3DTEwMR', '2bhbwexk7c6yJrEB4CtuY8'],
         schlager: ['5lS5fb5u4xAL0qhcuJRVpm'],
-        boygirlgroup: ['27zCFz4kdJIXGxIhUrZvIq']
+        boygirlgroup: ['27zCFz4kdJIXGxIhUrZvIq'],
+        xmas: ['0cy6DJ0CIg050McHHtRldr', '5XNs6ZHwBqjeE9BjdQvzyX']
     };
 
     //=======================================================================
