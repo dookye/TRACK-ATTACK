@@ -151,7 +151,7 @@ body, html {
 @keyframes fly-in {
     0% {
         /* Start: Groß und unsichtbar */
-        transform: translate(-50%, -50%) scale(2);
+        transform: translate(-50%, -50%) scale(8);
         opacity: 0;
     }
     100% {
