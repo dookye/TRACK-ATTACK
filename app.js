@@ -70,7 +70,7 @@ const diceConfig = {
         // dpunk: ['5ERIFUXWnLkXOABWjOOzo8', '3ci8gzflBxm0juHjeApzOu'],
         pop: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         alltime: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
-        detsch: ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
+        deutsch: ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
         party: ['53r5W67KJNIeHWAhVOWPDr', '37i9dQZF1DX9WU5Losjsy8']
         // disney: ['3Bilb56eeS7db5f3DTEwMR', '2bhbwexk7c6yJrEB4CtuY8'],
         // schlager: ['5lS5fb5u4xAL0qhcuJRVpm'],
