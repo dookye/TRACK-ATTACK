@@ -640,24 +640,77 @@ function fadeAudioOut() {
 
     revealButton.addEventListener('click', showResolution);
 
-    function handleFeedback(isCorrect) {
-        // NEU: Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
-        fadeAudioOut().then(() => {
-            // Dieser Code wird ausgeführt, NACHDEM der Fade-Out beendet ist
-            if (gameState.isSongPlaying && spotifyPlayer) {
-                spotifyPlayer.pause();
-                gameState.isSongPlaying = false;
+function handleFeedback(isCorrect) {
+    // NEU: Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
+    fadeAudioOut().then(() => {
+        // Dieser Code wird ausgeführt, NACHDEM der Fade-Out beendet ist
+        if (gameState.isSongPlaying && spotifyPlayer) {
+            spotifyPlayer.pause();
+            gameState.isSongPlaying = false;
         }
-        
-            if (isCorrect) {
+
+        let pointsAwarded = 0; // NEU: Variable für die vergebenen Punkte
+
+        if (isCorrect) {
             // 5.1: Punkte berechnen und speichern
-            const points = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1));
+            pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1)); // Punkte berechnen
             if (gameState.currentPlayer === 1) {
-                gameState.player1Score += points;
+                gameState.player1Score += pointsAwarded;
             } else {
-                gameState.player2Score += points;
+                gameState.player2Score += pointsAwarded;
             }
         }
+        
+        // NEU: Animation der vergebenen Punkte anzeigen
+        displayPointsAnimation(pointsAwarded, gameState.currentPlayer)
+            .then(() => { // Führe den Rest der Logik erst nach der Punkte-Animation aus
+                // 4.4: Spieler wechseln
+                gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+                appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
+
+                // Setze den Zustand zurück, bevor die nächste Runde beginnt
+                lastGameScreenVisible = '';
+                setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
+            });
+    });
+}
+
+// NEU: Funktion zur Anzeige der animierten Punkte
+function displayPointsAnimation(points, player) {
+    return new Promise(resolve => {
+        countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige (jetzt für Punkte) einblenden
+        countdownDisplay.classList.remove('countdown-animated'); // Alte Animation entfernen
+        countdownDisplay.innerText = `+${points}`; // Punkte mit "+" anzeigen
+
+        // Farbe an Spieler anpassen
+        if (player === 1) {
+            countdownDisplay.style.color = 'var(--player1-color)';
+            countdownDisplay.style.left = '25%'; // Linke Hälfte für Spieler 1
+            countdownDisplay.style.transform = 'translate(-50%, -50%)'; // Reset transform
+        } else {
+            countdownDisplay.style.color = 'var(--player2-color)';
+            countdownDisplay.style.left = '75%'; // Rechte Hälfte für Spieler 2
+            countdownDisplay.style.transform = 'translate(-50%, -50%)'; // Reset transform
+        }
+
+        // Animation starten
+        void countdownDisplay.offsetWidth; // Reflow erzwingen, um Animation neu zu starten
+        countdownDisplay.classList.add('countdown-animated'); // Animation hinzufügen
+
+        // Nach 1 Sekunde: Animation beenden und Element verstecken
+        setTimeout(() => {
+            countdownDisplay.classList.add('hidden');
+            countdownDisplay.classList.remove('countdown-animated');
+            countdownDisplay.innerText = ''; // Inhalt leeren
+
+            // Farben und Position zurücksetzen für den nächsten Countdown (optional, aber sauber)
+            countdownDisplay.style.color = 'var(--white)';
+            countdownDisplay.style.left = '50%';
+            countdownDisplay.style.transform = 'translate(-50%, -50%)';
+            resolve(); // Promise auflösen, um den nächsten Schritt in handleFeedback auszuführen
+        }, 1000); // 1 Sekunde Dauer für die Punkteanzeige
+    });
+}
         
         // 4.4: Spieler wechseln
         gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
