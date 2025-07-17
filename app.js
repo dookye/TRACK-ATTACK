@@ -461,16 +461,37 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
     // NEU: Anpassung der startGame-Funktion, die jetzt die erste Runde initiiert
-    function startGameRound() {
-        triggerBounce(logoButton);
-        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
+async function startGameRound() {
+    console.log("startGameRound aufgerufen");
 
-        setTimeout(() => {
-            // appContainer.style.backgroundColor wird schon in startMultiGenreMode gesetzt
-            logoButton.classList.add('hidden');
-            showDiceScreen(); // Startet die Würfel-Phase für die erste Runde
-        }, 800);
-    }
+    // Verstecke den aktuell aktiven Bildschirm (z.B. Modus-Auswahl oder Band-Modus)
+    // Wichtig: Wir verstecken beide, um sicherzugehen.
+    document.getElementById('mode-selection-screen').classList.add('hidden');
+    document.getElementById('band-mode-screen').classList.add('hidden');
+    document.getElementById('genre-container').classList.add('hidden'); // Stelle sicher, dass der Genre-Container am Anfang versteckt ist
+
+    // Zeige den Logo-Button und starte seine Animation
+    const logoButton = document.getElementById('logo-button'); // Stelle sicher, dass logoButton hier deklariert ist
+    logoButton.classList.remove('hidden');
+    triggerBounce(); // Dies ist die Funktion, die vorher undefiniert war
+
+    // Deaktiviere die Interaktion mit dem Logo-Button während der Animation
+    logoButton.classList.add('no-interaction');
+
+    // Nach der Logo-Animation zum nächsten Schritt übergehen (z.B. Würfel oder Genre-Auswahl zeigen)
+    // Dies muss sorgfältig basierend auf deinem Spielfluss gesteuert werden.
+    logoButton.addEventListener('animationend', () => {
+        logoButton.classList.remove('no-interaction'); // Interaktion nach Animation wieder aktivieren
+
+        // Abhängig vom Spielmodus, den nächsten Bildschirm anzeigen
+        if (gameState.gameMode === 'multi-genre' || gameState.gameMode === 'single-genre') {
+            showDiceSelection(); // Zeigt die Würfelauswahl an
+        }
+        // Für den Band-Modus wird startGameRound anders aufgerufen oder geht direkt zur Songauswahl
+        // (Diese Logik kommt später, wenn der Band-Modus komplett implementiert wird)
+
+    }, { once: true }); // event listener wird nach einmaliger Ausführung entfernt
+}
     
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
