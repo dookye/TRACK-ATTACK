@@ -20,7 +20,6 @@
             <img src="assets/logo.png" alt="Quiz Game Logo" id="login-logo">
             <p>Please log in with your Spotify-Premium-Account</p>
             <button id="login-button">
-                <!-- <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_White.png" alt="Spotify Logo"> -->
                 <img src="spotify_icon.png" alt="Spotify Logo">
                 LOG IN WITH SPOTIFY
             </button>
@@ -31,6 +30,21 @@
         </div>
 
         <div id="game-screen" class="screen hidden">
+            <div id="mode-selection-screen" class="mode-selection-screen hidden">
+                <h2>Wähle deinen Modus</h2>
+                <button id="multi-genre-mode-button" class="mode-button">Multi-Genre</button>
+                <button id="single-genre-mode-button" class="mode-button">Single-Genre</button>
+                <button id="band-mode-button" class="mode-button">Band-Modus</button>
+                <p class="mode-description">Der Band-Modus erlaubt dir, Songs von deinen Lieblingskünstlern zu erraten.
+                    Dieser Modus kann freigeschaltet werden.</p>
+            </div>
+            <div id="band-mode-screen" class="band-mode-screen hidden">
+                <h2>Band-Modus: Finde deinen Künstler</h2>
+                <input type="text" id="band-search-input" placeholder="Künstlername eingeben">
+                <button id="band-search-button">Song finden</button>
+                <p id="band-mode-description" class="hidden">Errate Songs spezifischer Künstler. Dieser Modus muss freigeschaltet werden.</p>
+                <a href="#" id="band-mode-purchase-link" class="hidden">Band-Modus jetzt freischalten!</a>
+            </div>
             <img src="assets/logo.png" alt="Track Attack Logo" id="logo-button" class="hidden">
 
             <div id="countdown-display" class="hidden"></div>
@@ -58,13 +72,7 @@
                 <button class="genre-button" data-genre="party">Partyhits</button>
                 
                 
-                <!-- <button class="genre-button" data-genre="punk">Punk Rock (90's & 00')</button> -->
-                <!-- <button class="genre-button" data-genre="dpunk">Deutscher Punk</button> -->
-                <!-- <button class="genre-button" data-genre="disney">Disney Songs</button> -->
-                <!-- <button class="genre-button" data-genre="schlager">Best Of Schlagerparty</button> -->
-                <!-- <button class="genre-button" data-genre="boygirlgroup">Boy- and Girlgroups</button> -->
-                <!-- <button class="genre-button" data-genre="xmas">Weihnachten</button> -->
-            </div>
+                </div>
 
             <div id="reveal-container" class="hidden">
                 <div id="track-info">
