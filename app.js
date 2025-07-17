@@ -507,7 +507,7 @@ function runGenreAnimation(buttons) {
         });
 
         // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
-        if (gameState.attemptsMade === 1) {
+        if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
             revealButton.classList.remove('hidden');
         }
     }
