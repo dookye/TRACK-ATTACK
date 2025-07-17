@@ -21,7 +21,9 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 #reveal-button, /* AUFLÖSEN-Button */
 #correct-button, /* RICHTIG-Button */
 #wrong-button, /* FALSCH-Button */
-.dice-option /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
+.dice-option, /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
+.mode-button, /* NEU: Modus-Auswahl-Buttons */
+#band-search-button /* NEU: Band-Suche-Button */
 {
     transition: transform 0.06s ease-out; /* Kurze, sanfte Animation */
     cursor: pointer; /* Zeigt an, dass das Element klickbar ist */
@@ -32,7 +34,9 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 #reveal-button:active,
 #correct-button:active,
 #wrong-button:active,
-.dice-option:active /* Optional: Für die Würfel-Bilder */
+.dice-option:active, /* Optional: Für die Würfel-Bilder */
+.mode-button:active, /* NEU: Modus-Auswahl-Buttons */
+#band-search-button:active /* NEU: Band-Suche-Button */
 {
     transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
 }
@@ -44,6 +48,9 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
     --black: #000;
     --white: #fff;
     --transition-speed: 0.8s;
+    --spotify-green: #1DB954; /* Spotify-Grün für Konsistenz */
+    --locked-color: #555; /* Farbe für gesperrte Elemente */
+    --locked-text-color: #aaa; /* Textfarbe für gesperrte Elemente */
 }
 
 /* Phase 1.1: Body & Seiten-Setup */
@@ -114,7 +121,7 @@ body, html {
 
 /* Login-Button (Phase 1.1) */
 #login-button {
-    background-color: #1DB954;
+    background-color: var(--spotify-green); /* Spotify-Grün verwenden */
     color: var(--white);
     border: none;
     padding: 15px 30px;
@@ -151,7 +158,7 @@ body, html {
 @keyframes fly-in {
     0% {
         /* Start: Groß und unsichtbar */
-        transform: translate(-50%, -50%) scale(12);
+        transform: translate(-50%, -50%) scale(12); /* Angepasster Scale-Wert */
         opacity: 0;
     }
     100% {
@@ -185,7 +192,7 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* gap: 20px; */
+    /* gap: 20px; */ /* Dieser Gap war nicht für die Würfel-Buttons selbst */
 }
 
 /* Würfel Auswahl (Die Würfel-Buttons selbst) */
@@ -194,6 +201,8 @@ body, html {
     justify-content: center;
     align-items: center;
     gap: 30px; /* ändert den Abstand zwischen den Würfeln */
+    flex-wrap: wrap; /* NEU: Für responsive Darstellung auf kleineren Bildschirmen */
+    max-width: 90%; /* NEU: Begrenzt die Breite, damit die Würfel umbrechen können */
 }
 
 .dice-option {
@@ -236,6 +245,7 @@ body, html {
     color: var(--white);
     transition: background-color 0.3s, color 0.3s;
     border-radius: 10px;
+    white-space: nowrap; /* Verhindert Umbruch innerhalb des Buttons */
 }
 
 .genre-button:hover:not(:disabled) {
@@ -245,6 +255,15 @@ body, html {
 .genre-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* NEU: Stil für ausgegraute/kaufbare Genres */
+.genre-button.locked-genre {
+    background-color: var(--locked-color);
+    color: var(--locked-text-color);
+    border-color: var(--locked-text-color);
+    cursor: not-allowed;
+    pointer-events: none; /* Damit sie nicht klickbar sind */
 }
 
 .random-blink {
@@ -260,9 +279,9 @@ body, html {
 #reveal-button {
     position: absolute;
     bottom: 5%;
-    padding: 15px 40px;
-    font-size: 1.3em;
-    background-color: #1DB954;
+    padding: 12px 30px; /* Etwas kleiner gemacht */
+    font-size: 1.1em; /* Etwas kleiner gemacht */
+    background-color: var(--spotify-green); /* Spotify-Grün verwenden */
     color: white;
     border: none;
     border-radius: 50px;
@@ -278,15 +297,26 @@ body, html {
 
 #track-info {
     display: flex;
+    flex-direction: column; /* NEU: Elemente untereinander auf kleinen Bildschirmen */
     align-items: center;
     gap: 20px;
     background: rgba(0,0,0,0.5);
     padding: 20px;
     border-radius: 10px;
+    max-width: 90%; /* NEU: Begrenzt die Breite */
 }
+/* Media Query für größere Bildschirme, um track-info nebeneinander zu halten */
+@media screen and (min-width: 600px) {
+    #track-info {
+        flex-direction: row; /* Nebeneinander auf größeren Bildschirmen */
+        max-width: 600px; /* Max-Breite für Desktop */
+    }
+}
+
 #album-cover {
     width: 150px;
     height: 150px;
+    border-radius: 5px; /* NEU: Abgerundete Ecken */
 }
 #track-title {
     font-size: 2em;
@@ -332,13 +362,13 @@ body, html {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 9em; /* Beispiel: Deutlich größer als normal, aber kleiner als 20vw */
+    font-size: 9em;
     font-weight: bold;
     color: var(--white);
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-    z-index: 20; /* Liegt unter dem Countdown, aber über dem Spielbildschirm */
-    animation: zoom-fade-in 4s forwards; /* Die Animation bleibt hier */
-    white-space: nowrap; /* Verhindert Zeilenumbruch bei langen Texten */
+    z-index: 20;
+    animation: zoom-fade-in 4s forwards;
+    white-space: nowrap;
 }
 
 /* --- Media Query für mobile Geräte --- */
@@ -384,4 +414,164 @@ body, html {
     20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
     80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* ======================================================================= */
+/* NEU: Styles für Modus-Auswahl-Bildschirm */
+/* ======================================================================= */
+#mode-selection-screen {
+    /* Übernimmt die Basiseigenschaften von .screen */
+    gap: 30px; /* Abstand zwischen den Buttons */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#mode-selection-screen h2 {
+    font-size: 2.5em;
+    margin-bottom: 40px;
+    color: var(--white);
+}
+
+.mode-button {
+    padding: 20px 40px;
+    font-size: 1.5em;
+    font-weight: bold;
+    background-color: var(--spotify-green);
+    color: var(--white);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.06s ease-out;
+    min-width: 280px; /* Mindestbreite für Konsistenz */
+}
+
+.mode-button:hover:not(:disabled) {
+    background-color: #1ed760; /* Etwas helleres Grün beim Hover */
+}
+
+/* Stil für gesperrte Modus-Buttons */
+.mode-button.locked-mode {
+    background-color: var(--locked-color);
+    color: var(--locked-text-color);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.mode-description {
+    font-size: 0.9em;
+    color: var(--locked-text-color);
+    margin-top: 20px;
+    max-width: 80%;
+}
+
+/* ======================================================================= */
+/* NEU: Styles für Band-Modus-Bildschirm */
+/* ======================================================================= */
+#band-mode-screen {
+    /* Übernimmt die Basiseigenschaften von .screen */
+    gap: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#band-mode-screen h2 {
+    font-size: 2.2em;
+    margin-bottom: 30px;
+    color: var(--white);
+}
+
+#band-search-input {
+    width: 80%;
+    max-width: 400px;
+    padding: 12px 15px;
+    font-size: 1.1em;
+    border: 2px solid var(--spotify-green);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--white);
+    text-align: center;
+}
+
+#band-search-input::placeholder {
+    color: var(--locked-text-color);
+}
+
+#band-search-input:focus {
+    outline: none;
+    border-color: #1ed760;
+}
+
+#band-search-button {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    font-weight: bold;
+    background-color: var(--spotify-green);
+    color: var(--white);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.06s ease-out;
+}
+
+#band-search-button:hover:not(:disabled) {
+    background-color: #1ed760;
+}
+
+#band-search-button:disabled {
+    background-color: var(--locked-color);
+    color: var(--locked-text-color);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+#band-mode-description {
+    font-size: 1.1em;
+    color: var(--locked-text-color);
+    margin-top: 30px;
+    max-width: 70%;
+    line-height: 1.5;
+}
+
+#band-mode-purchase-link {
+    display: inline-block; /* Damit Padding und Margin funktionieren */
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: var(--player1-color); /* Oder eine andere Akzentfarbe */
+    color: var(--white);
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+#band-mode-purchase-link:hover {
+    background-color: #0056b3; /* Dunkleres Blau beim Hover */
+}
+
+/* ======================================================================= */
+/* Media Queries für kleinere Bildschirme (allgemein) */
+/* ======================================================================= */
+@media screen and (max-width: 600px) {
+    .mode-button {
+        font-size: 1.2em;
+        padding: 15px 30px;
+        min-width: 220px;
+    }
+    #mode-selection-screen h2, #band-mode-screen h2 {
+        font-size: 1.8em;
+    }
+    #band-search-input {
+        font-size: 1em;
+        padding: 10px;
+    }
+    #band-search-button {
+        font-size: 1em;
+        padding: 12px 25px;
+    }
+    #track-title {
+        font-size: 1.5em;
+    }
+    #track-artist {
+        font-size: 1em;
+    }
 }
