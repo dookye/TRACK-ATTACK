@@ -640,6 +640,8 @@ function fadeAudioOut() {
 
     revealButton.addEventListener('click', showResolution);
 
+// ... (bestehender Code vor handleFeedback) ...
+
 function handleFeedback(isCorrect) {
     // NEU: Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
     fadeAudioOut().then(() => {
@@ -660,10 +662,10 @@ function handleFeedback(isCorrect) {
                 gameState.player2Score += pointsAwarded;
             }
         }
-        
+
         // NEU: Animation der vergebenen Punkte anzeigen
         displayPointsAnimation(pointsAwarded, gameState.currentPlayer)
-            .then(() => { // Führe den Rest der Logik erst nach der Punkte-Animation aus
+            .then(() => { // <--- HIER beginnt der .then()-Block für displayPointsAnimation
                 // 4.4: Spieler wechseln
                 gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
                 appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
@@ -671,8 +673,8 @@ function handleFeedback(isCorrect) {
                 // Setze den Zustand zurück, bevor die nächste Runde beginnt
                 lastGameScreenVisible = '';
                 setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
-            });
-    });
+            }); // <--- HIER endet der .then()-Block für displayPointsAnimation
+    }); // <--- HIER endet der .then()-Block für fadeAudioOut
 }
 
 // NEU: Funktion zur Anzeige der animierten Punkte
@@ -710,17 +712,6 @@ function displayPointsAnimation(points, player) {
             resolve(); // Promise auflösen, um den nächsten Schritt in handleFeedback auszuführen
         }, 1000); // 1 Sekunde Dauer für die Punkteanzeige
     });
-
-        
-        // 4.4: Spieler wechseln
-        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
-        appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
-
-        // Setze den Zustand zurück, bevor die nächste Runde beginnt
-        lastGameScreenVisible = '';
-         setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
-         
-    }); 
 }
 
     document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
