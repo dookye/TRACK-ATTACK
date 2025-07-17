@@ -422,24 +422,61 @@ function runGenreAnimation(buttons) {
     
     async function getTrack(genre) {
         const playlistPool = playlists[genre];
-        const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
-        
-        const response = await fetch(`https://api.spotify.com/v1/playlists/${randomPlaylistId}/tracks`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        if (!response.ok) { // Fehlerbehandlung für API-Anfrage
-            console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText);
-            alert("Fehler beim Laden der Songs. Bitte versuchen Sie es erneut.");
-            // Fallback: Zurück zum Genre-Bildschirm oder Fehler anzeigen
-            showGenreScreen();
+        // Stelle sicher, dass der Playlist-Pool für das Genre existiert und nicht leer ist
+        if (!playlistPool || playlistPool.length === 0) {
+            console.error(`Keine Playlists für Genre "${genre}" definiert oder Pool ist leer.`);
+            alert(`Fehler: Für das Genre "${genre}" sind keine Playlists verfügbar.`);
+            showGenreScreen(); // Zurück zum Genre-Bildschirm
             return null;
         }
+
+        const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
+        console.log(`Versuche Tracks von Playlist ID: ${randomPlaylistId} abzurufen.`); // Zum Debuggen
+
+        const response = await fetch(`https://api.spotify.com/v1/playlists/$${randomPlaylistId}/tracks`, {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) { // Fehlerbehandlung für API-Anfrage (z.B. 404 Not Found)
+            console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
+            alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
+            showGenreScreen(); // Zurück zum Genre-Bildschirm, damit der Spieler ein anderes Genre wählen kann
+            return null; // Wichtig: null zurückgeben, wenn ein Fehler auftritt
+        }
+
         const data = await response.json();
+
+        // Überprüfen, ob die Playlist Tracks enthält
+        if (!data.items || data.items.length === 0) {
+            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
+            alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
+            showGenreScreen(); // Zurück zum Genre-Bildschirm
+            return null;
+        }
+
+        // Filtere Tracks, die "null" sein könnten (z.B. gelöschte Tracks in der Playlist)
+        const playableTracks = data.items.filter(item => item.track && item.track.preview_url !== null); // Optional: Nur Tracks mit Preview-URL
+
+        if (playableTracks.length === 0) {
+            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
+            alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
+            showGenreScreen(); // Zurück zum Genre-Bildschirm
+            return null;
+        }
+
+        // Wähle einen zufälligen Track aus den gültigen Tracks
+        const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
         
-        const randomTrack = data.items[Math.floor(Math.random() * data.items.length)].track;
+        // Optional: Überprüfen, ob der zufällige Track gültig ist
+        if (!randomTrack) {
+            console.error("Zufällig ausgewählter Track ist null oder ungültig.");
+            alert("Es gab ein Problem mit dem Song. Bitte versuchen Sie es erneut.");
+            showGenreScreen(); // Zurück zum Genre-Bildschirm
+            return null;
+        }
+
         return randomTrack;
     }
-
     async function prepareAndShowRateScreen(genre) {
         gameState.currentTrack = await getTrack(genre);
         console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
