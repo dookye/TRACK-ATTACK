@@ -433,7 +433,7 @@ function runGenreAnimation(buttons) {
         // NEU: Loggen der ausgewählten Playlist-ID
         console.log(`DEBUG: Ausgewähltes Genre: "${genre}", Playlist-ID: "${randomPlaylistId}"`);
 
-        const response = await fetch(`http://googleusercontent.com/spotify.com/9{randomPlaylistId}/tracks`, {
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${randomPlaylistId}/tracks`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
 
