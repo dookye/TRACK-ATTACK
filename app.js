@@ -664,7 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Phase 4: Rate-Bildschirm & Spielerwechsel
     //=======================================================================
             
-    // NEU: getTrack Funktion angepasst, um allGenres zu nutzen
+    // NEU: getTrack Funktion angepasst, um allGenres zu nutzen und Abspielbarkeit zu prüfen
     async function getTrack(genreId) {
         const genreData = allGenres[genreId];
         if (!genreData || !genreData.playlists || genreData.playlists.length === 0) {
@@ -675,81 +675,178 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const playlistPool = genreData.playlists;
-        const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
-                
-        const response = await fetch(`https://api.spotify.com/v1/playlists/${randomPlaylistId}/tracks`, { // Korrigierte Spotify Playlist URL
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        if (!response.ok) { // Fehlerbehandlung für API-Anfrage
-            console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText);
-            // Versuche es erneut mit einem anderen Genre/Playlist oder zeige Fehler
-            alert("Fehler beim Laden der Songs. Bitte versuchen Sie es erneut.");
-            showGenreSelectionScreen();
-            return null;
-        }
-        const data = await response.json();
-                
-        // Filtere Tracks ohne Preview-URL oder mit zu kurzer Dauer
-        const playableTracks = data.items.filter(item =>
-            item.track && item.track.preview_url && item.track.duration_ms >= (gameState.trackDuration + 5000)
-        );
+        const maxAttemptsOverall = 10; // Sicherheitsnetz für die gesamte Suche
+        let currentOverallAttempts = 0;
 
-        if (playableTracks.length === 0) {
-            console.warn(`Keine spielbaren Tracks in Playlist ${randomPlaylistId} für Genre ${genreId}.`);
-            // Versuche eine andere Playlist oder ein anderes Genre
-            alert("Konnte keinen spielbaren Song in diesem Genre finden. Bitte wähle ein anderes Genre.");
-            showGenreSelectionScreen(); // Zurück zur Genre-Auswahl
-            return null;
+        while (currentOverallAttempts < maxAttemptsOverall) {
+            const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
+                    
+            try {
+                const response = await fetch(`https://api.spotify.com/v1/playlists/${randomPlaylistId}/tracks`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+
+                if (!response.ok) {
+                    console.warn(`Fehler beim Abrufen der Playlist-Tracks von ${randomPlaylistId}:`, response.status, response.statusText);
+                    currentOverallAttempts++;
+                    continue; // Versuche nächste Playlist
+                }
+
+                const data = await response.json();
+                const tracks = data.items;
+
+                if (!tracks || tracks.length === 0) {
+                    console.warn(`Keine Tracks in Playlist ${randomPlaylistId} gefunden.`);
+                    currentOverallAttempts++;
+                    continue; // Versuche nächste Playlist
+                }
+
+                let track = null;
+                let attemptsInPlaylist = 0;
+                const maxAttemptsInPlaylist = 10; // Sicherheitsnetz pro Playlist
+
+                // Schleife, um einen abspielbaren Song aus dieser Playlist zu finden
+                while (track === null && attemptsInPlaylist < maxAttemptsInPlaylist) {
+                    const randomIndex = Math.floor(Math.random() * tracks.length);
+                    const potentialTrack = tracks[randomIndex].track;
+
+                    // Überprüfen, ob der Song existiert, abspielbar ist und die Mindestdauer erfüllt
+                    if (potentialTrack && potentialTrack.is_playable && potentialTrack.duration_ms >= (gameState.trackDuration + 5000)) {
+                        track = potentialTrack;
+                    } else {
+                        attemptsInPlaylist++;
+                        // console.warn(`Versuch ${attemptsInPlaylist}: Song "${potentialTrack?.name || 'Unbekannt'}" nicht passend (is_playable: ${potentialTrack?.is_playable}, duration: ${potentialTrack?.duration_ms}).`);
+                    }
+                }
+
+                if (track) {
+                    return track; // Abspielbarer Track gefunden
+                } else {
+                    console.warn(`Konnte in Playlist ${randomPlaylistId} keinen passenden Track nach ${maxAttemptsInPlaylist} Versuchen finden.`);
+                    currentOverallAttempts++;
+                }
+
+            } catch (error) {
+                console.error(`Fehler beim Verarbeiten der Playlist ${randomPlaylistId}:`, error);
+                currentOverallAttempts++;
+            }
         }
 
-        const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
-        return randomTrack;
+        alert("Konnte nach mehreren Versuchen keinen spielbaren Song finden. Bitte wähle ein anderes Genre oder versuche es später erneut.");
+        showGenreSelectionScreen(); // Zurück zur Genre-Auswahl
+        return null;
     }
-
-    // NEU: Funktion zum Abrufen eines Tracks im Band-Modus
+    
+    // NEU: Funktion zum Abrufen eines Tracks im Band-Modus (angepasst)
     async function getTrackFromArtist(artistName) {
         if (!artistName) return null;
 
-        // 1. Künstler-ID suchen
-        const artistSearchResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`, {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        if (!artistSearchResponse.ok) {
-            console.error("Fehler bei Künstlersuche:", artistSearchResponse.status, artistSearchResponse.statusText);
-            alert("Künstler konnte nicht gefunden werden. Bitte versuchen Sie es erneut.");
-            return null;
-        }
-        const artistSearchData = await artistSearchResponse.json();
-        const artistId = artistSearchData.artists.items[0]?.id;
+        const maxAttemptsOverall = 10; // Sicherheitsnetz für die gesamte Suche
+        let currentOverallAttempts = 0;
+        let track = null;
 
-        if (!artistId) {
-            alert("Künstler nicht gefunden. Bitte versuchen Sie einen anderen Namen.");
-            return null;
+        while (track === null && currentOverallAttempts < maxAttemptsOverall) {
+            try {
+                // 1. Künstler-ID suchen
+                const artistSearchResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                if (!artistSearchResponse.ok) {
+                    console.error("Fehler bei Künstlersuche:", artistSearchResponse.status, artistSearchResponse.statusText);
+                    // Hier brechen wir ab, da der Künstler nicht gefunden wurde
+                    alert("Künstler konnte nicht gefunden werden. Bitte versuchen Sie es erneut.");
+                    return null;
+                }
+                const artistSearchData = await artistSearchResponse.json();
+                const artistId = artistSearchData.artists.items[0]?.id;
+
+                if (!artistId) {
+                    alert("Künstler nicht gefunden. Bitte versuchen Sie einen anderen Namen.");
+                    return null;
+                }
+
+                // NEU: Alben des Künstlers abrufen
+                const albumsResponse = await fetch(`https://accounts.spotify.com/api/token65{artistId}/albums?include_groups=album,single&market=DE&limit=50`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                if (!albumsResponse.ok) {
+                    console.error("Fehler beim Abrufen der Alben:", albumsResponse.status, albumsResponse.statusText);
+                    alert("Alben für diesen Künstler konnten nicht geladen werden.");
+                    currentOverallAttempts++;
+                    continue;
+                }
+                const albumsData = await albumsResponse.json();
+                const albums = albumsData.items;
+
+                if (!albums || albums.length === 0) {
+                    console.warn(`Keine Alben für Künstler ${artistName} gefunden.`);
+                    alert("Konnte keine Alben für diesen Künstler finden. Versuchen Sie einen anderen.");
+                    return null;
+                }
+
+                let currentAlbumAttempts = 0;
+                const maxAlbumAttempts = 5; // Versuche, ein Album mit spielbaren Tracks zu finden
+
+                while (track === null && currentAlbumAttempts < maxAlbumAttempts) {
+                    const randomAlbum = albums[Math.floor(Math.random() * albums.length)];
+
+                    // 2. Tracks des zufällig ausgewählten Albums abrufen
+                    const albumTracksResponse = await fetch(`https://accounts.spotify.com/api/token66{randomAlbum.id}/tracks?market=DE`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    if (!albumTracksResponse.ok) {
+                        console.warn(`Fehler beim Abrufen der Tracks von Album ${randomAlbum.name}:`, albumTracksResponse.status, albumTracksResponse.statusText);
+                        currentAlbumAttempts++;
+                        continue;
+                    }
+                    const albumTracksData = await albumTracksResponse.json();
+                    const albumTracks = albumTracksData.items;
+
+                    if (!albumTracks || albumTracks.length === 0) {
+                        console.warn(`Keine Tracks in Album ${randomAlbum.name} gefunden.`);
+                        currentAlbumAttempts++;
+                        continue;
+                    }
+
+                    let attemptsInAlbum = 0;
+                    const maxAttemptsInAlbum = 10; // Sicherheitsnetz pro Album
+
+                    // Schleife, um einen abspielbaren Song aus diesem Album zu finden
+                    while (track === null && attemptsInAlbum < maxAttemptsInAlbum) {
+                        const randomIndex = Math.floor(Math.random() * albumTracks.length);
+                        const potentialTrack = albumTracks[randomIndex]; // Hier ist es direkt der Track
+
+                        // Überprüfen, ob der Song existiert, abspielbar ist und die Mindestdauer erfüllt
+                        if (potentialTrack && potentialTrack.is_playable && potentialTrack.duration_ms >= (gameState.trackDuration + 5000)) {
+                            track = potentialTrack;
+                        } else {
+                            attemptsInAlbum++;
+                            // console.warn(`Versuch ${attemptsInAlbum}: Song "${potentialTrack?.name || 'Unbekannt'}" im Album "${randomAlbum.name}" nicht passend.`);
+                        }
+                    }
+
+                    if (track) {
+                        return track; // Abspielbarer Track gefunden
+                    } else {
+                        console.warn(`Konnte in Album ${randomAlbum.name} keinen passenden Track nach ${maxAttemptsInAlbum} Versuchen finden.`);
+                        currentAlbumAttempts++;
+                    }
+                }
+
+                if (track === null) {
+                    console.warn(`Konnte nach ${maxAlbumAttempts} Album-Versuchen keinen passenden Track für Künstler ${artistName} finden.`);
+                    currentOverallAttempts++;
+                }
+
+            } catch (error) {
+                console.error(`Fehler beim Abrufen von Künstler-Tracks (${artistName}):`, error);
+                currentOverallAttempts++;
+            }
         }
 
-        // 2. Top-Tracks des Künstlers abrufen
-        const topTracksResponse = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=DE`, { // 'market' anpassen falls nötig
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        if (!topTracksResponse.ok) {
-            console.error("Fehler beim Abrufen der Top-Tracks:", topTracksResponse.status, topTracksResponse.statusText);
-            alert("Top-Tracks für diesen Künstler konnten nicht geladen werden.");
-            return null;
-        }
-        const topTracksData = await topTracksResponse.json();
-        
-        const playableTracks = topTracksData.tracks.filter(track =>
-            track && track.preview_url && track.duration_ms >= (gameState.trackDuration + 5000)
-        );
-
-        if (playableTracks.length === 0) {
-            alert("Konnte keinen spielbaren Song von diesem Künstler finden. Versuchen Sie einen anderen Künstler oder eine andere Region.");
-            return null;
-        }
-
-        return playableTracks[Math.floor(Math.random() * playableTracks.length)];
+        alert("Konnte nach mehreren Versuchen keinen spielbaren Song von diesem Künstler finden. Versuchen Sie einen anderen Künstler.");
+        return null;
     }
-
 
     async function prepareAndShowRateScreen(genreOrArtistData) {
         if (gameState.currentMode === 'band-mode') {
