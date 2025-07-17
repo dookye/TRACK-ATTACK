@@ -452,6 +452,14 @@ document.addEventListener('DOMContentLoaded', () => {
         resetGame(); // Spielzustand zurücksetzen
     }
 
+    function triggerBounce() {
+    const logoButton = document.getElementById('logo-button');
+    logoButton.classList.add('bounce');
+    logoButton.addEventListener('animationend', () => {
+        logoButton.classList.remove('bounce');
+    }, { once: true });
+}
+
     // NEU: Anpassung der startGame-Funktion, die jetzt die erste Runde initiiert
     function startGameRound() {
         triggerBounce(logoButton);
