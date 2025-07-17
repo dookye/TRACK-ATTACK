@@ -710,7 +710,7 @@ function displayPointsAnimation(points, player) {
             resolve(); // Promise auflösen, um den nächsten Schritt in handleFeedback auszuführen
         }, 1000); // 1 Sekunde Dauer für die Punkteanzeige
     });
-}
+
         
         // 4.4: Spieler wechseln
         gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
