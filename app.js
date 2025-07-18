@@ -69,7 +69,7 @@ const diceConfig = {
         pop: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         alltime: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
         deutsch: ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
-        party: ['53r5W67KJNIeHWAhVOWPDr', '37i9dQZF1DX9WU5Losjsy8']
+        party: ['53r5W67KJNIeHWAhVOWPDr']
     };
 
     //=======================================================================
