@@ -721,12 +721,12 @@ function handleFeedback(isCorrect) {
 function displayPointsAnimation(points, player) {
     return new Promise(resolve => {
         // 1. Alle vorherigen Animationsklassen entfernen und Element für den Start vorbereiten
-        countdownDisplay.classList.remove('hidden', 'countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2');
+        countdownDisplay.classList.remove('hidden', 'countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2', 'points-pop-in'); // 'points-pop-in' auch entfernen
         countdownDisplay.innerText = `+${points}`;
 
-        // 2. Start-Stile für die Punkteanzeige setzen (sichtbar, normale Größe, mittige Position in der Spielerhälfte)
-        countdownDisplay.style.opacity = '1'; // Sicherstellen, dass es sichtbar ist
-        countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)'; // Reset Transformation
+        // 2. Start-Stile für die Punkteanzeige setzen (für die 'pop-in' Animation)
+        countdownDisplay.style.opacity = '0'; // Startet transparent
+        countdownDisplay.style.transform = 'translate(-50%, -50%) scale(0.8)'; // Startet kleiner
         countdownDisplay.style.top = '50%'; // Vertikale Mitte
 
         if (player === 1) {
@@ -740,21 +740,21 @@ function displayPointsAnimation(points, player) {
         // Reflow erzwingen, damit die Start-Stile angewendet werden, bevor die Animation beginnt
         void countdownDisplay.offsetWidth;
 
-        // 3. Phase 1: Punkte kurz anzeigen (z.B. 0.5 Sekunden)
-        // Hier könnte man eine kurze "Pop-in"-Animation einfügen, wenn gewünscht.
-        // Für jetzt bleiben sie einfach statisch sichtbar.
-        const initialDisplayDuration = 500; // Punkte bleiben 0.5 Sekunden sichtbar
-        const flyAnimationDuration = 700; // Dauer der "Wegfliegen"-Animation (passt zur CSS)
+        // 3. Phase 1: Punkte sanft einblenden (Pop-in)
+        countdownDisplay.classList.add('points-pop-in'); // Neue Klasse für den sanften Pop-in-Effekt
 
-        // 4. Phase 2: Nach der initialen Anzeige die "Wegfliegen"-Animation starten
+        const popInDuration = 300; // Dauer des Einblendens (0.3 Sekunden, passt zur CSS)
+        const flyAnimationDuration = 400; // Dauer der "Wegfliegen"-Animation (0.5 Sekunden, passt zur CSS)
+
+        // 4. Phase 2: Nach dem Einblenden die "Wegfliegen"-Animation starten
         setTimeout(() => {
+            countdownDisplay.classList.remove('points-pop-in'); // Pop-in-Klasse entfernen
             if (player === 1) {
                 countdownDisplay.classList.add('fly-to-corner-player1');
             } else {
                 countdownDisplay.classList.add('fly-to-corner-player2');
             }
-            // Die CSS-Animation übernimmt jetzt die Bewegung und das Ausfaden.
-        }, initialDisplayDuration);
+        }, popInDuration); // Startet nach dem Einblenden
 
         // 5. Nach der gesamten Animationsdauer das Element verstecken und Promise auflösen
         setTimeout(() => {
@@ -770,10 +770,9 @@ function displayPointsAnimation(points, player) {
             countdownDisplay.style.opacity = '1'; // Opacity zurücksetzen
             countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)'; // Transform zurücksetzen
             resolve(); // Promise auflösen, damit der nächste Schritt in handleFeedback ausgeführt werden kann
-        }, initialDisplayDuration + flyAnimationDuration); // Gesamtdauer: Anzeige + Fliegen
+        }, popInDuration + flyAnimationDuration); // Gesamtdauer: Einblenden + Fliegen
     });
 }
-
     document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
     document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
 
