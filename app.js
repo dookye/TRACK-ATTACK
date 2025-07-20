@@ -597,7 +597,7 @@ function runGenreAnimation(buttons) {
         const trackDurationMs = gameState.currentTrack.duration_ms;
         const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        fetch(`https://api.spotify.com/v1/me/player/play?device_id=$$${deviceId}`, {
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
