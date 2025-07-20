@@ -5,20 +5,25 @@
 }
 
 /* Optional: Spezifisch für Buttons, falls das globale * nicht ausreicht oder unerwünschte Nebeneffekte hat */
-button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button, #random-dice-button {
+button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button {
     -webkit-tap-highlight-color: transparent;
     outline: none;
 }
 
 /* Genereller Stil für interaktive Buttons für den Pulldown-Effekt */
+/* Betrifft AUFLÖSEN, RICHTIG, FALSCH und alle GENRE-BUTTONS */
+
+/* WICHTIG: Füge eine Transition hinzu, damit die Skalierung weich erfolgt */
+/* Dies kannst du entweder global für alle Buttons oder spezifisch tun */
+
+/* Beispiel für alle Buttons, die diesen Effekt haben sollen */
 .genre-button,
 #reveal-button, /* AUFLÖSEN-Button */
 #correct-button, /* RICHTIG-Button */
 #wrong-button, /* FALSCH-Button */
-.dice-option, /* Die Würfel-Bilder */
-#random-dice-button /* Random-Würfel-Button */
+.dice-option /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
 {
-    transition: transform 0.06s ease-out; /* Kurze, sanfte Animation für den Klick-Effekt */
+    transition: transform 0.06s ease-out; /* Kurze, sanfte Animation */
     cursor: pointer; /* Zeigt an, dass das Element klickbar ist */
 }
 
@@ -27,28 +32,10 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 #reveal-button:active,
 #correct-button:active,
 #wrong-button:active,
-.dice-option:active,
-#random-dice-button:active
+.dice-option:active /* Optional: Für die Würfel-Bilder */
 {
     transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
 }
-
-/* --- NEU: Globale Klasse für inaktive Buttons --- */
-/* Diese Klasse ersetzt frühere 'no-interaction' für einzelne Buttons und bietet visuelles Feedback */
-.button-inactive {
-    pointer-events: none; /* Blockiert Mausklicks */
-    opacity: 0.5 !important; /* Leicht abgedunkelt - !important um spezifischere Opazitäten zu überschreiben */
-    filter: blur(2px); /* Leicht verschwommen */
-    transition: opacity 0.3s ease, filter 0.3s ease; /* Sanfter Übergang */
-    cursor: default !important; /* Zeiger auf Standard setzen */
-}
-
-/* Globale Klasse für containerweite Interaktionssperre (wenn der gesamte Screen blockiert werden soll) */
-/* Diese wird auf #app-container oder .game-screen angewendet */
-.no-interaction {
-    pointer-events: none;
-}
-
 
 /* Grundlegende Stile & Variablen */
 :root {
@@ -157,16 +144,18 @@ body, html {
 }
 
 .initial-fly-in {
-    animation: fly-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
-               bounce-end 0.3s 0.4s ease-out forwards;
+    animation: fly-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+               bounce-end 0.3s 0.6s ease-out forwards;
 }
 
 @keyframes fly-in {
     0% {
-        transform: translate(-50%, -50%) scale(14);
+        /* Start: Groß und unsichtbar */
+        transform: translate(-50%, -50%) scale(12);
         opacity: 0;
     }
     100% {
+        /* Ende: Normale Größe und sichtbar */
         transform: translate(-50%, -50%) scale(1);
         opacity: 1;
     }
@@ -186,35 +175,17 @@ body, html {
     50% { transform: translate(-50%, -50%) scale(1.1); }
 }
 
-/* #logo-button.inactive wird durch .button-inactive ersetzt */
-
+#logo-button.inactive {
+    filter: blur(5px);
+    pointer-events: none;
+}
 
 /* Würfel Container */
 #dice-container {
     display: flex;
-    flex-direction: column; /* Für vertikale Anordnung */
     justify-content: center;
     align-items: center;
-    gap: 20px; /* Abstand zwischen Animation, Button und Auswahl */
-}
-
-/* .random-dice:hover ist nicht mehr direkt genutzt, da #random-dice-button img verwendet wird */
-
-/* NEU: Styling für den Random-Würfel-Button */
-#random-dice-button {
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    position: relative; /* Für die Positionierung der Icons */
-    z-index: 5; /* Über den Würfeln, aber unter dem Animation */
-    margin-bottom: 20px; /* Abstand zu den Würfel-Optionen */
-}
-
-#random-dice-button img {
-    width: 100px; /* Größe des Random-Würfel-Icons */
-    height: auto;
-    display: block; /* Entfernt zusätzlichen Platz unter dem Bild */
+    /* gap: 20px; */
 }
 
 /* Würfel Auswahl (Die Würfel-Buttons selbst) */
@@ -230,37 +201,30 @@ body, html {
     height: auto;
     cursor: pointer;
     transition: transform 0.1s;
-    position: relative; /* Für zukünftige Animationen/Positionierung */
 }
 
 #dice-animation {
     width: 250px;
 }
 
-.dice-option:hover:not(.button-inactive) { /* Sicherstellen, dass Hover nur auf aktiven Buttons wirkt */
+.dice-option:hover {
     transform: scale(1.1);
 }
 
-/* NEU: Klasse für den ausgewählten Würfel, der zoomt */
-/* Die Animation heißt jetzt "zoomAndFadeOut" für Konsistenz */
-.dice-selected-zoom {
-    position: absolute; /* Muss absolut sein, um mittig zu sein und zu zoomen */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(2); /* Starker Zoom */
-    z-index: 50; /* Über allem anderen */
-    /* Transition wird durch die Animation überschrieben, daher hier nicht nötig */
-    animation: zoomAndFadeOut 1.5s forwards; /* Animation für 1.5 Sekunden */
-}
-
-/* Genre Container (Phase 3) */
+/* Genre Container (Phase 3) - Jetzt separat stylen */
 #genre-container {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 20px; /* Abstand zwischen den Genre-Buttons */
-    flex-wrap: wrap; /* Lässt die Elemente in die nächste Zeile umbrechen */
+    flex-wrap: wrap; /* NEU: Lässt die Elemente in die nächste Zeile umbrechen */
     max-width: 80%; /* Optional: Begrenze die Breite des Containers, damit der Umbruch früher erfolgt */
+}
+
+/* NEU: Klasse zur Deaktivierung der Buttons während der Animation */
+.no-interaction {
+    pointer-events: none; /* Verhindert alle Maus- und Klick-Events */
+    cursor: default;     /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
 }
 
 .genre-button {
@@ -274,49 +238,23 @@ body, html {
     border-radius: 10px;
 }
 
-.genre-button:hover:not(.button-inactive) { /* Sicherstellen, dass Hover nur auf aktiven Buttons wirkt */
+.genre-button:hover:not(:disabled) {
     background-color: var(--white);
     color: var(--black);
 }
-/* .genre-button:disabled wird durch .button-inactive ersetzt und ist nicht mehr direkt nötig */
+.genre-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
 .random-blink {
-    animation: blink 0.2s infinite alternate; /* Blinkt 0.2s, unendlich, hin und her */
+    animation: blink 0.2s infinite;
 }
 
 @keyframes blink {
-    from { opacity: 1 !important; } /* Wichtig: !important hinzugefügt */
-    to { opacity: 0.4 !important; }  /* Wichtig: !important hinzugefügt */
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
-
-/* Animation für ausgewählte Genre-Buttons */
-.genre-selected-zoom {
-    animation: zoomAndFadeOut 1.5s forwards ease-out;
-}
-
-/* Gemeinsame Zoom-Animation für Würfel und Genres */
-@keyframes zoomAndFadeOut {
-    0% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.3);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-    }
-}
-
-/* Klasse für deaktivierte Genre-Buttons bei Würfel 7 (visuelles Feedback zusätzlich zu .button-inactive) */
-.genre-button.disabled-genre {
-    border-color: grey; /* Nur visueller Unterschied, Interaktion regelt .button-inactive */
-    background-color: #3a3a5a;
-    /* cursor: not-allowed; und pointer-events: none; sind in .button-inactive enthalten */
-}
-
 
 /* Rate-Bildschirm & Auflösung (Phase 4) */
 #reveal-button {
@@ -388,42 +326,44 @@ body, html {
 }
 
 /* Speed-Round (Phase 6) */
-/* Styling für das Wort "SPEED-ROUND" */
+/* NEU: Styling für das Wort "SPEED-ROUND" */
 #speed-round-text-display {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 9em;
+    font-size: 9em; /* Beispiel: Deutlich größer als normal, aber kleiner als 20vw */
     font-weight: bold;
     color: var(--white);
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-    z-index: 20;
-    animation: zoom-fade-in 4s forwards;
-    white-space: nowrap;
+    z-index: 20; /* Liegt unter dem Countdown, aber über dem Spielbildschirm */
+    animation: zoom-fade-in 4s forwards; /* Die Animation bleibt hier */
+    white-space: nowrap; /* Verhindert Zeilenumbruch bei langen Texten */
 }
 
 /* --- Media Query für mobile Geräte --- */
+/* Dies wird auf Bildschirmen mit einer Breite von 768px oder weniger angewendet */
 @media screen and (max-width: 768px) {
     #speed-round-text-display {
-        font-size: 8em;
-        line-height: 1.2;
-        padding: 0 10px;
-        box-sizing: border-box;
+        font-size: 8em; /* Anpassung für Handys, verringert die Schriftgröße */
+        line-height: 1.2; /* Sorgt dafür, dass der Text eng beieinander steht, falls er umbricht */
+        padding: 0 10px; /* Fügt links und rechts etwas Platz hinzu */
+        box-sizing: border-box; /* Stellt sicher, dass das Padding die Gesamtbreite nicht erhöht */
     }
 }
 
-/* Countdown-Anzeige */
+/* Countdown-Anzeige (bleibt so groß und animiert) */
 #countdown-display {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 20vw;
+    font-size: 20vw; /* Sehr groß und responsiv */
     font-weight: bold;
     color: var(--white);
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-    z-index: 30;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* Leichter Glow */
+    z-index: 30; /* Über den meisten anderen Elementen */
+    /* Animation wird über JavaScript hinzugefügt/entfernt, damit sie jedes Mal neu startet */
 }
 
 /* Klasse für die Animation, die wir per JS hinzufügen und entfernen */
@@ -434,9 +374,9 @@ body, html {
 /* Angepasste Keyframes für den Countdown-Puls */
 @keyframes countdown-pulse {
     0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-    20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } /* Kurz größer werden und sichtbar */
     80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } /* Wieder kleiner werden und ausblenden */
 }
 
 @keyframes zoom-fade-in {
@@ -447,58 +387,58 @@ body, html {
 }
 
 @keyframes points-fade-in-zoom {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5);
-    }
-    20% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.2);
-    }
-    100% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5); /* Start kleiner und transparent */
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2); /* Endet normal groß und sichtbar */
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); /* Endet normal groß und sichtbar */
+  }
 }
 
 .points-pop-in {
-    animation: points-fade-in-zoom 1s ease-out forwards;
+  animation: points-fade-in-zoom 1s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
 }
 
 @keyframes flyToCornerPlayer1 {
-    0% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-        top: 50%;
-        left: 25%;
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.3);
-        top: 3%;
-        left: 3%;
-    }
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); /* Startposition (Mitte linke Hälfte) */
+    top: 50%;
+    left: 25%;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3); /* Wird kleiner */
+    top: 3%; /* Fliegt nach oben */
+    left: 3%; /* Fliegt nach links oben */
+  }
 }
 
 @keyframes flyToCornerPlayer2 {
-    0% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-        top: 50%;
-        left: 75%;
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.3);
-        top: 3%;
-        left: 97%;
-    }
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); /* Startposition (Mitte rechte Hälfte) */
+    top: 50%;
+    left: 75%;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3); /* Wird kleiner */
+    top: 3%; /* Fliegt nach oben */
+    left: 97%; /* Fliegt nach rechts oben */
+  }
 }
 
 .fly-to-corner-player1 {
-    animation: flyToCornerPlayer1 0.4s ease-out forwards;
+  animation: flyToCornerPlayer1 0.4s ease-out forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
 
 .fly-to-corner-player2 {
-    animation: flyToCornerPlayer2 0.4s ease-out forwards;
+  animation: flyToCornerPlayer2 0.4s ease-out forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
