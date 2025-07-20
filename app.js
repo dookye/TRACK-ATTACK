@@ -884,9 +884,21 @@ function displayPointsAnimation(points, player) {
             });
        }
 
-       // NEU HINZUGEFÜGT: Aktiviere den Random-Würfel-Button für die nächste Runde
+       // --- NEU HINZUGEFÜGT: Umfassendes Zurücksetzen aller Würfel-Elemente ---
+       // 1. Random-Würfel-Button wieder aktivieren
        randomDiceButton.disabled = false;
        randomDiceButton.classList.remove('no-interaction');
+
+       // 2. Alle manuellen Würfel-Optionen vollständig zurücksetzen
+       document.querySelectorAll('.dice-option').forEach(dice => {
+         dice.classList.remove('no-interaction'); // 'pointer-events: none' entfernen
+         dice.style.opacity = '1'; // Opazität zurücksetzen, falls in animateSelectedDice geändert
+         dice.style.pointerEvents = 'auto'; // Pointer Events aktivieren
+       });
+
+       // 3. Sicherstellen, dass der gesamte diceContainer interaktiv ist
+       diceContainer.classList.remove('no-interaction'); // Falls er zuvor deaktiviert wurde
+       // --- ENDE NEU HINZUGEFÜGT ---
    }
     
     //=======================================================================
