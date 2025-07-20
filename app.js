@@ -433,6 +433,7 @@ function runGenreAnimation(buttons) {
     
     // Erst alle Buttons deaktivieren
     buttons.forEach(btn => {
+        btn.classList.add('no-interaction'); // <--- Hier dauerhaft inaktiv machen
         btn.disabled = true;
         btn.classList.remove('disabled-genre'); // Sicherstellen, dass dies entfernt ist
     });
@@ -457,6 +458,7 @@ function runGenreAnimation(buttons) {
         disabledButton.disabled = true;
         // Optional: Füge eine visuelle Klasse hinzu, um es zu markieren
         disabledButton.classList.add('disabled-genre');
+         disabledButton.classList.add('no-interaction'); // Auch hier no-interaction hinzufügen!
         
         // Füge Event-Listener für alle Buttons hinzu
         buttons.forEach(btn => {
@@ -472,11 +474,18 @@ function runGenreAnimation(buttons) {
         const randomIndex = Math.floor(Math.random() * buttons.length);
         const activeButton = buttons[randomIndex];
 
+        buttons.forEach(btn => { // Erst alle als 'disabled' markieren
+            btn.disabled = true;
+            btn.classList.add('no-interaction');
+        });
+
         activeButton.disabled = false;
+        activeButton.classList.remove('no-interaction'); // Hier Interaktion erlauben
         // Optional: Entferne eine mögliche visuelle Klasse
         activeButton.classList.remove('disabled-genre');
 
         // Füge den Event-Listener nur für den aktiven Button hinzu
+        activeButton.removeEventListener('click', handleGenreSelection); // Sicherstellen, dass kein alter Listener mehr da ist
         activeButton.addEventListener('click', handleGenreSelection, { once: true });
     }
 }
