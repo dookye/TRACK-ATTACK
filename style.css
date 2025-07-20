@@ -33,10 +33,8 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 #correct-button:active,
 #wrong-button:active,
 .dice-option:active /* Optional: Für die Würfel-Bilder */
-#w-random-button
 {
     transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
-    cursor: pointer;
 }
 
 /* Grundlegende Stile & Variablen */
@@ -46,7 +44,6 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
     --black: #000;
     --white: #fff;
     --transition-speed: 0.8s;
-     --highlight-color: #ffd700; /* NEU: Beispiel für eine Highlight-Farbe (Goldgelb) */
 }
 
 /* Phase 1.1: Body & Seiten-Setup */
@@ -186,12 +183,9 @@ body, html {
 /* Würfel Container */
 #dice-container {
     display: flex;
-    flex-direction: column; /* NEU: Elemente sollen untereinander sein */
     justify-content: center;
     align-items: center;
-    gap: 20px; /* Abstand zwischen W-Random Button und dice-animation/dice-selection */
-    /* Füge diese für die relative Positionierung hinzu, wenn dice-container der Parent für absolut positionierte Elemente wird */
-    position: relative;
+    /* gap: 20px; */
 }
 
 /* Würfel Auswahl (Die Würfel-Buttons selbst) */
@@ -215,81 +209,6 @@ body, html {
 
 .dice-option:hover {
     transform: scale(1.1);
-}
-
-/* --- W-Random Button Styling (NEU) --- */
-#w-random-button {
-    width: 150px; /* Anpassbare Breite für den Button oben */
-    height: auto;
-    cursor: pointer;
-    transition: transform 0.06s ease-out; /* Pulldown-Effekt beim Klicken */
-    /* Entferne das margin-top von vorher, da es jetzt anders positioniert wird */
-}
-
-/* Pulldown-Effekt für den W-Random Button beim Klicken */
-#w-random-button:active {
-    transform: scale(0.95);
-}
-
-/* Visuelle Deaktivierung für den W-Random Button */
-#w-random-button.disabled-visual {
-    opacity: 0.5;
-    pointer-events: none;
-    filter: grayscale(100%);
-    /* WICHTIG: Entferne random-blink oder ähnliche Blink-Klassen von hier */
-}
-
-/* --- dice-value-display Styling --- */
-#dice-value-display {
-    position: absolute; /* Positioniert über anderen Inhalten */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(1); /* Zentriert und Startgröße */
-    font-size: 10em; /* Sehr groß, anpassen */
-    font-weight: bold;
-    color: var(--white); /* Oder eine andere Farbe */
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-    z-index: 1000; /* Sicherstellen, dass es über den Würfeln liegt */
-    opacity: 0; /* Standardmäßig unsichtbar */
-    transition: all 0.5s ease-out; /* Für den Zoom-Effekt */
-    pointer-events: none; /* Damit es nicht mit Klicks interferiert */
-}
-
-#dice-value-display.hidden {
-    display: none; /* Versteckt das Element komplett, wenn nicht benötigt */
-}
-
-/* --- Animationen für Würfel (vorhandene dice-option Bilder) --- */
-
-/* Highlight-Effekt für Würfelbilder während des "Rollens" */
-.dice-option.highlight-dice {
-    box-shadow: 0 0 30px 10px var(--highlight-color); /* Beispiel: Leuchtender Rand */
-    transform: scale(1.05); /* Leicht vergrößern */
-    transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-}
-
-/* Highlight für den final ausgewählten Würfel (kurzzeitig) */
-.dice-option.selected-dice-highlight {
-    animation: finalDiceHighlight 1.5s forwards; /* Animation beim Anzeigen des Endwerts */
-}
-
-@keyframes finalDiceHighlight {
-    0% {
-        box-shadow: 0 0 0px 0px transparent;
-        transform: scale(1);
-    }
-    25% {
-        box-shadow: 0 0 30px 10px var(--highlight-color);
-        transform: scale(1.1);
-    }
-    50% {
-        box-shadow: 0 0 30px 10px var(--highlight-color);
-        transform: scale(1.05);
-    }
-    100% {
-        box-shadow: 0 0 0px 0px transparent;
-        transform: scale(1);
-    }
 }
 
 /* Genre Container (Phase 3) - Jetzt separat stylen */
@@ -426,7 +345,7 @@ body, html {
 /* Dies wird auf Bildschirmen mit einer Breite von 768px oder weniger angewendet */
 @media screen and (max-width: 768px) {
     #speed-round-text-display {
-        font-size: 6em; /* Anpassung für Handys, verringert die Schriftgröße */
+        font-size: 8em; /* Anpassung für Handys, verringert die Schriftgröße */
         line-height: 1.2; /* Sorgt dafür, dass der Text eng beieinander steht, falls er umbricht */
         padding: 0 10px; /* Fügt links und rechts etwas Platz hinzu */
         box-sizing: border-box; /* Stellt sicher, dass das Padding die Gesamtbreite nicht erhöht */
