@@ -344,7 +344,7 @@ function runGenreAnimation(buttons) {
             buttons.forEach(btn => btn.classList.remove('random-blink'));
             buttons.forEach(btn => btn.classList.remove('no-interaction'));
             resolve(); // Löst das Promise auf, wenn die Animation fertig ist
-        }, 4000);
+        }, 2000);
     });
 }
     
