@@ -870,7 +870,10 @@ function displayPointsAnimation(points, player) {
             });
        }
 
-    }
+       // NEU HINZUGEFÜGT: Aktiviere den Random-Würfel-Button für die nächste Runde
+       randomDiceButton.disabled = false;
+       randomDiceButton.classList.remove('no-interaction');
+   }
     
     //=======================================================================
     // Phase 5: Spielende & Reset
