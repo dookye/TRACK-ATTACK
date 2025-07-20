@@ -5,7 +5,7 @@
 }
 
 /* Optional: Spezifisch für Buttons, falls das globale * nicht ausreicht oder unerwünschte Nebeneffekte hat */
-button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button {
+button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button, #random-dice-button {
     -webkit-tap-highlight-color: transparent;
     outline: none;
 }
@@ -21,7 +21,8 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 #reveal-button, /* AUFLÖSEN-Button */
 #correct-button, /* RICHTIG-Button */
 #wrong-button, /* FALSCH-Button */
-.dice-option /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
+.dice-option, /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
+#random-dice-button /* NEU: Für den Random-Würfel-Button */
 {
     transition: transform 0.06s ease-out; /* Kurze, sanfte Animation */
     cursor: pointer; /* Zeigt an, dass das Element klickbar ist */
@@ -32,7 +33,8 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 #reveal-button:active,
 #correct-button:active,
 #wrong-button:active,
-.dice-option:active /* Optional: Für die Würfel-Bilder */
+.dice-option:active, /* Optional: Für die Würfel-Bilder */
+#random-dice-button:active /* NEU: Für den Random-Würfel-Button */
 {
     transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
 }
@@ -145,7 +147,7 @@ body, html {
 
 .initial-fly-in {
     animation: fly-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
-               bounce-end 0.3s 0.6s ease-out forwards;
+                bounce-end 0.3s 0.6s ease-out forwards;
 }
 
 @keyframes fly-in {
@@ -183,9 +185,27 @@ body, html {
 /* Würfel Container */
 #dice-container {
     display: flex;
+    flex-direction: column; /* NEU: Für vertikale Anordnung */
     justify-content: center;
     align-items: center;
-    /* gap: 20px; */
+    gap: 20px; /* Abstand zwischen Animation, Button und Auswahl */
+}
+
+/* NEU: Styling für den Random-Würfel-Button */
+#random-dice-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    position: relative; /* Für die Positionierung der Icons */
+    z-index: 5; /* Über den Würfeln, aber unter dem Animation */
+    margin-bottom: 20px; /* Abstand zu den Würfel-Optionen */
+}
+
+#random-dice-button img {
+    width: 100px; /* Größe des Random-Würfel-Icons */
+    height: auto;
+    display: block; /* Entfernt zusätzlichen Platz unter dem Bild */
 }
 
 /* Würfel Auswahl (Die Würfel-Buttons selbst) */
@@ -201,6 +221,7 @@ body, html {
     height: auto;
     cursor: pointer;
     transition: transform 0.1s;
+    position: relative; /* Für zukünftige Animationen/Positionierung */
 }
 
 #dice-animation {
@@ -210,6 +231,33 @@ body, html {
 .dice-option:hover {
     transform: scale(1.1);
 }
+
+/* NEU: Klasse für den ausgewählten Würfel, der zoomt */
+.dice-selected-zoom {
+    position: absolute; /* Muss absolut sein, um mittig zu sein und zu zoomen */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(2); /* Starker Zoom */
+    z-index: 50; /* Über allem anderen */
+    transition: transform 0.5s ease-out, opacity 0.5s ease-out; /* Sanfte Animation */
+    animation: diceZoomAndFade 2s forwards; /* Animation für 2 Sekunden */
+}
+
+@keyframes diceZoomAndFade {
+    0% {
+        transform: translate(-50%, -50%) scale(1); /* Start mit normaler Größe */
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.5); /* Kurz größer */
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0); /* Auszoomen und verschwinden */
+        opacity: 0;
+    }
+}
+
 
 /* Genre Container (Phase 3) - Jetzt separat stylen */
 #genre-container {
@@ -224,7 +272,8 @@ body, html {
 /* NEU: Klasse zur Deaktivierung der Buttons während der Animation */
 .no-interaction {
     pointer-events: none; /* Verhindert alle Maus- und Klick-Events */
-    cursor: default;     /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
+    cursor: default;       /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
+    opacity: 0.5; /* Leicht ausgrauen, um Inaktivität anzuzeigen */
 }
 
 .genre-button {
