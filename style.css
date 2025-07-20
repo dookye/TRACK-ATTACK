@@ -44,6 +44,7 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
     --black: #000;
     --white: #fff;
     --transition-speed: 0.8s;
+     --highlight-color: #ffd700; /* NEU: Beispiel für eine Highlight-Farbe (Goldgelb) */
 }
 
 /* Phase 1.1: Body & Seiten-Setup */
