@@ -386,6 +386,21 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
 }
 
+@keyframes points-fade-in-zoom {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8); /* Start kleiner und transparent */
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); /* Endet normal groß und sichtbar */
+  }
+}
+
+.points-pop-in {
+  animation: points-fade-in-zoom 0.3s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
+}
+
 @keyframes flyToCornerPlayer1 {
   0% {
     opacity: 1;
@@ -395,9 +410,9 @@ body, html {
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5); /* Wird kleiner */
-    top: 5%; /* Fliegt nach oben */
-    left: 5%; /* Fliegt nach links oben */
+    transform: translate(-50%, -50%) scale(0.3); /* Wird kleiner */
+    top: 3%; /* Fliegt nach oben */
+    left: 3%; /* Fliegt nach links oben */
   }
 }
 
@@ -410,16 +425,16 @@ body, html {
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5); /* Wird kleiner */
-    top: 5%; /* Fliegt nach oben */
-    left: 95%; /* Fliegt nach rechts oben */
+    transform: translate(-50%, -50%) scale(0.3); /* Wird kleiner */
+    top: 3%; /* Fliegt nach oben */
+    left: 97%; /* Fliegt nach rechts oben */
   }
 }
 
 .fly-to-corner-player1 {
-  animation: flyToCornerPlayer1 0.7s ease-out forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
+  animation: flyToCornerPlayer1 0.4s ease-out forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
 
 .fly-to-corner-player2 {
-  animation: flyToCornerPlayer2 0.7s ease-out forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
+  animation: flyToCornerPlayer2 0.4s ease-out forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
