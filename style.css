@@ -211,6 +211,75 @@ body, html {
     transform: scale(1.1);
 }
 
+/* --- W-Random Button Styling (Optional, anpassen wie deine anderen Würfel) --- */
+/* Wenn w-random-button wie andere dice-option sein soll, erbt er bereits viel */
+#w-random-button {
+    cursor: pointer;
+    /* Weitere spezifische Stile für den W-Random Button */
+    /* Beispiel: margin-top, damit er unter den anderen Würfeln ist */
+    margin-top: 20px; /* Anpassen nach Bedarf */
+}
+
+/* Visuelle Deaktivierung für den W-Random Button und andere Würfel */
+.disabled-visual {
+    opacity: 0.5; /* Leicht transparent */
+    pointer-events: none; /* Verhindert Klicks */
+    filter: grayscale(100%); /* Optional: Grau-Effekt */
+}
+
+/* --- dice-value-display Styling --- */
+#dice-value-display {
+    position: absolute; /* Positioniert über anderen Inhalten */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1); /* Zentriert und Startgröße */
+    font-size: 10em; /* Sehr groß, anpassen */
+    font-weight: bold;
+    color: var(--white); /* Oder eine andere Farbe */
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+    z-index: 1000; /* Sicherstellen, dass es über den Würfeln liegt */
+    opacity: 0; /* Standardmäßig unsichtbar */
+    transition: all 0.5s ease-out; /* Für den Zoom-Effekt */
+    pointer-events: none; /* Damit es nicht mit Klicks interferiert */
+}
+
+#dice-value-display.hidden {
+    display: none; /* Versteckt das Element komplett, wenn nicht benötigt */
+}
+
+/* --- Animationen für Würfel (vorhandene dice-option Bilder) --- */
+
+/* Highlight-Effekt für Würfelbilder während des "Rollens" */
+.dice-option.highlight-dice {
+    box-shadow: 0 0 30px 10px var(--highlight-color); /* Beispiel: Leuchtender Rand */
+    transform: scale(1.05); /* Leicht vergrößern */
+    transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+}
+
+/* Highlight für den final ausgewählten Würfel (kurzzeitig) */
+.dice-option.selected-dice-highlight {
+    animation: finalDiceHighlight 1.5s forwards; /* Animation beim Anzeigen des Endwerts */
+}
+
+@keyframes finalDiceHighlight {
+    0% {
+        box-shadow: 0 0 0px 0px transparent;
+        transform: scale(1);
+    }
+    25% {
+        box-shadow: 0 0 30px 10px var(--highlight-color);
+        transform: scale(1.1);
+    }
+    50% {
+        box-shadow: 0 0 30px 10px var(--highlight-color);
+        transform: scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 0px 0px transparent;
+        transform: scale(1);
+    }
+}
+
 /* Genre Container (Phase 3) - Jetzt separat stylen */
 #genre-container {
     display: flex;
@@ -345,7 +414,7 @@ body, html {
 /* Dies wird auf Bildschirmen mit einer Breite von 768px oder weniger angewendet */
 @media screen and (max-width: 768px) {
     #speed-round-text-display {
-        font-size: 8em; /* Anpassung für Handys, verringert die Schriftgröße */
+        font-size: 6em; /* Anpassung für Handys, verringert die Schriftgröße */
         line-height: 1.2; /* Sorgt dafür, dass der Text eng beieinander steht, falls er umbricht */
         padding: 0 10px; /* Fügt links und rechts etwas Platz hinzu */
         box-sizing: border-box; /* Stellt sicher, dass das Padding die Gesamtbreite nicht erhöht */
