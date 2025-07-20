@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const speedRoundTextDisplay = document.getElementById('speed-round-text-display'); // NEU: Referenz auf das Text-Element
     const speedRoundTimer = document.getElementById('speed-round-timer');
     const countdownDisplay = document.getElementById('countdown-display');
+    const randomDiceButton = document.getElementById('random-dice-button'); // NEU: Random Dice Button
 
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
@@ -118,7 +119,7 @@ const diceConfig = {
         params.append("scope", "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state");
         params.append("code_challenge_method", "S256");
         params.append("code_challenge", challenge);
-        document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
+        document.location = `https://accounts.spotify.com/authorize?$${params.toString()}`;
     }
 
     // 1.2: Access Token abrufen
@@ -294,6 +295,7 @@ const diceConfig = {
         diceContainer.classList.remove('hidden');
         diceAnimation.classList.remove('hidden');
         diceSelection.classList.add('hidden');
+        randomDiceButton.classList.add('hidden'); // NEU: Random-Button verstecken während Animation
 
         // Speichere den Zustand: Würfel-Bildschirm
         lastGameScreenVisible = 'dice-container';
@@ -301,48 +303,124 @@ const diceConfig = {
         setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
+            randomDiceButton.classList.remove('hidden'); // NEU: Random-Button anzeigen
+            randomDiceButton.disabled = false; // NEU: Button aktivieren
+            // NEU: Sicherstellen, dass die Würfel-Buttons klickbar sind
+            document.querySelectorAll('.dice-option').forEach(dice => {
+                dice.classList.remove('no-interaction'); // Interaktion wieder erlauben
+            });
         }, 4000);
     }
 
+    // Event Listener für "Manuelle" Würfel
     document.querySelectorAll('.dice-option').forEach(dice => {
-    dice.addEventListener('click', (e) => {
-        const selectedValue = parseInt(e.target.dataset.value);
+        dice.addEventListener('click', (e) => {
+            // NEU: Deaktiviere alle Würfel-Optionen und den Random-Würfel-Button
+            disableDiceInteraction();
+            const selectedValue = parseInt(e.target.dataset.value);
+            processDiceSelection(selectedValue, e.target); // Übergebe das geklickte Element
+        });
+    });
+
+    // NEU: Event Listener für den Zufallswürfel-Button
+    randomDiceButton.addEventListener('click', handleRandomDiceRoll);
+
+    // NEU: Funktion zum Deaktivieren der Würfel-Buttons und des Random-Buttons
+    function disableDiceInteraction() {
+        randomDiceButton.disabled = true;
+        randomDiceButton.classList.add('no-interaction'); // Visuelles Feedback
+        document.querySelectorAll('.dice-option').forEach(dice => {
+            dice.classList.add('no-interaction'); // Alle Würfel-Optionen inaktiv machen
+        });
+    }
+
+    // NEU: Funktion zum Auswählen eines zufälligen Würfels
+    async function handleRandomDiceRoll() {
+        disableDiceInteraction(); // Deaktiviere alle Buttons sofort
+
+        const diceOptions = Array.from(document.querySelectorAll('.dice-option'));
+        
+        // Blink-Animation für alle Würfel
+        await runGenreAnimation(diceOptions); // Nutze die bestehende Funktion
+        
+        // Zufälligen Würfel auswählen
+        const randomDiceIndex = Math.floor(Math.random() * diceOptions.length);
+        const selectedDiceElement = diceOptions[randomDiceIndex];
+        const selectedValue = parseInt(selectedDiceElement.dataset.value);
+
+        // Animation des ausgewählten Würfels
+        await animateSelectedDice(selectedDiceElement);
+
+        processDiceSelection(selectedValue); // Keinen Element-Parameter mehr, da die Animation es schon hatte
+    }
+
+    // NEU: Funktion zur Animation des ausgewählten Würfels
+    function animateSelectedDice(element) {
+        return new Promise(resolve => {
+            // Klonen des Elements, um es unabhängig animieren zu können
+            const clonedDice = element.cloneNode(true);
+            // Ursprüngliches Element unsichtbar machen
+            element.style.opacity = '0';
+            element.style.pointerEvents = 'none';
+
+            // Position des geklonten Würfels relativ zum dice-container
+            // Da dice-container flex-column ist, ist die Mitte des Würfels relativ zu seiner Position
+            // Es ist einfacher, den geklonten Würfel direkt in der Bildschirmmitte zu positionieren
+            clonedDice.style.position = 'absolute';
+            clonedDice.style.top = '50%';
+            clonedDice.style.left = '50%';
+            clonedDice.style.transform = 'translate(-50%, -50%) scale(1)'; // Startgröße
+            clonedDice.style.zIndex = '100'; // Ganz nach vorne bringen
+            clonedDice.classList.add('dice-selected-zoom'); // Animation triggern
+
+            document.body.appendChild(clonedDice); // Zum Body hinzufügen, um über allem zu liegen
+
+            setTimeout(() => {
+                clonedDice.remove(); // Geklonten Würfel entfernen
+                element.style.opacity = '1'; // Ursprünglichen Würfel wieder sichtbar machen
+                element.style.pointerEvents = 'auto'; // Interaktion wieder ermöglichen
+                resolve();
+            }, 2000); // 2 Sekunden anzeigen + Animationsdauer (CSS)
+        });
+    }
+
+
+    // NEU: Allgemeine Funktion zum Verarbeiten der Würfelauswahl
+    async function processDiceSelection(selectedValue) {
         gameState.diceValue = selectedValue;
 
-        // Prüfen, ob der ausgewählte Würfel in unserer Konfiguration existiert
         const config = diceConfig[selectedValue];
         if (!config) {
             console.error(`Konfiguration für Würfelwert ${selectedValue} nicht gefunden!`);
-            return; // Beende die Funktion, um Fehler zu vermeiden
+            return;
         }
 
-        setTimeout(() => {
-            // Die Werte werden jetzt direkt aus dem Konfigurationsobjekt ausgelesen
-            gameState.trackDuration = config.duration;
-            gameState.maxAttempts = config.attempts;
-            gameState.attemptsMade = 0;
+        gameState.trackDuration = config.duration;
+        gameState.maxAttempts = config.attempts;
+        gameState.attemptsMade = 0;
 
-            diceContainer.classList.add('hidden');
-            showGenreScreen();
+        diceContainer.classList.add('hidden');
+        await showGenreScreen(); // Warten, bis Genre-Screen-Animation fertig ist
+    }
 
-        }, 150);
-    });
-});
-    
+
     // NEU: Funktion zur Ausführung der Blink-Animation
 function runGenreAnimation(buttons) {
     return new Promise(resolve => {
-        buttons.forEach(btn => btn.classList.add('no-interaction'));
-        const blinkInterval = setInterval(() => {
-            buttons.forEach(btn => btn.classList.toggle('random-blink'));
-        }, 100);
+        // Sicherstellen, dass alle Buttons interaktionslos sind und blinken können
+        buttons.forEach(btn => {
+            btn.classList.add('no-interaction');
+            btn.classList.add('random-blink');
+        });
 
+        // Nach 2 Sekunden Blink-Animation beenden und interagierbar machen
         setTimeout(() => {
-            clearInterval(blinkInterval);
-            buttons.forEach(btn => btn.classList.remove('random-blink'));
-            buttons.forEach(btn => btn.classList.remove('no-interaction'));
+            buttons.forEach(btn => {
+                btn.classList.remove('random-blink');
+                btn.classList.remove('no-interaction'); // Interaktion wieder erlauben
+            });
             resolve(); // Löst das Promise auf, wenn die Animation fertig ist
-        }, 4000);
+        }, 2000); // Blinkt für 2 Sekunden
     });
 }
     
@@ -353,13 +431,16 @@ function runGenreAnimation(buttons) {
     buttons.forEach(btn => {
         btn.disabled = false;
         btn.classList.remove('random-blink');
+        btn.classList.remove('disabled-genre'); // Sicherstellen, dass dies entfernt ist
     });
 
     // Speichere den Zustand: Genre-Bildschirm
     lastGameScreenVisible = 'genre-container';
 
     // Führe die gleiche Blink-Animation für beide Fälle aus
-    await runGenreAnimation(buttons);
+    // Dies wird jetzt direkt in handleRandomDiceRoll aufgerufen oder in processDiceSelection,
+    // wenn es nur für die Würfel gedacht ist. Hier entfernen wir es.
+    // await runGenreAnimation(buttons); // Diese Zeile wird hier entfernt.
 
     // Die Logik für die Button-Aktivierung/-Deaktivierung kommt jetzt NACH der Animation
     if (gameState.diceValue === 7) { // Fall B: WÜRFEL 7
@@ -378,7 +459,7 @@ function runGenreAnimation(buttons) {
         
         // Füge Event-Listener für alle Buttons hinzu
         buttons.forEach(btn => {
-             btn.addEventListener('click', handleGenreSelection, { once: true });
+            btn.addEventListener('click', handleGenreSelection, { once: true });
         });
 
     } else { // Fall A: WÜRFEL 1-5
@@ -404,7 +485,7 @@ function runGenreAnimation(buttons) {
         genreContainer.classList.add('hidden');
         document.querySelectorAll('.genre-button').forEach(btn => btn.removeEventListener('click', handleGenreSelection));
         
-         // NEU: Speed-Round Check NACHDEM Genre gewählt wurde, aber VOR dem Track-Laden
+          // NEU: Speed-Round Check NACHDEM Genre gewählt wurde, aber VOR dem Track-Laden
         const playerRound = Math.ceil(gameState.currentRound / 2);
         if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
             (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
@@ -433,7 +514,7 @@ function runGenreAnimation(buttons) {
         // NEU: Loggen der ausgewählten Playlist-ID
         console.log(`DEBUG: Ausgewähltes Genre: "${genre}", Playlist-ID: "${randomPlaylistId}"`);
 
-        const response = await fetch(`https://api.spotify.com/v1/playlists/${randomPlaylistId}/tracks`, {
+        const response = await fetch(`https://api.spotify.com/v1/playlists/$${randomPlaylistId}/tracks`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
 
@@ -509,7 +590,7 @@ function runGenreAnimation(buttons) {
         const trackDurationMs = gameState.currentTrack.duration_ms;
         const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`, {
         // ??? fetch(`${SPOTIFY_PLAY_URL}${deviceId}`, { // KORRIGIERT
             method: 'PUT',
             body: JSON.stringify({
@@ -558,7 +639,7 @@ function runGenreAnimation(buttons) {
         clearInterval(gameState.countdownInterval);
         clearTimeout(gameState.spotifyPlayTimeout); // Auch den Song-Pause-Timer stoppen
         clearInterval(gameState.fadeInterval); // WICHTIG: Fade-In-Intervall stoppen
-       
+        
         // Spotify Player pausieren, falls noch aktiv
         if (gameState.isSongPlaying && spotifyPlayer) {
             spotifyPlayer.pause();
@@ -582,7 +663,7 @@ function runGenreAnimation(buttons) {
         revealContainer.classList.remove('hidden');
         // Speichere den Zustand: Auflösung-Bildschirm
         lastGameScreenVisible = 'reveal-container';
-         
+        
         // NEU: Song bei Auflösung abspielen
         playSongForResolution();
     }
@@ -606,7 +687,7 @@ async function playSongForResolution() {
 
         // Song bei Sekunde 30 starten
         // fetch(`${SPOTIFY_PLAYER_BASE}play?device_id=${deviceId}`, { // Korrigierte URL, falls nötig
-        fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        fetch(`https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`, {
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
@@ -635,10 +716,10 @@ async function playSongForResolution() {
             // Wenn der Track sehr lang ist und du ihn explizit pausieren willst:
             // const remainingTime = gameState.currentTrack.duration_ms - startPositionMs;
             // gameState.spotifyPlayTimeout = setTimeout(() => {
-            //     if (gameState.isSongPlaying && spotifyPlayer) {
-            //         spotifyPlayer.pause();
-            //         gameState.isSongPlaying = false;
-            //     }
+            //      if (gameState.isSongPlaying && spotifyPlayer) {
+            //          spotifyPlayer.pause();
+            //          gameState.isSongPlaying = false;
+            //      }
             // }, remainingTime + 1000); // Kleine Pufferzeit
         }).catch(error => {
             console.error("Netzwerkfehler beim Starten des Songs für Auflösung:", error);
@@ -885,7 +966,7 @@ function displayPointsAnimation(points, player) {
     });
 }
 
-     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
+      // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
     function startVisualSpeedRoundCountdown() {
         let timeLeft = 7; // Startwert des Countdowns
         countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
