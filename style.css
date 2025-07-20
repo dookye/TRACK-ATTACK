@@ -309,6 +309,26 @@ body, html {
     50% { opacity: 0.5; }
 }
 
+/* Animation für ausgewählte Genre-Buttons */
+.genre-selected-zoom {
+    animation: zoomAndFadeOut 1.5s forwards ease-out;
+}
+
+@keyframes zoomAndFadeOut {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+}
+
 /* Rate-Bildschirm & Auflösung (Phase 4) */
 #reveal-button {
     position: absolute;
