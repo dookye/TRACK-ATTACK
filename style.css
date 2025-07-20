@@ -389,9 +389,9 @@ body, html {
 @keyframes points-fade-in-zoom {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.7); /* Start kleiner und transparent */
+    transform: translate(-50%, -50%) scale(0.5); /* Start kleiner und transparent */
   }
-  90% {
+  30% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.2); /* Endet normal groß und sichtbar */
   }
