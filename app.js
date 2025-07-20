@@ -511,7 +511,7 @@ function runGenreAnimation(buttons) {
         console.log(`DEBUG: Ausgewähltes Genre: "${genre}", Playlist-ID: "${randomPlaylistId}"`);
 
         // KORREKTUR: Fehlendes '$' hinzugefügt, damit randomPlaylistId korrekt in die URL eingefügt wird.
-        const response = await fetch(`https://api.spotify.com/v1/playlists/$$${randomPlaylistId}/tracks`, {
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${randomPlaylistId}/tracks`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
 
