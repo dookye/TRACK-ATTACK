@@ -191,6 +191,10 @@ body, html {
     gap: 20px; /* Abstand zwischen Animation, Button und Auswahl */
 }
 
+.random-dice:hover {
+    transform: scale(1.1);
+}
+
 /* NEU: Styling für den Random-Würfel-Button */
 #random-dice-button {
     background: none;
