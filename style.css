@@ -146,14 +146,14 @@ body, html {
 }
 
 .initial-fly-in {
-    animation: fly-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
-                bounce-end 0.3s 0.6s ease-out forwards;
+    animation: fly-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+                bounce-end 0.3s 0.4s ease-out forwards;
 }
 
 @keyframes fly-in {
     0% {
         /* Start: Groß und unsichtbar */
-        transform: translate(-50%, -50%) scale(12);
+        transform: translate(-50%, -50%) scale(14);
         opacity: 0;
     }
     100% {
@@ -240,7 +240,7 @@ body, html {
     transform: translate(-50%, -50%) scale(2); /* Starker Zoom */
     z-index: 50; /* Über allem anderen */
     transition: transform 0.5s ease-out, opacity 0.5s ease-out; /* Sanfte Animation */
-    animation: diceZoomAndFade 2s forwards; /* Animation für 2 Sekunden */
+    animation: diceZoomAndFade 1.5s forwards; /* Animation für 2 Sekunden */
 }
 
 @keyframes diceZoomAndFade {
