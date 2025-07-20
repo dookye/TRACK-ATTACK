@@ -355,6 +355,8 @@ const diceConfig = {
     // NEU: Funktion zur Animation des ausgewählten Würfels
     function animateSelectedDice(element) {
         return new Promise(resolve => {
+            // Vor dem Klonen und der Animation: Den gesamten diceContainer inaktiv machen
+            diceContainer.classList.add('no-interaction');
             // Klonen des Elements, um es unabhängig animieren zu können
             const clonedDice = element.cloneNode(true);
             // Ursprüngliches Element unsichtbar machen
@@ -377,8 +379,11 @@ const diceConfig = {
                 clonedDice.remove(); // Geklonten Würfel entfernen
                 element.style.opacity = '1'; // Ursprünglichen Würfel wieder sichtbar machen
                 element.style.pointerEvents = 'auto'; // Interaktion wieder ermöglichen
+                
+                // Nach der Animation: Den diceContainer wieder aktivieren
+                diceContainer.classList.remove('no-interaction'); // <--- NEU HINZUGEFÜGT
                 resolve();
-            }, 2000); // 2 Sekunden anzeigen + Animationsdauer (CSS)
+            }, 1500); // 2 Sekunden anzeigen + Animationsdauer (CSS)
         });
     }
 
