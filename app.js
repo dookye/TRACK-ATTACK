@@ -303,7 +303,7 @@ const diceConfig = {
         setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
-        }, 1000);
+        }, 1800);
     }
 
     document.querySelectorAll('.dice-option').forEach(dice => {
@@ -344,7 +344,7 @@ function runGenreAnimation(buttons) {
             buttons.forEach(btn => btn.classList.remove('random-blink'));
             buttons.forEach(btn => btn.classList.remove('no-interaction'));
             resolve(); // Löst das Promise auf, wenn die Animation fertig ist
-        }, 2000);
+        }, 1800);
     });
 }
     
