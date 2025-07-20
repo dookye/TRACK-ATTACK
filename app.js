@@ -273,233 +273,278 @@ const diceConfig = {
         }, 800); // Warten, bis Bounce-Effekt und Blur sichtbar sind
     }
     
-    //=======================================================================
-    // Phase 3: Würfel- & Genre-Auswahl
-    //=======================================================================
+//=======================================================================
+// Phase 3: Würfel- & Genre-Auswahl
+//=======================================================================
 
-    function showDiceScreen() {
-        resetRoundUI();
-        gameState.currentRound++;
-        gameState.isSpeedRound = false;
-
-        // Check für Spielende
-        if (gameState.currentRound > gameState.totalRounds) {
-            endGame();
-            return;
-        }
-
-        diceContainer.classList.remove('hidden');
-        diceAnimation.classList.remove('hidden');
-        diceSelection.classList.add('hidden');
-        randomDiceButton.classList.add('hidden'); // NEU: Random-Button verstecken während Animation
-
-        // Speichere den Zustand: Würfel-Bildschirm
-        lastGameScreenVisible = 'dice-container';
-        
-        setTimeout(() => {
-            diceAnimation.classList.add('hidden');
-            diceSelection.classList.remove('hidden');
-            randomDiceButton.classList.remove('hidden'); // NEU: Random-Button anzeigen
-            randomDiceButton.disabled = false; // NEU: Button aktivieren
-            // NEU: Sicherstellen, dass die Würfel-Buttons klickbar sind
-            document.querySelectorAll('.dice-option').forEach(dice => {
-                dice.classList.remove('no-interaction'); // Interaktion wieder erlauben
-            });
-        }, 4000);
-    }
-
-    // Event Listener für "Manuelle" Würfel
+// NEU: Funktion zum Deaktivieren der Würfel-Buttons und des Random-Buttons
+// Diese Funktion wird jetzt am Anfang der Würfelauswahl aufgerufen
+function disableDiceInteraction() {
+    randomDiceButton.disabled = true;
+    randomDiceButton.classList.add('no-interaction');
     document.querySelectorAll('.dice-option').forEach(dice => {
-        dice.addEventListener('click', async (e) => { // async hinzugefügt
-            // NEU: Deaktiviere alle Würfel-Optionen und den Random-Würfel-Button
-            disableDiceInteraction();
-            const selectedValue = parseInt(e.target.dataset.value);
-            // Animation des ausgewählten Würfels
-            await animateSelectedDice(e.target); // Übergebe das geklickte Element
-            processDiceSelection(selectedValue);
-        });
+        dice.classList.add('no-interaction');
     });
+}
 
-    // NEU: Event Listener für den Zufallswürfel-Button
-    randomDiceButton.addEventListener('click', handleRandomDiceRoll);
+// NEU: Funktion zum Aktivieren der Würfel-Buttons und des Random-Buttons
+// Diese Funktion wird am Ende der Würfelphase aufgerufen
+function enableDiceInteraction() {
+    randomDiceButton.disabled = false;
+    randomDiceButton.classList.remove('no-interaction');
+    document.querySelectorAll('.dice-option').forEach(dice => {
+        dice.classList.remove('no-interaction');
+        dice.style.opacity = '1'; // Sicherstellen, dass die Opazität zurückgesetzt wird
+        dice.style.pointerEvents = 'auto'; // Sicherstellen, dass Pointer Events aktiv sind
+    });
+}
 
-    // NEU: Funktion zum Deaktivieren der Würfel-Buttons und des Random-Buttons
-    function disableDiceInteraction() {
-        randomDiceButton.disabled = true;
-        randomDiceButton.classList.add('no-interaction'); // Visuelles Feedback
-        document.querySelectorAll('.dice-option').forEach(dice => {
-            dice.classList.add('no-interaction'); // Alle Würfel-Optionen inaktiv machen
-        });
+// NEU: Funktion zur Animation des ausgewählten Würfels (Zentrieren & Zoom)
+async function animateSelectedDice(element) {
+    return new Promise(resolve => {
+        // Temporäre Deaktivierung des gesamten Würfel-Containers während der Animation
+        diceContainer.classList.add('no-interaction');
+
+        const clonedDice = element.cloneNode(true);
+        element.style.opacity = '0'; // Original unsichtbar machen
+        element.style.pointerEvents = 'none'; // Original nicht klickbar machen
+
+        clonedDice.style.position = 'absolute';
+        clonedDice.style.top = '50%';
+        clonedDice.style.left = '50%';
+        clonedDice.style.transform = 'translate(-50%, -50%) scale(1)';
+        clonedDice.style.zIndex = '100';
+        clonedDice.classList.add('dice-selected-zoom'); // CSS-Animation triggern
+
+        document.body.appendChild(clonedDice);
+
+        setTimeout(() => {
+            clonedDice.remove();
+            // Original-Würfel-Zustand wird in enableDiceInteraction() nach showDiceScreen() zurückgesetzt.
+            // Hier nur den diceContainer wieder aktivieren, da die Animation vorbei ist.
+            diceContainer.classList.remove('no-interaction');
+            resolve();
+        }, 1500); // Dauer der Animation, angepasst auf 1.5s
+    });
+}
+
+// NEU: Funktion zur Animation des ausgewählten Genres (Zentrieren & Zoom)
+async function animateSelectedGenre(element) {
+    return new Promise(resolve => {
+        // Temporäre Deaktivierung des gesamten Genre-Containers während der Animation
+        genreContainer.classList.add('no-interaction');
+
+        const clonedGenre = element.cloneNode(true);
+        element.style.opacity = '0'; // Original unsichtbar machen
+        element.style.pointerEvents = 'none'; // Original nicht klickbar machen
+
+        clonedGenre.style.position = 'absolute';
+        clonedGenre.style.top = '50%';
+        clonedGenre.style.left = '50%';
+        clonedGenre.style.transform = 'translate(-50%, -50%) scale(1)';
+        clonedGenre.style.zIndex = '100';
+        clonedGenre.classList.add('genre-selected-zoom'); // Neue CSS-Klasse für Genre-Zoom-Animation
+
+        document.body.appendChild(clonedGenre);
+
+        setTimeout(() => {
+            clonedGenre.remove();
+            // Original-Genre-Zustand wird in handleGenreSelection oder showGenreScreen zurückgesetzt.
+            genreContainer.classList.remove('no-interaction');
+            resolve();
+        }, 1500); // Dauer der Animation, angepasst auf 1.5s
+    });
+}
+
+
+function showDiceScreen() {
+    resetRoundUI(); // Alle UI-Elemente zurücksetzen
+    gameState.currentRound++;
+    gameState.isSpeedRound = false;
+
+    // Check für Spielende
+    if (gameState.currentRound > gameState.totalRounds) {
+        endGame();
+        return;
     }
 
-    // NEU: Funktion zum Auswählen eines zufälligen Würfels
-    async function handleRandomDiceRoll() {
-        disableDiceInteraction(); // Deaktiviere alle Buttons sofort
+    diceContainer.classList.remove('hidden');
+    diceAnimation.classList.remove('hidden');
+    diceSelection.classList.add('hidden'); // Würfel-Auswahl erst nach Animation zeigen
+    randomDiceButton.classList.add('hidden'); // Random-Button erst nach Animation zeigen
 
-        const diceOptions = Array.from(document.querySelectorAll('.dice-option'));
-        
-        // Blink-Animation für alle Würfel
-        await runGenreAnimation(diceOptions); // Nutze die bestehende Funktion
-        
-        // Zufälligen Würfel auswählen
-        const randomDiceIndex = Math.floor(Math.random() * diceOptions.length);
-        const selectedDiceElement = diceOptions[randomDiceIndex];
-        const selectedValue = parseInt(selectedDiceElement.dataset.value);
+    // Speichere den Zustand: Würfel-Bildschirm
+    lastGameScreenVisible = 'dice-container';
 
-        // Animation des ausgewählten Würfels
-        await animateSelectedDice(selectedDiceElement);
+    // Sicherstellen, dass alle Würfel-Buttons und Random-Button am Start inaktiv sind,
+    // um Klicks während der Einführungsanimation zu verhindern.
+    disableDiceInteraction();
 
-        processDiceSelection(selectedValue); // Keinen Element-Parameter mehr, da die Animation es schon hatte
+
+    setTimeout(() => {
+        diceAnimation.classList.add('hidden');
+        diceSelection.classList.remove('hidden');
+        randomDiceButton.classList.remove('hidden');
+        enableDiceInteraction(); // Würfel-Buttons und Random-Button jetzt aktivieren
+    }, 4000); // Warten, bis Würfel-Einführungsanimation fertig ist (4 Sekunden)
+}
+
+// Event Listener für "Manuelle" Würfel
+document.querySelectorAll('.dice-option').forEach(dice => {
+    dice.addEventListener('click', async (e) => {
+        disableDiceInteraction(); // Alle Würfel-Interaktionen sofort blockieren
+        const selectedValue = parseInt(e.target.dataset.value);
+        await animateSelectedDice(e.target); // Animation des geklickten Würfels
+        processDiceSelection(selectedValue);
+    });
+});
+
+// Event Listener für den Zufallswürfel-Button
+randomDiceButton.addEventListener('click', async () => {
+    disableDiceInteraction(); // Alle Würfel-Interaktionen sofort blockieren
+
+    const diceOptions = Array.from(document.querySelectorAll('.dice-option'));
+    
+    // Blink-Animation für alle Würfel (1.5 Sekunden)
+    diceContainer.classList.add('no-interaction'); // Container während Blinken inaktiv
+    await runGenreAnimation(diceOptions); // Nutze runGenreAnimation für visuelles Blinken
+    diceContainer.classList.remove('no-interaction'); // Container nach Blinken wieder aktiv
+
+    // Zufälligen Würfel auswählen
+    const randomDiceIndex = Math.floor(Math.random() * diceOptions.length);
+    const selectedDiceElement = diceOptions[randomDiceIndex];
+    const selectedValue = parseInt(selectedDiceElement.dataset.value);
+
+    await animateSelectedDice(selectedDiceElement); // Animation des ausgewählten Würfels
+    processDiceSelection(selectedValue);
+});
+
+// Allgemeine Funktion zum Verarbeiten der Würfelauswahl
+async function processDiceSelection(selectedValue) {
+    gameState.diceValue = selectedValue;
+
+    const config = diceConfig[selectedValue];
+    if (!config) {
+        console.error(`Konfiguration für Würfelwert ${selectedValue} nicht gefunden!`);
+        return;
     }
 
-    // NEU: Funktion zur Animation des ausgewählten Würfels
-    function animateSelectedDice(element) {
-        return new Promise(resolve => {
-            // Vor dem Klonen und der Animation: Den gesamten diceContainer inaktiv machen
-            diceContainer.classList.add('no-interaction');
-            // Klonen des Elements, um es unabhängig animieren zu können
-            const clonedDice = element.cloneNode(true);
-            // Ursprüngliches Element unsichtbar machen
-            element.style.opacity = '0';
-            element.style.pointerEvents = 'none';
+    gameState.trackDuration = config.duration;
+    gameState.maxAttempts = config.attempts;
+    gameState.attemptsMade = 0;
 
-            // Position des geklonten Würfels relativ zum dice-container
-            // Da dice-container flex-column ist, ist die Mitte des Würfels relativ zu seiner Position
-            // Es ist einfacher, den geklonten Würfel direkt in der Bildschirmmitte zu positionieren
-            clonedDice.style.position = 'absolute';
-            clonedDice.style.top = '50%';
-            clonedDice.style.left = '50%';
-            clonedDice.style.transform = 'translate(-50%, -50%) scale(1)'; // Startgröße
-            clonedDice.style.zIndex = '100'; // Ganz nach vorne bringen
-            clonedDice.classList.add('dice-selected-zoom'); // Animation triggern
+    diceContainer.classList.add('hidden');
+    await showGenreScreen(); // Warten, bis Genre-Screen-Animationen fertig sind
+}
 
-            document.body.appendChild(clonedDice); // Zum Body hinzufügen, um über allem zu liegen
-
-            setTimeout(() => {
-                clonedDice.remove(); // Geklonten Würfel entfernen
-                element.style.opacity = '1'; // Ursprünglichen Würfel wieder sichtbar machen
-                element.style.pointerEvents = 'auto'; // Interaktion wieder ermöglichen
-                
-                // Nach der Animation: Den diceContainer wieder aktivieren
-                diceContainer.classList.remove('no-interaction'); // <--- NEU HINZUGEFÜGT
-                resolve();
-            }, 1500); // 2 Sekunden anzeigen + Animationsdauer (CSS)
-        });
-    }
-
-
-    // NEU: Allgemeine Funktion zum Verarbeiten der Würfelauswahl
-    async function processDiceSelection(selectedValue) {
-        gameState.diceValue = selectedValue;
-
-        const config = diceConfig[selectedValue];
-        if (!config) {
-            console.error(`Konfiguration für Würfelwert ${selectedValue} nicht gefunden!`);
-            return;
-        }
-
-        gameState.trackDuration = config.duration;
-        gameState.maxAttempts = config.attempts;
-        gameState.attemptsMade = 0;
-
-        diceContainer.classList.add('hidden');
-        await showGenreScreen(); // Warten, bis Genre-Screen-Animation fertig ist
-    }
-
-
-    // NEU: Funktion zur Ausführung der Blink-Animation
+// NEU: Funktion zur Ausführung der Blink-Animation für Genres/Würfel
+// Diese Funktion wird jetzt allgemeiner verwendet und verwaltet no-interaction während des Blinkens
 function runGenreAnimation(buttons) {
     return new Promise(resolve => {
-        // Sicherstellen, dass alle Buttons interaktionslos sind und blinken können
-        buttons.forEach(btn => {    
+        buttons.forEach(btn => {
             btn.classList.add('random-blink');
-            btn.classList.add('no-interaction');
+            btn.classList.add('no-interaction'); // Während des Blinkens inaktiv
         });
 
-        // Nach 2 Sekunden Blink-Animation beenden und interagierbar machen
         setTimeout(() => {
             buttons.forEach(btn => {
                 btn.classList.remove('random-blink');
+                // Die 'no-interaction' Klasse wird HIER NICHT entfernt,
+                // das passiert erst in showGenreScreen oder handleGenreSelection selektiv.
             });
-            resolve(); // Löst das Promise auf, wenn die Animation fertig ist
-        }, 1500); // Blinkt für 2 Sekunden
+            resolve();
+        }, 1500); // Blinkt für 1.5 Sekunden
     });
 }
-    
-    async function showGenreScreen() {
+
+async function showGenreScreen() {
     genreContainer.classList.remove('hidden');
     const buttons = document.querySelectorAll('.genre-button');
-    
-    // Erst alle Buttons deaktivieren
+
+    // Alle Genre-Buttons sofort auf disabled und no-interaction setzen (Standardzustand)
     buttons.forEach(btn => {
         btn.disabled = true;
-        btn.classList.add('no-interaction'); // <--- Hier dauerhaft inaktiv machen
+        btn.classList.add('no-interaction'); // Standardmäßig inaktiv
         btn.classList.remove('disabled-genre'); // Sicherstellen, dass dies entfernt ist
+        btn.removeEventListener('click', handleGenreSelection); // Alte Listener entfernen
     });
 
     // Speichere den Zustand: Genre-Bildschirm
     lastGameScreenVisible = 'genre-container';
 
-    // Führe die Blink-Animation aus
-    await runGenreAnimation(buttons); // Jetzt wird es hier wieder aufgerufen!
+    // Führe die Blink-Animation aus - diese hält die Buttons inaktiv
+    await runGenreAnimation(buttons); // Warten, bis die Blinkanimation fertig ist (1.5s)
 
-    // NACHDEM die Blink-Animation fertig ist: Logik für die Button-Aktivierung/-Deaktivierung
-    if (gameState.diceValue === 7) { // Fall B: WÜRFEL 7 (Ein Genre inaktiv)
+    // Logik basierend auf dem gewürfelten Wert
+    if (gameState.diceValue === 7) { // Fall: Würfel 7 (User wählt Genre)
         // Alle Buttons sind klickbar, außer einem zufälligen
         buttons.forEach(btn => {
             btn.disabled = false; // Wieder aktivieren
             btn.classList.remove('no-interaction'); // Interaktion wieder erlauben
-            btn.removeEventListener('click', handleGenreSelection); // Sicherstellen, dass kein alter Listener mehr da ist
             btn.addEventListener('click', handleGenreSelection, { once: true });
         });
 
-        // 2. Wähle ein zufälliges Genre aus, das inaktiv sein soll
+        // Wähle ein zufälliges Genre aus, das inaktiv sein soll
         const randomIndex = Math.floor(Math.random() * buttons.length);
         const disabledButton = buttons[randomIndex];
         
-        // 3. Deaktiviere das ausgewählte Genre
+        // Deaktiviere das ausgewählte Genre
         disabledButton.disabled = true;
-        // Optional: Füge eine visuelle Klasse hinzu, um es zu markieren
         disabledButton.classList.add('disabled-genre');
-         disabledButton.classList.add('no-interaction'); // Auch hier no-interaction hinzufügen!
+        disabledButton.classList.add('no-interaction'); // Auch hier no-interaction hinzufügen!
 
-    } else { // Fall A: WÜRFEL 1-5 (Nur ein Genre aktiv)
-        // Zuerst alle Buttons als disabled markieren (was am Anfang schon passiert ist, aber hier zur Klarheit)
+    } else { // Fall: Würfel 1-5 (Genre wird automatisch gewählt)
+        // Erstmal alle Buttons inaktiv halten (sollten sie schon sein)
         buttons.forEach(btn => {
             btn.disabled = true;
             btn.classList.add('no-interaction');
         });
             
-        // Dann ein zufälliges Genre auswählen und aktivieren
+        // Dann ein zufälliges Genre auswählen und animieren
         const randomIndex = Math.floor(Math.random() * buttons.length);
-        const activeButton = buttons[randomIndex];
+        const selectedGenreElement = buttons[randomIndex];
+        const selectedGenre = selectedGenreElement.dataset.genre;
 
-        activeButton.disabled = false; // Nur den aktiven Button aktivieren
-        activeButton.classList.remove('no-interaction'); // <--- HIER Interaktion nur für den AKTIVEN erlauben
-        activeButton.classList.remove('disabled-genre'); // Optional: Entferne eine mögliche visuelle Klasse
+        await animateSelectedGenre(selectedGenreElement); // Animation des ausgewählten Genres
 
-        // Füge den Event-Listener nur für den aktiven Button hinzu
-        activeButton.removeEventListener('click', handleGenreSelection); // Sicherstellen, dass kein alter Listener mehr da ist
-        activeButton.addEventListener('click', handleGenreSelection, { once: true });
-    }
-}
-
-    async function handleGenreSelection(e) {
-        const selectedGenre = e.target.dataset.genre;
-        genreContainer.classList.add('hidden');
-        document.querySelectorAll('.genre-button').forEach(btn => btn.removeEventListener('click', handleGenreSelection));
-        
-          // NEU: Speed-Round Check NACHDEM Genre gewählt wurde, aber VOR dem Track-Laden
+        // NEU: Speed-Round Check NACHDEM Genre gewählt wurde, aber VOR dem Track-Laden
         const playerRound = Math.ceil(gameState.currentRound / 2);
         if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
             (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
             gameState.isSpeedRound = true;
-            // Zeige die "Speed-Round" Animation, bevor der Track geladen wird
-            await showSpeedRoundAnimation();
+            await showSpeedRoundAnimation(); // Zeige die "Speed-Round" Animation
         }
-
+        
+        // Gehe direkt zum Ratescreen über, da keine User-Interaktion benötigt wird
         await prepareAndShowRateScreen(selectedGenre);
     }
+}
+
+async function handleGenreSelection(e) {
+    const selectedGenreElement = e.target;
+    const selectedGenre = selectedGenreElement.dataset.genre;
+
+    // Alle Genre-Buttons sofort deaktivieren, um weitere Klicks zu verhindern
+    document.querySelectorAll('.genre-button').forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('no-interaction');
+        btn.removeEventListener('click', handleGenreSelection);
+    });
+
+    await animateSelectedGenre(selectedGenreElement); // Animation des ausgewählten Genres
+    
+    // NEU: Speed-Round Check NACHDEM Genre gewählt wurde, aber VOR dem Track-Laden
+    const playerRound = Math.ceil(gameState.currentRound / 2);
+    if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
+        (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
+        gameState.isSpeedRound = true;
+        await showSpeedRoundAnimation(); // Zeige die "Speed-Round" Animation
+    }
+
+    // Gehe zum Ratescreen über
+    genreContainer.classList.add('hidden'); // Genre-Container verstecken
+    await prepareAndShowRateScreen(selectedGenre);
+}
 
     //=======================================================================
     // Phase 4: Rate-Bildschirm & Spielerwechsel
