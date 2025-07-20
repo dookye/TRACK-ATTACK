@@ -720,37 +720,57 @@ function handleFeedback(isCorrect) {
 // NEU: Funktion zur Anzeige der animierten Punkte
 function displayPointsAnimation(points, player) {
     return new Promise(resolve => {
-        countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige (jetzt für Punkte) einblenden
-        countdownDisplay.classList.remove('countdown-animated'); // Alte Animation entfernen
-        countdownDisplay.innerText = `+${points}`; // Punkte mit "+" anzeigen
+        // 1. Alle vorherigen Animationsklassen entfernen und Element für den Start vorbereiten
+        countdownDisplay.classList.remove('hidden', 'countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2');
+        countdownDisplay.innerText = `+${points}`;
 
-        // Farbe an Spieler anpassen
+        // 2. Start-Stile für die Punkteanzeige setzen (sichtbar, normale Größe, mittige Position in der Spielerhälfte)
+        countdownDisplay.style.opacity = '1'; // Sicherstellen, dass es sichtbar ist
+        countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)'; // Reset Transformation
+        countdownDisplay.style.top = '50%'; // Vertikale Mitte
+
         if (player === 1) {
             countdownDisplay.style.color = 'var(--player1-color)';
             countdownDisplay.style.left = '25%'; // Linke Hälfte für Spieler 1
-            countdownDisplay.style.transform = 'translate(-50%, -50%)'; // Reset transform
         } else {
             countdownDisplay.style.color = 'var(--player2-color)';
             countdownDisplay.style.left = '75%'; // Rechte Hälfte für Spieler 2
-            countdownDisplay.style.transform = 'translate(-50%, -50%)'; // Reset transform
         }
 
-        // Animation starten
-        void countdownDisplay.offsetWidth; // Reflow erzwingen, um Animation neu zu starten
-        countdownDisplay.classList.add('countdown-animated'); // Animation hinzufügen
+        // Reflow erzwingen, damit die Start-Stile angewendet werden, bevor die Animation beginnt
+        void countdownDisplay.offsetWidth;
 
-        // Nach 1 Sekunde: Animation beenden und Element verstecken
+        // 3. Phase 1: Punkte kurz anzeigen (z.B. 0.5 Sekunden)
+        // Hier könnte man eine kurze "Pop-in"-Animation einfügen, wenn gewünscht.
+        // Für jetzt bleiben sie einfach statisch sichtbar.
+        const initialDisplayDuration = 500; // Punkte bleiben 0.5 Sekunden sichtbar
+        const flyAnimationDuration = 700; // Dauer der "Wegfliegen"-Animation (passt zur CSS)
+
+        // 4. Phase 2: Nach der initialen Anzeige die "Wegfliegen"-Animation starten
+        setTimeout(() => {
+            if (player === 1) {
+                countdownDisplay.classList.add('fly-to-corner-player1');
+            } else {
+                countdownDisplay.classList.add('fly-to-corner-player2');
+            }
+            // Die CSS-Animation übernimmt jetzt die Bewegung und das Ausfaden.
+        }, initialDisplayDuration);
+
+        // 5. Nach der gesamten Animationsdauer das Element verstecken und Promise auflösen
         setTimeout(() => {
             countdownDisplay.classList.add('hidden');
-            countdownDisplay.classList.remove('countdown-animated');
-            countdownDisplay.innerText = ''; // Inhalt leeren
+            // Animationsklassen entfernen, damit sie beim nächsten Mal sauber starten
+            countdownDisplay.classList.remove('fly-to-corner-player1', 'fly-to-corner-player2');
+            countdownDisplay.innerText = ''; // Text leeren
 
-            // Farben und Position zurücksetzen für den nächsten Countdown (optional, aber sauber)
+            // Stile auf den Standardwert zurücksetzen, falls countdownDisplay auch für den Countdown genutzt wird
             countdownDisplay.style.color = 'var(--white)';
             countdownDisplay.style.left = '50%';
-            countdownDisplay.style.transform = 'translate(-50%, -50%)';
-            resolve(); // Promise auflösen, um den nächsten Schritt in handleFeedback auszuführen
-        }, 1000); // 1 Sekunde Dauer für die Punkteanzeige
+            countdownDisplay.style.top = '50%';
+            countdownDisplay.style.opacity = '1'; // Opacity zurücksetzen
+            countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)'; // Transform zurücksetzen
+            resolve(); // Promise auflösen, damit der nächste Schritt in handleFeedback ausgeführt werden kann
+        }, initialDisplayDuration + flyAnimationDuration); // Gesamtdauer: Anzeige + Fliegen
     });
 }
 
