@@ -279,34 +279,54 @@ const diceConfig = {
 
 /**
  * Setzt den visuellen und interaktiven Zustand von Buttons.
- * @param {string} selector - CSS-Selektor für die zu bearbeitenden Buttons.
- * @param {boolean} isActive - True, um Buttons zu aktivieren, False, um sie zu deaktivieren.
- * @param {boolean} [resetOpacityAndPointer=false] - True, um Inline-Styles für Opacity/PointerEvents zurückzusetzen.
+ * @param {string|HTMLElement|Array<HTMLElement>} target - CSS-Selektor, ein einzelnes Element oder ein Array von Elementen.
+ * @param {boolean} isActive - True, um Buttons zu aktivieren, False, um sie zu deaktivieren (visuell und interaktiv).
+ * @param {boolean} [applyVisuals=true] - True, um Abdunklung/Verschwommenheit anzuwenden, False um nur pointer-events/disabled zu setzen.
  */
-function setButtonState(selector, isActive, resetOpacityAndPointer = false) {
-    document.querySelectorAll(selector).forEach(button => {
+function setButtonState(target, isActive, applyVisuals = true) {
+    let elements;
+    if (typeof target === 'string') {
+        elements = document.querySelectorAll(target);
+    } else if (Array.isArray(target)) {
+        elements = target;
+    } else { // Einzelnes Element
+        elements = [target];
+    }
+
+    elements.forEach(button => {
         if (isActive) {
-            button.classList.remove('button-inactive');
             button.disabled = false;
-            if (resetOpacityAndPointer) {
-                button.style.opacity = ''; // Setzt auf CSS-Standard zurück
-                button.style.pointerEvents = ''; // Setzt auf CSS-Standard zurück
+            // Entferne visuelle Deaktivierung nur, wenn applyVisuals true ist,
+            // ansonsten bleiben sie unsichtbar/ohne Pointer Events durch Inline-Styles
+            if (applyVisuals) {
+                button.classList.remove('button-inactive');
             }
+            button.style.pointerEvents = ''; // Setzt auf CSS-Standard zurück
+            button.style.opacity = ''; // Setzt auf CSS-Standard zurück
         } else {
-            button.classList.add('button-inactive');
             button.disabled = true;
+            if (applyVisuals) {
+                button.classList.add('button-inactive');
+            }
+            // Pointer events werden hier immer gesetzt, um Klicks zu verhindern
+            button.style.pointerEvents = 'none';
         }
     });
 }
 
+
 // Animation für einen ausgewählten Würfel oder Genre-Button
 async function animateSelectedElement(element, type = 'dice') {
     return new Promise(resolve => {
-        // Temporäre visuelle und interaktive Deaktivierung des Originalelements
+        // Temporäre Deaktivierung des Originalelements (unsichtbar, nicht klickbar)
         element.style.opacity = '0';
-        element.style.pointerEvents = 'none'; // Klicks gehen durch, um geklontes Element nicht zu stören
+        element.style.pointerEvents = 'none'; // Wichtig, damit das geklonte Element Klicks abfängt, falls es überlagert
 
         const clonedElement = element.cloneNode(true);
+        // Sicherstellen, dass der Klon die visuellen Inaktivitäts-Klassen nicht hat, um klar zu animieren
+        clonedElement.classList.remove('button-inactive', 'random-blink', 'disabled-genre');
+        clonedElement.style.opacity = '1'; // Klon ist immer voll sichtbar
+
         clonedElement.style.position = 'absolute';
         clonedElement.style.top = '50%';
         clonedElement.style.left = '50%';
@@ -324,16 +344,14 @@ async function animateSelectedElement(element, type = 'dice') {
 
         setTimeout(() => {
             clonedElement.remove();
-            // Originalelement wieder sichtbar/interagierbar machen (Opazität/PointerEvents)
-            // Die .button-inactive Klasse wird später separat verwaltet, um Konflikte zu vermeiden.
-            element.style.opacity = ''; 
-            element.style.pointerEvents = '';
+            // Originalelement sollte später über setButtonState oder screen-Wechsel behandelt werden,
+            // daher hier keine Rücksetzung der Inline-Styles.
             resolve();
         }, 1500); // 1.5 Sekunden für die Animation
     });
 }
 
-// Allgemeine Funktion für Blink-Animationen (ohne Interaktionskontrolle)
+// Allgemeine Funktion für Blink-Animationen (ohne Interaktionskontrolle hier)
 async function runBlinkAnimation(elementsSelector) {
     const elements = document.querySelectorAll(elementsSelector);
     return new Promise(resolve => {
@@ -367,17 +385,17 @@ function showDiceScreen() {
 
     lastGameScreenVisible = 'dice-container';
 
-    // Alle Würfel-Buttons sofort deaktivieren, um Klicks während der Einführungsanimation zu verhindern
-    setButtonState('.dice-option', false);
-    setButtonState('#random-dice-button', false);
+    // Alle Würfel-Buttons und Random-Button sofort deaktivieren, um Klicks während der Einführungsanimation zu verhindern
+    setButtonState('.dice-option', false); // Visuell inaktiv
+    setButtonState('#random-dice-button', false); // Visuell inaktiv
 
     setTimeout(() => {
         diceAnimation.classList.add('hidden');
         diceSelection.classList.remove('hidden');
         randomDiceButton.classList.remove('hidden');
         
-        // Würfel-Buttons und Random-Button jetzt aktivieren
-        setButtonState('.dice-option', true, true); // True für resetOpacityAndPointer
+        // Würfel-Buttons und Random-Button jetzt aktivieren (visuell aktiv)
+        setButtonState('.dice-option', true);
         setButtonState('#random-dice-button', true);
     }, 4000); // Warten, bis Würfel-Einführungsanimation fertig ist (4 Sekunden)
 }
@@ -385,30 +403,47 @@ function showDiceScreen() {
 // Event Listener für "Manuelle" Würfel
 document.querySelectorAll('.dice-option').forEach(dice => {
     dice.addEventListener('click', async (e) => {
-        setButtonState('.dice-option', false); // Alle manuellen Würfel sofort inaktiv
-        setButtonState('#random-dice-button', false); // Random-Button sofort inaktiv
-
         const selectedValue = parseInt(e.target.dataset.value);
-        await animateSelectedElement(e.target, 'dice'); // Animation des geklickten Würfels
+        const allDice = Array.from(document.querySelectorAll('.dice-option'));
+        const randomBtn = document.getElementById('random-dice-button');
+
+        // Alle Würfel-Buttons (außer dem geklickten) und den Random-Button deaktivieren (visuell und interaktiv)
+        allDice.forEach(d => {
+            if (d !== e.target) {
+                setButtonState(d, false); // Andere Würfel visuell inaktiv
+            }
+        });
+        setButtonState(randomBtn, false); // Random-Button visuell inaktiv
+
+        // Nur den geklickten Würfel animieren (er bleibt visuell aktiv für die Animation)
+        setButtonState(e.target, false, false); // Klick blockieren, aber keine visuellen Effekte (kein Abdunkeln)
+        await animateSelectedElement(e.target, 'dice'); 
+        
         processDiceSelection(selectedValue);
     });
 });
 
 // Event Listener für den Zufallswürfel-Button
 randomDiceButton.addEventListener('click', async () => {
-    setButtonState('.dice-option', false); // Alle manuellen Würfel sofort inaktiv
-    setButtonState('#random-dice-button', false); // Random-Button sofort inaktiv
+    const diceOptions = Array.from(document.querySelectorAll('.dice-option'));
+    const randomBtn = document.getElementById('random-dice-button');
 
-    // Blink-Animation für alle Würfel (1.5 Sekunden)
+    // Alle Würfel-Buttons und Random-Button deaktivieren (visuell und interaktiv)
+    setButtonState(diceOptions, false);
+    setButtonState(randomBtn, false);
+
+    // Blink-Animation für alle Würfel (1.5 Sekunden) - sie sind visuell inaktiv, aber blinken
     await runBlinkAnimation('.dice-option'); 
 
     // Zufälligen Würfel auswählen
-    const diceOptions = Array.from(document.querySelectorAll('.dice-option'));
     const randomDiceIndex = Math.floor(Math.random() * diceOptions.length);
     const selectedDiceElement = diceOptions[randomDiceIndex];
     const selectedValue = parseInt(selectedDiceElement.dataset.value);
 
-    await animateSelectedElement(selectedDiceElement, 'dice'); // Animation des ausgewählten Würfels
+    // Jetzt den ausgewählten Würfel für die Zoom-Animation vorbereiten (nicht abgedunkelt)
+    setButtonState(selectedDiceElement, false, false); // Klick blockieren, aber keine visuellen Effekte
+    await animateSelectedElement(selectedDiceElement, 'dice'); 
+    
     processDiceSelection(selectedValue);
 });
 
@@ -419,8 +454,8 @@ async function processDiceSelection(selectedValue) {
     const config = diceConfig[selectedValue];
     if (!config) {
         console.error(`Konfiguration für Würfelwert ${selectedValue} nicht gefunden!`);
-        // Im Fehlerfall Buttons wieder aktivieren
-        setButtonState('.dice-option', true, true);
+        // Im Fehlerfall alle Buttons wieder aktivieren
+        setButtonState('.dice-option', true);
         setButtonState('#random-dice-button', true);
         return;
     }
@@ -435,9 +470,10 @@ async function processDiceSelection(selectedValue) {
 
 async function showGenreScreen() {
     genreContainer.classList.remove('hidden');
-    
-    // Alle Genre-Buttons sofort deaktivieren für die Blink-Animation
-    setButtonState('.genre-button', false, true); 
+    const buttons = document.querySelectorAll('.genre-button');
+
+    // Alle Genre-Buttons sofort deaktivieren für die Blink-Animation (visuell inaktiv)
+    setButtonState(buttons, false); 
 
     lastGameScreenVisible = 'genre-container';
 
@@ -446,27 +482,29 @@ async function showGenreScreen() {
 
     // Logik basierend auf dem gewürfelten Wert
     if (gameState.diceValue === 7) { // Fall: Würfel 7 (User wählt Genre)
-        // Alle Buttons sind klickbar, außer einem zufälligen
-        setButtonState('.genre-button', true, true); // Alle aktivieren
+        // Alle Buttons werden aktiviert, außer einem zufälligen
+        setButtonState(buttons, true); // Alle visuell aktiv und klickbar
 
         // Wähle ein zufälliges Genre aus, das inaktiv sein soll
-        const buttons = document.querySelectorAll('.genre-button');
         const randomIndex = Math.floor(Math.random() * buttons.length);
         const disabledButton = buttons[randomIndex];
         
-        disabledButton.classList.add('disabled-genre'); // Visuelle Klasse
-        setButtonState(`[data-genre="${disabledButton.dataset.genre}"]`, false); // Nur diesen Button deaktivieren
-
+        // Deaktiviere und visualisiere das ausgewählte Genre als inaktiv
+        disabledButton.classList.add('disabled-genre'); // Für spezifisches Styling (z.B. grauer Rahmen)
+        setButtonState(disabledButton, false); // Visuell und interaktiv inaktiv
+        
     } else { // Fall: Würfel 1-5 (Genre wird automatisch gewählt)
         // Alle Genre-Buttons bleiben inaktiv (da keine User-Interaktion nötig)
-        setButtonState('.genre-button', false);
+        // Sie bekommen aber das visuelle 'button-inactive' Feedback
+        setButtonState(buttons, false); 
             
-        // Dann ein zufälliges Genre auswählen und animieren
-        const buttons = document.querySelectorAll('.genre-button');
+        // Dann ein zufälliges Genre auswählen
         const randomIndex = Math.floor(Math.random() * buttons.length);
         const selectedGenreElement = buttons[randomIndex];
         const selectedGenre = selectedGenreElement.dataset.genre;
 
+        // Der ausgewählte Genre-Button darf NICHT abgedunkelt sein für die Animation
+        setButtonState(selectedGenreElement, false, false); // Klick blockieren, aber keine visuellen Effekte
         await animateSelectedElement(selectedGenreElement, 'genre'); // Animation des ausgewählten Genres
 
         // Speed-Round Check NACHDEM Genre gewählt wurde
@@ -486,20 +524,27 @@ async function showGenreScreen() {
 // Event Listener für Genre-Auswahl (nur für Würfel 7 relevant)
 document.querySelectorAll('.genre-button').forEach(genreBtn => {
     genreBtn.addEventListener('click', async (e) => {
-        // Alle Genre-Buttons sofort deaktivieren, um Mehrfachklicks zu verhindern
-        setButtonState('.genre-button', false); 
-
         const selectedGenreElement = e.target;
         const selectedGenre = selectedGenreElement.dataset.genre;
+        const allGenreButtons = Array.from(document.querySelectorAll('.genre-button'));
 
-        await animateSelectedElement(selectedGenreElement, 'genre'); // Animation des ausgewählten Genres
+        // Alle Genre-Buttons (außer dem geklickten) deaktivieren (visuell und interaktiv)
+        allGenreButtons.forEach(btn => {
+            if (btn !== selectedGenreElement) {
+                setButtonState(btn, false);
+            }
+        });
+        
+        // Den geklickten Button interaktiv deaktivieren, aber NICHT visuell abdunkeln/verschwommen machen
+        setButtonState(selectedGenreElement, false, false); 
+        await animateSelectedElement(selectedGenreElement, 'genre');
         
         // Speed-Round Check NACHDEM Genre gewählt wurde
         const playerRound = Math.ceil(gameState.currentRound / 2);
         if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
             (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
             gameState.isSpeedRound = true;
-            await showSpeedRoundAnimation(); // Zeige die "Speed-Round" Animation
+            await showSpeedRoundAnimation();
         }
 
         // Gehe zum Ratescreen über
