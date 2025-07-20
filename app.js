@@ -411,19 +411,18 @@ const diceConfig = {
 function runGenreAnimation(buttons) {
     return new Promise(resolve => {
         // Sicherstellen, dass alle Buttons interaktionslos sind und blinken können
-        buttons.forEach(btn => {
-            btn.classList.add('no-interaction');
+        buttons.forEach(btn => {    
             btn.classList.add('random-blink');
+            btn.classList.add('no-interaction');
         });
 
         // Nach 2 Sekunden Blink-Animation beenden und interagierbar machen
         setTimeout(() => {
             buttons.forEach(btn => {
                 btn.classList.remove('random-blink');
-                btn.classList.remove('no-interaction'); // Interaktion wieder erlauben
             });
             resolve(); // Löst das Promise auf, wenn die Animation fertig ist
-        }, 2000); // Blinkt für 2 Sekunden
+        }, 1500); // Blinkt für 2 Sekunden
     });
 }
     
@@ -433,8 +432,8 @@ function runGenreAnimation(buttons) {
     
     // Erst alle Buttons deaktivieren
     buttons.forEach(btn => {
-        btn.classList.add('no-interaction'); // <--- Hier dauerhaft inaktiv machen
         btn.disabled = true;
+        btn.classList.add('no-interaction'); // <--- Hier dauerhaft inaktiv machen
         btn.classList.remove('disabled-genre'); // Sicherstellen, dass dies entfernt ist
     });
 
@@ -444,11 +443,15 @@ function runGenreAnimation(buttons) {
     // Führe die Blink-Animation aus
     await runGenreAnimation(buttons); // Jetzt wird es hier wieder aufgerufen!
 
-    // Die Logik für die Button-Aktivierung/-Deaktivierung kommt jetzt NACH der Animation
-    if (gameState.diceValue === 7) { // Fall B: WÜRFEL 7
-        
-        // 1. Alle Buttons sind klickbar (standardmäßig)
-        buttons.forEach(btn => btn.disabled = false);
+    // NACHDEM die Blink-Animation fertig ist: Logik für die Button-Aktivierung/-Deaktivierung
+    if (gameState.diceValue === 7) { // Fall B: WÜRFEL 7 (Ein Genre inaktiv)
+        // Alle Buttons sind klickbar, außer einem zufälligen
+        buttons.forEach(btn => {
+            btn.disabled = false; // Wieder aktivieren
+            btn.classList.remove('no-interaction'); // Interaktion wieder erlauben
+            btn.removeEventListener('click', handleGenreSelection); // Sicherstellen, dass kein alter Listener mehr da ist
+            btn.addEventListener('click', handleGenreSelection, { once: true });
+        });
 
         // 2. Wähle ein zufälliges Genre aus, das inaktiv sein soll
         const randomIndex = Math.floor(Math.random() * buttons.length);
@@ -459,30 +462,21 @@ function runGenreAnimation(buttons) {
         // Optional: Füge eine visuelle Klasse hinzu, um es zu markieren
         disabledButton.classList.add('disabled-genre');
          disabledButton.classList.add('no-interaction'); // Auch hier no-interaction hinzufügen!
-        
-        // Füge Event-Listener für alle Buttons hinzu
+
+    } else { // Fall A: WÜRFEL 1-5 (Nur ein Genre aktiv)
+        // Zuerst alle Buttons als disabled markieren (was am Anfang schon passiert ist, aber hier zur Klarheit)
         buttons.forEach(btn => {
-            btn.addEventListener('click', handleGenreSelection, { once: true });
-        });
-
-    } else { // Fall A: WÜRFEL 1-5
-        
-        // 1. Erst alle Buttons deaktivieren (bereits oben geschehen)
-        // buttons.forEach(btn => btn.disabled = true);
-        
-        // 2. Dann ein zufälliges Genre auswählen und aktivieren
-        const randomIndex = Math.floor(Math.random() * buttons.length);
-        const activeButton = buttons[randomIndex];
-
-        buttons.forEach(btn => { // Erst alle als 'disabled' markieren
             btn.disabled = true;
             btn.classList.add('no-interaction');
         });
+            
+        // Dann ein zufälliges Genre auswählen und aktivieren
+        const randomIndex = Math.floor(Math.random() * buttons.length);
+        const activeButton = buttons[randomIndex];
 
-        activeButton.disabled = false;
-        activeButton.classList.remove('no-interaction'); // Hier Interaktion erlauben
-        // Optional: Entferne eine mögliche visuelle Klasse
-        activeButton.classList.remove('disabled-genre');
+        activeButton.disabled = false; // Nur den aktiven Button aktivieren
+        activeButton.classList.remove('no-interaction'); // <--- HIER Interaktion nur für den AKTIVEN erlauben
+        activeButton.classList.remove('disabled-genre'); // Optional: Entferne eine mögliche visuelle Klasse
 
         // Füge den Event-Listener nur für den aktiven Button hinzu
         activeButton.removeEventListener('click', handleGenreSelection); // Sicherstellen, dass kein alter Listener mehr da ist
