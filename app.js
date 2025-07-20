@@ -181,7 +181,7 @@ window.addEventListener('load', () => {
 });
 
 function redirectToSpotifyAuth() {
-    const clientId = 'YOUR_SPOTIFY_CLIENT_ID'; // !!!!!!!!!!! ERSETZE DURCH DEINE CLIENT ID !!!!!!!!!!!
+    const clientId = '53257f6a1c144d3f929a60d691a0c6f6'; // !!!!!!!!!!! ERSETZE DURCH DEINE CLIENT ID !!!!!!!!!!!
     const redirectUri = encodeURIComponent(window.location.origin); // Dynamische Redirect URI
     const scopes = 'user-read-private user-read-email user-modify-playback-state user-read-playback-state user-read-currently-playing streaming';
     window.location = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${redirectUri}&scope=${scopes}&show_dialog=true`;
