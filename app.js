@@ -580,6 +580,8 @@ function runGenreAnimation(buttons) {
         document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
         document.getElementById('track-title').innerText = gameState.currentTrack.name;
         document.getElementById('track-artist').innerText = gameState.currentTrack.artists.map(a => a.name).join(', ');
+        trackAlbum.innerText = gameState.currentTrack.album.name; // NEU
+        trackYear.innerText = `(${gameState.currentTrack.album.release_date.substring(0, 4)})`; // NEU: Nur das Jahr
         
         revealContainer.classList.remove('hidden');
         // Speichere den Zustand: Auflösung-Bildschirm
