@@ -285,8 +285,8 @@ body, html {
 }
 
 @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    from { opacity: 1 !important; } /* Wichtig: !important hinzugefügt */
+    to { opacity: 0.4 !important; }  /* Wichtig: !important hinzugefügt */
 }
 
 /* Animation für ausgewählte Genre-Buttons */
