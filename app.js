@@ -301,7 +301,7 @@ const diceConfig = {
         setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
-        }, 4000);
+        }, 2500);
     }
 
     document.querySelectorAll('.dice-option').forEach(dice => {
