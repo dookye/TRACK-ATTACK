@@ -298,6 +298,18 @@ body, html {
     margin: 0;
 }
 
+/* Styling für Album und Jahr */
+#track-album {
+    font-size: 1em; /* Etwas kleiner als Titel und Interpret */
+    margin-top: 5px; /* Abstand zum Interpreten */
+    color: #bbb; /* Leicht gräuliche Farbe */
+}
+
+#track-year {
+    font-size: 0.9em; /* Noch kleiner */
+    color: #999; /* Noch gräulicher */
+}
+
 #feedback-buttons button {
     padding: 15px 30px;
     font-size: 1.2em;
