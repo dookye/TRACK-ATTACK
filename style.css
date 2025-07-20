@@ -389,7 +389,11 @@ body, html {
 @keyframes points-fade-in-zoom {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8); /* Start kleiner und transparent */
+    transform: translate(-50%, -50%) scale(0.7); /* Start kleiner und transparent */
+  }
+  90% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2); /* Endet normal groß und sichtbar */
   }
   100% {
     opacity: 1;
@@ -398,7 +402,7 @@ body, html {
 }
 
 .points-pop-in {
-  animation: points-fade-in-zoom 0.3s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
+  animation: points-fade-in-zoom 0.5s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
 }
 
 @keyframes flyToCornerPlayer1 {
