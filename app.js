@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const speedRoundTextDisplay = document.getElementById('speed-round-text-display'); // NEU: Referenz auf das Text-Element
     const speedRoundTimer = document.getElementById('speed-round-timer');
     const countdownDisplay = document.getElementById('countdown-display');
+     const trackAlbum = document.getElementById('track-album'); // NEU
+    const trackYear = document.getElementById('track-year');     // NEU
 
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
