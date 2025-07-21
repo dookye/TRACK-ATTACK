@@ -712,7 +712,7 @@ function handleFeedback(isCorrect) {
             .then(() => { // <--- HIER beginnt der .then()-Block für displayPointsAnimation
                 // 4.4: Spieler wechseln
                 gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
-                appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
+                appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--punktefarbe-player1)' : 'var(--player2-color)';
 
                 // Setze den Zustand zurück, bevor die nächste Runde beginnt
                 lastGameScreenVisible = '';
@@ -734,11 +734,11 @@ function displayPointsAnimation(points, player) {
         countdownDisplay.style.top = '50%'; // Vertikale Mitte
 
         if (player === 1) {
-            countdownDisplay.style.color = 'var(--player1-color)';
-            countdownDisplay.style.left = '25%'; // Linke Hälfte für Spieler 1
+            countdownDisplay.style.color = 'var(--punktefarbe-player1)';
+            countdownDisplay.style.left = '50%'; // 25% für Linke Hälfte für Spieler 1
         } else {
-            countdownDisplay.style.color = 'var(--player2-color)';
-            countdownDisplay.style.left = '75%'; // Rechte Hälfte für Spieler 2
+            countdownDisplay.style.color = 'var(--punktefarbe-player2)';
+            countdownDisplay.style.left = '50%'; // 75% für Rechte Hälfte für Spieler 2
         }
 
         // Reflow erzwingen, damit die Start-Stile angewendet werden, bevor die Animation beginnt
