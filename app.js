@@ -46,7 +46,7 @@ const diceConfig = {
         player1Score: 0,
         player2Score: 0,
         currentPlayer: 1,
-        totalRounds: 20,
+        totalRounds: 4,
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
