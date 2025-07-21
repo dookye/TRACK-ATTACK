@@ -41,6 +41,8 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 :root {
     --player1-color: #007bff; /* Blau */
     --player2-color: #e83e8c; /* Pink */
+    --punktefarbe-player1: #FFD700; /* Beispiel: Gold für Spieler 1 */
+    --punktefarbe-player2: #ADFF2F; /* Beispiel: Grün für Spieler 2 */
     --black: #000;
     --white: #fff;
     --transition-speed: 0.8s;
