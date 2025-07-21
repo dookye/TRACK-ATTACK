@@ -712,7 +712,7 @@ function handleFeedback(isCorrect) {
             .then(() => { // <--- HIER beginnt der .then()-Block für displayPointsAnimation
                 // 4.4: Spieler wechseln
                 gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
-                appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--punktefarbe-player1)' : 'var(--player2-color)';
+                appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
 
                 // Setze den Zustand zurück, bevor die nächste Runde beginnt
                 lastGameScreenVisible = '';
