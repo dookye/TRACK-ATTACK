@@ -53,8 +53,8 @@ const diceConfig = {
         maxAttempts: 0,
         trackDuration: 0,
         currentTrack: null,
-        player1SpeedRound: Math.floor(Math.random() * 2) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
-        player2SpeedRound: Math.floor(Math.random() * 2) + 1,
+        player1SpeedRound: Math.floor(Math.random() * 10) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
+        player2SpeedRound: Math.floor(Math.random() * 10) + 1,
         isSpeedRound: false,
         speedRoundTimeout: null,
         countdownInterval: null,
