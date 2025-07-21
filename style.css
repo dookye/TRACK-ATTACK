@@ -226,6 +226,7 @@ body, html {
 /* NEU: Klasse zur Deaktivierung der Buttons während der Animation */
 .no-interaction {
     pointer-events: none; /* Verhindert alle Maus- und Klick-Events */
+    opacity: 0.8;
     cursor: default;     /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
 }
 
