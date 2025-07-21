@@ -689,8 +689,8 @@ function fadeAudioOut() {
 // ... (bestehender Code vor handleFeedback) ...
 
 function handleFeedback(isCorrect) {
-    correctButton.classList.add('hidden');
-    wrongButton.classList.add('hidden');
+    correctButton.classList.add('inactive-button');
+    wrongButton.classList.add('inactive-button');
     
     // NEU: Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
     fadeAudioOut().then(() => {
@@ -792,8 +792,8 @@ function displayPointsAnimation(points, player) {
         diceContainer.classList.add('hidden');
         revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
         speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
-        document.getElementById('correct-button').classList.remove('hidden');
-        document.getElementById('wrong-button').classList.remove('hidden');
+        correctButton.classList.remove('inactive-button');
+        wrongButton.classList.remove('inactive-button');
         
         // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
         // wenn der Logo-Button wieder verwendet wird.
