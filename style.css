@@ -428,13 +428,13 @@ body, html {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1); /* Startposition (Mitte linke Hälfte) */
     top: 50%;
-    left: 25%;
+    left: 50%; /* 25 für linke hälfte */
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.3); /* Wird kleiner */
-    top: 3%; /* Fliegt nach oben */
-    left: 3%; /* Fliegt nach links oben */
+    transform: translate(-50%, -50%) scale(0.2); /* Wird kleiner */
+    top: 50%; /* bleibt mittig */
+    left: 1%; /* Fliegt nach links oben */
   }
 }
 
@@ -443,20 +443,20 @@ body, html {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1); /* Startposition (Mitte rechte Hälfte) */
     top: 50%;
-    left: 75%;
+    left: 50%; /* 75 für rechte hälfte */
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.3); /* Wird kleiner */
-    top: 3%; /* Fliegt nach oben */
-    left: 97%; /* Fliegt nach rechts oben */
+    transform: translate(-50%, -50%) scale(0.2); /* Wird kleiner */
+    top: 50%; /* bleibt mittig */
+    left: 99%; /* Fliegt nach rechts oben */
   }
 }
 
 .fly-to-corner-player1 {
-  animation: flyToCornerPlayer1 0.4s ease-out forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
+  animation: flyToCornerPlayer1 0.4s ease-in forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
 
 .fly-to-corner-player2 {
-  animation: flyToCornerPlayer2 0.4s ease-out forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
+  animation: flyToCornerPlayer2 0.4s ease-in forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
