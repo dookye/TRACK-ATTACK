@@ -375,7 +375,7 @@ body, html {
     font-size: 20vw; /* Sehr groß und responsiv */
     font-weight: bold;
     color: var(--white);
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* Leichter Glow */
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Leichter Glow */
     z-index: 30; /* Über den meisten anderen Elementen */
     /* Animation wird über JavaScript hinzugefügt/entfernt, damit sie jedes Mal neu startet */
 }
