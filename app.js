@@ -17,11 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const revealButton = document.getElementById('reveal-button');
     const revealContainer = document.getElementById('reveal-container');
     const scoreScreen = document.getElementById('score-screen');
-    const speedRoundTextDisplay = document.getElementById('speed-round-text-display'); // NEU: Referenz auf das Text-Element
+    const speedRoundTextDisplay = document.getElementById('speed-round-text-display');
     const speedRoundTimer = document.getElementById('speed-round-timer');
     const countdownDisplay = document.getElementById('countdown-display');
-    const trackAlbum = document.getElementById('track-album'); // NEU
-    const trackYear = document.getElementById('track-year');     // NEU
+    const trackAlbum = document.getElementById('track-album');
+    const trackYear = document.getElementById('track-year');
+    const correctButton = document.getElementById('correct-button');
+    const wrongButton = document.getElementById('wrong-button');
 
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
@@ -687,6 +689,9 @@ function fadeAudioOut() {
 // ... (bestehender Code vor handleFeedback) ...
 
 function handleFeedback(isCorrect) {
+    correctButton.classList.add('hidden');
+    wrongButton.classList.add('hidden');
+    
     // NEU: Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
     fadeAudioOut().then(() => {
         // Dieser Code wird ausgeführt, NACHDEM der Fade-Out beendet ist
@@ -787,6 +792,8 @@ function displayPointsAnimation(points, player) {
         diceContainer.classList.add('hidden');
         revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
         speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
+        document.getElementById('correct-button').classList.remove('hidden');
+        document.getElementById('wrong-button').classList.remove('hidden');
         
         // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
         // wenn der Logo-Button wieder verwendet wird.
