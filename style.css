@@ -327,7 +327,7 @@ body, html {
 /* Punkte-Bildschirm (Phase 5) */
 #score-screen {
     flex-direction: row;
-    background: linear-gradient(90deg, var(--player1-color) 0%, var(--player1-color) 40%, var(--player2-color) 60%, var(--player2-color) 100%);
+    background: linear-gradient(90deg, var(--player1-color) 0%, var(--player1-color) 45%, var(--player2-color) 55%, var(--player2-color) 100%);
 }
 #player1-score-display, #player2-score-display {
     width: 50%;
