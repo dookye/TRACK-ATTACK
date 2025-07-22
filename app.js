@@ -387,9 +387,8 @@ function runGenreAnimation(buttons) {
         buttons.forEach(btn => {
              btn.addEventListener('click', handleGenreSelection, { once: true });
         });
- } 
-    
-    else { // Fall A: WÜRFEL 1-5
+
+    }   else { // Fall A: WÜRFEL 1-5
         
         // 1. Erst alle Buttons deaktivieren
         buttons.forEach(btn => btn.disabled = true);
