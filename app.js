@@ -24,7 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const trackYear = document.getElementById('track-year');
     const correctButton = document.getElementById('correct-button');
     const wrongButton = document.getElementById('wrong-button');
+    const randomDiceButton = document.getElementById('random-dice-button'); // ----RANDOM DICE
 
+    // --- Event Listener ---
+    randomDiceButton.addEventListener('click', handleRandomDiceRoll);
+    // hier können weitere vorhandene Event Listener zentral eingefügt wwerden
+    
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
     const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
@@ -284,6 +289,82 @@ const diceConfig = {
     // Phase 3: Würfel- & Genre-Auswahl
     //=======================================================================
 
+    // ------ RANDOM DICE ----------
+
+// Holt alle Würfelbilder
+function getAllDiceImages() {
+    return Array.from(document.querySelectorAll('#dice-selection img[data-dice-value]'));
+}
+
+// Setzt alle Würfel auf ihren Normalzustand zurück
+function resetDiceSelectionUI() {
+    getAllDiceImages().forEach(img => {
+        img.classList.remove('inactive-dice', 'selected-dice-blink');
+        img.style.opacity = '1'; // Sicherstellen, dass Opacity zurückgesetzt wird
+        img.style.filter = 'none'; // Sicherstellen, dass Filter zurückgesetzt wird
+        img.style.border = 'none'; // Falls du später einen Border für den ausgewählten Würfel hinzufügst
+    });
+}
+
+// Funktion, die ausgelöst wird, wenn der digitale Würfelbutton geklickt wird
+async function handleRandomDiceRoll() {
+    // Buttons inaktiv machen, um Mehrfach-Klicks während Animation zu verhindern
+    randomDiceButton.classList.add('inactive'); // Die bestehende 'inactive' Klasse kann genutzt werden
+    getAllDiceImages().forEach(img => img.classList.add('no-interaction')); // Verhindert Klicks auf die Würfelbilder während des Würfelns
+
+    resetDiceSelectionUI(); // Setzt alle Würfel zurück, falls schon ein Würfel ausgewählt war
+
+    const diceImages = getAllDiceImages();
+    const diceValues = [1, 2, 3, 4, 5, 7]; // Die möglichen Würfelwerte
+    
+    // Zufälligen Würfelwert auswählen
+    const randomValue = diceValues[Math.floor(Math.random() * diceValues.length)];
+    let selectedDiceImage = null;
+
+    // Blink-Animation für 2 Sekunden
+    const blinkDuration = 2000; // 2 Sekunden
+    const blinkIntervalTime = 100; // Blinkfrequenz (schneller, da es viele Würfel sind)
+    let blinkCounter = 0;
+
+    const blinkInterval = setInterval(() => {
+        // Alle Würfel toggeln die Blinkklasse
+        diceImages.forEach(img => img.classList.toggle('random-blink'));
+        blinkCounter += blinkIntervalTime;
+
+        if (blinkCounter >= blinkDuration) {
+            clearInterval(blinkInterval);
+            diceImages.forEach(img => img.classList.remove('random-blink')); // Blinkklasse entfernen
+            
+            // Den zufällig ausgewählten Würfel identifizieren
+            selectedDiceImage = diceImages.find(img => parseInt(img.dataset.diceValue) === randomValue);
+
+            if (selectedDiceImage) {
+                // Den ausgewählten Würfel aktiv lassen und die anderen inaktiv machen
+                diceImages.forEach(img => {
+                    if (img !== selectedDiceImage) {
+                        img.classList.add('inactive-dice'); // Abgedunkelt/verschwommen und nicht klickbar
+                    }
+                });
+                // Optional: Ausgewählten Würfel besonders hervorheben, z.B. mit einem Rahmen
+                // selectedDiceImage.style.border = '3px solid gold'; 
+                // selectedDiceImage.classList.add('selected-dice-blink'); // Kann auch eine leichte Animation sein
+
+                // Den Wert im gameState speichern, damit der Spieler dann auf den "echten" Würfel klicken kann
+                // oder du kannst es direkt hier als gewählt behandeln
+                gameState.diceValue = randomValue; // Den Wert des zufällig gewählten Würfels speichern
+                console.log(`Digital gewürfelt: ${randomValue}`);
+
+                // Nach der Auswahl wieder alle Klicks auf Würfel zulassen
+                getAllDiceImages().forEach(img => img.classList.remove('no-interaction'));
+            } else {
+                console.error("Fehler: Zufällig ausgewählter Würfel konnte nicht gefunden werden.");
+            }
+            randomDiceButton.classList.remove('inactive'); // Button wieder aktiv machen
+        }
+    }, blinkIntervalTime);
+}
+       //---------- ENDE RANDOM DICE -------------
+    
     function showDiceScreen() {
         resetRoundUI();
         gameState.currentRound++;
@@ -299,13 +380,18 @@ const diceConfig = {
         diceAnimation.classList.remove('hidden');
         diceSelection.classList.add('hidden');
 
+        // NEU: Digitalen Würfelbutton anzeigen
+        randomDiceButton.classList.remove('hidden'); // Macht den Button sichtbar
+
         // Speichere den Zustand: Würfel-Bildschirm
         lastGameScreenVisible = 'dice-container';
         
         setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
-        }, 2000);
+            // NEU: Setze Würfelauswahl-UI zurück, wenn Würfel angezeigt werden
+            resetDiceSelectionUI();
+        }, 2000); // Dauer der Würfelanimation
     }
 
     document.querySelectorAll('.dice-option').forEach(dice => {
@@ -686,8 +772,6 @@ function fadeAudioOut() {
 
     revealButton.addEventListener('click', showResolution);
 
-// ... (bestehender Code vor handleFeedback) ...
-
 function handleFeedback(isCorrect) {
     correctButton.classList.add('no-interaction');
     wrongButton.classList.add('no-interaction');
@@ -794,12 +878,15 @@ function displayPointsAnimation(points, player) {
         speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
         correctButton.classList.remove('no-interaction');
         wrongButton.classList.remove('no-interaction');
+
+        // NEU: Digitalen Würfelbutton ausblenden und Würfel-UI zurücksetzen
+        randomDiceButton.classList.add('hidden'); // Oder einfach nur 'inactive', je nachdem wann er erscheinen soll
+        resetDiceSelectionUI(); // Setzt alle Würfel auf normal zurück
         
         // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
         // wenn der Logo-Button wieder verwendet wird.
         logoButton.removeEventListener('click', playTrackSnippet);
 
-        //NEU:
         // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
     clearTimeout(gameState.speedRoundTimeout);
     clearInterval(gameState.countdownInterval);
@@ -812,7 +899,7 @@ function displayPointsAnimation(points, player) {
         gameState.isSongPlaying = false;
     }
 
-    // NEU: Lautstärke auf 100% zurücksetzen, BEVOR der nächste Song startet
+    // Lautstärke auf 100% zurücksetzen, BEVOR der nächste Song startet
     if (spotifyPlayer) { // Prüfen, ob der Player initialisiert ist
         spotifyPlayer.setVolume(1.0) // 1.0 entspricht 100%
             .then(() => {
