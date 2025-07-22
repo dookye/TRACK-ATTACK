@@ -405,6 +405,7 @@ function runGenreAnimation(buttons) {
 
     async function handleGenreSelection(e) {
         const selectedGenre = e.target.dataset.genre;
+        await new Promise(resolve => setTimeout(resolve, 200)); // kurze Verzögerung zum nächsten screen
         genreContainer.classList.add('hidden');
         document.querySelectorAll('.genre-button').forEach(btn => btn.removeEventListener('click', handleGenreSelection));
         
