@@ -32,7 +32,6 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 #reveal-button:active,
 #correct-button:active,
 #wrong-button:active,
-.dice-otion:active,
 {
     transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
 }
