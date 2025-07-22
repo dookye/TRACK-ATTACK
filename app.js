@@ -690,7 +690,7 @@ function fadeAudioOut() {
     // ------------------------mit verzögerung zur Auflösung:.............................................
     revealButton.addEventListener('click', async () => { 
     // Blende den Button sofort aus, um Doppelklicks zu vermeiden
-    revealButton.classList.add('hidden'); 
+    revealButton.classList.add('no-interaction'); 
 
     // NEU: Verzögerung HIER einfügen, direkt nach dem Klick und dem Ausblenden des Buttons.
     // Das gibt dem Browser Zeit, die Pulldown-Animation zu rendern,
