@@ -24,8 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const trackYear = document.getElementById('track-year');
     const correctButton = document.getElementById('correct-button');
     const wrongButton = document.getElementById('wrong-button');
-  
-    
+
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
     const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
@@ -284,7 +283,7 @@ const diceConfig = {
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
     //=======================================================================
-    
+
     function showDiceScreen() {
         resetRoundUI();
         gameState.currentRound++;
@@ -306,9 +305,7 @@ const diceConfig = {
         setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
-            // NEU: Setze Würfelauswahl-UI zurück, wenn Würfel angezeigt werden
-            resetDiceSelectionUI();
-        }, 2000); // Dauer der Würfelanimation
+        }, 2000);
     }
 
     document.querySelectorAll('.dice-option').forEach(dice => {
@@ -332,7 +329,7 @@ const diceConfig = {
             diceContainer.classList.add('hidden');
             showGenreScreen();
 
-        }, 500);
+        }, 400);
     });
 });
     
@@ -388,7 +385,7 @@ function runGenreAnimation(buttons) {
              btn.addEventListener('click', handleGenreSelection, { once: true });
         });
 
-    }   else { // Fall A: WÜRFEL 1-5
+    } else { // Fall A: WÜRFEL 1-5
         
         // 1. Erst alle Buttons deaktivieren
         buttons.forEach(btn => btn.disabled = true);
@@ -689,6 +686,8 @@ function fadeAudioOut() {
 
     revealButton.addEventListener('click', showResolution);
 
+// ... (bestehender Code vor handleFeedback) ...
+
 function handleFeedback(isCorrect) {
     correctButton.classList.add('no-interaction');
     wrongButton.classList.add('no-interaction');
@@ -800,6 +799,7 @@ function displayPointsAnimation(points, player) {
         // wenn der Logo-Button wieder verwendet wird.
         logoButton.removeEventListener('click', playTrackSnippet);
 
+        //NEU:
         // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
     clearTimeout(gameState.speedRoundTimeout);
     clearInterval(gameState.countdownInterval);
@@ -812,7 +812,7 @@ function displayPointsAnimation(points, player) {
         gameState.isSongPlaying = false;
     }
 
-    // Lautstärke auf 100% zurücksetzen, BEVOR der nächste Song startet
+    // NEU: Lautstärke auf 100% zurücksetzen, BEVOR der nächste Song startet
     if (spotifyPlayer) { // Prüfen, ob der Player initialisiert ist
         spotifyPlayer.setVolume(1.0) // 1.0 entspricht 100%
             .then(() => {
