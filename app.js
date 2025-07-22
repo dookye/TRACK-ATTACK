@@ -329,7 +329,7 @@ const diceConfig = {
             diceContainer.classList.add('hidden');
             showGenreScreen();
 
-        }, 400);
+        }, 200);
     });
 });
     
