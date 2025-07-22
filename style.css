@@ -68,6 +68,14 @@ body, html {
     -moz-user-select: none;      /* Old versions of Firefox */
     -ms-user-select: none;       /* Internet Explorer/Edge */
     user-select: none;           /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+
+    -webkit-user-drag: none; /* Spezifisch für WebKit (Chrome, Safari, Edge auf iOS) */
+    -moz-user-drag: none;    /* Für Firefox */
+    user-drag: none;         /* Standard */
+
+    touch-action: pan-x pan-y; /* Erlaubt Panning/Scrolling. Auf 'none' setzen, um alles zu blockieren. */
+    /* Alternative für touch-action: */
+    /* touch-action: none; */ /* Blockiert ALLE Touch-Gesten (Panning, Zoom, etc.). SEHR VORSICHTIG ANWENDEN! */
 }
 
 #app-container {
