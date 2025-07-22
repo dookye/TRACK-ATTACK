@@ -213,6 +213,43 @@ body, html {
     transform: scale(1.1);
 }
 
+/* -------------RANDOM-DICE---------------- */
+/* NEU: Styling für den digitalen Würfelbutton */
+#random-dice-button {
+    position: absolute;
+    bottom: 20px; /* Abstand von unten */
+    left: 20px; /* Abstand von links */
+    background: none; /* Kein Hintergrund für den Button selbst */
+    border: none; /* Kein Rand */
+    padding: 0;
+    cursor: pointer;
+    z-index: 10; /* Stellen Sie sicher, dass es über anderen Elementen liegt */
+    width: 80px; /* Beispielgröße, anpassen nach Bedarf */
+    height: 80px; /* Beispielgröße */
+    display: flex; /* Für zentriertes Bild */
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.2s ease-in-out; /* Für Bounce-Effekt */
+}
+
+#random-dice-button img {
+    width: 100%; /* Bild füllt den Button aus */
+    height: 100%;
+    object-fit: contain; /* Bildgröße anpassen */
+}
+
+#random-dice-button:active {
+    transform: scale(0.9); /* Kleiner werden beim Klicken */
+}
+
+/* NEU: Stile für inaktive Würfelbilder nach Zufallsauswahl */
+#dice-selection img.inactive-dice {
+    opacity: 0.3; /* Leicht abgedunkelt */
+    filter: blur(2px); /* Leicht verschwommen */
+    pointer-events: none; /* Nicht klickbar */
+}
+*/ ---------RANDOM DICE------------- */
+
 /* Genre Container (Phase 3) - Jetzt separat stylen */
 #genre-container {
     display: flex;
