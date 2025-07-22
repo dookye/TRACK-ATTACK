@@ -198,6 +198,10 @@ body, html {
     gap: 30px; /* ändert den Abstand zwischen den Würfeln */
 }
 
+#dice-selection img:active {
+    transform: scale(0.95); /* Wird kleiner beim Klicken */
+}
+
 .dice-option {
     width: 100px;
     height: auto;
