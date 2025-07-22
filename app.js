@@ -404,6 +404,10 @@ function runGenreAnimation(buttons) {
         // Füge den Event-Listener nur für den aktiven Button hinzu
         activeButton.addEventListener('click', handleGenreSelection, { once: true });
     }
+        // NEU TEST TIMEOUT
+        setTimeout(() => {
+             }, 500);
+    });
 }
 
     async function handleGenreSelection(e) {
