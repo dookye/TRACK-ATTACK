@@ -288,7 +288,7 @@ const diceConfig = {
         resetRoundUI();
         gameState.currentRound++;
         gameState.isSpeedRound = false;
-
+        
         // Check für Spielende
         if (gameState.currentRound > gameState.totalRounds) {
             endGame();
@@ -305,6 +305,9 @@ const diceConfig = {
         setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
+            
+            // ----------------------- test für no-active ----------------------
+            diceSelection.classList.remove('no-interaction');
         }, 2000);
     }
 
@@ -312,6 +315,9 @@ const diceConfig = {
     dice.addEventListener('click', (e) => {
         const selectedValue = parseInt(e.target.dataset.value);
         gameState.diceValue = selectedValue;
+        
+        // --------------- test für no-active---------------------------------
+        diceSelection.classList.ad('no-interaction');
 
         // Prüfen, ob der ausgewählte Würfel in unserer Konfiguration existiert
         const config = diceConfig[selectedValue];
