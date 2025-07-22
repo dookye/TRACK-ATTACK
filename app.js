@@ -278,7 +278,7 @@ const diceConfig = {
             appContainer.style.backgroundColor = 'var(--player1-color)';
             logoButton.classList.add('hidden');
             showDiceScreen();
-        }, 800); // Warten, bis Bounce-Effekt und Blur sichtbar sind
+        }, 2000); // Warten, bis Bounce-Effekt und Blur sichtbar sind
     }
     
     //=======================================================================
