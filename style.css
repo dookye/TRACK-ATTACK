@@ -22,6 +22,7 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 #correct-button, /* RICHTIG-Button */
 #wrong-button, /* FALSCH-Button */
 .dice-option /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
+.dice-selection
 {
     transition: transform 0.06s ease-out; /* Kurze, sanfte Animation */
     cursor: pointer; /* Zeigt an, dass das Element klickbar ist */
@@ -32,7 +33,7 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 #reveal-button:active,
 #correct-button:active,
 #wrong-button:active,
-.dice-selection:active /* Optional: Für die Würfel-Bilder */
+.dice-otion:active,
 {
     transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
 }
