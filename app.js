@@ -554,8 +554,6 @@ function runGenreAnimation(buttons) {
         // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
             revealButton.classList.remove('hidden');
-            //NEU TEST VERZÖGERUNG
-            await new Promise(resolve => setTimeout(resolve, 200));
         }
     }
 
@@ -687,7 +685,31 @@ function fadeAudioOut() {
     });
 }
 
-    revealButton.addEventListener('click', showResolution);
+    // alt einfach diese Zeile hier: revealButton.addEventListener('click', showResolution);
+    
+    // ------------------------mit verzögerung zur Auflösung:.............................................
+    revealButton.addEventListener('click', async () => { 
+    // Blende den Button sofort aus, um Doppelklicks zu vermeiden
+    revealButton.classList.add('hidden'); 
+
+    // NEU: Verzögerung HIER einfügen, direkt nach dem Klick und dem Ausblenden des Buttons.
+    // Das gibt dem Browser Zeit, die Pulldown-Animation zu rendern,
+    // bevor der Rest des Skripts (und damit der Screen-Wechsel) abläuft.
+    await new Promise(resolve => setTimeout(resolve, 200)); // Kurze Verzögerung für die Button-Animation
+
+    // Song ausblenden (falls noch nicht geschehen)
+    await fadeAudioOut(); 
+    
+    // Song pausieren
+    if (gameState.isSongPlaying && spotifyPlayer) {
+        spotifyPlayer.pause();
+        gameState.isSongPlaying = false;
+    }
+
+    // Zeige die Auflösung an (Titel, Album, etc.)
+    showResolution(); 
+});
+    // ---------------------------verzögerung ende----------------------------------------------------
 
 // ... (bestehender Code vor handleFeedback) ...
 
