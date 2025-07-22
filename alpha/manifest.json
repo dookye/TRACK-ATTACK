@@ -1,0 +1,21 @@
+{
+  "name": "TRACK ATTACK",
+  "short_name": "TRACK ATTACK",
+  "start_url": "https://dookye.github.io/TRACK-ATTACK/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "description": "MUSIC GUESSING GAME",
+  "icons": [
+    {
+      "src": "assets/logo-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
