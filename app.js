@@ -278,7 +278,7 @@ const diceConfig = {
             appContainer.style.backgroundColor = 'var(--player1-color)';
             logoButton.classList.add('hidden');
             showDiceScreen();
-        }, 2000); // Warten, bis Bounce-Effekt und Blur sichtbar sind
+        }, 800); // Warten, bis Bounce-Effekt und Blur sichtbar sind
     }
     
     //=======================================================================
@@ -332,7 +332,7 @@ const diceConfig = {
             diceContainer.classList.add('hidden');
             showGenreScreen();
 
-        }, 150);
+        }, 500);
     });
 });
     
@@ -892,7 +892,7 @@ function displayPointsAnimation(points, player) {
         setTimeout(() => {
             speedRoundTextDisplay.classList.add('hidden'); // Und hier
             resolve();
-        }, 4000);
+        }, 3500);
     });
 }
 
