@@ -66,6 +66,13 @@ const diceConfig = {
         currentSongVolume: 0, // NEU: Aktuelle Lautstärke für Fade-In
     };
 
+    // NEU: Zufälligen Startspieler festlegen
+    // Diese Zeile sollte NACH der gameState-Definition stehen,
+    // idealerweise in deiner initGame() Funktion oder dort, wo das Spiel gestartet wird.
+    gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2; 
+    // Eine 50/50 Chance: Wenn Math.random() < 0.5, ist es Spieler 1, sonst Spieler 2.
+    console.log(`Zufälliger Startspieler ist Spieler ${gameState.currentPlayer}`); // Zur Überprüfung in der Konsole
+
     // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
     let lastGameScreenVisible = '';
     
@@ -259,13 +266,6 @@ const diceConfig = {
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
     //=======================================================================
-
-    // NEU: Zufälligen Startspieler festlegen
-    // Diese Zeile sollte NACH der gameState-Definition stehen,
-    // idealerweise in deiner initGame() Funktion oder dort, wo das Spiel gestartet wird.
-    gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2; 
-    // Eine 50/50 Chance: Wenn Math.random() < 0.5, ist es Spieler 1, sonst Spieler 2.
-    console.log(`Zufälliger Startspieler ist Spieler ${gameState.currentPlayer}`); // Zur Überprüfung in der Konsole
     
     function triggerBounce(element) {
         element.classList.remove('bounce');
