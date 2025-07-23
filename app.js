@@ -346,22 +346,11 @@ function resetDiceSelectionUI() {
 
     document.querySelectorAll('.dice-option').forEach(dice => {
     dice.addEventListener('click', (e) => {
-        //
-        const selectedDice = e.target;
         const selectedValue = parseInt(e.target.dataset.value);
         gameState.diceValue = selectedValue;
 
-        // --- NEU: Alle Würfel inaktiv machen, außer dem geklickten ---
-        document.querySelectorAll('.dice-option').forEach(otherDice => {
-            if (otherDice !== selectedDice) {
-                otherDice.classList.add('no-interaction');
-            }
-            // Auch den geklickten Würfel sollte man nicht mehrfach klicken können,
-            // daher können wir den EventListener entfernen oder ihn ebenfalls inaktiv machen,
-            // aber das setTimeout unten sorgt bereits für den Screen-Wechsel.
-            // Wichtiger ist, dass die anderen inaktiv werden.
-        });
-        // --- ENDE NEU ---
+        // nachklick alle würfel "no-interaction"
+        diceSelction.classList.add('no-interaction');
 
         // Prüfen, ob der ausgewählte Würfel in unserer Konfiguration existiert
         const config = diceConfig[selectedValue];
