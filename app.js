@@ -333,9 +333,6 @@ const diceConfig = {
             return; // Beende die Funktion, um Fehler zu vermeiden
         }
 
-        // nachklick alle würfel "no-interaction"
-        diceSelction.classList.add('no-interaction');
-
         setTimeout(() => {
             // Die Werte werden jetzt direkt aus dem Konfigurationsobjekt ausgelesen
             gameState.trackDuration = config.duration;
@@ -839,9 +836,7 @@ function displayPointsAnimation(points, player) {
         revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
         speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
         correctButton.classList.remove('no-interaction');
-        wrongButton.classList.remove('no-interaction');
-        diceSelction.classList.remove('no-interaction');
-        
+        wrongButton.classList.remove('no-interaction');        
         
         // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
         // wenn der Logo-Button wieder verwendet wird.
