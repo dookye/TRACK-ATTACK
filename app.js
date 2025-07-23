@@ -326,15 +326,15 @@ const diceConfig = {
         const selectedValue = parseInt(e.target.dataset.value);
         gameState.diceValue = selectedValue;
 
-        // nachklick alle würfel "no-interaction"
-        diceSelction.classList.add('no-interaction');
-
         // Prüfen, ob der ausgewählte Würfel in unserer Konfiguration existiert
         const config = diceConfig[selectedValue];
         if (!config) {
             console.error(`Konfiguration für Würfelwert ${selectedValue} nicht gefunden!`);
             return; // Beende die Funktion, um Fehler zu vermeiden
         }
+
+        // nachklick alle würfel "no-interaction"
+        diceSelction.classList.add('no-interaction');
 
         setTimeout(() => {
             // Die Werte werden jetzt direkt aus dem Konfigurationsobjekt ausgelesen
