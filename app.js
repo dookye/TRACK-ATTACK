@@ -71,7 +71,11 @@ const diceConfig = {
     // idealerweise in deiner initGame() Funktion oder dort, wo das Spiel gestartet wird.
     gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2; 
     // Eine 50/50 Chance: Wenn Math.random() < 0.5, ist es Spieler 1, sonst Spieler 2.
-    console.log(`Zufälliger Startspieler ist Spieler ${gameState.currentPlayer}`); // Zur Überprüfung in der Konsole
+    // NEU: Setze die Hintergrundfarbe basierend auf dem zufälligen Startspieler
+    appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
+
+    console.log(`Zufälliger Startspieler ist Spieler ${gameState.currentPlayer}`); 
+    console.log(`Hintergrundfarbe gesetzt für Spieler ${gameState.currentPlayer}`); // Optional zur Überprüfung
 
     // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
     let lastGameScreenVisible = '';
