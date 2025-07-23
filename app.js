@@ -318,31 +318,8 @@ const diceConfig = {
         setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
-            resetDiceSelectionUI();
         }, 2000);
     }
-
-    // --- NEU: Utility-Funktion zum Zurücksetzen der Würfel-UI ---
-// Diese Funktion stellt sicher, dass alle Würfel wieder anklickbar und normal aussehen.
-function resetDiceSelectionUI() {
-    // Holt alle Würfelbilder mit dem data-dice-value Attribut
-    const allDiceImages = Array.from(document.querySelectorAll('#dice-selection img[data-dice-value]'));
-    
-    allDiceImages.forEach(img => {
-        // Entfernt alle Klassen, die Inaktivität oder spezielle Animationen verursachen
-        img.classList.remove('inactive-dice', 'selected-dice-blink', 'no-interaction', 'random-blink'); 
-        
-        // Stellt sicher, dass die grundlegenden Stile zurückgesetzt werden
-        img.style.opacity = '1'; 
-        img.style.filter = 'none'; 
-        img.style.border = 'none'; // Falls du später einen Rahmen für den ausgewählten Würfel hinzufügst
-    });
-    // Optional: Den digitalen Würfel-Button wieder aktivieren, falls er deaktiviert war
-    if (randomDiceButton) { // Nur ausführen, wenn der Button existiert
-        randomDiceButton.classList.remove('inactive'); 
-        randomDiceButton.classList.remove('no-interaction'); // Falls er auch diese Klasse hatte
-    }
-}
 
     document.querySelectorAll('.dice-option').forEach(dice => {
     dice.addEventListener('click', (e) => {
@@ -444,13 +421,6 @@ function runGenreAnimation(buttons) {
 
     async function handleGenreSelection(e) {
         const selectedGenre = e.target.dataset.genre;
-        
-        // NEU: Sofort alle Genre-Buttons inaktiv machen, um Doppelklicks zu vermeiden
-        document.querySelectorAll('.genre-button').forEach(btn => {
-        btn.classList.add('no-interaction');
-        // Optional: btn.disabled = true; // Kann zusätzlich gesetzt werden
-    });
-    // --- ENDE NEU ---
         
         await new Promise(resolve => setTimeout(resolve, 200)); // kurze Verzögerung zum nächsten screen
         genreContainer.classList.add('hidden');
@@ -870,15 +840,8 @@ function displayPointsAnimation(points, player) {
         speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
         correctButton.classList.remove('no-interaction');
         wrongButton.classList.remove('no-interaction');
-
-        // dice-buttons wieder aktiv machen
-        resetDiceSelectionUI();
-
-        // NEU: Genre-Buttons wieder aktiv machen
-        document.querySelectorAll('.genre-button').forEach(btn => {
-        btn.classList.remove('no-interaction');
-        // btn.disabled = false; // Falls du disabled benutzt hast
-    });
+        diceSelction.classList.remove('no-interaction');
+        
         
         // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
         // wenn der Logo-Button wieder verwendet wird.
