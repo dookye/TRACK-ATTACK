@@ -346,7 +346,8 @@ function resetDiceSelectionUI() {
 
     document.querySelectorAll('.dice-option').forEach(dice => {
     dice.addEventListener('click', (e) => {
-        // diese zeile mal testen, was passiert: const selectedDice = e.target; // Das geklickte Würfelbild ----------------------------------------------------------------------- testen
+        //
+        const selectedDice = e.target;
         const selectedValue = parseInt(e.target.dataset.value);
         gameState.diceValue = selectedValue;
 
