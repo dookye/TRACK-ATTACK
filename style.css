@@ -63,11 +63,11 @@ body, html {
     align-items: center;
     text-align: center;
     -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none;   /* Safari */
-    -khtml-user-select: none;    /* Konqueror HTML */
-    -moz-user-select: none;      /* Old versions of Firefox */
-    -ms-user-select: none;       /* Internet Explorer/Edge */
-    user-select: none;           /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+    -webkit-user-select: none;    /* Safari */
+    -khtml-user-select: none;     /* Konqueror HTML */
+    -moz-user-select: none;       /* Old versions of Firefox */
+    -ms-user-select: none;        /* Internet Explorer/Edge */
+    user-select: none;            /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
 
     -webkit-user-drag: none; /* Spezifisch für WebKit (Chrome, Safari, Edge auf iOS) */
     -moz-user-drag: none;    /* Für Firefox */
@@ -116,11 +116,6 @@ body, html {
     font-size: 1.5em;
 }
 
-#fullscreen-screen {
-    cursor: pointer;
-    font-size: 2em;
-}
-
 /* Stil für das Logo auf dem Login-Screen */
 #login-logo {
     width: 250px; /* Passe die Breite an deine Bedürfnisse an */
@@ -161,7 +156,7 @@ body, html {
 
 .initial-fly-in {
     animation: fly-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
-               bounce-end 0.3s 0.6s ease-out forwards;
+                bounce-end 0.3s 0.6s ease-out forwards;
 }
 
 @keyframes fly-in {
@@ -245,7 +240,7 @@ body, html {
 .no-interaction {
     pointer-events: none; /* Verhindert alle Maus- und Klick-Events */
     opacity: 0.8;
-    cursor: default;     /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
+    cursor: default;       /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
 }
 
 .genre-button {
