@@ -123,10 +123,21 @@ body, html {
     margin-bottom: 20px; /* Abstand zum Text darunter */
 }
 
-#info {
-     width: 50px; /* Passe die Breite an deine Bedürfnisse an */
-    height: auto;
-    margin-bottom: 20px; /* Abstand zum Text darunter */
+.info-button {
+    display: inline-block; /* Ermöglicht Padding und Margin */
+    margin-top: 20px; /* Abstand nach oben */
+    cursor: pointer;
+    transition: transform 0.2s ease; /* Kleine Animation beim Hover */
+}
+
+.info-button:hover {
+    transform: scale(1.05); /* Beim Hover leicht größer werden */
+}
+
+.info-button img {
+    width: 50px; /* Größe deines Info-Icons, anpassen */
+    height: 50px;
+    display: block; /* Entfernt zusätzlichen Platz unter dem Bild */
 }
 
 /* Login-Button (Phase 1.1) */
