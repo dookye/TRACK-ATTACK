@@ -1,7 +1,14 @@
-// Teil1/2:
-
 // Wichtiger Hinweis: Dieser Code muss von einem Webserver bereitgestellt werden (z.B. über "Live Server" in VS Code).
 // Ein direktes Öffnen der HTML-Datei im Browser funktioniert wegen der Sicherheitsrichtlinien (CORS) bei API-Anfragen nicht.
+
+
+// --- API Endpunkte --- NEU HINZUGEFÜGT
+const API_ENDPOINTS = {
+    SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
+    SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
+    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
+};
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -133,7 +140,8 @@ const diceConfig = {
         params.append("scope", "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state");
         params.append("code_challenge_method", "S256");
         params.append("code_challenge", challenge);
-        document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
+        // document.location = `https://accounts.spotify.com/authorize?$${params.toString()}`; // ALTE ZEILE
+        document.location = `${API_ENDPOINTS.SPOTIFY_AUTH}?${params.toString()}`; // NEUE ZEILE
     }
 
     // 1.2: Access Token abrufen
@@ -146,7 +154,8 @@ const diceConfig = {
         params.append("redirect_uri", REDIRECT_URI);
         params.append("code_verifier", verifier);
 
-        const result = await fetch("https://accounts.spotify.com/api/token", {
+        // const result = await fetch("https://accounts.spotify.com/api/token", { // ALTE ZEILE
+        const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, { // NEUE ZEILE
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: params
@@ -466,7 +475,8 @@ function runGenreAnimation(buttons) {
         // NEU: Loggen der ausgewählten Playlist-ID
         console.log(`DEBUG: Ausgewähltes Genre: "${genre}", Playlist-ID: "${randomPlaylistId}"`);
 
-        const response = await fetch(`https://api.spotify.com/v1/playlists/$${randomPlaylistId}/tracks`, {
+        // const response = await fetch(`https://api.spotify.com/v1/playlists/$${randomPlaylistId}/tracks`, { // ALTE ZEILE
+        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), { // NEUE ZEILE
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
 
@@ -542,8 +552,8 @@ function runGenreAnimation(buttons) {
         const trackDurationMs = gameState.currentTrack.duration_ms;
         const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        fetch(`https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`, {
-        // ??? fetch(`${SPOTIFY_PLAY_URL}${deviceId}`, { // KORRIGIERT
+        // fetch(`https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`, { // ALTE ZEILE
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
@@ -644,8 +654,8 @@ async function playSongForResolution() {
         gameState.currentSongVolume = 0; // Setze interne Volume auf 0
 
         // Song bei Sekunde 30 starten
-        // fetch(`${SPOTIFY_PLAYER_BASE}play?device_id=${deviceId}`, { // Korrigierte URL, falls nötig
-        fetch(`https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`, {
+        // fetch(`https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`, { // ALTE ZEILE
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
