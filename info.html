@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRACK ATTACK - Spielregeln</title>
+    <link rel="stylesheet" href="style.css"> <style>
+        /* Grundlegendes Styling für die Infoseite, anpassbar an dein Design */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--black); /* Oder deine Hintergrundfarbe */
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Inhalt oben ausrichten */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .info-content {
+            max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.1); /* Leicht transparenter Hintergrund */
+            padding: 30px;
+            border-radius: 15px;
+            text-align: left;
+            margin-top: 50px; /* Abstand nach oben */
+            margin-bottom: 20px;
+            overflow-y: auto; /* Wenn der Inhalt länger ist, wird gescrollt */
+            max-height: calc(100vh - 150px); /* Maximale Höhe, damit der Button noch sichtbar ist */
+        }
+
+        .info-content h1 {
+            text-align: center;
+            color: var(--player1-color); /* Oder eine passende Akzentfarbe */
+            margin-bottom: 20px;
+        }
+
+        .info-content h2 {
+            color: var(--player2-color);
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .info-content p, .info-content ul {
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .info-content ul {
+            padding-left: 20px;
+        }
+
+        .back-button-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .back-button {
+            background-color: var(--player1-color); /* Deine Akzentfarbe */
+            color: var(--white);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none; /* Für den Link-Stil */
+            display: inline-block; /* Für padding und Abstände */
+        }
+
+        .back-button:hover {
+            background-color: var(--player2-color); /* Hover-Farbe */
+        }
+    </style>
+</head>
+<body>
+    <div class="info-content">
+        <h1>TRACK ATTACK - Spielregeln</h1>
+
+        <p>Willkommen bei TRACK ATTACK! Teste dein Musikwissen und tritt gegen deine Freunde an. Schaffst du es, die Songs zu erraten?</p>
+
+        <h2>So funktioniert's:</h2>
+        <ul>
+            <li>Jeder Spieler würfelt abwechselnd, um die Anzahl der Versuche und die Länge des Musik-Snippets zu bestimmen.</li>
+            <li>Hör dir das Snippet an und versuche, den Songtitel und/oder den Interpreten zu erraten.</li>
+            <li>Wähle "Richtig" oder "Falsch", nachdem du geraten hast oder die "Auflösen"-Taste gedrückt hast.</li>
+            <li>Punkte gibt es für richtige Antworten – je schneller du rätst und je weniger Versuche du brauchst, desto mehr Punkte!</li>
+        </ul>
+
+        <h2>Würfel-Erklärung:</h2>
+        <p>Jeder Würfelwert beeinflusst die Spieldauer und die Anzahl der dir zur Verfügung stehenden Hinweise:</p>
+        <ul>
+            <li><strong>Würfel 1-5:</strong> Du erhältst entsprechend viele Versuche, um den Song zu erraten. Das Musik-Snippet ist 7 Sekunden lang.</li>
+            <li><strong>Würfel 7 (Speed-Round):</strong> Dies ist eine schnelle Runde! Du hast nur einen einzigen Versuch und musst den Song innerhalb von 7 Sekunden erraten. Aber Achtung: Eines der Genres ist bei dieser Runde nicht verfügbar.</li>
+        </ul>
+
+        <h2>Ziel des Spiels:</h2>
+        <p>Sammle die meisten Punkte, indem du die Songs schneller und effizienter errätst als dein Gegner!</p>
+
+        <p>Viel Spaß beim Raten und möge der Beste gewinnen!</p>
+    </div>
+
+    <div class="back-button-container">
+        <a href="index.html" class="back-button">Zurück zum Spiel</a>
+    </div>
+</body>
+</html>
