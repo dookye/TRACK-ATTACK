@@ -135,8 +135,8 @@ body, html {
 }
 
 .info-button img {
-    width: 50px; /* Größe deines Info-Icons, anpassen */
-    height: 50px;
+    width: 1ß%; /* Größe deines Info-Icons, anpassen */
+    height: 10%;
     display: block; /* Entfernt zusätzlichen Platz unter dem Bild */
 }
 
