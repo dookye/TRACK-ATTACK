@@ -6,8 +6,8 @@
 const API_ENDPOINTS = {
     SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
     SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
-    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/$${playlistId}/tracks`,
-    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`
+    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM-Elemente ---
     const appContainer = document.getElementById('app-container');
     const loginScreen = document.getElementById('login-screen');
-    // const fullscreenScreen = document.getElementById('fullscreen-screen'); // ENTFERNT
+    const fullscreenScreen = document.getElementById('fullscreen-screen');
     const gameScreen = document.getElementById('game-screen');
     const rotateDeviceOverlay = document.getElementById('rotate-device-overlay');
     const logoButton = document.getElementById('logo-button');
@@ -82,9 +82,9 @@ const diceConfig = {
     gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2;  
     // Eine 50/50 Chance: Wenn Math.random() < 0.5, ist es Spieler 1, sonst Spieler 2.
 
-    console.log(`Zufälliger Startspieler ist Spieler ${gameState.currentPlayer}`);  
+    console.log(`Zufälliger Startspieler ist Spieler ${gameState.currentPlayer}`); 
 
-    // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens (wird jetzt weniger relevant)
+    // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
     let lastGameScreenVisible = '';
     
     const playlists = {
@@ -98,17 +98,18 @@ const diceConfig = {
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
     
-    // 1.4: Querformat-Prüfung (JETZT ANPASSEN FÜR PWA-MODUS)
+    // 1.4: Querformat-Prüfung
     function checkOrientation() {
-        // Prüft, ob die App im Standalone-Modus (PWA) läuft
-        const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || document.referrer.includes('android-app://') || navigator.standalone;
-
-        if (window.innerHeight > window.innerWidth && isStandalone) {
+        if (window.innerHeight > window.innerWidth) {
             rotateDeviceOverlay.classList.remove('hidden');
         } else {
             rotateDeviceOverlay.classList.add('hidden');
         }
     }
+
+    // alte rotations abfrage
+    // window.addEventListener('resize', checkOrientation);
+    // checkOrientation();
 
     // 1.2: PKCE-Flow Helferfunktionen
     async function generateCodeChallenge(codeVerifier) {
@@ -139,7 +140,8 @@ const diceConfig = {
         params.append("scope", "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state");
         params.append("code_challenge_method", "S256");
         params.append("code_challenge", challenge);
-        document.location = `${API_ENDPOINTS.SPOTIFY_AUTH}?${params.toString()}`;
+        // document.location = `https://accounts.spotify.com/authorize?$${params.toString()}`; // ALTE ZEILE
+        document.location = `${API_ENDPOINTS.SPOTIFY_AUTH}?${params.toString()}`; // NEUE ZEILE
     }
 
     // 1.2: Access Token abrufen
@@ -152,7 +154,8 @@ const diceConfig = {
         params.append("redirect_uri", REDIRECT_URI);
         params.append("code_verifier", verifier);
 
-        const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, {
+        // const result = await fetch("https://accounts.spotify.com/api/token", { // ALTE ZEILE
+        const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, { // NEUE ZEILE
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: params
@@ -166,24 +169,20 @@ const diceConfig = {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
-    // **Direkte Aktivierung der Orientierungsprüfung beim Laden der Seite**
-    window.addEventListener('resize', checkOrientation);
-    checkOrientation();
-
     if (code) {
         // Wir kommen von der Spotify-Weiterleitung zurück
         window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
         getAccessToken(code).then(token => {
             accessToken = token;
             loginScreen.classList.add('hidden');
-            gameScreen.classList.remove('hidden'); // Direkt zum GameScreen wechseln
-            logoButton.classList.remove('hidden'); // Logo Button anzeigen
-            logoButton.classList.add('initial-fly-in'); // Animation starten
-            logoButton.addEventListener('click', startGame, { once: true }); // Listener für Spielstart
+            fullscreenScreen.classList.remove('hidden');
             initializePlayer();
+            // NEU: Orientierungsprüfung und Listener nach erfolgreichem Login aktivieren
+            window.addEventListener('resize', checkOrientation);
+            checkOrientation();
         });
     } else {
-        // Standard-Ansicht (wenn kein Code in der URL ist)
+        // Standard-Ansicht
         loginScreen.classList.remove('hidden');
         document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
     }
@@ -214,27 +213,69 @@ const diceConfig = {
         };
     }
 
-    // Event Listener für das Verlassen des Vollbildmodus (relevant nur noch für PWA-Modus, wenn geschlossen)
+    // NEU: Event Listener für das Verlassen des Vollbildmodus
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement) {
-            // Vollbildmodus wurde verlassen (relevant für PWA, wenn man ihn schließt)
-            // Pausiere den Player, wenn der Vollbildmodus verlassen wird
+            // Vollbildmodus wurde verlassen
+            // Speichere den Zustand, BEVOR alles versteckt wird
+            if (!logoButton.classList.contains('hidden')) {
+                lastGameScreenVisible = 'logo-button';
+            } else if (!diceContainer.classList.contains('hidden')) {
+                lastGameScreenVisible = 'dice-container';
+            } else if (!genreContainer.classList.contains('hidden')) {
+                lastGameScreenVisible = 'genre-container';
+            } else if (!revealContainer.classList.contains('hidden')) {
+                lastGameScreenVisible = 'reveal-container';
+            } else {
+                lastGameScreenVisible = ''; // Wenn nichts Spezielles sichtbar war
+            }
+
+
+            // Alle Spiel-Elemente verstecken
+            gameScreen.classList.add('hidden');
+            revealContainer.classList.add('hidden');
+            diceContainer.classList.add('hidden');
+            genreContainer.classList.add('hidden');
+            logoButton.classList.add('hidden');
+            speedRoundTextDisplay.classList.add('hidden');
+            revealButton.classList.add('hidden'); // AUFLÖSEN Button auch verstecken
+
+            // Spotify-Player pausieren
             if (spotifyPlayer) {
                 spotifyPlayer.pause();
             }
-            clearTimeout(gameState.speedRoundTimeout);
-            clearInterval(gameState.countdownInterval);
-            clearTimeout(gameState.spotifyPlayTimeout);
-            clearInterval(gameState.fadeInterval);
-            clearTimeout(gameState.diceAnimationTimeout);
-            
-            // Wenn man den Vollbildmodus verlässt (z.B. PWA geschlossen),
-            // möchten wir zum Login-Screen zurückkehren oder das Spiel resetten.
-            resetGame(); 
+            clearTimeout(gameState.speedRoundTimeout); // Speed-Round-Timer stoppen
+            clearTimeout(gameState.diceAnimationTimeout); // NEU: Würfel-Animation stoppen
+
+            // Den Vollbild-Screen wieder anzeigen
+            fullscreenScreen.classList.remove('hidden');
         }
     });
 
-    // Event Listener für "Click to play in fullscreen mode" wurde entfernt.
+    
+    // 1.4: Vollbild-Modus aktivieren
+    fullscreenScreen.addEventListener('click', () => {
+        document.documentElement.requestFullscreen().then(() => {
+            fullscreenScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            // NEU: Stelle den letzten Zustand wieder her, oder starte neu
+            if (lastGameScreenVisible === 'dice-container') {
+                showDiceScreen();
+            } else if (lastGameScreenVisible === 'genre-container') {
+                showGenreScreen();
+            } else if (lastGameScreenVisible === 'reveal-container') {
+                showResolution(); // Zeigt nur die Auflösung, nicht das Abspielen
+                // Hier müsste man überlegen, ob der Track weiterlaufen soll
+                // oder ob man ihn pausiert hat und jetzt fortsetzen will.
+                // Fürs Erste zeige ich nur die Auflösung.
+            } else {
+                // Wenn kein spezieller Zustand gespeichert ist, starte neu mit dem Logo
+                logoButton.classList.remove('hidden');
+                logoButton.classList.add('initial-fly-in');
+                logoButton.addEventListener('click', startGame, { once: true });
+            }
+        });
+    });
 
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
@@ -415,9 +456,11 @@ function runGenreAnimation(buttons) {
         await prepareAndShowRateScreen(selectedGenre);
     }
 
-//=======================================================================
-// Phase 4: Rate-Bildschirm & Spielerwechsel
-//=======================================================================
+// Teil 2/2:
+
+    //=======================================================================
+    // Phase 4: Rate-Bildschirm & Spielerwechsel
+    //=======================================================================
     
     async function getTrack(genre) {
         const playlistPool = playlists[genre];
@@ -432,7 +475,8 @@ function runGenreAnimation(buttons) {
         // NEU: Loggen der ausgewählten Playlist-ID
         console.log(`DEBUG: Ausgewähltes Genre: "${genre}", Playlist-ID: "${randomPlaylistId}"`);
 
-        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
+        // const response = await fetch(`https://api.spotify.com/v1/playlists/$${randomPlaylistId}/tracks`, { // ALTE ZEILE
+        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), { // NEUE ZEILE
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
 
@@ -453,7 +497,7 @@ function runGenreAnimation(buttons) {
         }
 
         // Filterung, wie zuvor besprochen (optional: .explicit === false hinzufügen)
-        const playableTracks = data.items.filter(item => item.track);  
+        const playableTracks = data.items.filter(item => item.track); 
         // Für explizite Inhalte: const playableTracks = data.items.filter(item => item.track && item.track.explicit === false);
 
 
@@ -508,7 +552,8 @@ function runGenreAnimation(buttons) {
         const trackDurationMs = gameState.currentTrack.duration_ms;
         const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+        // fetch(`https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`, { // ALTE ZEILE
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
@@ -609,7 +654,8 @@ async function playSongForResolution() {
         gameState.currentSongVolume = 0; // Setze interne Volume auf 0
 
         // Song bei Sekunde 30 starten
-        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+        // fetch(`https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`, { // ALTE ZEILE
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
@@ -638,10 +684,10 @@ async function playSongForResolution() {
             // Wenn der Track sehr lang ist und du ihn explizit pausieren willst:
             // const remainingTime = gameState.currentTrack.duration_ms - startPositionMs;
             // gameState.spotifyPlayTimeout = setTimeout(() => {
-            //      if (gameState.isSongPlaying && spotifyPlayer) {
+            //     if (gameState.isSongPlaying && spotifyPlayer) {
             //          spotifyPlayer.pause();
             //          gameState.isSongPlaying = false;
-            //      }
+            //     }
             // }, remainingTime + 1000); // Kleine Pufferzeit
         }).catch(error => {
             console.error("Netzwerkfehler beim Starten des Songs für Auflösung:", error);
@@ -684,9 +730,9 @@ function fadeAudioOut() {
     // alt einfach diese Zeile hier: revealButton.addEventListener('click', showResolution);
     
     // ------------------------mit verzögerung zur Auflösung:.............................................
-    revealButton.addEventListener('click', async () => {  
+    revealButton.addEventListener('click', async () => { 
     // Blende den Button sofort aus, um Doppelklicks zu vermeiden
-    revealButton.classList.add('no-interaction');  
+    revealButton.classList.add('no-interaction'); 
 
     // NEU: Verzögerung HIER einfügen, direkt nach dem Klick und dem Ausblenden des Buttons.
     // Das gibt dem Browser Zeit, die Pulldown-Animation zu rendern,
@@ -694,7 +740,7 @@ function fadeAudioOut() {
     await new Promise(resolve => setTimeout(resolve, 200)); // Kurze Verzögerung für die Button-Animation
 
     // Song ausblenden (falls noch nicht geschehen)
-    await fadeAudioOut();  
+    await fadeAudioOut(); 
     
     // Song pausieren
     if (gameState.isSongPlaying && spotifyPlayer) {
@@ -703,7 +749,7 @@ function fadeAudioOut() {
     }
 
     // Zeige die Auflösung an (Titel, Album, etc.)
-    showResolution();  
+    showResolution(); 
 });
     // ---------------------------verzögerung ende----------------------------------------------------
 
@@ -847,9 +893,9 @@ function displayPointsAnimation(points, player) {
 
     }
     
-//=======================================================================
-// Phase 5: Spielende & Reset
-//=======================================================================
+    //=======================================================================
+    // Phase 5: Spielende & Reset
+    //=======================================================================
     
     function endGame() {
         gameScreen.classList.add('hidden');
@@ -881,8 +927,7 @@ function displayPointsAnimation(points, player) {
         // Spielstatus zurücksetzen
         gameState.player1Score = 0;
         gameState.player2Score = 0;
-        // gameState.currentPlayer = 1; // Dies würde den Spieler immer auf 1 setzen
-        gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2; // Wieder zufällig starten
+        gameState.currentPlayer = 1;
         gameState.currentRound = 0;
         gameState.diceValue = 0; // Neu hinzugefügt
         gameState.attemptsMade = 0; // Neu hinzugefügt
@@ -905,9 +950,9 @@ function displayPointsAnimation(points, player) {
         lastGameScreenVisible = '';
     }
 
-//=======================================================================
-// Phase 6: Sonderfunktion "Speed-Round"
-//=======================================================================
+    //=======================================================================
+    // Phase 6: Sonderfunktion "Speed-Round"
+    //=======================================================================
 
     function showSpeedRoundAnimation() {
     return new Promise(resolve => {
