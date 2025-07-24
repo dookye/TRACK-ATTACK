@@ -456,8 +456,6 @@ function runGenreAnimation(buttons) {
         await prepareAndShowRateScreen(selectedGenre);
     }
 
-// Teil 2/2:
-
     //=======================================================================
     // Phase 4: Rate-Bildschirm & Spielerwechsel
     //=======================================================================
