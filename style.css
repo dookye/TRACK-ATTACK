@@ -123,6 +123,12 @@ body, html {
     margin-bottom: 20px; /* Abstand zum Text darunter */
 }
 
+#info {
+     width: 50px; /* Passe die Breite an deine Bedürfnisse an */
+    height: auto;
+    margin-bottom: 20px; /* Abstand zum Text darunter */
+}
+
 /* Login-Button (Phase 1.1) */
 #login-button {
     background-color: #1DB954;
