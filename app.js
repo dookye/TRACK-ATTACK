@@ -97,12 +97,6 @@ const diceConfig = {
     //=======================================================================
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
-
-    // BROWSER-PRÜFUNG, bei safari anderes verhalten
-    function isIOSSafari() {
-    const userAgent = navigator.userAgent;
-    return /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream && /WebKit/.test(userAgent);
-}
     
     // 1.4: Querformat-Prüfung
     function checkOrientation() {
@@ -175,6 +169,11 @@ const diceConfig = {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
+     // BROWSER-PRÜFUNG, bei safari anderes verhalten
+    function isIOSSafari() {
+    const userAgent = navigator.userAgent;
+    return /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream && /WebKit/.test(userAgent);
+}
 // FÜR SAFAR ------ anderes verhalten ----
 if (isIOSSafari()) {
     // Entferne den fullscreenScreen-Listener
