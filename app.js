@@ -133,7 +133,7 @@ const diceConfig = {
         params.append("scope", "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state");
         params.append("code_challenge_method", "S256");
         params.append("code_challenge", challenge);
-        document.location = `https://accounts.spotify.com/authorize?$${params.toString()}`;
+        document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
     }
 
     // 1.2: Access Token abrufen
