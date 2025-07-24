@@ -309,28 +309,28 @@ if (isIOSSafari()) {
     // FÜR SAFARI -----ENDE-----
     
     // 1.4: Vollbild-Modus aktivieren
-    fullscreenScreen.addEventListener('click', () => {
-        document.documentElement.requestFullscreen().then(() => {
-            fullscreenScreen.classList.add('hidden');
-            gameScreen.classList.remove('hidden');
-            // NEU: Stelle den letzten Zustand wieder her, oder starte neu
-            if (lastGameScreenVisible === 'dice-container') {
-                showDiceScreen();
-            } else if (lastGameScreenVisible === 'genre-container') {
-                showGenreScreen();
-            } else if (lastGameScreenVisible === 'reveal-container') {
-                showResolution(); // Zeigt nur die Auflösung, nicht das Abspielen
-                // Hier müsste man überlegen, ob der Track weiterlaufen soll
-                // oder ob man ihn pausiert hat und jetzt fortsetzen will.
-                // Fürs Erste zeige ich nur die Auflösung.
-            } else {
-                // Wenn kein spezieller Zustand gespeichert ist, starte neu mit dem Logo
-                logoButton.classList.remove('hidden');
-                logoButton.classList.add('initial-fly-in');
-                logoButton.addEventListener('click', startGame, { once: true });
-            }
-        });
-    });
+//    fullscreenScreen.addEventListener('click', () => {
+//        document.documentElement.requestFullscreen().then(() => {
+//            fullscreenScreen.classList.add('hidden');
+//            gameScreen.classList.remove('hidden');
+//            // NEU: Stelle den letzten Zustand wieder her, oder starte neu
+//            if (lastGameScreenVisible === 'dice-container') {
+//                showDiceScreen();
+//            } else if (lastGameScreenVisible === 'genre-container') {
+//                showGenreScreen();
+//            } else if (lastGameScreenVisible === 'reveal-container') {
+//                showResolution(); // Zeigt nur die Auflösung, nicht das Abspielen
+//                // Hier müsste man überlegen, ob der Track weiterlaufen soll
+//                // oder ob man ihn pausiert hat und jetzt fortsetzen will.
+//                // Fürs Erste zeige ich nur die Auflösung.
+//            } else {
+//                // Wenn kein spezieller Zustand gespeichert ist, starte neu mit dem Logo
+//                logoButton.classList.remove('hidden');
+//                logoButton.classList.add('initial-fly-in');
+//                logoButton.addEventListener('click', startGame, { once: true });
+//            }
+//        });
+//    });
 
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
