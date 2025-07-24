@@ -52,8 +52,8 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 body, html {
     margin: 0;
     padding: 0;
-    width: 100vw; /* statt % */
-    height: 100vh; /* statt % */
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     font-family: Arial, Helvetica, sans-serif;
     background-color: var(--black);
@@ -81,9 +81,7 @@ body, html {
 #app-container {
     width: 100%;
     height: 100%;
-    position: fixed; /* statt relativ */
-    top: 0;
-    left: 0;
+    position: relative;
     transition: background-color var(--transition-speed) ease-in-out;
 }
 
@@ -482,52 +480,4 @@ body, html {
 
 .fly-to-corner-player2 {
   animation: flyToCornerPlayer2 0.4s ease-in forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
-}
-
-/* Add to Home Screen Prompt Styling */
-#add-to-home-screen-prompt {
-    background-color: var(--black);
-    color: var(--white);
-    font-size: 1.2em;
-    padding: 20px;
-    text-align: center;
-}
-
-#add-to-home-screen-prompt p {
-    margin-bottom: 10px;
-}
-
-.a2hs-instructions {
-    margin-top: 30px;
-    margin-bottom: 30px;
-}
-
-.a2hs-icon {
-    width: 60px; /* Passe die Größe nach Bedarf an */
-    height: auto;
-    margin: 10px auto;
-    display: block;
-}
-
-.a2hs-option {
-    font-weight: bold;
-    font-size: 1.3em;
-    color: #1DB954; /* Spotify Grün */
-    margin-top: 10px;
-}
-
-#close-a2hs-prompt {
-    background-color: #1DB954;
-    color: var(--white);
-    border: none;
-    padding: 15px 30px;
-    border-radius: 50px;
-    font-size: 1em;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 30px;
-}
-
-#close-a2hs-prompt:active {
-    transform: scale(0.95);
 }
