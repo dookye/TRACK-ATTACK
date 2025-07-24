@@ -6,8 +6,8 @@
 const API_ENDPOINTS = {
     SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
     SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
-    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
+    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/$${playlistId}/tracks`,
+    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -98,7 +98,7 @@ const diceConfig = {
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
     
-     // 1.4: Querformat-Prüfung (JETZT ANPASSEN FÜR PWA-MODUS)
+    // 1.4: Querformat-Prüfung (JETZT ANPASSEN FÜR PWA-MODUS)
     function checkOrientation() {
         // Prüft, ob die App im Standalone-Modus (PWA) läuft
         const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || document.referrer.includes('android-app://') || navigator.standalone;
@@ -125,32 +125,6 @@ const diceConfig = {
             text += possible.charAt(Math.floor(Math.random() * possible.length));
         }
         return text;
-    }
-
-    // Initialisierung nach dem Laden der Seite
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-
-    if (code) {
-        // Wir kommen von der Spotify-Weiterleitung zurück
-        window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
-        getAccessToken(code).then(token => {
-            accessToken = token;
-            loginScreen.classList.add('hidden');
-            gameScreen.classList.remove('hidden'); // Direkt zum GameScreen wechseln
-            logoButton.classList.remove('hidden'); // Logo Button anzeigen
-            logoButton.classList.add('initial-fly-in'); // Animation starten
-            logoButton.addEventListener('click', startGame, { once: true }); // Listener für Spielstart
-            initializePlayer();
-            // Orientierungsprüfung und Listener NACH erfolgreichem Login aktivieren
-            window.addEventListener('resize', checkOrientation);
-            checkOrientation();
-        });
-    } else {
-        // Standard-Ansicht (wenn kein Code in der URL ist)
-        loginScreen.classList.remove('hidden');
-        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
-        // HIER KEINE Orientierungsprüfung aktivieren, da sie erst nach dem Login erfolgen soll.
     }
 
     // 1.2: Login-Prozess starten
@@ -192,6 +166,10 @@ const diceConfig = {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
+    // **Direkte Aktivierung der Orientierungsprüfung beim Laden der Seite**
+    window.addEventListener('resize', checkOrientation);
+    checkOrientation();
+
     if (code) {
         // Wir kommen von der Spotify-Weiterleitung zurück
         window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
@@ -203,17 +181,11 @@ const diceConfig = {
             logoButton.classList.add('initial-fly-in'); // Animation starten
             logoButton.addEventListener('click', startGame, { once: true }); // Listener für Spielstart
             initializePlayer();
-            // Orientierungsprüfung und Listener nach erfolgreichem Login aktivieren
-            window.addEventListener('resize', checkOrientation);
-            checkOrientation();
         });
     } else {
         // Standard-Ansicht (wenn kein Code in der URL ist)
         loginScreen.classList.remove('hidden');
         document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
-        // Auch hier die Orientierungsprüfung aktivieren, falls die Seite direkt aufgerufen wird
-        window.addEventListener('resize', checkOrientation);
-        checkOrientation();
     }
 
     // 1.3: Spotify Web Player SDK laden und initialisieren
@@ -242,14 +214,10 @@ const diceConfig = {
         };
     }
 
-    // Event Listener für das Verlassen des Vollbildmodus (Wird jetzt obsolet für Browser-Modus, aber nützlich für PWA)
+    // Event Listener für das Verlassen des Vollbildmodus (relevant nur noch für PWA-Modus, wenn geschlossen)
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement) {
             // Vollbildmodus wurde verlassen (relevant für PWA, wenn man ihn schließt)
-            // Hier könnte man ggf. eine "Bitte tippe zum Starten"-Nachricht anzeigen,
-            // aber da wir den Login-Screen oder GameScreen direkt anzeigen, ist es nicht zwingend nötig.
-            // Die Logik, die bisher hier war, um zum fullscreenScreen zurückzukehren, entfällt.
-            
             // Pausiere den Player, wenn der Vollbildmodus verlassen wird
             if (spotifyPlayer) {
                 spotifyPlayer.pause();
@@ -261,9 +229,8 @@ const diceConfig = {
             clearTimeout(gameState.diceAnimationTimeout);
             
             // Wenn man den Vollbildmodus verlässt (z.B. PWA geschlossen),
-            // möchten wir vielleicht zum Login-Screen zurückkehren oder das Spiel resetten.
-            // Für diesen Anwendungsfall setzen wir das Spiel zurück.
-            resetGame(); // Geht zurück zum Logo-Screen (oder Login, falls nicht eingeloggt)
+            // möchten wir zum Login-Screen zurückkehren oder das Spiel resetten.
+            resetGame(); 
         }
     });
 
