@@ -1,18 +1,19 @@
 // Wichtiger Hinweis: Dieser Code muss von einem Webserver bereitgestellt werden (z.B. über "Live Server" in VS Code).
 // Ein direktes Öffnen der HTML-Datei im Browser funktioniert wegen der Sicherheitsrichtlinien (CORS) bei API-Anfragen nicht.
 
-
 // --- API Endpunkte ---
+// Zentralisierte Verwaltung der API-Endpunkte für einfache Wartung.
 const API_ENDPOINTS = {
     SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
     SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
-    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
+    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/$${playlistId}/tracks`,
+    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`
 };
 
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- DOM-Elemente ---
+    // Alle relevanten DOM-Elemente werden hier einmalig abgerufen, um wiederholte Zugriffe zu vermeiden.
     const appContainer = document.getElementById('app-container');
     const loginScreen = document.getElementById('login-screen');
     const fullscreenScreen = document.getElementById('fullscreen-screen');
@@ -27,63 +28,64 @@ document.addEventListener('DOMContentLoaded', () => {
     const revealContainer = document.getElementById('reveal-container');
     const scoreScreen = document.getElementById('score-screen');
     const speedRoundTextDisplay = document.getElementById('speed-round-text-display');
-    const speedRoundTimer = document.getElementById('speed-round-timer'); // Nicht verwendet, kann entfernt werden
+    const speedRoundTimer = document.getElementById('speed-round-timer'); // Nicht direkt verwendet, aber im Code vorhanden
     const countdownDisplay = document.getElementById('countdown-display');
     const trackAlbum = document.getElementById('track-album');
     const trackYear = document.getElementById('track-year');
     const correctButton = document.getElementById('correct-button');
     const wrongButton = document.getElementById('wrong-button');
-    const addToHomeScreenPrompt = document.getElementById('add-to-home-screen-prompt'); // NEU: A2HS Prompt Element
-    const closeA2HSPromptButton = document.getElementById('close-a2hs-prompt'); // NEU: Button zum Schließen des A2HS Prompts
+    const nextRoundButton = document.getElementById('next-round-button'); // NEU: Für den "NÄCHSTE RUNDE" Button
+    const playerScoresIngame = document.getElementById('player-scores-ingame'); // NEU: Container für In-Game Punkte
+    const player1ScoreIngame = document.getElementById('player1-score-ingame'); // NEU: Spieler 1 In-Game Punkte
+    const player2ScoreIngame = document.getElementById('player2-score-ingame'); // NEU: Spieler 2 In-Game Punkte
 
-    // --- Spotify-Parameter (Phase 1.1) ---
+    // --- Spotify-Parameter ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
     const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
 
-    // NEU: Konfiguration für jeden Würfelwert
+    // Konfiguration für jeden Würfelwert: Versuche und Abspieldauer des Snippets.
     const diceConfig = {
         1: { attempts: 1, duration: 7000 },
         2: { attempts: 2, duration: 7000 },
         3: { attempts: 3, duration: 7000 },
         4: { attempts: 4, duration: 7000 },
         5: { attempts: 5, duration: 7000 },
-        7: { attempts: 7, duration: 2000 }
+        7: { attempts: 7, duration: 2000 } // Speed Round: Mehr Versuche, kürzere Dauer
     };
-    
+
     // --- Spielstatus-Variablen ---
-    let spotifyPlayer;
-    let deviceId;
-    let accessToken;
+    // Zentrales Objekt zur Verwaltung des gesamten Spielzustands.
+    let spotifyPlayer; // Das Spotify Web Playback SDK Player-Objekt
+    let deviceId;      // Die Spotify Device ID für die Wiedergabe
+    let accessToken;   // Der Spotify OAuth Access Token
+
     let gameState = {
         player1Score: 0,
         player2Score: 0,
-        currentPlayer: 1,
-        totalRounds: 4, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        currentPlayer: Math.random() < 0.5 ? 1 : 2, // Zufälliger Startspieler (1 oder 2)
+        totalRounds: 20, // Gesamtzahl der Runden (10 Runden pro Spieler)
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
         maxAttempts: 0,
-        trackDuration: 0,
-        currentTrack: null,
-        player1SpeedRound: Math.floor(Math.random() * 10) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
-        player2SpeedRound: Math.floor(Math.random() * 10) + 1,
+        trackDuration: 0, // Dauer des abgespielten Song-Snippets in ms
+        currentTrack: null, // Der aktuell geratene Track
+        player1SpeedRound: Math.floor(Math.random() * 10) + 1, // Zufällige Speed-Round für Spieler 1 (Runde 1-10)
+        player2SpeedRound: Math.floor(Math.random() * 10) + 1, // Zufällige Speed-Round für Spieler 2 (Runde 1-10)
         isSpeedRound: false,
-        speedRoundTimeout: null,
-        countdownInterval: null,
-        spotifyPlayTimeout: null, // Timeout für das Pausieren des Songs
-        isSongPlaying: false, // Flag, ob Song gerade spielt
-        fadeInterval: null, // Für den Fade-In-Intervall
-        currentSongVolume: 0, // Aktuelle Lautstärke für Fade-In
-        diceAnimationTimeout: null, // Timeout für die Würfel-Animation
+        speedRoundTimeout: null, // Timeout-ID für das automatische Auflösen der Speed-Round
+        countdownInterval: null, // Interval-ID für den visuellen Speed-Round Countdown
+        spotifyPlayTimeout: null, // Timeout-ID für das Pausieren des Songs im normalen Modus
+        isSongPlaying: false, // Flag, ob der Song gerade über den Player läuft
+        fadeInterval: null, // Interval-ID für den Fade-In/Out der Lautstärke
+        currentSongVolume: 0, // Aktuelle Lautstärke für Fade-Effekte (0-100)
+        diceAnimationTimeout: null, // Timeout-ID für die Würfel-Animation
     };
 
-    // NEU: Zufälligen Startspieler festlegen
-    gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2;  
-    console.log(`Zufälliger Startspieler ist Spieler ${gameState.currentPlayer}`); 
-
-    // Variable zum Speichern des letzten sichtbaren Spiel-Screens
+    // Variable zum Speichern des letzten sichtbaren Spiel-Screens, für den Fall, dass der Vollbildmodus verlassen wird.
     let lastGameScreenVisible = '';
-    
+
+    // Definiert die verfügbaren Genres und ihre zugehörigen Spotify Playlist IDs.
     const playlists = {
         pop: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         alltime: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
@@ -92,32 +94,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     //=======================================================================
-    // Hilfsfunktionen für Geräte-/Browser-Erkennung
-    //=======================================================================
-
-    function isMobileDevice() {
-        // Prüft auf gängige mobile User-Agents und Touch-Fähigkeit
-        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        return (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|rim)|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(userAgent) ||
-                /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rim)|al(av|ca|co)|amoi|an(d|on)|aq(ar|red|s|t|u)a|at(t|oc)|audi|av(p|v )|ay(ad|eg)|az(w|z)|bc(ad|eg|tr)|bd(eg|me)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\- |cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(is|eo)|dc\-\d+|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(ad|in|u2)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(|mp|wi))\-|hu(aw|tc)|i\-20|i\-go|i\-ma|i\-r |in(di|og)|iq(at|lb)|it(al|on|sys)|ji(18|mb)|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|ad|t(|line|v )|vk(40|5[0-3]|\-v))|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|pino|pl(at|ti)|pn\-ho|po(ck|rt|ze)|ps(as|sm)|pt\-ch|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|pn)|sc(01|sc|ws)|sdk\-|se(c(|49|65|c0|16|21|42))|send|sf(nd|wt)|sg(lc|\-at|ea)-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(es|v )|sy(01|mb)|t2(18|50)|t6(00|10|40)|tb(te|v)|tdwa|telm|tim\-|t\-mo|to(pl|sh)|ts(70|mp|ra)|tt(ar|go)|tv(ar|df)|ux(ap|st)|v500|vwp |wagv|wapi|wf(ap|si)|wi(mp|th|ym)|wm(hw|lc)|ws(48|ut)|ww(ap|at|ob)|xp(is|si)|yas\-|your|zeto|zte\-)/i.test(userAgent.substr(0,4))) ||
-               (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
-    }
-
-    function isIOSSafari() {
-        const userAgent = navigator.userAgent;
-        return /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream && /WebKit/.test(userAgent);
-    }
-
-    function isInStandaloneMode() {
-        // Prüft, ob die App im "Standalone"-Modus (vom Home-Bildschirm) läuft
-        return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
-    }
-
-    //=======================================================================
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
-    
-    // 1.4: Querformat-Prüfung
+
+    /**
+     * Überprüft die Geräteausrichtung und zeigt bei Hochformat ein Overlay an.
+     */
     function checkOrientation() {
         if (window.innerHeight > window.innerWidth) {
             rotateDeviceOverlay.classList.remove('hidden');
@@ -126,7 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 1.2: PKCE-Flow Helferfunktionen
+    /**
+     * Generiert den Code Challenge für den PKCE-Flow.
+     * @param {string} codeVerifier - Der generierte Code Verifier.
+     * @returns {Promise<string>} Der Base64url-codierte SHA256-Hash des Code Verifiers.
+     */
     async function generateCodeChallenge(codeVerifier) {
         const data = new TextEncoder().encode(codeVerifier);
         const digest = await window.crypto.subtle.digest('SHA-256', data);
@@ -134,6 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
+    /**
+     * Generiert einen zufälligen String für den Code Verifier.
+     * @param {number} length - Die gewünschte Länge des Strings.
+     * @returns {string} Ein zufälliger alphanumerischer String.
+     */
     function generateRandomString(length) {
         let text = '';
         let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -143,11 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return text;
     }
 
-    // 1.2: Login-Prozess starten
+    /**
+     * Leitet den Benutzer zum Spotify-Authentifizierungs-Flow weiter (PKCE).
+     */
     async function redirectToAuthCodeFlow() {
         const verifier = generateRandomString(128);
         const challenge = await generateCodeChallenge(verifier);
-        localStorage.setItem("verifier", verifier);
+        localStorage.setItem("verifier", verifier); // Speichert den Verifier für den Token-Austausch
         const params = new URLSearchParams();
         params.append("client_id", CLIENT_ID);
         params.append("response_type", "code");
@@ -158,7 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.location = `${API_ENDPOINTS.SPOTIFY_AUTH}?${params.toString()}`;
     }
 
-    // 1.2: Access Token abrufen
+    /**
+     * Ruft den Access Token von Spotify unter Verwendung des Authorization Codes und Code Verifiers ab.
+     * @param {string} code - Der von Spotify zurückgegebene Authorization Code.
+     * @returns {Promise<string>} Der Spotify Access Token.
+     */
     async function getAccessToken(code) {
         const verifier = localStorage.getItem("verifier");
         const params = new URLSearchParams();
@@ -168,18 +165,71 @@ document.addEventListener('DOMContentLoaded', () => {
         params.append("redirect_uri", REDIRECT_URI);
         params.append("code_verifier", verifier);
 
-        const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params
-        });
+        try {
+            const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: params
+            });
 
-        const { access_token } = await result.json();
-        return access_token;
+            if (!result.ok) {
+                const errorData = await result.json().catch(() => ({}));
+                const errorMessage = errorData.error && errorData.error.message ? errorData.error.message : result.statusText;
+                console.error("Fehler beim Abrufen des Access Tokens:", result.status, errorMessage);
+                alert(`Authentifizierung fehlgeschlagen: ${errorMessage}. Bitte versuchen Sie es erneut.`);
+                // Bei Fehler zum Login-Screen zurückkehren
+                loginScreen.classList.remove('hidden');
+                document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+                return null;
+            }
+
+            const { access_token } = await result.json();
+            return access_token;
+        } catch (error) {
+            console.error("Netzwerkfehler beim Abrufen des Access Tokens:", error);
+            alert("Netzwerkfehler während der Authentifizierung. Bitte überprüfen Sie Ihre Internetverbindung.");
+            loginScreen.classList.remove('hidden');
+            document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+            return null;
+        }
     }
 
-    // 1.3: Spotify Web Player SDK laden und initialisieren
+    // Initialisierung nach dem Laden der Seite
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
+    if (code) {
+        // Wenn ein Authorization Code in der URL ist, kommen wir von der Spotify-Weiterleitung zurück.
+        window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
+        getAccessToken(code).then(token => {
+            if (token) {
+                accessToken = token;
+                loginScreen.classList.add('hidden');
+                fullscreenScreen.classList.remove('hidden');
+                initializePlayer(); // Spotify Player initialisieren
+                window.addEventListener('resize', checkOrientation);
+                checkOrientation(); // Initialprüfung der Orientierung
+            } else {
+                // Token konnte nicht abgerufen werden (Fehlerbehandlung in getAccessToken übernimmt die UI-Anpassung)
+                console.warn("Access Token konnte nicht abgerufen werden, kehre zum Login zurück.");
+            }
+        });
+    } else {
+        // Standard-Ansicht: Zeige den Login-Screen.
+        loginScreen.classList.remove('hidden');
+        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+    }
+
+    /**
+     * Lädt das Spotify Web Player SDK und initialisiert den Player.
+     */
     function initializePlayer() {
+        // Vermeidet mehrfaches Laden des Skripts
+        if (document.querySelector('script[src="https://sdk.scdn.co/spotify-player.js"]')) {
+            console.warn("Spotify SDK bereits geladen.");
+            return;
+        }
+
         const script = document.createElement('script');
         script.src = "https://sdk.scdn.co/spotify-player.js";
         script.async = true;
@@ -191,24 +241,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 getOAuthToken: cb => { cb(accessToken); }
             });
 
+            // Listener für Player-Bereitschaft
             spotifyPlayer.addListener('ready', ({ device_id }) => {
                 console.log('Ready with Device ID', device_id);
                 deviceId = device_id;
             });
 
+            // Listener für Player-Offline-Status
             spotifyPlayer.addListener('not_ready', ({ device_id }) => {
                 console.log('Device ID has gone offline', device_id);
+                // Hier könnte man den Benutzer informieren, dass der Player offline ist.
+                alert("Dein Spotify-Gerät ist offline gegangen. Bitte überprüfe deine Spotify-App.");
             });
 
-            spotifyPlayer.connect();
+            // NEU: Listener für Änderungen des Player-Zustands (z.B. extern pausiert)
+            spotifyPlayer.addListener('player_state_changed', state => {
+                if (state) {
+                    gameState.isSongPlaying = !state.paused;
+
+                    // Wenn der Song pausiert wurde (z.B. extern), und wir einen Timeout haben, lösche ihn.
+                    if (state.paused && gameState.spotifyPlayTimeout) {
+                        clearTimeout(gameState.spotifyPlayTimeout);
+                        gameState.spotifyPlayTimeout = null;
+                        // Im normalen Modus den Play-Button wieder aktivieren, wenn pausiert wurde
+                        if (!gameState.isSpeedRound && gameState.attemptsMade < gameState.maxAttempts) {
+                             logoButton.classList.remove('inactive');
+                        }
+                    }
+                }
+            });
+
+            // Verbindung zum Player herstellen
+            spotifyPlayer.connect().then(success => {
+                if (success) {
+                    console.log('Spotify Player erfolgreich verbunden!');
+                } else {
+                    console.error('Verbindung zum Spotify Player fehlgeschlagen.');
+                    alert("Konnte keine Verbindung zum Spotify Player herstellen. Bitte stellen Sie sicher, dass Spotify geöffnet ist.");
+                }
+            }).catch(error => {
+                console.error("Fehler beim Verbinden des Spotify Players:", error);
+                alert("Ein unerwarteter Fehler ist beim Verbinden mit Spotify aufgetreten.");
+            });
         };
     }
 
-    // NEU: Event Listener für das Verlassen des Vollbildmodus (relevant für Desktop)
+    // Event Listener für das Verlassen des Vollbildmodus.
+    // Speichert den aktuellen Spielzustand, um ihn beim erneuten Eintritt wiederherzustellen.
     document.addEventListener('fullscreenchange', () => {
         if (!document.fullscreenElement) {
-            // Vollbildmodus wurde verlassen
-            // Speichere den Zustand, BEVOR alles versteckt wird
+            // Vollbildmodus wurde verlassen: Speichere den sichtbaren Screen.
             if (!logoButton.classList.contains('hidden')) {
                 lastGameScreenVisible = 'logo-button';
             } else if (!diceContainer.classList.contains('hidden')) {
@@ -217,408 +299,404 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastGameScreenVisible = 'genre-container';
             } else if (!revealContainer.classList.contains('hidden')) {
                 lastGameScreenVisible = 'reveal-container';
+            } else if (!scoreScreen.classList.contains('hidden')) { // Berücksichtige auch den Score-Screen
+                lastGameScreenVisible = 'score-screen';
             } else {
-                lastGameScreenVisible = ''; // Wenn nichts Spezielles sichtbar war
+                lastGameScreenVisible = '';
             }
 
-            // Alle Spiel-Elemente verstecken
+            // Alle Spiel-Elemente verstecken und laufende Prozesse stoppen
             gameScreen.classList.add('hidden');
             revealContainer.classList.add('hidden');
             diceContainer.classList.add('hidden');
             genreContainer.classList.add('hidden');
             logoButton.classList.add('hidden');
             speedRoundTextDisplay.classList.add('hidden');
-            revealButton.classList.add('hidden'); // AUFLÖSEN Button auch verstecken
+            revealButton.classList.add('hidden');
+            playerScoresIngame.classList.add('hidden'); // In-Game Scores verstecken
 
-            // Spotify-Player pausieren
+            // Alle Timer und den Spotify Player stoppen
             if (spotifyPlayer) {
-                spotifyPlayer.pause();
+                spotifyPlayer.pause().catch(e => console.error("Fehler beim Pausieren des Players:", e));
             }
-            clearTimeout(gameState.speedRoundTimeout); // Speed-Round-Timer stoppen
-            clearTimeout(gameState.diceAnimationTimeout); // Würfel-Animation stoppen
-
+            // Umfassendes Aufräumen aller Timer und Intervalle
+            clearTimeout(gameState.speedRoundTimeout);
+            clearInterval(gameState.countdownInterval);
+            clearTimeout(gameState.spotifyPlayTimeout);
+            clearInterval(gameState.fadeInterval);
+            clearTimeout(gameState.diceAnimationTimeout);
+            gameState.isSongPlaying = false; // Setze Flag zurück
+            
             // Den Vollbild-Screen wieder anzeigen
             fullscreenScreen.classList.remove('hidden');
         }
     });
 
-    //=======================================================================
-    // Initialer App-Start und Routing basierend auf Gerät/Login
-    //=======================================================================
+    // Event Listener für das Aktivieren des Vollbildmodus.
+    // Stellt den Spielzustand wieder her, der vor dem Verlassen des Vollbildmodus gespeichert wurde.
+    fullscreenScreen.addEventListener('click', () => {
+        document.documentElement.requestFullscreen().then(() => {
+            fullscreenScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            playerScoresIngame.classList.remove('hidden'); // In-Game Scores wieder anzeigen
+            updateInGameScores(); // Stellt sicher, dass die Punktanzeige aktuell ist
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const authCode = urlParams.get("code");
-
-    if (authCode) {
-        // Fall 1: Rückkehr von der Spotify-Authentifizierung
-        window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
-        getAccessToken(authCode).then(token => {
-            accessToken = token;
-            initializePlayer(); // Spotify Player initialisieren
-
-            // Nach erfolgreichem Login: Entscheidung, welcher Screen als Nächstes gezeigt wird
-            if (isMobileDevice() && isInStandaloneMode()) {
-                // Mobiles PWA (vom Startbildschirm gestartet): Direkt zum Spiel
-                console.log("App läuft im mobilen Standalone-Modus (nach Login). Direkt zum Spiel.");
-                loginScreen.classList.add('hidden');
-                gameScreen.classList.remove('hidden');
+            // Stelle den letzten gespeicherten Zustand wieder her
+            if (lastGameScreenVisible === 'dice-container') {
+                showDiceScreen();
+            } else if (lastGameScreenVisible === 'genre-container') {
+                showGenreScreen();
+            } else if (lastGameScreenVisible === 'reveal-container') {
+                showResolution(); // Zeigt nur die Auflösung, ohne den Song neu zu starten
+            } else if (lastGameScreenVisible === 'score-screen') {
+                endGame(); // Zeigt den Score-Screen wieder an
+            }
+            else {
+                // Wenn kein spezieller Zustand gespeichert ist, starte neu mit dem Logo.
                 logoButton.classList.remove('hidden');
                 logoButton.classList.add('initial-fly-in');
+                logoButton.removeEventListener('click', startGame); // Sicherstellen, dass nur ein Listener aktiv ist
                 logoButton.addEventListener('click', startGame, { once: true });
-            } else if (isMobileDevice() && !isInStandaloneMode()) {
-                // Mobiles Gerät (im Browser, nicht Standalone): A2HS Prompt anzeigen
-                console.log("App läuft im mobilen Browser (nach Login). Zeige 'Zum Startbildschirm hinzufügen'-Prompt.");
-                loginScreen.classList.add('hidden');
-                // Prüfen, ob der Prompt schon einmal geschlossen wurde
-                if (localStorage.getItem('hasSeenA2HSPrompt') !== 'true') {
-                    addToHomeScreenPrompt.classList.remove('hidden');
-                    closeA2HSPromptButton.addEventListener('click', () => {
-                        addToHomeScreenPrompt.classList.add('hidden');
-                        localStorage.setItem('hasSeenA2HSPrompt', 'true');
-                        // Nach dem Schließen des Prompts zum Spiel starten
-                        gameScreen.classList.remove('hidden');
-                        logoButton.classList.remove('hidden');
-                        logoButton.classList.add('initial-fly-in');
-                        logoButton.addEventListener('click', startGame, { once: true });
-                    }, { once: true });
-                } else {
-                    // Prompt wurde bereits geschlossen, direkt zum Spiel
-                    gameScreen.classList.remove('hidden');
-                    logoButton.classList.remove('hidden');
-                    logoButton.classList.add('initial-fly-in');
-                    logoButton.addEventListener('click', startGame, { once: true });
-                }
-            } else {
-                // Desktop-Gerät: Fullscreen-Prompt anzeigen
-                console.log("App läuft auf Desktop (nach Login). Zeige Fullscreen-Prompt.");
-                loginScreen.classList.add('hidden');
-                fullscreenScreen.classList.remove('hidden');
-                fullscreenScreen.addEventListener('click', () => {
-                    document.documentElement.requestFullscreen().then(() => {
-                        fullscreenScreen.classList.add('hidden');
-                        gameScreen.classList.remove('hidden');
-                        logoButton.classList.remove('hidden');
-                        logoButton.classList.add('initial-fly-in');
-                        logoButton.addEventListener('click', startGame, { once: true });
-                    });
-                }, { once: true });
             }
-            // Orientierungsprüfung für alle Fälle nach Login aktivieren
-            window.addEventListener('resize', checkOrientation);
-            checkOrientation();
+        }).catch(error => {
+            console.error("Fehler beim Anfordern des Vollbildmodus:", error);
+            alert("Vollbildmodus konnte nicht aktiviert werden. Möglicherweise blockiert Ihr Browser dies.");
         });
-    } else {
-        // Fall 2: Erster Aufruf der App (nicht von Spotify-Authentifizierung zurück)
-        if (isMobileDevice()) {
-            if (isInStandaloneMode()) {
-                // Mobiles PWA (vom Startbildschirm gestartet): Direkt zum Spiel
-                console.log("App läuft im mobilen Standalone-Modus (initial). Direkt zum Spiel.");
-                loginScreen.classList.add('hidden');
-                gameScreen.classList.remove('hidden');
-                logoButton.classList.remove('hidden');
-                logoButton.classList.add('initial-fly-in');
-                logoButton.addEventListener('click', startGame, { once: true });
-            } else {
-                // Mobiles Gerät (im Browser, nicht Standalone): A2HS Prompt anzeigen
-                console.log("App läuft im mobilen Browser (initial). Zeige 'Zum Startbildschirm hinzufügen'-Prompt.");
-                loginScreen.classList.add('hidden'); // Login-Screen zuerst verstecken
-                if (localStorage.getItem('hasSeenA2HSPrompt') !== 'true') {
-                    addToHomeScreenPrompt.classList.remove('hidden');
-                    closeA2HSPromptButton.addEventListener('click', () => {
-                        addToHomeScreenPrompt.classList.add('hidden');
-                        localStorage.setItem('hasSeenA2HSPrompt', 'true');
-                        // Nach dem Schließen des Prompts zum Login-Screen
-                        loginScreen.classList.remove('hidden');
-                        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
-                    }, { once: true });
-                } else {
-                    // Prompt wurde bereits geschlossen, direkt zum Login-Screen
-                    loginScreen.classList.remove('hidden');
-                    document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
-                }
-            }
-            // Orientierungsprüfung für alle Fälle aktivieren
-            window.addEventListener('resize', checkOrientation);
-            checkOrientation();
-        } else {
-            // Desktop-Gerät: Login-Screen anzeigen
-            console.log("App läuft auf Desktop (initial). Zeige Login-Screen.");
-            loginScreen.classList.remove('hidden');
-            document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
-        }
-    }
+    });
 
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
     //=======================================================================
-    
+
+    /**
+     * Führt eine "Bounce"-Animation auf einem Element aus.
+     * @param {HTMLElement} element - Das zu animierende DOM-Element.
+     */
     function triggerBounce(element) {
         element.classList.remove('bounce');
-        void element.offsetWidth; // Trigger reflow
+        void element.offsetWidth; // Erzwingt einen Reflow, um die Animation zurückzusetzen.
         element.classList.add('bounce');
     }
 
+    /**
+     * Startet das Spiel vom Logo-Screen aus.
+     */
     function startGame() {
         triggerBounce(logoButton);
-        logoButton.classList.add('inactive');
+        logoButton.classList.add('inactive'); // Button während der Animation inaktiv machen.
 
-        // Speichere den Zustand, dass das Spiel gestartet wurde (Logo-Phase)
-        lastGameScreenVisible = 'logo-button';
-        
+        lastGameScreenVisible = 'logo-button'; // Zustand speichern.
+
         setTimeout(() => {
-            appContainer.style.backgroundColor = 'var(--player1-color)';
+            appContainer.style.backgroundColor = 'var(--player1-color)'; // Startfarbe für Spieler 1.
             logoButton.classList.add('hidden');
-            showDiceScreen();
-        }, 800); // Warten, bis Bounce-Effekt und Blur sichtbar sind
+            playerScoresIngame.classList.remove('hidden'); // In-Game Score anzeigen.
+            updateInGameScores(); // Initial die Punkte aktualisieren (0:0) und aktiven Spieler hervorheben.
+            showDiceScreen(); // Zum Würfel-Screen wechseln.
+        }, 800); // Wartet, bis der Bounce-Effekt sichtbar war.
     }
-    
+
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
     //=======================================================================
 
+    /**
+     * Zeigt den Würfel-Auswahlbildschirm an.
+     * Setzt die UI zurück und bereitet die nächste Runde vor.
+     */
     function showDiceScreen() {
-        resetRoundUI();
-        gameState.currentRound++;
-        gameState.isSpeedRound = false;
-        
-        // Check für Spielende
+        resetRoundUI(); // Reinigt die UI und stoppt alle Timer der vorherigen Runde.
+        gameState.currentRound++; // Erhöht die Rundenzahl.
+        gameState.isSpeedRound = false; // Setzt den Speed-Round-Status zurück.
+
+        // Überprüft, ob das Spielende erreicht ist.
         if (gameState.currentRound > gameState.totalRounds) {
             endGame();
             return;
         }
 
-        // Setze die Hintergrundfarbe basierend auf dem aktuellen Spieler.
+        // Setzt die Hintergrundfarbe basierend auf dem aktuellen Spieler.
         appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
-        console.log(`Hintergrundfarbe gesetzt für Spieler ${gameState.currentPlayer}`); // Optional zur Überprüfung
+        console.log(`Hintergrundfarbe gesetzt für Spieler ${gameState.currentPlayer}.`);
 
         diceContainer.classList.remove('hidden');
-        diceAnimation.classList.remove('hidden');
-        diceSelection.classList.add('hidden');
+        diceAnimation.classList.remove('hidden'); // Würfel-Animation anzeigen.
+        diceSelection.classList.add('hidden'); // Würfel-Auswahl verstecken.
 
-        // Speichere den Zustand: Würfel-Bildschirm
-        lastGameScreenVisible = 'dice-container';
-        
-        // Setze den Timeout für die Würfel-Animation
+        lastGameScreenVisible = 'dice-container'; // Zustand speichern.
+
+        // Setzt den Timeout für die Würfel-Animation, danach wird die Auswahl sichtbar.
         gameState.diceAnimationTimeout = setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
-        }, 2000);
+        }, 2000); // 2 Sekunden Animationszeit.
     }
 
-    // Event-Listener für das Überspringen der Würfel-Animation
+    // Event-Listener für das Überspringen der Würfel-Animation durch Klick.
     diceAnimation.addEventListener('click', () => {
-        clearTimeout(gameState.diceAnimationTimeout); // Stoppt den automatischen Timeout
+        clearTimeout(gameState.diceAnimationTimeout); // Stoppt den automatischen Timeout.
+        gameState.diceAnimationTimeout = null; // Zurücksetzen der ID.
         diceAnimation.classList.add('hidden');
         diceSelection.classList.remove('hidden');
     });
 
+    // Event-Listener für die Auswahl eines Würfelwerts.
     document.querySelectorAll('.dice-option').forEach(dice => {
         dice.addEventListener('click', (e) => {
             const selectedValue = parseInt(e.target.dataset.value);
             gameState.diceValue = selectedValue;
 
-            // Prüfen, ob der ausgewählte Würfel in unserer Konfiguration existiert
+            // Prüft, ob der ausgewählte Würfel in der Konfiguration existiert.
             const config = diceConfig[selectedValue];
             if (!config) {
                 console.error(`Konfiguration für Würfelwert ${selectedValue} nicht gefunden!`);
-                return; // Beende die Funktion, um Fehler zu vermeiden
+                alert("Fehler: Ungültiger Würfelwert ausgewählt. Bitte versuchen Sie es erneut.");
+                return;
             }
 
+            // Kurze Verzögerung für visuellen Effekt vor dem Bildschirmwechsel.
             setTimeout(() => {
-                // Die Werte werden jetzt direkt aus dem Konfigurationsobjekt ausgelesen
                 gameState.trackDuration = config.duration;
                 gameState.maxAttempts = config.attempts;
-                gameState.attemptsMade = 0;
+                gameState.attemptsMade = 0; // Setzt die Versuche für die neue Runde zurück.
 
                 diceContainer.classList.add('hidden');
                 showGenreScreen();
-
             }, 200);
         });
     });
-    
-    // Funktion zur Ausführung der Blink-Animation
+
+    /**
+     * Führt eine Blink-Animation für die Genre-Buttons aus.
+     * @param {NodeListOf<Element>} buttons - Die zu animierenden Buttons.
+     * @returns {Promise<void>} Ein Promise, das aufgelöst wird, wenn die Animation abgeschlossen ist.
+     */
     function runGenreAnimation(buttons) {
         return new Promise(resolve => {
-            buttons.forEach(btn => btn.classList.add('no-interaction'));
+            buttons.forEach(btn => btn.classList.add('no-interaction')); // Deaktiviert Interaktionen während der Animation.
             const blinkInterval = setInterval(() => {
-                buttons.forEach(btn => btn.classList.toggle('random-blink'));
+                buttons.forEach(btn => btn.classList.toggle('random-blink')); // Schaltet Blink-Klasse um.
             }, 100);
 
             setTimeout(() => {
                 clearInterval(blinkInterval);
                 buttons.forEach(btn => btn.classList.remove('random-blink'));
-                buttons.forEach(btn => btn.classList.remove('no-interaction'));
-                resolve(); // Löst das Promise auf, wenn die Animation fertig ist
-            }, 1800);
+                buttons.forEach(btn => btn.classList.remove('no-interaction')); // Aktiviert Interaktionen wieder.
+                resolve();
+            }, 1800); // Dauer der gesamten Blink-Animation.
         });
     }
-    
+
+    /**
+     * Zeigt den Genre-Auswahlbildschirm an und wählt ein Genre basierend auf dem Würfelwert aus.
+     */
     async function showGenreScreen() {
         genreContainer.classList.remove('hidden');
         const buttons = document.querySelectorAll('.genre-button');
-        
+
+        // Zuerst alle bestehenden Listener entfernen, um Dopplungen zu vermeiden.
+        // Setzt auch alle Buttons auf ihren Standardzustand zurück.
         buttons.forEach(btn => {
             btn.disabled = false;
-            btn.classList.remove('random-blink');
+            btn.classList.remove('random-blink', 'disabled-genre');
+            btn.removeEventListener('click', handleGenreSelection); // Wichtig: Alte Listener entfernen.
         });
 
-        // Speichere den Zustand: Genre-Bildschirm
-        lastGameScreenVisible = 'genre-container';
+        lastGameScreenVisible = 'genre-container'; // Zustand speichern.
 
-        // Führe die gleiche Blink-Animation für beide Fälle aus
-        await runGenreAnimation(buttons);
+        await runGenreAnimation(buttons); // Führt die Blink-Animation aus.
 
-        // Die Logik für die Button-Aktivierung/-Deaktivierung kommt jetzt NACH der Animation
-        if (gameState.diceValue === 7) { // Fall B: WÜRFEL 7
-            
-            // 1. Alle Buttons sind klickbar (standardmäßig)
+        if (gameState.diceValue === 7) { // Fall: Würfelwert ist 7 (aktive Auswahl)
+            // Alle Buttons sind klickbar.
             buttons.forEach(btn => btn.disabled = false);
 
-            // 2. Wähle ein zufälliges Genre aus, das inaktiv sein soll
+            // Wähle ein zufälliges Genre aus, das inaktiv sein soll.
             const randomIndex = Math.floor(Math.random() * buttons.length);
             const disabledButton = buttons[randomIndex];
-            
-            // 3. Deaktiviere das ausgewählte Genre
+
+            // Deaktiviere das ausgewählte Genre und markiere es visuell.
             disabledButton.disabled = true;
-            // Optional: Füge eine visuelle Klasse hinzu, um es zu markieren
             disabledButton.classList.add('disabled-genre');
-            
-            // Füge Event-Listener für alle Buttons hinzu
+
+            // Füge Event-Listener für alle Buttons (außer dem deaktivierten) hinzu.
             buttons.forEach(btn => {
-                btn.addEventListener('click', handleGenreSelection, { once: true });
+                if (!btn.disabled) { // Füge nur Listener zu aktiven Buttons hinzu.
+                    btn.addEventListener('click', handleGenreSelection);
+                }
             });
 
-        } else { // Fall A: WÜRFEL 1-5
-            
-            // 1. Erst alle Buttons deaktivieren
+        } else { // Fall: Würfelwert ist 1-5 (zufälliges Genre wird vorgegeben)
+            // Erst alle Buttons deaktivieren.
             buttons.forEach(btn => btn.disabled = true);
-            
-            // 2. Dann ein zufälliges Genre auswählen und aktivieren
+
+            // Dann ein zufälliges Genre auswählen und aktivieren.
             const randomIndex = Math.floor(Math.random() * buttons.length);
             const activeButton = buttons[randomIndex];
 
             activeButton.disabled = false;
-            // Optional: Entferne eine mögliche visuelle Klasse
-            activeButton.classList.remove('disabled-genre');
+            activeButton.classList.remove('disabled-genre'); // Sicherstellen, dass die visuelle Markierung entfernt ist.
 
-            // Füge den Event-Listener nur für den aktiven Button hinzu
-            activeButton.addEventListener('click', handleGenreSelection, { once: true });
+            // Füge den Event-Listener nur für den aktiven Button hinzu.
+            activeButton.addEventListener('click', handleGenreSelection);
         }
     }
 
+    /**
+     * Behandelt die Auswahl eines Genres.
+     * @param {Event} e - Das Klick-Event.
+     */
     async function handleGenreSelection(e) {
         const selectedGenre = e.target.dataset.genre;
-        
-        await new Promise(resolve => setTimeout(resolve, 200)); // kurze Verzögerung zum nächsten screen
+
+        // Sofort alle Genre-Buttons deaktivieren und ihre Listener entfernen,
+        // um weitere Klicks während der Animation oder des Ladens zu verhindern.
+        document.querySelectorAll('.genre-button').forEach(btn => {
+            btn.disabled = true;
+            btn.removeEventListener('click', handleGenreSelection); // Wichtig: Listener entfernen.
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 200)); // Kurze Verzögerung für visuellen Übergang.
         genreContainer.classList.add('hidden');
-        document.querySelectorAll('.genre-button').forEach(btn => btn.removeEventListener('click', handleGenreSelection));
-        
-        // Speed-Round Check NACHDEM Genre gewählt wurde, aber VOR dem Track-Laden
+
+        // Speed-Round Check NACHDEM Genre gewählt wurde, aber VOR dem Track-Laden.
         const playerRound = Math.ceil(gameState.currentRound / 2);
         if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
             (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
             gameState.isSpeedRound = true;
-            // Zeige die "Speed-Round" Animation, bevor der Track geladen wird
-            await showSpeedRoundAnimation();
+            await showSpeedRoundAnimation(); // Zeigt die "Speed-Round" Animation.
         }
 
-        await prepareAndShowRateScreen(selectedGenre);
+        await prepareAndShowRateScreen(selectedGenre); // Bereitet den Rate-Screen vor und lädt den Track.
     }
 
     //=======================================================================
     // Phase 4: Rate-Bildschirm & Spielerwechsel
     //=======================================================================
-    
+
+    /**
+     * Ruft einen zufälligen Track aus einer Playlist des ausgewählten Genres ab.
+     * @param {string} genre - Das ausgewählte Genre.
+     * @returns {Promise<Object|null>} Der zufällig ausgewählte Track oder null bei Fehler.
+     */
     async function getTrack(genre) {
         const playlistPool = playlists[genre];
         if (!playlistPool || playlistPool.length === 0) {
             console.error(`Keine Playlists für Genre "${genre}" definiert oder Pool ist leer.`);
-            // Statt alert, eine Meldung auf dem Bildschirm anzeigen oder zur Genre-Auswahl zurückkehren
-            // alert(`Fehler: Für das Genre "${genre}" sind keine Playlists verfügbar.`);
-            showGenreScreen(); // Zurück zur Genre-Auswahl
+            alert(`Fehler: Für das Genre "${genre}" sind keine Playlists verfügbar. Bitte versuchen Sie ein anderes Genre.`);
+            showGenreScreen(); // Bei Fehler, zurück zum Genre-Auswahlbildschirm.
             return null;
         }
 
         const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
         console.log(`DEBUG: Ausgewähltes Genre: "${genre}", Playlist-ID: "${randomPlaylistId}"`);
 
-        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
+        try {
+            const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
 
-        if (!response.ok) {
-            console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
-            // alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
-            showGenreScreen(); // Zurück zur Genre-Auswahl
+            if (!response.ok) {
+                // Versucht, eine spezifischere Fehlermeldung vom Spotify-Server zu bekommen.
+                const errorData = await response.json().catch(() => ({})); // Fängt Parsing-Fehler ab.
+                const errorMessage = errorData.error && errorData.error.message ? errorData.error.message : response.statusText;
+                console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, errorMessage, `Playlist ID: ${randomPlaylistId}`);
+                alert(`Fehler beim Laden der Songs (Code: ${response.status}: ${errorMessage}). Bitte versuchen Sie ein anderes Genre oder überprüfen Sie Ihre Internetverbindung.`);
+                showGenreScreen();
+                return null;
+            }
+
+            const data = await response.json();
+
+            if (!data.items || data.items.length === 0) {
+                console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
+                alert(`Die ausgewählte Playlist hat keine Songs oder ist leer. Bitte wählen Sie ein anderes Genre.`);
+                showGenreScreen();
+                return null;
+            }
+
+            // Filtert Tracks, die nicht null sind (manchmal gibt es "leere" Items).
+            const playableTracks = data.items.filter(item => item.track);
+
+            if (playableTracks.length === 0) {
+                console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
+                alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
+                showGenreScreen();
+                return null;
+            }
+
+            const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
+
+            if (randomTrack) {
+                console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
+            } else {
+                console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
+                alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
+                showGenreScreen();
+                return null;
+            }
+
+            return randomTrack;
+        } catch (error) { // Fängt Netzwerkfehler oder andere unerwartete Fehler ab.
+            console.error("Netzwerkfehler beim Abrufen der Playlist-Tracks:", error);
+            alert("Ein Netzwerkfehler ist aufgetreten. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.");
+            showGenreScreen();
             return null;
         }
-
-        const data = await response.json();
-
-        if (!data.items || data.items.length === 0) {
-            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
-            // alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
-            showGenreScreen(); // Zurück zur Genre-Auswahl
-            return null;
-        }
-
-        // Filterung, wie zuvor besprochen (optional: .explicit === false hinzufügen)
-        const playableTracks = data.items.filter(item => item.track); 
-
-        if (playableTracks.length === 0) {
-            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
-            // alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
-            showGenreScreen(); // Zurück zur Genre-Auswahl
-            return null;
-        }
-
-        const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
-
-        if (randomTrack) {
-            console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
-        } else {
-            console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
-            // alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
-            showGenreScreen(); // Zurück zur Genre-Auswahl
-            return null;
-        }
-
-        return randomTrack;
     }
 
+    /**
+     * Bereitet den Bildschirm für das Raten des Songs vor.
+     * @param {string} genre - Das ausgewählte Genre.
+     */
     async function prepareAndShowRateScreen(genre) {
         gameState.currentTrack = await getTrack(genre);
         if (!gameState.currentTrack) {
-            // Wenn getTrack null zurückgibt (Fehler), die Funktion beenden
+            // Wenn getTrack null zurückgibt (Fehler beim Laden),
+            // kehren wir zur Genre-Auswahl zurück (wird in getTrack selbst gehandhabt).
+            // Hier brauchen wir nichts weiter zu tun, außer die Funktion zu beenden.
             return;
         }
-        console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
+
+        console.log("Selected Track:", gameState.currentTrack.name);
 
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-        logoButton.removeEventListener('click', playTrackSnippet); // Sicherstellen, dass alte Listener entfernt werden
+        // Entfernt den Event-Listener, um sicherzustellen, dass er nur einmal hinzugefügt wird.
+        logoButton.removeEventListener('click', playTrackSnippet);
         logoButton.addEventListener('click', playTrackSnippet);
 
-        // Speichere den Zustand: Raten-Bildschirm
-        lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
+        lastGameScreenVisible = 'reveal-container'; // Der Rate-Bildschirm wird unter 'reveal-container' zusammengefasst.
     }
 
+    /**
+     * Spielt ein Snippet des aktuellen Tracks ab.
+     * Verwaltet die Anzahl der Versuche und die Wiedergabedauer.
+     */
     function playTrackSnippet() {
-        if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
-            // Im normalen Modus: Keine weiteren Versuche
+        // Prüft, ob ein Gerät verbunden ist, bevor der Play-Request gesendet wird.
+        if (!deviceId) {
+            console.error("Spotify-Gerät nicht verbunden. Bitte stellen Sie sicher, dass Spotify geöffnet und verbunden ist.");
+            alert("Spotify-Player ist nicht bereit. Bitte stellen Sie sicher, dass die Spotify-App geöffnet und ein Gerät ausgewählt ist, dann versuchen Sie es erneut.");
+            logoButton.classList.remove('inactive'); // Button wieder aktiv machen.
             return;
         }
+
+        // Im normalen Modus: Keine weiteren Versuche, wenn das Maximum erreicht ist.
+        if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+            return;
+        }
+        // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick).
         if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
-            // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
             return;
         }
 
         triggerBounce(logoButton);
-        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
+        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen.
         gameState.attemptsMade++;
 
         const trackDurationMs = gameState.currentTrack.duration_ms;
-        const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
+        // Stellt sicher, dass die Startposition nicht über das Ende des Tracks hinausgeht.
+        const maxStartPosition = Math.max(0, trackDurationMs - gameState.trackDuration);
+        const randomStartPosition = Math.floor(Math.random() * maxStartPosition);
 
         fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
             method: 'PUT',
@@ -628,96 +706,107 @@ document.addEventListener('DOMContentLoaded', () => {
             }),
             headers: { 'Authorization': `Bearer ${accessToken}` }
         }).then(response => {
-            if (!response.ok) { // Fehlerbehandlung für Play-Request
-                console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
-                // alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-                logoButton.classList.remove('inactive'); // Button wieder aktiv machen
+            if (!response.ok) {
+                response.json().then(errorData => {
+                    const errorMessage = errorData.error && errorData.error.message ? errorData.error.message : response.statusText;
+                    console.error("Fehler beim Abspielen des Tracks:", response.status, errorMessage);
+                    alert(`Konnte den Song nicht abspielen (Code: ${response.status}). Möglicherweise ist kein aktives Spotify-Gerät ausgewählt oder es gibt ein Problem mit dem Access Token. ${errorMessage}`);
+                    logoButton.classList.remove('inactive'); // Button wieder aktiv machen.
+                }).catch(() => {
+                    // Fallback, wenn JSON-Parsing der Fehlermeldung fehlschlägt.
+                    console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+                    alert(`Konnte den Song nicht abspielen (Code: ${response.status}). Bitte stellen Sie sicher, dass ein aktives Spotify-Gerät ausgewählt ist.`);
+                    logoButton.classList.remove('inactive');
+                });
                 return;
             }
-            gameState.isSongPlaying = true; // Song spielt
+            gameState.isSongPlaying = true; // Setzt das Flag, dass der Song spielt.
 
             if (gameState.isSpeedRound) {
-                startVisualSpeedRoundCountdown(); // Startet den 10s Countdown
-                // Der Song wird nur einmal gespielt. Nach 10s wird aufgelöst.
-                // spotifyPlayer.pause() wird im countdown-timer gemacht oder durch showResolution
+                startVisualSpeedRoundCountdown(); // Startet den visuellen 7-Sekunden-Countdown.
+                // Der Song wird in der Speed-Round nach 7 Sekunden automatisch pausiert und aufgelöst.
             } else {
-                // Normaler Modus: Song pausiert nach trackDuration
+                // Normaler Modus: Song pausiert nach der festgelegten trackDuration.
                 gameState.spotifyPlayTimeout = setTimeout(() => {
-                    spotifyPlayer.pause();
+                    spotifyPlayer.pause().catch(e => console.error("Fehler beim Pausieren des Players nach Timeout:", e));
                     gameState.isSongPlaying = false;
+                    // Button wieder aktiv machen, wenn noch Versuche übrig sind.
                     if (gameState.attemptsMade < gameState.maxAttempts) {
-                        logoButton.classList.remove('inactive'); // Wieder aktiv, wenn noch Versuche da sind
+                        logoButton.classList.remove('inactive');
                     }
                 }, gameState.trackDuration);
             }
-        }).catch(error => { // Fehlerbehandlung für den Fetch-Request selbst
+        }).catch(error => {
             console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
-            // alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+            alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
             logoButton.classList.remove('inactive');
         });
 
-        // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
+        // "AUFLÖSEN"-Button nach dem ersten Versuch anzeigen (nicht in Speed-Round, da dort automatisch aufgelöst wird).
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
             revealButton.classList.remove('hidden');
-            revealButton.classList.remove('no-interaction');
+            revealButton.classList.remove('no-interaction'); // Ermöglicht Klick auf den Button.
         }
     }
 
+    /**
+     * Zeigt die Auflösung des Tracks an (Titel, Künstler, Album) und spielt den Song ab.
+     */
     function showResolution() {
-        // Alle Timer und Intervalle der Speed-Round stoppen
+        // Alle Timer und Intervalle der Speed-Round und des Song-Timings stoppen.
         clearTimeout(gameState.speedRoundTimeout);
         clearInterval(gameState.countdownInterval);
-        clearTimeout(gameState.spotifyPlayTimeout); // Auch den Song-Pause-Timer stoppen
-        clearInterval(gameState.fadeInterval); // WICHTIG: Fade-In-Intervall stoppen
-        
-        // Spotify Player pausieren, falls noch aktiv
+        clearTimeout(gameState.spotifyPlayTimeout);
+        clearInterval(gameState.fadeInterval);
+
+        // Spotify Player pausieren, falls noch aktiv.
         if (gameState.isSongPlaying && spotifyPlayer) {
-            spotifyPlayer.pause();
+            spotifyPlayer.pause().catch(e => console.error("Fehler beim Pausieren des Players für Auflösung:", e));
             gameState.isSongPlaying = false;
         }
 
-        // UI-Elemente ausblenden
+        // UI-Elemente ausblenden/zurücksetzen.
         countdownDisplay.classList.add('hidden');
-        countdownDisplay.classList.remove('countdown-animated'); // Animationsklasse entfernen
-        countdownDisplay.innerText = ''; // Inhalt leeren
+        countdownDisplay.classList.remove('countdown-animated');
+        countdownDisplay.innerText = '';
 
         logoButton.classList.add('inactive', 'hidden');
         revealButton.classList.add('hidden');
-        speedRoundTextDisplay.classList.add('hidden'); // Der Speed-Round Text sollte auch weg
+        speedRoundTextDisplay.classList.add('hidden');
 
-        // Track-Infos anzeigen
+        // Track-Informationen anzeigen.
         document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
         document.getElementById('track-title').innerText = gameState.currentTrack.name;
         document.getElementById('track-artist').innerText = gameState.currentTrack.artists.map(a => a.name).join(', ');
         trackAlbum.innerText = gameState.currentTrack.album.name;
         trackYear.innerText = `(${gameState.currentTrack.album.release_date.substring(0, 4)})`;
-        
+
         revealContainer.classList.remove('hidden');
-        // Speichere den Zustand: Auflösung-Bildschirm
-        lastGameScreenVisible = 'reveal-container';
-            
-        // Song bei Auflösung abspielen
-        playSongForResolution();
+        lastGameScreenVisible = 'reveal-container'; // Zustand speichern.
+
+        playSongForResolution(); // Spielt den Song bei der Auflösung ab.
     }
 
-    // Funktion zum Abspielen des Songs bei Auflösung
+    /**
+     * Spielt den vollständigen Song bei der Auflösung ab, mit Fade-In-Effekt.
+     */
     async function playSongForResolution() {
         if (!gameState.currentTrack || !deviceId) {
             console.warn("Kein Track oder Gerät verfügbar, kann Song nicht abspielen.");
             return;
         }
 
-        const startPositionMs = 30 * 1000; // 30 Sekunden in Millisekunden
-        const targetVolume = 80; // Ziel-Lautstärke in %
-        const fadeDuration = 2000; // Fade-In Dauer in Millisekunden (z.B. 2 Sekunden)
-        const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
-        const intervalTime = fadeDuration / (targetVolume / fadeStep); // Intervallzeit für jeden Schritt
+        const startPositionMs = 30 * 1000; // Startet den Song bei 30 Sekunden.
+        const targetVolume = 80; // Ziel-Lautstärke in Prozent.
+        const fadeDuration = 2000; // Fade-In Dauer in Millisekunden (2 Sekunden).
+        const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung.
+        const intervalTime = fadeDuration / (targetVolume / fadeStep); // Berechnet das Intervall für jeden Schritt.
 
-        // Sicherstellen, dass die Lautstärke auf 0 gesetzt ist, bevor wir starten
+        // Sicherstellen, dass die Lautstärke auf 0 gesetzt ist, bevor der Song startet, um einen sauberen Fade-In zu gewährleisten.
         spotifyPlayer.setVolume(0).then(() => {
-            gameState.currentSongVolume = 0; // Setze interne Volume auf 0
+            gameState.currentSongVolume = 0; // Setzt die interne Volume auf 0.
 
-            // Song bei Sekunde 30 starten
+            // Startet den Song bei der festgelegten Position.
             fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
                 method: 'PUT',
                 body: JSON.stringify({
@@ -730,316 +819,405 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
                     return;
                 }
-                gameState.isSongPlaying = true; // Song spielt jetzt
+                gameState.isSongPlaying = true; // Song spielt jetzt.
 
-                // Starte Fade-In
+                // Startet den Fade-In-Effekt.
                 gameState.fadeInterval = setInterval(() => {
                     if (gameState.currentSongVolume < targetVolume) {
                         gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
-                        spotifyPlayer.setVolume(gameState.currentSongVolume / 100); // Spotify Volume erwartet 0.0 bis 1.0
+                        spotifyPlayer.setVolume(gameState.currentSongVolume / 100).catch(e => console.error("Fehler beim Setzen der Lautstärke:", e));
                     } else {
-                        clearInterval(gameState.fadeInterval); // Fade-In beendet
+                        clearInterval(gameState.fadeInterval); // Beendet den Fade-In, wenn die ZIel-Lautstärke erreicht ist.
+                        gameState.fadeInterval = null;
                     }
-                }, intervalTime); // Intervall für den Fade-In
+                }, intervalTime);
             }).catch(error => {
                 console.error("Netzwerkfehler beim Starten des Songs für Auflösung:", error);
+                alert("Problem beim Abspielen des Songs für die Auflösung. Bitte überprüfen Sie Ihre Internetverbindung.");
             });
         }).catch(error => {
             console.error("Fehler beim Setzen der Initiallautstärke auf 0:", error);
+            alert("Ein Problem ist aufgetreten beim Vorbereiten der Audiowiedergabe.");
         });
     }
 
-    // Funktion für Fade-Out
+    /**
+     * Führt einen sanften Fade-Out des aktuell spielenden Audiotracks durch.
+     * @returns {Promise<void>} Ein Promise, das aufgelöst wird, wenn der Fade-Out abgeschlossen ist.
+     */
     function fadeAudioOut() {
         return new Promise(resolve => {
+            // Wenn kein Player oder kein Song spielt, direkt auflösen.
             if (!spotifyPlayer || !gameState.isSongPlaying) {
-                resolve(); // Nichts zu faden oder Song spielt nicht
+                resolve();
                 return;
             }
 
-            clearInterval(gameState.fadeInterval); // Sicherstellen, dass kein Fade-In mehr läuft
+            clearInterval(gameState.fadeInterval); // Stellt sicher, dass kein Fade-In mehr läuft.
 
-            const fadeDuration = 500; // Fade-Out Dauer in Millisekunden (z.B. 0.5 Sekunden)
-            const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
-            const currentVolumePercent = gameState.currentSongVolume; // Letzte Lautstärke vom Fade-In
+            const fadeDuration = 500; // Fade-Out Dauer in Millisekunden (0.5 Sekunden).
+            const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung.
+            // Nutzt die letzte bekannte Lautstärke vom Fade-In als Startpunkt.
+            const currentVolumePercent = gameState.currentSongVolume;
 
-            // Berechne die Intervallzeit basierend auf der aktuellen Lautstärke
+            // Berechnet die Intervallzeit basierend auf der aktuellen Lautstärke und Fade-Dauer.
             const intervalTime = fadeDuration / (currentVolumePercent / fadeStep);
 
             gameState.fadeInterval = setInterval(() => {
                 if (gameState.currentSongVolume > 0) {
                     gameState.currentSongVolume = Math.max(0, gameState.currentSongVolume - fadeStep);
-                    spotifyPlayer.setVolume(gameState.currentSongVolume / 100);
+                    spotifyPlayer.setVolume(gameState.currentSongVolume / 100).catch(e => console.error("Fehler beim Fade-Out Lautstärke setzen:", e));
                 } else {
-                    clearInterval(gameState.fadeInterval);
+                    clearInterval(gameState.fadeInterval); // Stoppt den Interval, wenn Lautstärke 0 erreicht.
                     gameState.fadeInterval = null;
-                    resolve(); // Fade-Out abgeschlossen
+                    resolve(); // Fade-Out abgeschlossen.
                 }
             }, intervalTime);
         });
     }
 
-    revealButton.addEventListener('click', async () => { 
-        // Blende den Button sofort aus, um Doppelklicks zu vermeiden
-        revealButton.classList.add('no-interaction'); 
+    // Event Listener für den "AUFLÖSEN"-Button.
+    revealButton.addEventListener('click', async () => {
+        revealButton.classList.add('no-interaction'); // Verhindert Doppelklicks.
 
-        // Verzögerung HIER einfügen, direkt nach dem Klick und dem Ausblenden des Buttons.
-        await new Promise(resolve => setTimeout(resolve, 200)); // Kurze Verzögerung für die Button-Animation
+        // Kurze Verzögerung für eine bessere visuelle Erfahrung (z.B. Pulldown-Effekt des Buttons).
+        await new Promise(resolve => setTimeout(resolve, 200));
 
-        // Song ausblenden (falls noch nicht geschehen)
-        await fadeAudioOut(); 
-        
-        // Song pausieren
+        await fadeAudioOut(); // Führt den Fade-Out des Songs durch.
+
+        // Pausiert den Song endgültig, falls er noch spielt.
         if (gameState.isSongPlaying && spotifyPlayer) {
-            spotifyPlayer.pause();
+            spotifyPlayer.pause().catch(e => console.error("Fehler beim Pausieren des Players nach Fade-Out:", e));
             gameState.isSongPlaying = false;
         }
 
-        // Zeige die Auflösung an (Titel, Album, etc.)
-        showResolution(); 
+        showResolution(); // Zeigt die Track-Informationen an.
     });
 
+    /**
+     * Verarbeitet das Feedback des Spielers (richtig/falsch).
+     * @param {boolean} isCorrect - True, wenn die Antwort richtig war, sonst False.
+     */
     function handleFeedback(isCorrect) {
-        correctButton.classList.add('no-interaction');
+        correctButton.classList.add('no-interaction'); // Deaktiviert Buttons, um Mehrfachklicks zu verhindern.
         wrongButton.classList.add('no-interaction');
-        
-        // Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
+
+        // Startet den Fade-Out des Songs, bevor die Punktelogik ausgeführt wird.
         fadeAudioOut().then(() => {
-            // Dieser Code wird ausgeführt, NACHDEM der Fade-Out beendet ist
+            // Song pausieren, falls er noch spielt (redundant, aber sicherheitshalber).
             if (gameState.isSongPlaying && spotifyPlayer) {
-                spotifyPlayer.pause();
+                spotifyPlayer.pause().catch(e => console.error("Fehler beim Pausieren des Players in handleFeedback:", e));
                 gameState.isSongPlaying = false;
             }
 
-            let pointsAwarded = 0; // Variable für die vergebenen Punkte
+            let pointsAwarded = 0;
 
             if (isCorrect) {
-                // 5.1: Punkte berechnen und speichern
-                pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1)); // Punkte berechnen
+                // Berechnet die vergebenen Punkte basierend auf Würfelwert und Versuchen.
+                pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1));
                 if (gameState.currentPlayer === 1) {
                     gameState.player1Score += pointsAwarded;
                 } else {
                     gameState.player2Score += pointsAwarded;
                 }
+                updateInGameScores(); // Aktualisiert die In-Game-Punktanzeige.
             }
 
-            // Animation der vergebenen Punkte anzeigen
+            // Zeigt die Animation der vergebenen Punkte an.
             displayPointsAnimation(pointsAwarded, gameState.currentPlayer)
-                .then(() => { 
-                    // Spieler wechseln
+                .then(() => {
+                    // Spielerwechsel und Hintergrundfarben-Anpassung.
                     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
                     appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
+                    updateInGameScores(); // Aktualisiert die In-Game-Punktanzeige für den neuen Spieler.
 
-                    // Setze den Zustand zurück, bevor die nächste Runde beginnt
-                    lastGameScreenVisible = '';
-                    setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
+                    // Feedback-Buttons verstecken, "NÄCHSTE RUNDE" Button anzeigen.
+                    document.getElementById('feedback-buttons').classList.add('hidden');
+                    nextRoundButton.classList.remove('hidden'); // Macht den "NÄCHSTE RUNDE" Button sichtbar.
                 });
         });
     }
 
-    // Funktion zur Anzeige der animierten Punkte
+    /**
+     * Aktualisiert die In-Game-Punktanzeige für Spieler 1 und Spieler 2.
+     * Hebt den aktuell spielenden Spieler visuell hervor.
+     */
+    function updateInGameScores() {
+        player1ScoreIngame.innerText = `Player 1: ${gameState.player1Score}`;
+        player2ScoreIngame.innerText = `Player 2: ${gameState.player2Score}`;
+
+        if (gameState.currentPlayer === 1) {
+            player1ScoreIngame.classList.add('active-player-score');
+            player2ScoreIngame.classList.remove('active-player-score');
+        } else {
+            player2ScoreIngame.classList.add('active-player-score');
+            player1ScoreIngame.classList.remove('active-player-score');
+        }
+    }
+
+    /**
+     * Zeigt eine animierte Punkteanzeige, die zu den entsprechenden Spielern fliegt.
+     * @param {number} points - Die Anzahl der Punkte, die angezeigt werden sollen.
+     * @param {number} player - Der Spieler (1 oder 2), dem die Punkte zugeordnet werden.
+     * @returns {Promise<void>} Ein Promise, das aufgelöst wird, wenn die Animation beendet ist.
+     */
     function displayPointsAnimation(points, player) {
         return new Promise(resolve => {
-            // 1. Alle vorherigen Animationsklassen entfernen und Element für den Start vorbereiten
+            // Alle vorherigen Animationsklassen entfernen und Element für den Start vorbereiten.
             countdownDisplay.classList.remove('hidden', 'countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2', 'points-pop-in');
-            countdownDisplay.innerText = `+${points}`;
+            countdownDisplay.innerText = points > 0 ? `+${points}` : ''; // Zeigt Punkte nur an, wenn > 0.
 
-            // 2. Start-Stile für die Punkteanzeige setzen (für die 'pop-in' Animation)
-            countdownDisplay.style.opacity = '0'; // Startet transparent
-            countdownDisplay.style.transform = 'translate(-50%, -50%) scale(0.8)'; // Startet kleiner
-            countdownDisplay.style.top = '50%'; // Vertikale Mitte
+            // Start-Stile für die Punkteanzeige setzen (für die 'pop-in' Animation).
+            countdownDisplay.style.opacity = '0';
+            countdownDisplay.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            countdownDisplay.style.top = '50%'; // Vertikale Mitte.
 
             if (player === 1) {
                 countdownDisplay.style.color = 'var(--punktefarbe-player1)';
-                countdownDisplay.style.left = '50%'; // 25% für Linke Hälfte für Spieler 1
+                countdownDisplay.style.left = '50%'; // Startet mittig.
             } else {
                 countdownDisplay.style.color = 'var(--punktefarbe-player2)';
-                countdownDisplay.style.left = '50%'; // 75% für Rechte Hälfte für Spieler 2
+                countdownDisplay.style.left = '50%'; // Startet mittig.
             }
 
-            // Reflow erzwingen, damit die Start-Stile angewendet werden, bevor die Animation beginnt
-            void countdownDisplay.offsetWidth;
+            void countdownDisplay.offsetWidth; // Erzwingt Reflow, damit Start-Stile angewendet werden.
 
-            // 3. Phase 1: Punkte sanft einblenden (Pop-in)
-            countdownDisplay.classList.add('points-pop-in'); // Neue Klasse für den sanften Pop-in-Effekt
+            // Phase 1: Punkte sanft einblenden (Pop-in).
+            if (points > 0) { // Nur animieren, wenn Punkte vergeben werden.
+                countdownDisplay.classList.add('points-pop-in');
+            }
 
-            const popInDuration = 1000; // Dauer des Einblendens (0.3 Sekunden, passt zur CSS)
-            const flyAnimationDuration = 400; // Dauer der "Wegfliegen"-Animation (0.5 Sekunden, passt zur CSS)
+            const popInDuration = 1000; // Dauer des Einblendens (passt zur CSS-Transition).
+            const flyAnimationDuration = 400; // Dauer der "Wegfliegen"-Animation (passt zur CSS-Transition).
 
-            // 4. Phase 2: Nach dem Einblenden die "Wegfliegen"-Animation starten
+            // Phase 2: Nach dem Einblenden die "Wegfliegen"-Animation starten.
             setTimeout(() => {
-                countdownDisplay.classList.remove('points-pop-in'); // Pop-in-Klasse entfernen
+                countdownDisplay.classList.remove('points-pop-in');
                 if (player === 1) {
                     countdownDisplay.classList.add('fly-to-corner-player1');
                 } else {
                     countdownDisplay.classList.add('fly-to-corner-player2');
                 }
-            }, popInDuration); // Startet nach dem Einblenden
+            }, popInDuration);
 
-            // 5. Nach der gesamten Animationsdauer das Element verstecken und Promise auflösen
+            // Nach der gesamten Animationsdauer das Element verstecken und Promise auflösen.
             setTimeout(() => {
                 countdownDisplay.classList.add('hidden');
-                // Animationsklassen entfernen, damit sie beim nächsten Mal sauber starten
+                // Animationsklassen entfernen, damit sie beim nächsten Mal sauber starten.
                 countdownDisplay.classList.remove('fly-to-corner-player1', 'fly-to-corner-player2');
-                countdownDisplay.innerText = ''; // Text leeren
+                countdownDisplay.innerText = '';
 
-                // Stile auf den Standardwert zurücksetzen, falls countdownDisplay auch für den Countdown genutzt wird
+                // Stile auf den Standardwert zurücksetzen, falls countdownDisplay auch für den Countdown genutzt wird.
                 countdownDisplay.style.color = 'var(--white)';
                 countdownDisplay.style.left = '50%';
                 countdownDisplay.style.top = '50%';
-                countdownDisplay.style.opacity = '1'; // Opacity zurücksetzen
-                countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)'; // Transform zurücksetzen
-                resolve(); // Promise auflösen, damit der nächste Schritt in handleFeedback ausgeführt werden kann
-            }, popInDuration + flyAnimationDuration); // Gesamtdauer: Einblenden + Fliegen
+                countdownDisplay.style.opacity = '1';
+                countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)';
+                resolve(); // Promise auflösen, damit der nächste Schritt ausgeführt werden kann.
+            }, popInDuration + flyAnimationDuration);
         });
     }
+
+    // Event-Listener für die Feedback-Buttons.
     document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
     document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
 
+    // NEU: Event-Listener für den "NÄCHSTE RUNDE" Button.
+    nextRoundButton.addEventListener('click', () => {
+        nextRoundButton.classList.add('hidden'); // Versteckt den Button sofort.
+        // Die Feedback-Buttons werden in resetRoundUI wieder sichtbar gemacht.
+        resetRoundUI(); // Bereinigt die UI und setzt Timer zurück.
+        showDiceScreen(); // Startet die nächste Runde mit dem Würfel-Screen.
+    });
+
+    /**
+     * Setzt die UI-Elemente für eine neue Runde zurück und stoppt alle aktiven Timer/Intervalle.
+     * Dies ist entscheidend für die Robustheit der Anwendung und zur Vermeidung von Memory Leaks.
+     */
     function resetRoundUI() {
+        // UI-Elemente verstecken.
         revealContainer.classList.add('hidden');
         logoButton.classList.add('hidden');
         genreContainer.classList.add('hidden');
         diceContainer.classList.add('hidden');
-        revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
-        speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
+        revealButton.classList.add('hidden');
+        speedRoundTextDisplay.classList.add('hidden');
+        playerScoresIngame.classList.remove('hidden'); // In-Game Scores bleiben sichtbar.
+
+        // Feedback- und Next-Round-Buttons zurücksetzen.
         correctButton.classList.remove('no-interaction');
-        wrongButton.classList.remove('no-interaction');        
-        
-        // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
-        // wenn der Logo-Button wieder verwendet wird.
+        wrongButton.classList.remove('no-interaction');
+        nextRoundButton.classList.add('hidden');
+        document.getElementById('feedback-buttons').classList.remove('hidden');
+
+        // Entfernen Sie alle spezifischen Event-Listener von Elementen,
+        // die in der nächsten Phase neue Listener erhalten.
         logoButton.removeEventListener('click', playTrackSnippet);
+        document.querySelectorAll('.genre-button').forEach(btn => btn.removeEventListener('click', handleGenreSelection));
 
-        // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
+
+        // Alle laufenden Timer und Intervalle beenden und ihre Referenzen zurücksetzen.
+        // Dies verhindert, dass alte Funktionen nach dem Rundenwechsel ausgeführt werden.
         clearTimeout(gameState.speedRoundTimeout);
+        gameState.speedRoundTimeout = null;
         clearInterval(gameState.countdownInterval);
+        gameState.countdownInterval = null;
         clearTimeout(gameState.spotifyPlayTimeout);
+        gameState.spotifyPlayTimeout = null;
         clearInterval(gameState.fadeInterval);
-        clearTimeout(gameState.diceAnimationTimeout); // Würfel-Animations-Timeout auch hier stoppen
+        gameState.fadeInterval = null;
+        clearTimeout(gameState.diceAnimationTimeout);
+        gameState.diceAnimationTimeout = null;
 
-        // Spotify Player pausieren, falls noch aktiv
-        if (gameState.isSongPlaying && spotifyPlayer) {
-            spotifyPlayer.pause();
-            gameState.isSongPlaying = false;
+        // Spotify Player pausieren, falls noch aktiv, und Lautstärke zurücksetzen.
+        if (spotifyPlayer) {
+            if (gameState.isSongPlaying) {
+                spotifyPlayer.pause().catch(e => console.error("Fehler beim Pausieren des Players in resetRoundUI:", e));
+                gameState.isSongPlaying = false;
+            }
+            spotifyPlayer.setVolume(1.0) // Setzt die Lautstärke auf 100% für den nächsten Rateversuch.
+                .then(() => console.log("Lautstärke auf 100% zurückgesetzt."))
+                .catch(error => console.error("Fehler beim Zurücksetzen der Lautstärke:", error));
         }
 
-        // Lautstärke auf 100% zurücksetzen, BEVOR der nächste Song startet
-        if (spotifyPlayer) { // Prüfen, ob der Player initialisiert ist
-            spotifyPlayer.setVolume(1.0) // 1.0 entspricht 100%
-                .then(() => {
-                    console.log("Lautstärke für Rateteil auf 100% zurückgesetzt.");
-                })
-                .catch(error => {
-                    console.error("Fehler beim Zurücksetzen der Lautstärke:", error);
-                });
-        }
+        // Countdown-Display zurücksetzen, falls es aktiv war oder für Punkteanzeige genutzt wurde.
+        countdownDisplay.classList.add('hidden');
+        countdownDisplay.classList.remove('countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2', 'points-pop-in');
+        countdownDisplay.innerText = '';
+        countdownDisplay.style.opacity = '1'; // Opacity zurücksetzen.
+        countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)'; // Transform zurücksetzen.
+        countdownDisplay.style.color = 'var(--white)'; // Auf Standardfarbe zurücksetzen.
+        countdownDisplay.style.left = '50%'; // Position zurücksetzen.
+        countdownDisplay.style.top = '50%'; // Position zurücksetzen.
+
+        // Entfernen der spezifischen CSS-Klasse von deaktivierten Genre-Buttons.
+        document.querySelectorAll('.genre-button').forEach(btn => {
+            btn.classList.remove('disabled-genre');
+        });
     }
-    
+
     //=======================================================================
     // Phase 5: Spielende & Reset
     //=======================================================================
-    
+
+    /**
+     * Beendet das Spiel und zeigt den Punktestand an.
+     */
     function endGame() {
         gameScreen.classList.add('hidden');
         scoreScreen.classList.remove('hidden');
         appContainer.style.backgroundColor = 'transparent';
+        playerScoresIngame.classList.add('hidden'); // In-Game Scores verstecken.
 
-        // Speichere den Zustand als Score-Screen
-        lastGameScreenVisible = 'score-screen';
+        lastGameScreenVisible = 'score-screen'; // Zustand speichern.
 
         const p1ScoreEl = document.getElementById('player1-score-display');
         const p2ScoreEl = document.getElementById('player2-score-display');
         p1ScoreEl.innerText = gameState.player1Score;
         p2ScoreEl.innerText = gameState.player2Score;
-        p1ScoreEl.style.opacity = '1';
+        p1ScoreEl.style.opacity = '1'; // Macht die Punkte sichtbar.
         p2ScoreEl.style.opacity = '1';
 
+        // Nach 7 Sekunden werden die Punkte ausgeblendet.
         setTimeout(() => {
             p1ScoreEl.style.opacity = '0';
             p2ScoreEl.style.opacity = '0';
         }, 7000);
 
-        setTimeout(resetGame, 8000); // Nach Fade-Out
+        // Nach 8 Sekunden wird das Spiel zurückgesetzt und zum Startbildschirm gewechselt.
+        setTimeout(resetGame, 8000);
     }
 
+    /**
+     * Setzt den gesamten Spielstatus und die UI auf den Ausgangszustand zurück.
+     */
     function resetGame() {
         scoreScreen.classList.add('hidden');
         appContainer.style.backgroundColor = 'var(--black)';
-        
-        // Spielstatus zurücksetzen
+
+        // Rufe resetRoundUI auf, um alle Timer und UI-Elemente zu bereinigen,
+        // bevor der Spielstatus zurückgesetzt wird. Dies ist ein umfassendes Aufräumen.
+        resetRoundUI();
+
+        // Setzt alle Spielstatus-Variablen auf ihre Initialwerte zurück.
         gameState.player1Score = 0;
         gameState.player2Score = 0;
-        gameState.currentPlayer = 1;
+        gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2; // Zufälligen Startspieler für das neue Spiel.
         gameState.currentRound = 0;
         gameState.diceValue = 0;
         gameState.attemptsMade = 0;
         gameState.maxAttempts = 0;
         gameState.trackDuration = 0;
         gameState.currentTrack = null;
-        gameState.isSpeedRound = false;
-        clearTimeout(gameState.speedRoundTimeout);
-        
         gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
         gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
+        gameState.isSpeedRound = false;
 
-        // Zurück zum Start (ohne Einflug-Animation)
+        // Zeigt den Game-Screen und den Logo-Button für einen Neustart an.
         gameScreen.classList.remove('hidden');
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-        logoButton.removeEventListener('click', startGame); // Sicherstellen, dass kein alter Listener hängt
-        logoButton.addEventListener('click', startGame, { once: true });
+        logoButton.removeEventListener('click', startGame); // Entfernt alte Listener.
+        logoButton.addEventListener('click', startGame, { once: true }); // Fügt neuen Listener hinzu.
 
-        // Setze den letzten sichtbaren Screen zurück, da das Spiel neu startet
-        lastGameScreenVisible = '';
+        lastGameScreenVisible = ''; // Setzt den gespeicherten Zustand zurück.
     }
 
     //=======================================================================
     // Phase 6: Sonderfunktion "Speed-Round"
     //=======================================================================
 
+    /**
+     * Zeigt die visuelle Animation für den Beginn einer Speed-Round an.
+     * @returns {Promise<void>} Ein Promise, das aufgelöst wird, wenn die Animation abgeschlossen ist.
+     */
     function showSpeedRoundAnimation() {
         return new Promise(resolve => {
-            speedRoundTextDisplay.classList.remove('hidden');
+            speedRoundTextDisplay.classList.remove('hidden'); // Zeigt den Speed-Round Text an.
             setTimeout(() => {
-                speedRoundTextDisplay.classList.add('hidden');
+                speedRoundTextDisplay.classList.add('hidden'); // Versteckt den Text nach einer kurzen Zeit.
                 resolve();
-            }, 3500);
+            }, 3500); // Dauer der Speed-Round Textanzeige.
         });
     }
 
-    // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
+    /**
+     * Startet den visuellen Countdown für die Speed-Round.
+     * Nach Ablauf des Countdowns wird die Auflösung automatisch ausgelöst.
+     */
     function startVisualSpeedRoundCountdown() {
-        let timeLeft = 7; // Startwert des Countdowns
-        countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
+        let timeLeft = 7; // Countdown beginnt bei 7 Sekunden.
+        countdownDisplay.classList.remove('hidden'); // Macht die Countdown-Anzeige sichtbar.
 
-        // Timer für die automatische Auflösung nach 10 Sekunden
+        // Timer für die automatische Auflösung nach der vollen Dauer der Speed-Round (7 Sekunden).
         gameState.speedRoundTimeout = setTimeout(() => {
-            showResolution(); // Auflösung nach 10 Sekunden
+            showResolution(); // Löst die Anzeige der Track-Informationen aus.
         }, 7000);
 
-        // Sofort die erste Zahl anzeigen und animieren
+        // Zeigt sofort die erste Zahl an und animiert sie.
         countdownDisplay.innerText = timeLeft;
         countdownDisplay.classList.remove('countdown-animated');
-        void countdownDisplay.offsetWidth; // Reflow
+        void countdownDisplay.offsetWidth; // Erzwingt Reflow, um Animation zurückzusetzen.
         countdownDisplay.classList.add('countdown-animated');
 
-        // Interval für den visuellen Countdown jede Sekunde
+        // Interval für den visuellen Countdown, aktualisiert jede Sekunde.
         gameState.countdownInterval = setInterval(() => {
-            timeLeft--; // Zahl verringern
+            timeLeft--; // Verringert die verbleibende Zeit.
 
-            if (timeLeft >= 0) { // Solange die Zahl 0 oder größer ist
-                countdownDisplay.innerText = timeLeft; // Zahl aktualisieren
-                countdownDisplay.classList.remove('countdown-animated'); // Animation entfernen
-                void countdownDisplay.offsetWidth; // Reflow erzwingen
-                countdownDisplay.classList.add('countdown-animated'); // Animation hinzufügen
+            if (timeLeft >= 0) { // Solange die Zahl 0 oder größer ist.
+                countdownDisplay.innerText = timeLeft;
+                countdownDisplay.classList.remove('countdown-animated');
+                void countdownDisplay.offsetWidth; // Erzwingt Reflow für neue Animation.
+                countdownDisplay.classList.add('countdown-animated');
             }
 
-            if (timeLeft < 0) { // Wenn Countdown abgelaufen ist (nach 0)
-                clearInterval(gameState.countdownInterval); // Interval stoppen
-                countdownDisplay.classList.add('hidden'); // Countdown ausblenden
-                countdownDisplay.innerText = ''; // Inhalt leeren
-                // showResolution wird bereits durch speedRoundTimeout ausgelöst
+            if (timeLeft < 0) { // Wenn Countdown abgelaufen ist (nach 0).
+                clearInterval(gameState.countdownInterval); // Stoppt den Interval.
+                gameState.countdownInterval = null; // Zurücksetzen der ID.
+                countdownDisplay.classList.add('hidden'); // Countdown ausblenden.
+                countdownDisplay.innerText = ''; // Inhalt leeren.
+                // showResolution wird bereits durch speedRoundTimeout ausgelöst.
             }
-        }, 1000); // Jede Sekunde aktualisieren
+        }, 1000); // Aktualisiert jede Sekunde.
     }
 
-}); // Ende DOMContentLoaded
+}); // Ende DOMContentLoaded-Event-Listener
