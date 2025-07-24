@@ -103,54 +103,6 @@ const diceConfig = {
     const userAgent = navigator.userAgent;
     return /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream && /WebKit/.test(userAgent);
 }
-
-// FÜR SAFAR anderes verhalten In deinem DOMContentLoaded-Block
-if (isIOSSafari()) {
-    // Entferne den fullscreenScreen-Listener
-    fullscreenScreen.removeEventListener('click', () => {
-        document.documentElement.requestFullscreen().then(...);
-    });
-
-    // Verstecke den fullscreenScreen-Container oder ändere seinen Text
-    // Beispiel:
-    fullscreenScreen.querySelector('p').innerText = 'Füge diese Seite zum Home-Bildschirm hinzu für die beste Erfahrung!';
-    // Oder direkt: fullscreenScreen.classList.add('hidden'); // Wenn du gar keinen "Fullscreen"-Button anzeigen willst.
-    // Dann müsstest du den gameScreen direkt sichtbar machen und dein Spiel dort starten.
-
-    // Das Spiel direkt im "Pseudo-Fullscreen" starten, ohne expliziten Klick auf den Fullscreen-Button
-    fullscreenScreen.classList.add('hidden');
-    gameScreen.classList.remove('hidden');
-    // Und dann direkt mit dem Start des Spiels fortfahren, z.B. startGame();
-    // Du müsstest überlegen, ob du dann direkt mit dem Logo-Button startest
-    // oder eine andere Einführungsphase hast.
-
-    // Die Orientierungsprüfung bleibt wichtig!
-    window.addEventListener('resize', checkOrientation);
-    checkOrientation();
-
-} else {
-    // Bestehende Fullscreen-Logik für andere Browser
-    fullscreenScreen.addEventListener('click', () => {
-        document.documentElement.requestFullscreen().then(() => {
-            fullscreenScreen.classList.add('hidden');
-            gameScreen.classList.remove('hidden');
-            if (lastGameScreenVisible === 'dice-container') {
-                showDiceScreen();
-            } else if (lastGameScreenVisible === 'genre-container') {
-                showGenreScreen();
-            } else if (lastGameScreenVisible === 'reveal-container') {
-                showResolution();
-            } else {
-                logoButton.classList.remove('hidden');
-                logoButton.classList.add('initial-fly-in');
-                logoButton.addEventListener('click', startGame, { once: true });
-            }
-        });
-    });
-    // Und weiterhin die Orientierungsprüfung
-    window.addEventListener('resize', checkOrientation);
-    checkOrientation();
-}
     
     // 1.4: Querformat-Prüfung
     function checkOrientation() {
@@ -223,6 +175,55 @@ if (isIOSSafari()) {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
+// FÜR SAFAR ------ anderes verhalten ----
+if (isIOSSafari()) {
+    // Entferne den fullscreenScreen-Listener
+    fullscreenScreen.removeEventListener('click', () => {
+        document.documentElement.requestFullscreen().then(...);
+    });
+
+    // Verstecke den fullscreenScreen-Container oder ändere seinen Text
+    // Beispiel:
+    fullscreenScreen.querySelector('p').innerText = 'Füge diese Seite zum Home-Bildschirm hinzu für die beste Erfahrung!';
+    // Oder direkt: fullscreenScreen.classList.add('hidden'); // Wenn du gar keinen "Fullscreen"-Button anzeigen willst.
+    // Dann müsstest du den gameScreen direkt sichtbar machen und dein Spiel dort starten.
+
+    // Das Spiel direkt im "Pseudo-Fullscreen" starten, ohne expliziten Klick auf den Fullscreen-Button
+    fullscreenScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    // Und dann direkt mit dem Start des Spiels fortfahren, z.B. startGame();
+    // Du müsstest überlegen, ob du dann direkt mit dem Logo-Button startest
+    // oder eine andere Einführungsphase hast.
+
+    // Die Orientierungsprüfung bleibt wichtig!
+    window.addEventListener('resize', checkOrientation);
+    checkOrientation();
+
+} else {
+    // Bestehende Fullscreen-Logik für andere Browser
+    fullscreenScreen.addEventListener('click', () => {
+        document.documentElement.requestFullscreen().then(() => {
+            fullscreenScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            if (lastGameScreenVisible === 'dice-container') {
+                showDiceScreen();
+            } else if (lastGameScreenVisible === 'genre-container') {
+                showGenreScreen();
+            } else if (lastGameScreenVisible === 'reveal-container') {
+                showResolution();
+            } else {
+                logoButton.classList.remove('hidden');
+                logoButton.classList.add('initial-fly-in');
+                logoButton.addEventListener('click', startGame, { once: true });
+            }
+        });
+    });
+    // Und weiterhin die Orientierungsprüfung
+    window.addEventListener('resize', checkOrientation);
+    checkOrientation();
+}
+    // FÜR SAFARI -----ENDE-----
+    
     if (code) {
         // Wir kommen von der Spotify-Weiterleitung zurück
         window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
