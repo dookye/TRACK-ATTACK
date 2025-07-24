@@ -98,7 +98,7 @@ const diceConfig = {
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
     
-    // 1.4: Querformat-Prüfung (JETZT ANPASSEN FÜR PWA-MODUS)
+     // 1.4: Querformat-Prüfung (JETZT ANPASSEN FÜR PWA-MODUS)
     function checkOrientation() {
         // Prüft, ob die App im Standalone-Modus (PWA) läuft
         const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || document.referrer.includes('android-app://') || navigator.standalone;
@@ -125,6 +125,32 @@ const diceConfig = {
             text += possible.charAt(Math.floor(Math.random() * possible.length));
         }
         return text;
+    }
+
+    // Initialisierung nach dem Laden der Seite
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
+    if (code) {
+        // Wir kommen von der Spotify-Weiterleitung zurück
+        window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
+        getAccessToken(code).then(token => {
+            accessToken = token;
+            loginScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden'); // Direkt zum GameScreen wechseln
+            logoButton.classList.remove('hidden'); // Logo Button anzeigen
+            logoButton.classList.add('initial-fly-in'); // Animation starten
+            logoButton.addEventListener('click', startGame, { once: true }); // Listener für Spielstart
+            initializePlayer();
+            // Orientierungsprüfung und Listener NACH erfolgreichem Login aktivieren
+            window.addEventListener('resize', checkOrientation);
+            checkOrientation();
+        });
+    } else {
+        // Standard-Ansicht (wenn kein Code in der URL ist)
+        loginScreen.classList.remove('hidden');
+        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+        // HIER KEINE Orientierungsprüfung aktivieren, da sie erst nach dem Login erfolgen soll.
     }
 
     // 1.2: Login-Prozess starten
