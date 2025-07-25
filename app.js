@@ -384,11 +384,11 @@ const diceConfig = {
         diceAnimation.classList.remove('hidden');
         diceSelection.classList.add('hidden');
 
-        // NEU: Digitalen Würfel-Bereich anzeigen und initialisieren
-        digitalDiceArea.classList.remove('hidden'); // Den gesamten Bereich sichtbar machen
-        digitalDiceButton.classList.remove('hidden', 'no-interaction', 'rolling'); // Button sichtbar, klickbar machen
-        digitalDiceButton.src = 'assets/digi-ani.gif'; // Animation auf Startbild setzen
-        digitalDiceResult.classList.add('hidden'); // Ergebnisbild am Anfang verstecken
+        // Verstecke den digitalen Würfelbereich am Anfang
+        digitalDiceArea.classList.add('hidden'); // Stellen sicher, dass er initial versteckt ist
+        digitalDiceButton.classList.remove('no-interaction', 'rolling'); // Reset Button
+        digitalDiceButton.src = 'assets/digi-ani.gif'; // Reset Button Bild
+        digitalDiceResult.classList.add('hidden'); // Reset Ergebnis Bild
         
         // Speichere den Zustand: Würfel-Bildschirm
         lastGameScreenVisible = 'dice-container';
@@ -397,6 +397,9 @@ const diceConfig = {
         gameState.diceAnimationTimeout = setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
+
+             // Jetzt, und erst jetzt, den digitalen Würfelbereich anzeigen und initialisieren
+            digitalDiceArea.classList.remove('hidden'); // Hier wird er sichtbar gemacht!
 
             // Aktiviere die Möglichkeit, die physischen Würfel auszuwählen
             document.querySelectorAll('.dice-option').forEach(dice => {
@@ -430,11 +433,10 @@ const diceConfig = {
             digitalDiceResult.src = digitalDiceImages[randomDiceValue];
             digitalDiceResult.classList.remove('hidden');
 
-            // Nach einer kurzen Verzögerung den Button wieder aktivieren (visuell)
-            // Spieler muss aber immer noch die physischen Würfel anklicken.
-            setTimeout(() => {
-                digitalDiceButton.classList.remove('no-interaction'); // Button wieder klickbar machen
-            }, 500); // Kurze Verzögerung, damit man das Ergebnis sehen kann, bevor der Button wieder aktiviert wird
+            // Den Button wieder klickbar machen
+            // Nach der Animation des Würfelns, bleibt das Ergebnis stehen.
+            // Der Button wird sofort wieder aktiv, damit man erneut würfeln kann.
+            digitalDiceButton.classList.remove('no-interaction');
 
         }, 1500); // Dauer der Animation in Millisekunden (1.5 Sekunden)
     }
