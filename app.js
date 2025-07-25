@@ -34,11 +34,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const correctButton = document.getElementById('correct-button');
     const wrongButton = document.getElementById('wrong-button');
 
+    // Konstanten für die neuen Digitalen Würfel-Elemente
+    const digitalDiceArea = document.getElementById('digital-dice-area');
+    const digitalDiceButton = document.getElementById('digital-dice-button');
+    const digitalDiceResult = document.getElementById('digital-dice-result');
+
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
     const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
 
-    // NEU: Konfiguration für jeden Würfelwert
+    // Konfiguration für jeden Würfelwert
 const diceConfig = {
     1: { attempts: 1, duration: 7000 },
     2: { attempts: 2, duration: 7000 },
@@ -46,6 +51,15 @@ const diceConfig = {
     4: { attempts: 4, duration: 7000 },
     5: { attempts: 5, duration: 7000 },
     7: { attempts: 7, duration: 2000 }
+
+     // Map für die Bildpfade der digitalen Würfel-Ergebnisse
+    const digitalDiceImages = {
+        1: 'assets/digi-1.png',
+        2: 'assets/digi-2.png',
+        3: 'assets/digi-3.png',
+        4: 'assets/digi-4.png',
+        5: 'assets/digi-5.png',
+        7: 'assets/digi-tg.png' // Für den "Teamgeist" / 7er-Würfel
 };
     
     // --- Spielstatus-Variablen ---
