@@ -386,7 +386,7 @@ const diceConfig = {
 
         // Verstecke den digitalen Würfelbereich am Anfang
         digitalDiceArea.classList.add('hidden'); // Stellen sicher, dass er initial versteckt ist
-        digitalDiceButton.classList.remove('no-interaction', 'rolling'); // Reset Button
+        digitalDiceButton.classList.remove('no-interaction'); // Reset Button - , 'rolling')
         digitalDiceButton.src = 'assets/digi-ani.gif'; // Reset Button Bild
         digitalDiceResult.classList.add('hidden'); // Reset Ergebnis Bild
         
