@@ -231,7 +231,8 @@ const diceConfig = {
             window.addEventListener('resize', checkOrientation);
             checkOrientation(); // Initial prüfen
         });
-    } else {
+    }
+        else {
         // Standard-Ansicht
         loginScreen.classList.remove('hidden');
         document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
