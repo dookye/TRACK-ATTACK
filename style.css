@@ -508,11 +508,11 @@ body, html {
 
 /* Styling für den klickbaren Animations-Button */
 .digital-dice-icon {
-    width: 60px;        /* Kleinere Größe für den Button */
-    height: 60px;
+    width: 5%;        /* Kleinere Größe für den Button */
+    height: 5%;
     cursor: pointer;    /* Zeigt an, dass das Element klickbar ist */
-    border-radius: 10px; /* Leicht abgerundete Ecken */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Leichter Schatten */
+    /* border-radius: 10px; - Leicht abgerundete Ecken */
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); - Leichter Schatten */
     transition: transform 0.2s ease, opacity 0.2s ease; /* Sanfte Übergänge */
 }
 
@@ -537,8 +537,8 @@ body, html {
 
 /* Styling für das Ergebnisbild des Würfels */
 .digital-dice-result {
-    width: 70px;        /* Etwas größer als der Button für bessere Sichtbarkeit */
-    height: 70px;
+    width: 60px;        /* Etwas größer als der Button für bessere Sichtbarkeit */
+    height: 60px;
     object-fit: contain; /* Bildgröße anpassen, ohne es zu verzerren */
     margin-bottom: -5px; /* Optische Korrektur, falls nötig, um es mit dem Button auszurichten */
 }
