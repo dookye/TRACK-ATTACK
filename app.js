@@ -383,6 +383,12 @@ const diceConfig = {
         diceAnimation.classList.remove('hidden');
         diceSelection.classList.add('hidden');
 
+        // NEU: Digitalen Würfel-Bereich anzeigen und initialisieren
+        digitalDiceArea.classList.remove('hidden'); // Den gesamten Bereich sichtbar machen
+        digitalDiceButton.classList.remove('hidden', 'no-interaction', 'rolling'); // Button sichtbar, klickbar machen
+        digitalDiceButton.src = 'assets/digi-ani.gif'; // Animation auf Startbild setzen
+        digitalDiceResult.classList.add('hidden'); // Ergebnisbild am Anfang verstecken
+        
         // Speichere den Zustand: Würfel-Bildschirm
         lastGameScreenVisible = 'dice-container';
         
@@ -390,8 +396,50 @@ const diceConfig = {
         gameState.diceAnimationTimeout = setTimeout(() => {
             diceAnimation.classList.add('hidden');
             diceSelection.classList.remove('hidden');
+
+            // Aktiviere die Möglichkeit, die physischen Würfel auszuwählen
+            document.querySelectorAll('.dice-option').forEach(dice => {
+                dice.classList.remove('no-interaction');
+            });
         }, 2000);
     }
+
+    // --- NEU: Funktion für den digitalen Würfelwurf ---
+    function rollDigitalDice() {
+        // Verhindere weitere Klicks während der Animation
+        digitalDiceButton.classList.add('no-interaction'); // Macht den Button nicht mehr klickbar
+        digitalDiceButton.classList.add('rolling'); // Fügt die CSS-Klasse für Animationseffekte hinzu
+
+        // Setze die Quelle des Buttons auf die Animation (startet die GIF neu)
+        digitalDiceButton.src = 'assets/digi-ani.gif';
+        digitalDiceButton.classList.remove('hidden'); // Sicherstellen, dass die Animation sichtbar ist
+        digitalDiceResult.classList.add('hidden'); // Ergebnisbild ausblenden
+
+        // Die Animation läuft einmal durch (ca. 1.5 Sekunden, je nach GIF-Dauer)
+        setTimeout(() => {
+            digitalDiceButton.classList.add('hidden'); // Animation ausblenden
+            digitalDiceButton.classList.remove('rolling'); // Animationsklasse entfernen
+            
+            // Zufälligen Würfelwert auswählen (1-5 oder 7)
+            const possibleDiceValues = [1, 2, 3, 4, 5, 7]; // Dein digi-ta.png ist für 7
+            const randomIndex = Math.floor(Math.random() * possibleDiceValues.length);
+            const randomDiceValue = possibleDiceValues[randomIndex];
+
+            // Zeige das entsprechende Würfelbild an
+            digitalDiceResult.src = digitalDiceImages[randomDiceValue];
+            digitalDiceResult.classList.remove('hidden');
+
+            // Nach einer kurzen Verzögerung den Button wieder aktivieren (visuell)
+            // Spieler muss aber immer noch die physischen Würfel anklicken.
+            setTimeout(() => {
+                digitalDiceButton.classList.remove('no-interaction'); // Button wieder klickbar machen
+            }, 500); // Kurze Verzögerung, damit man das Ergebnis sehen kann, bevor der Button wieder aktiviert wird
+
+        }, 1500); // Dauer der Animation in Millisekunden (1.5 Sekunden)
+    }
+
+    // --- Event Listener für den digitalen Würfel-Button ---
+    digitalDiceButton.addEventListener('click', rollDigitalDice);
 
     // NEU: Event-Listener für das Überspringen der Würfel-Animation
     diceAnimation.addEventListener('click', () => {
@@ -921,6 +969,13 @@ function displayPointsAnimation(points, player) {
         // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
         // wenn der Logo-Button wieder verwendet wird.
         logoButton.removeEventListener('click', playTrackSnippet);
+
+        // NEU: Digitalen Würfel-Bereich verstecken und zurücksetzen
+        digitalDiceArea.classList.add('hidden');
+        digitalDiceButton.classList.remove('no-interaction', 'rolling'); // Klickbarkeit und Animation entfernen
+        digitalDiceButton.src = 'assets/digi-ani.gif'; // Button auf Startbild zurücksetzen
+        digitalDiceResult.classList.add('hidden');
+        digitalDiceResult.src = ''; // Ergebnisbild leeren
 
         //NEU:
         // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
