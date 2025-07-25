@@ -521,9 +521,9 @@ body, html {
     opacity: 0.9;
 }
 
-/* Optional: Animation für den Button während des Würfelns */
+/* Optional: Animation für den Button während des Würfelns
 .digital-dice-icon.rolling {
-    animation: pulse-border 1s infinite alternate; /* Fügt einen pulsierenden Rahmen hinzu */
+    animation: pulse-border 1s infinite alternate; - Fügt einen pulsierenden Rahmen hinzu -
 }
 
 @keyframes pulse-border {
@@ -533,12 +533,13 @@ body, html {
     to {
         box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
     }
-}
+}  
+*/
 
 /* Styling für das Ergebnisbild des Würfels */
 .digital-dice-result {
-    width: 60px;        /* Etwas größer als der Button für bessere Sichtbarkeit */
-    height: 60px;
+    width: 50px;        /* Etwas größer als der Button für bessere Sichtbarkeit */
+    height: 50px;
     object-fit: contain; /* Bildgröße anpassen, ohne es zu verzerren */
     margin-bottom: -5px; /* Optische Korrektur, falls nötig, um es mit dem Button auszurichten */
 }
