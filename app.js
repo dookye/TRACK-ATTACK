@@ -60,6 +60,7 @@ const diceConfig = {
         4: 'assets/digi-4.png',
         5: 'assets/digi-5.png',
         7: 'assets/digi-tg.png' // Für den "Teamgeist" / 7er-Würfel
+    };
 };
     
     // --- Spielstatus-Variablen ---
