@@ -231,7 +231,7 @@ const diceConfig = {
             window.addEventListener('resize', checkOrientation);
             checkOrientation(); // Initial prüfen
         });
-    }
+    
         else {
         // Standard-Ansicht
         loginScreen.classList.remove('hidden');
