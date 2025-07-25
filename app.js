@@ -93,8 +93,8 @@ const diceConfig = {
         deutsch: ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
         party: ['53r5W67KJNIeHWAhVOWPDr'],
         skate: ['7qGvinYjBfVpl1FJFkzGqV'],
-        dpunk: ['3sQLh9hYyJQZ0qWrtJG1OO'],
-        onehit: ['1t1iRfYh9is6FH6hvn58lt']
+        dpunk: ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
+        onehit: ['1t1iRfYh9is6FH6hvn58lt', '77IXl4Gh7AZLyVLx66NkqV']
     };
 
     //=======================================================================
