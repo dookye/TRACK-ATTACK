@@ -195,49 +195,42 @@ const diceConfig = {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
-    if (code) {
+ if (code) {
         // Wir kommen von der Spotify-Weiterleitung zurück
         window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
+
         getAccessToken(code).then(token => {
-            accessToken = token;
-            loginScreen.classList.add('hidden');
-            // fullscreenScreen.classList.remove('hidden'); // ENTFERNT
-            initializePlayer();
-            // kurzes timeout bevor rotation abgefragt wird (für ios wichtig)
+            accessToken = token; // Hier wird der Access Token gesetzt!
+            loginScreen.classList.add('hidden'); // Login-Screen ausblenden
+            // fullscreenScreen.classList.remove('hidden'); // ENTFERNT (wie von dir vermerkt)
+            initializePlayer(); // Spotify-Player initialisieren
+
+            // HIER WIRD DER TIMEOUT EINGEFÜGT!
+            // Er gibt iOS eine kurze Pause, um die UI-Änderungen zu verarbeiten.
             setTimeout(() => {
-                // Erst NACH dieser kleinen Pause den Resize-Listener aktivieren
+                // Diese beiden Zeilen werden erst nach der Verzögerung ausgeführt
                 window.addEventListener('resize', checkOrientation);
-                // Und dann die Orientierung das erste Mal prüfen
-                checkOrientation();
+                checkOrientation(); // Initial die Orientierung prüfen
             }, 500); // 500 Millisekunden (0.5 Sekunden) Verzögerung
 
         }).catch(error => {
             console.error("Fehler beim Abrufen des Access Tokens:", error);
             alert("Anmeldung bei Spotify fehlgeschlagen. Bitte versuchen Sie es erneut.");
-            loginScreen.classList.remove('hidden'); // Zurück zum Login
-            document.getElementById('login-button').removeEventListener('click', redirectToAuthCodeFlow);
+            // Zurück zum Login-Screen, falls Fehler
+            loginScreen.classList.remove('hidden');
+            // Stelle sicher, dass der 'login-button' Listener noch aktiv ist
+            document.getElementById('login-button').removeEventListener('click', redirectToAuthCodeFlow); // Duplizierte Listener vermeiden
             document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
         });
+
     } else {
         // Standard-Ansicht (noch nicht von Spotify zurückgekommen)
         loginScreen.classList.remove('hidden');
         document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
-        // Sicherstellen, dass Overlay beim Start nicht sichtbar ist
-        rotateDeviceOverlay.classList.add('hidden');
+        // Sicherstellen, dass Overlay beim Start nicht sichtbar ist (falls du ein rotateDeviceOverlay hast)
+        // rotateDeviceOverlay.classList.add('hidden'); // Nur wenn dieses Element existiert und versteckt werden soll
     }
-    // timout für ios ENDE.........
     
-            // NEU: Orientierungsprüfung und Listener nach erfolgreichem Login aktivieren
-            window.addEventListener('resize', checkOrientation);
-            checkOrientation(); // Initial prüfen
-        });
-    
-        else {
-        // Standard-Ansicht
-        loginScreen.classList.remove('hidden');
-        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
-    }
-
     // 1.3: Spotify Web Player SDK laden und initialisieren
     function initializePlayer() {
         const script = document.createElement('script');
