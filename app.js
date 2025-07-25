@@ -51,6 +51,7 @@ const diceConfig = {
     4: { attempts: 4, duration: 7000 },
     5: { attempts: 5, duration: 7000 },
     7: { attempts: 7, duration: 2000 }
+   };
 
      // Map für die Bildpfade der digitalen Würfel-Ergebnisse
     const digitalDiceImages = {
@@ -61,7 +62,6 @@ const diceConfig = {
         5: 'assets/digi-5.png',
         7: 'assets/digi-tg.png' // Für den "Teamgeist" / 7er-Würfel
     };
-};
     
     // --- Spielstatus-Variablen ---
     // let player;
