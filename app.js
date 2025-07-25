@@ -203,6 +203,30 @@ const diceConfig = {
             loginScreen.classList.add('hidden');
             // fullscreenScreen.classList.remove('hidden'); // ENTFERNT
             initializePlayer();
+            // kurzes timeout bevor rotation abgefragt wird (für ios wichtig)
+            setTimeout(() => {
+                // Erst NACH dieser kleinen Pause den Resize-Listener aktivieren
+                window.addEventListener('resize', checkOrientation);
+                // Und dann die Orientierung das erste Mal prüfen
+                checkOrientation();
+            }, 500); // 500 Millisekunden (0.5 Sekunden) Verzögerung
+
+        }).catch(error => {
+            console.error("Fehler beim Abrufen des Access Tokens:", error);
+            alert("Anmeldung bei Spotify fehlgeschlagen. Bitte versuchen Sie es erneut.");
+            loginScreen.classList.remove('hidden'); // Zurück zum Login
+            document.getElementById('login-button').removeEventListener('click', redirectToAuthCodeFlow);
+            document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+        });
+    } else {
+        // Standard-Ansicht (noch nicht von Spotify zurückgekommen)
+        loginScreen.classList.remove('hidden');
+        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+        // Sicherstellen, dass Overlay beim Start nicht sichtbar ist
+        rotateDeviceOverlay.classList.add('hidden');
+    }
+    // timout für ios ENDE.........
+    
             // NEU: Orientierungsprüfung und Listener nach erfolgreichem Login aktivieren
             window.addEventListener('resize', checkOrientation);
             checkOrientation(); // Initial prüfen
