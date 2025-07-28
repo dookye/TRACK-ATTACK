@@ -102,7 +102,7 @@ body, html {
     /* Deine bestehenden Styles, z.B. */
     display: flex;
     flex-direction: column; /* Wichtig, damit die Elemente untereinander stehen */
-    justify-content: center; /* Zentriert vertikal, wenn genug Platz ist */
+    justify-content: top; /* center Zentriert vertikal, wenn genug Platz ist */
     align-items: center; /* Zentriert horizontal */
     text-align: center;
     padding: 20px; /* Füge etwas Polsterung hinzu */
@@ -112,11 +112,6 @@ body, html {
     height: 100vh; /* (100vh Nimmt die volle Viewport-Höhe ein) */
     overflow-y: auto; /* Ermöglicht vertikales Scrollen, wenn Inhalt die Höhe übersteigt */
     -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS */
-}
-
-#login-screen #login-button {
-    margin-top: auto; /* Schiebt den Button nach unten, wenn viel Platz ist */
-    flex-shrink: 0; /* Verhindert, dass der Button schrumpft */
 }
 
 .hidden {
