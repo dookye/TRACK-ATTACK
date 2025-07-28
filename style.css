@@ -603,7 +603,7 @@ body, html {
 
 .preselect-genre-button:hover {
     transform: scale(1.03);
-    border-color: var(--black); /* Oder eine andere Highlight-Farbe z.b. (--player1-color) */
+    border-color: var(--white); /* Oder eine andere Highlight-Farbe z.b. (--player1-color) */
 }
 
 /* Stil für ausgewählte Genre-Buttons */
