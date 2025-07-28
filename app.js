@@ -133,23 +133,66 @@ document.addEventListener('DOMContentLoaded', () => {
     //=======================================================================
 
 // 1.4: Querformat-Prüfung
-    function checkOrientation() {
-        if (window.innerHeight > window.innerWidth) {
-            rotateDeviceOverlay.classList.remove('hidden');
-        } else {
-            rotateDeviceOverlay.classList.add('hidden');
-            // Wenn die Ausrichtung korrekt ist, starte das Spiel (falls noch nicht gestartet)
-            if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
-                startGameAfterOrientation();
-            }
+function checkOrientation() {
+    if (window.innerHeight > window.innerWidth) {
+        rotateDeviceOverlay.classList.remove('hidden');
+        // Auch die Start-Genre-Auswahl ausblenden, wenn im Hochformat
+        startGenreSelectionContainer.classList.add('hidden');
+        // appContainer Hintergrund zurücksetzen, falls er schon geändert wurde
+        appContainer.style.backgroundColor = 'var(--black)';
+
+    } else {
+        rotateDeviceOverlay.classList.add('hidden');
+        // Wenn die Ausrichtung korrekt ist, starte das Spiel (falls noch nicht gestartet)
+        // Die Logik hier muss angepasst werden, um den Start-Genre-Container korrekt zu behandeln
+        startGameAfterOrientation();
+    }
+}
+
+// NEU: Funktion, die nach korrekter Orientierung das Spiel startet oder den Startbildschirm wiederherstellt
+function startGameAfterOrientation() {
+    // Wenn das Spiel noch nicht im 'game-screen' ist und der Login-Screen ausgeblendet ist (also wir im Start-Zustand sind)
+    if (loginScreen.classList.contains('hidden') && gameScreen.classList.contains('hidden')) {
+        // Dies ist der Zustand, in dem wir uns nach dem Login befinden, aber VOR dem eigentlichen Spielstart (Logo-Klick)
+        gameScreen.classList.remove('hidden'); // Zeige den game-screen, der das Logo und die Genre-Auswahl enthält
+
+        // NEU: Sicherstellen, dass die Genre-Vorauswahl sichtbar ist
+        startGenreSelectionContainer.classList.remove('hidden');
+        // Genres nur beim ersten Start oder nach einem Reset neu rendern,
+        // oder wenn die Box nach Rotation leer ist (was sie nicht sein sollte, aber zur Sicherheit)
+        if (allGenresScrollbox.children.length === 0 || allGenresScrollbox.querySelectorAll('.preselect-genre-button').length === 0) {
+            renderPreselectionGenres();
+        }
+
+        // Stelle sicher, dass das Logo-Button-Handling für den Start richtig gesetzt ist
+        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+        logoButton.removeEventListener('click', startGame); // Vorherigen Listener entfernen, falls vorhanden
+        logoButton.addEventListener('click', startGame, { once: true });
+
+        // Den Zustand für die Orientierungsprüfung aktualisieren
+        lastGameScreenVisible = ''; // Setzen wir zurück, da wir wieder am echten Startpunkt sind
+
+    } else if (accessToken) { // Wenn bereits ein Token vorhanden ist und das Spiel läuft/lief
+        gameScreen.classList.remove('hidden');
+        // NEU: Start-Genre-Auswahl sicherstellen, dass sie ausgeblendet ist, wenn das Spiel schon läuft
+        startGenreSelectionContainer.classList.add('hidden');
+
+        // Stelle den letzten Zustand wieder her
+        if (lastGameScreenVisible === 'dice-container') {
+            showDiceScreen();
+        } else if (lastGameScreenVisible === 'genre-container') {
+            showGenreScreen();
+        } else if (lastGameScreenVisible === 'reveal-container') {
+            showResolution();
+        } else if (lastGameScreenVisible === 'score-screen') {
+            // Wenn der Score-Screen zuletzt sichtbar war, zeige ihn erneut an
+            // Wichtig: handleScoreScreenEnd wird auch durch den Timeout ausgelöst,
+            // aber wir wollen den Screen bei Rotation sofort wieder anzeigen,
+            // falls der Timeout noch nicht abgelaufen ist.
+            scoreScreen.classList.remove('hidden');
         }
     }
-
-    // NEU: Funktion, die nach korrekter Orientierung das Spiel startet
-    function startGameAfterOrientation() {
-        gameScreen.classList.remove('hidden');
-
-        // NEU: Sound für das einfliegende Logo abspielen
+     // NEU: Sound für das einfliegende Logo abspielen
         if (logoFlyInSound) {
             logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
             logoFlyInSound.volume = 0.3; // Optional: Passe die Lautstärke an (z.B. 50%)
@@ -158,28 +201,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // NEU: Stelle den letzten Zustand wieder her, oder starte neu
-        if (lastGameScreenVisible === 'dice-container') {
-            showDiceScreen();
-        } else if (lastGameScreenVisible === 'genre-container') {
-            showGenreScreen();
-        } else if (lastGameScreenVisible === 'reveal-container') {
-            showResolution();
-        } else {
-            // Wenn kein spezieller Zustand gespeichert ist, starte neu mit dem Logo
-            logoButton.classList.remove('hidden');
-            logoButton.classList.add('initial-fly-in');
-            logoButton.addEventListener('click', startGame, { once: true });
+}
 
-            // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
-            startGenreSelectionContainer.classList.remove('hidden');
-            // Genres nur beim ersten Start oder nach einem Reset neu rendern
-            if (allGenresScrollbox.children.length === 0) { // Vermeidet redundantes Rendern
-                renderPreselectionGenres();
-            }
-        }
-    }
 
+    
     // 1.2: PKCE-Flow Helferfunktionen
     async function generateCodeChallenge(codeVerifier) {
         const data = new TextEncoder().encode(codeVerifier);
