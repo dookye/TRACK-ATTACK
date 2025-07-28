@@ -116,8 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastGameScreenVisible = '';
 
     const playlists = {
-        pop: ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
-        alltime: ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
+        'Pop Hits 200ß-2025' ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
+        'Die grössten Hits aller Zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
         deutsch: ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
         party: ['53r5W67KJNIeHWAhVOWPDr'],
         skate: ['7qGvinYjBfVpl1FJFkzGqV'],
@@ -125,28 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         onehit: ['1t1iRfYh9is6FH6hvn58lt', '77IXl4Gh7AZLyVLx66NkqV'],
         girlboy: ['11Q0O9t6MGGXrKFaeqRRwm'],
         disney: ['6CdPoZsFja4LOrTYTvHrY5'],
-        lagerfeuer: ['3TfJ6iMeqPXPLW8sxuQgcd'],
-        rock: ["37i9dQZF1DXcF6BWMw0fA2"], // Beispiel-ID, anpassen
-        hiphop: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        jazz: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        classical: ["37i9dQZF1DXcF6BWMw0fA2"], // Beispiel-ID, anpassen
-        country: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        blues: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        electronic: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        reggae: ["37i9dQZF1DXcF6BWMw0fA2"], // Beispiel-ID, anpassen
-        rnb: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        latin: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        folk: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        metal: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        indie: ["37i9dQZF1DXcF6BWMw0fA2"], // Beispiel-ID, anpassen
-        funk: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        soul: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        punk: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        disco: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        schlager: ["37i9dQZF1DXcF6BWMw0fA2"], // Beispiel-ID, anpassen
-        kpop: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        anime: ["37i9dQZF1DXcBWIGoYBM5M"], // Beispiel-ID, anpassen
-        gaming: ["37i9dQZF1DXcF6BWMw0fA2"] // Beispiel-ID, anpassen
+        lagerfeuer: ['3TfJ6iMeqPXPLW8sxuQgcd']
     };
 
     //=======================================================================
