@@ -1046,6 +1046,26 @@ function displayPointsAnimation(points, player) {
     //=======================================================================
     // Phase 5: Spielende & Reset
     //=======================================================================
+
+    // Scorescree funktion ----
+    // Bei Klick auf den Score-Screen soll das Spiel sofort zurückgesetzt werden
+    scoreScreen.addEventListener('click', handleScoreScreenEnd);
+    // NEU: Funktion, die die Aktionen nach dem Score-Screen ausführt
+    function handleScoreScreenEnd() {
+    // Stoppt den laufenden Timeout für den Score-Screen, falls er noch aktiv ist
+    clearTimeout(gameState.scoreScreenTimeout); 
+    
+    scoreScreen.classList.add('hidden'); // Score-Screen ausblenden
+    
+    // Setze die Deckkraft der Punkteanzeigen zurück, falls sie noch nicht auf 0 sind
+    // Dies ist wichtig, wenn man den Screen überspringt, bevor die normale Fade-Out-Animation beendet ist.
+    document.getElementById('player1-score-display').style.opacity = '0';
+    document.getElementById('player2-score-display').style.opacity = '0';
+
+    // Hier kommt die Logik, die nach dem Score-Screen passieren soll.
+    // In deinem Fall ist das der Reset des Spiels und das Zurückkehren zum Startlogo.
+    resetGame(); // Ruft die resetGame-Funktion auf, um das Spiel zurückzusetzen und neu zu starten
+}
     
     function endGame() {
         gameScreen.classList.add('hidden');
@@ -1062,12 +1082,17 @@ function displayPointsAnimation(points, player) {
         p1ScoreEl.style.opacity = '1';
         p2ScoreEl.style.opacity = '1';
 
+        // Der Fade-Out der Punkteanzeige bleibt bestehen, da er schön aussieht.
         setTimeout(() => {
             p1ScoreEl.style.opacity = '0';
             p2ScoreEl.style.opacity = '0';
-        }, 7000);
+        }, 7000); // Dieser Timer lässt die Punkte 7 Sekunden lang sichtbar sein und dann ausfaden
 
-        setTimeout(resetGame, 8000); // Nach Fade-Out
+        // NEU: Verwende gameState.scoreScreenTimeout für den Timeout des Score-Screens
+        // Dieser Timeout ruft jetzt die neue Helferfunktion auf
+        gameState.scoreScreenTimeout = setTimeout(() => {
+            handleScoreScreenEnd(); // Ruft die neue Funktion auf
+        }, 8000); // Nach 8 Sekunden (7s für Punkte-Fade-Out + 1s Puffer)
     }
 
     function resetGame() {
