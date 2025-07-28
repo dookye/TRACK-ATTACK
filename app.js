@@ -136,6 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkOrientation() {
         if (window.innerHeight > window.innerWidth) {
             rotateDeviceOverlay.classList.remove('hidden');
+            startGenreSelectionContainer.classList.add('hidden');
+            // Optional: appContainer Hintergrund zurücksetzen, falls er schon geändert wurde
+            appContainer.style.backgroundColor = 'var(--black)';
         } else {
             rotateDeviceOverlay.classList.add('hidden');
             // Wenn die Ausrichtung korrekt ist, starte das Spiel (falls noch nicht gestartet)
