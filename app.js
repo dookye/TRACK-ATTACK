@@ -125,7 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
         'top 100 one hit wonders': ['1t1iRfYh9is6FH6hvn58lt', '77IXl4Gh7AZLyVLx66NkqV'],
         'girl- and boybands': ['11Q0O9t6MGGXrKFaeqRRwm'],
         'deutsche disney-songs': ['6CdPoZsFja4LOrTYTvHrY5'],
-        'lagerfeuer klassiker': ['3TfJ6iMeqPXPLW8sxuQgcd']
+        'lagerfeuer klassiker': ['3TfJ6iMeqPXPLW8sxuQgcd'],
+        'rock songs': ['6QrVkClF1eJSjb9FDfqtJ8'],
+        rocklegenden: ['3sdqSseSnwb4A0RqP93SUH', '37i9dQZF1DWXRqgorJj26U']
     };
 
     //=======================================================================
