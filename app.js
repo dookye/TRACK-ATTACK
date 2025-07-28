@@ -142,6 +142,16 @@ const diceConfig = {
     // NEU: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
         gameScreen.classList.remove('hidden');
+
+         // NEU: Sound für das einfliegende Logo abspielen
+        if (logoFlyInSound) {
+            logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
+            logoFlyInSound.volume = 0.3; // Optional: Passe die Lautstärke an (z.B. 50%)
+            logoFlyInSound.play().catch(error => {
+                console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
+            });
+        }
+        
         // NEU: Stelle den letzten Zustand wieder her, oder starte neu
         if (lastGameScreenVisible === 'dice-container') {
             showDiceScreen();
@@ -362,15 +372,6 @@ const diceConfig = {
 
         // Speichere den Zustand, dass das Spiel gestartet wurde (Logo-Phase)
         lastGameScreenVisible = 'logo-button';
-
-        // NEU: Sound für das einfliegende Logo abspielen
-        if (logoFlyInSound) {
-            logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
-            logoFlyInSound.volume = 0.3; // Optional: Passe die Lautstärke an (z.B. 50%)
-            logoFlyInSound.play().catch(error => {
-                console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
-            });
-        }
         
         setTimeout(() => {
             appContainer.style.backgroundColor = 'var(--player1-color)';
