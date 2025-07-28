@@ -585,12 +585,12 @@ body, html {
     background-color: rgba(0, 0, 0, 0.7); /* Leicht durchsichtiger Hintergrund */
     display: flex; /* Flexbox für Inhalt */
     flex-direction: column; /* Buttons untereinander */
-    justify-content: flex-start; /* Oben beginnen */
-    align-items: center; /* Mittig ausrichten */
+    justify-content: center; /* NEU: Vertikal zentrieren */
+    align-items: flex-start; /* NEU: Links ausrichten, damit Buttons ihre eigene Breite haben */
     padding: 20px 10px; /* Innenabstand */
     box-sizing: border-box; /* Padding wird in die Breite/Höhe einberechnet */
     z-index: 100; /* Sicherstellen, dass es über anderen Elementen liegt */
-    border-right: 2px solid var(--white); /* Optische Trennlinie */
+    /* border-right: 2px solid var(--white); */ /* GEÄNDERT: Diese Zeile entfernt den vertikalen Strich */
     overflow-y: auto; /* Scrollbar, wenn Inhalt zu lang */
     -webkit-overflow-scrolling: touch; /* Flüssiges Scrollen auf iOS */
     scrollbar-width: none; /* Scrollbar verstecken (Firefox) */
@@ -614,8 +614,9 @@ body, html {
     font-weight: bold;
     border-radius: 8px;
     transition: all 0.2s ease-in-out; /* Übergänge für visuelles Feedback */
-    width: 100%; /* Volle Breite im Container */
+    /* width: 100%; */ /* GEÄNDERT: Diese Zeile entfernen, um Breite an Inhalt anzupassen */
     text-align: center;
+    white-space: nowrap; /* NEU: Verhindert Zeilenumbruch im Button-Text */
 }
 
 .preselect-genre-button:hover {
@@ -636,4 +637,5 @@ body, html {
     margin-bottom: 20px;
     font-size: 1.4em;
     text-align: center;
+    width: 100%; /* Sicherstellen, dass der Titel die volle Breite einnimmt, um zentriert zu bleiben */
 }
