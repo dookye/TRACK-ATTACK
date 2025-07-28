@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         rocklegenden: ['3sdqSseSnwb4A0RqP93SUH', '37i9dQZF1DWXRqgorJj26U'],
         'alte schlagerschoten': ['68SxsyVUJ1DEGByUcEMrr4', '7dmg14Fnm9stKYkU4IthAG'],
         lovesongs: ['6oNsYDhN95gkENsdFcAwTh'],
-        kinderserien: ['1De2vLmWkrNE11JjrC8OTj']
+        'serien unserer kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt']
     };
 
     //=======================================================================
