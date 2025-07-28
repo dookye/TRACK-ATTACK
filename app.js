@@ -34,10 +34,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const correctButton = document.getElementById('correct-button');
     const wrongButton = document.getElementById('wrong-button');
 
-    // Konstanten für die neuen Digitalen Würfel-Elemente
+     // NEU: Konstante für das EINE digitale Würfelbild
     const digitalDiceArea = document.getElementById('digital-dice-area');
-    const digitalDiceButton = document.getElementById('digital-dice-button');
-    const digitalDiceResult = document.getElementById('digital-dice-result');
+    const digitalDiceMainImage = document.getElementById('digital-dice-main-image');
+
+    const digitalDiceImages = {
+        1: 'assets/digi-1.png',
+        2: 'assets/digi-2.png',
+        3: 'assets/digi-3.png',
+        4: 'assets/digi-4.png',
+        5: 'assets/digi-5.png',
+        7: 'assets/digi-tg.png'
+    };
+
+    // Pfad zur digitalen Animation und dem Standard-Startbild
+    const digitalDiceAnimationGif = 'assets/digi-ani.gif';
+    const digitalDiceStartImage = 'assets/digi-ta.png'; // Das Bild, das standardmäßig angezeigt wird
 
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
@@ -53,15 +65,6 @@ const diceConfig = {
     7: { attempts: 7, duration: 2000 }
    };
 
-     // Map für die Bildpfade der digitalen Würfel-Ergebnisse
-    const digitalDiceImages = {
-        1: 'assets/digi-1.png',
-        2: 'assets/digi-2.png',
-        3: 'assets/digi-3.png',
-        4: 'assets/digi-4.png',
-        5: 'assets/digi-5.png',
-        7: 'assets/digi-ta.png' // Für den "Teamgeist" / 7er-Würfel
-    };
     
     // --- Spielstatus-Variablen ---
     // let player;
@@ -384,11 +387,13 @@ const diceConfig = {
         diceAnimation.classList.remove('hidden');
         diceSelection.classList.add('hidden');
 
-        // Verstecke den digitalen Würfelbereich am Anfang
-        digitalDiceArea.classList.add('hidden'); // Stellen sicher, dass er initial versteckt ist
-        digitalDiceButton.classList.remove('no-interaction'); // Reset Button - , 'rolling')
-        digitalDiceButton.src = 'assets/digi-ani.gif'; // Reset Button Bild
-        digitalDiceResult.classList.add('hidden'); // Reset Ergebnis Bild
+        // Verstecke den gesamten Bereich des digitalen Würfels während der Haupt-Animation
+        digitalDiceArea.classList.add('hidden');
+        
+        // NEU: Setze das digitale Würfelbild auf das Startbild und mache es klickbar
+        digitalDiceMainImage.src = digitalDiceStartImage;
+        digitalDiceMainImage.classList.remove('no-interaction', 'rolling'); // Sicherstellen, dass es klickbar ist
+        digitalDiceMainImage.style.cursor = 'pointer'; // Cursor als Zeiger anzeigen
         
         // Speichere den Zustand: Würfel-Bildschirm
         lastGameScreenVisible = 'dice-container';
@@ -408,41 +413,37 @@ const diceConfig = {
         }, 2000);
     }
 
-    // --- NEU: Funktion für den digitalen Würfelwurf ---
+// --- NEU: Funktion für den digitalen Würfelwurf ---
     function rollDigitalDice() {
-        // Verhindere weitere Klicks während der Animation
-        digitalDiceButton.classList.add('no-interaction'); // Macht den Button nicht mehr klickbar
-        digitalDiceButton.classList.add('rolling'); // Fügt die CSS-Klasse für Animationseffekte hinzu
+        // Mache das Bild während der Animation nicht klickbar
+        digitalDiceMainImage.classList.add('no-interaction');
+        digitalDiceMainImage.classList.add('rolling'); // Füge CSS-Klasse für Animationseffekte hinzu
+        digitalDiceMainImage.style.cursor = 'default'; // Cursor auf Standard setzen während Animation
 
-        // Setze die Quelle des Buttons auf die Animation (startet die GIF neu)
-        digitalDiceButton.src = 'assets/digi-ani.gif';
-        digitalDiceButton.classList.remove('hidden'); // Sicherstellen, dass die Animation sichtbar ist
-        digitalDiceResult.classList.add('hidden'); // Ergebnisbild ausblenden
+        // Setze die Quelle des Bildes auf das ANIMIERTE GIF
+        digitalDiceMainImage.src = digitalDiceAnimationGif;
 
-        // Die Animation läuft einmal durch (ca. 1.5 Sekunden, je nach GIF-Dauer)
+        // Die Animation läuft einmal durch (ca. 1.5 Sekunden)
         setTimeout(() => {
-            digitalDiceButton.classList.add('hidden'); // Animation ausblenden
-            digitalDiceButton.classList.remove('rolling'); // Animationsklasse entfernen
+            digitalDiceMainImage.classList.remove('rolling'); // Animationsklasse entfernen
             
-            // Zufälligen Würfelwert auswählen (1-5 oder 7)
-            const possibleDiceValues = [1, 2, 3, 4, 5, 7]; // Dein digi-ta.png ist für 7
+            // Zufälligen Würfelwert auswählen
+            const possibleDiceValues = [1, 2, 3, 4, 5, 7];
             const randomIndex = Math.floor(Math.random() * possibleDiceValues.length);
             const randomDiceValue = possibleDiceValues[randomIndex];
 
-            // Zeige das entsprechende Würfelbild an
-            digitalDiceResult.src = digitalDiceImages[randomDiceValue];
-            digitalDiceResult.classList.remove('hidden');
+            // Setze die Quelle des Bildes auf das ZUFÄLLIGE ERGEBNISBILD
+            digitalDiceMainImage.src = digitalDiceImages[randomDiceValue];
 
-            // Den Button wieder klickbar machen
-            // Nach der Animation des Würfelns, bleibt das Ergebnis stehen.
-            // Der Button wird sofort wieder aktiv, damit man erneut würfeln kann.
-            digitalDiceButton.classList.remove('no-interaction');
+            // Mache das Bild wieder klickbar, damit man erneut würfeln kann
+            digitalDiceMainImage.classList.remove('no-interaction');
+            digitalDiceMainImage.style.cursor = 'pointer'; // Cursor wieder als Zeiger anzeigen
 
         }, 1500); // Dauer der Animation in Millisekunden (1.5 Sekunden)
     }
 
     // --- Event Listener für den digitalen Würfel-Button ---
-    digitalDiceButton.addEventListener('click', rollDigitalDice);
+    digitalDiceMainImage.addEventListener('click', rollDigitalDice);
 
     // NEU: Event-Listener für das Überspringen der Würfel-Animation
     diceAnimation.addEventListener('click', () => {
@@ -959,6 +960,7 @@ function displayPointsAnimation(points, player) {
     document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
     document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
 
+// RESET ROUND ---------------------------------------------------------------------------------------------------------------
     function resetRoundUI() {
         revealContainer.classList.add('hidden');
         logoButton.classList.add('hidden');
@@ -973,14 +975,15 @@ function displayPointsAnimation(points, player) {
         // wenn der Logo-Button wieder verwendet wird.
         logoButton.removeEventListener('click', playTrackSnippet);
 
-        // NEU: Digitalen Würfel-Bereich verstecken und zurücksetzen
+       // Digitalen Würfel-Bereich IMMER verstecken, wenn eine Runde vorbei ist
         digitalDiceArea.classList.add('hidden');
-        digitalDiceButton.classList.remove('no-interaction', 'rolling'); // Klickbarkeit und Animation entfernen
-        digitalDiceButton.src = 'assets/digi-ani.gif'; // Button auf Startbild zurücksetzen
-        digitalDiceResult.classList.add('hidden');
-        digitalDiceResult.src = ''; // Ergebnisbild leeren
+        
+        // NEU: Setze das digitale Würfelbild auf seinen initialen Zustand zurück
+        digitalDiceMainImage.src = digitalDiceStartImage;
+        digitalDiceMainImage.classList.remove('no-interaction', 'rolling');
+        digitalDiceMainImage.style.cursor = 'pointer'; // Sicherstellen, dass es klickbar ist
+    }
 
-        //NEU:
         // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
     clearTimeout(gameState.speedRoundTimeout);
     clearInterval(gameState.countdownInterval);
