@@ -305,10 +305,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
         allGenresScrollbox.innerHTML = '';
 
-        // Optional: Einen Titel hinzufügen
-        const title = document.createElement('h3');
-        title.innerText = 'Genre-Auswahl:';
-        allGenresScrollbox.appendChild(title);
+        // ---- Optional: Einen Titel hinzufügen
+        // const title = document.createElement('h3');
+        // title.innerText = 'Genre-Auswahl:';
+        // allGenresScrollbox.appendChild(title);
 
         const allAvailableGenres = Object.keys(playlists); // Alle Genre-Namen aus dem playlists-Objekt
 
