@@ -503,7 +503,7 @@ body, html {
     display: flex;      /* Um das einzelne Bild zu zentrieren oder einfach zu enthalten */
     align-items: center; /* Vertikal zentrieren */
     justify-content: center; /* Horizontal zentrieren */
-    z-index: 50;        /* Sicherstellen, dass es über anderen Elementen liegt */
+    /* z-index: 50;        - Sicherstellen, dass es über anderen Elementen liegt */
 }
 
 /* Styling für das einzige Bild-Element (egal ob Startbild, Animation oder Ergebnis) */
