@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         3: 'assets/digi-3.png',
         4: 'assets/digi-4.png',
         5: 'assets/digi-5.png',
-        7: 'assets/digi-tg.png'
+        7: 'assets/digi-ta.png'
     };
 
     // Pfad zur digitalen Animation und dem Standard-Startbild
