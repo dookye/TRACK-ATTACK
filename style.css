@@ -446,7 +446,7 @@ body, html {
     font-weight: bold;
     color: var(--white);
     text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Leichter Glow */
-    z-index: 30; /* Über den meisten anderen Elementen */
+    z-index: 120; /* Über den meisten anderen Elementen */
     /* Animation wird über JavaScript hinzugefügt/entfernt, damit sie jedes Mal neu startet */
 }
 
