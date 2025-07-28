@@ -624,7 +624,6 @@ body, html {
 }
 
 .preselect-genre-button:hover {
-    transform: scale(1.03);
     background-color: var(--white);
     color: var(--black);
 }
