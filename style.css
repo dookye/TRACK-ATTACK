@@ -244,24 +244,37 @@ body, html {
     transform: scale(1.1);
 }
 
-/* Genre Container (Phase 3) - Jetzt separat stylen */
 #genre-container {
     display: flex;
+    flex-wrap: wrap; /* Wichtig, damit die Buttons in die nächste Zeile umbrechen */
     justify-content: center;
     align-items: center;
-    gap: 20px; /* Abstand zwischen den Genre-Buttons */
-    flex-wrap: wrap; /* NEU: Lässt die Elemente in die nächste Zeile umbrechen */
-    max-width: 80%; /* Optional: Begrenze die Breite des Containers, damit der Umbruch früher erfolgt */
+    gap: 15px; /* Abstand zwischen den Buttons */
+    padding: 20px;
+    
+    /* --- NEU/AKTUALISIERT: Für den scrollbaren Bereich --- */
+    max-height: 70vh; /* Maximale Höhe: 70% der Viewport-Höhe. 
+                         Du kannst diesen Wert anpassen (z.B. 60vh, 500px), 
+                         je nachdem, wie viel Platz du für andere Elemente lassen möchtest. */
+    overflow-y: auto; /* Erlaubt vertikales Scrollen, wenn der Inhalt die max-height überschreitet */
+    -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS-Geräten */
+    
+    /* Optional: Scrollbar verstecken für einen saubereren Look */
+    scrollbar-width: none; /* Für Firefox */
+    -ms-overflow-style: none; /* Für Internet Explorer und Edge */
 }
 
-/* NEU: Klasse zur Deaktivierung der Buttons während der Animation */
-.no-interaction {
-    pointer-events: none; /* Verhindert alle Maus- und Klick-Events */
-    opacity: 0.8;
-    cursor: default;       /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
+/* Optional: Für Webkit-Browser (Chrome, Safari) die Scrollbar verstecken */
+#genre-container::-webkit-scrollbar {
+    display: none;
 }
 
+/* Optional: Stil für einzelne Genre-Buttons */
 .genre-button {
+    /* Sicherstellen, dass die Buttons nicht zu klein werden, 
+       wenn viele da sind und flex-wrap aktiv ist */
+    flex-shrink: 0; 
+    min-width: 120px; /* Beispiel: Mindestbreite für jeden Button */
     padding: 20px 30px;
     font-size: 1.2em;
     cursor: pointer;
@@ -279,6 +292,13 @@ body, html {
 .genre-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* NEU: Klasse zur Deaktivierung der Buttons während der Animation */
+.no-interaction {
+    pointer-events: none; /* Verhindert alle Maus- und Klick-Events */
+    opacity: 0.8;
+    cursor: default;       /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
 }
 
 .random-blink {
