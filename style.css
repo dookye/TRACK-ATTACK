@@ -563,8 +563,8 @@ body, html {
     position: absolute;
     left: 0; /* Links positioniert */
     top: 0;
-    width: 200px; /* Breite der Scrollbox anpassen */
-    height: 100%; /* Volle Höhe des Bildschirms */
+    width: 30%; /* Breite der Scrollbox anpassen */
+    height: 90%; /* Volle Höhe des Bildschirms */
     background-color: rgba(0, 0, 0, 0.7); /* Leicht durchsichtiger Hintergrund */
     display: flex; /* Flexbox für Inhalt */
     flex-direction: column; /* Buttons untereinander */
@@ -603,13 +603,13 @@ body, html {
 
 .preselect-genre-button:hover {
     transform: scale(1.03);
-    border-color: var(--player1-color); /* Oder eine andere Highlight-Farbe */
+    border-color: var(--black); /* Oder eine andere Highlight-Farbe z.b. (--player1-color) */
 }
 
 /* Stil für ausgewählte Genre-Buttons */
 .preselect-genre-button.selected {
-    background-color: var(--player1-color); /* Beispiel: Player1-Farbe für "ausgewählt" */
-    border-color: var(--player1-color);
+    background-color: var(--white); /* Beispiel: Player1-Farbe für "ausgewählt" */
+    border-color: var(--black);
     color: var(--black);
 }
 
