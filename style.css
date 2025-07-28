@@ -581,15 +581,13 @@ body, html {
     left: 0; /* Links positioniert */
     /* top: 0; */
     max-height: 80vh;
-    width: 40%; /* Breite der Scrollbox anpassen */
+    width: 35%; /* Breite der Scrollbox anpassen */
     /* height: 90%; - Volle Höhe des Bildschirms */
     background-color: rgba(0, 0, 0, 0.7); /* Leicht durchsichtiger Hintergrund */
     display: flex; /* Flexbox für Inhalt */
     flex-direction: column; /* Buttons untereinander */
     justify-content: flex-start; /* Oben beginnen */
     align-items: center; /* Mittig ausrichten */
-    gap: 15px; /* Abstand zwischen den Buttons */
-    padding: 20px;
     box-sizing: border-box; /* Padding wird in die Breite/Höhe einberechnet */
     z-index: 100; /* Sicherstellen, dass es über anderen Elementen liegt */
     /* border-right: 2px solid var(--white); - Optische Trennlinie */
@@ -609,8 +607,9 @@ body, html {
     background-color: var(--black); /* Hintergrundfarbe für "unausgewählt" */
     color: var(--white);
     border: 2px solid var(--white);
-    padding: 10px 15px;
-    margin-bottom: 10px; /* Abstand zwischen den Buttons */
+    padding: 20;
+    gap: 15px; /* Abstand zwischen den Buttons */
+    /* margin-bottom: 10px; - Abstand zwischen den Buttons */
     cursor: pointer;
     font-size: 1.1em;
     font-weight: bold;
