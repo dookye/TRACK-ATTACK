@@ -627,77 +627,68 @@ document.addEventListener('DOMContentLoaded', () => {
     // Phase 4: Rate-Bildschirm & Spielerwechsel
     //=======================================================================
 
-    // AKTUALISIERT: getTrack-Funktion
-    async function getTrack(genre) {
-        // Überprüfe, ob überhaupt Genres ausgewählt wurden.
-        // Wenn nicht, nimm ALLE verfügbaren Genres als Fallback oder zeige einen Fehler.
-        let genresToPickFrom = gameState.selectedPlayableGenres.length > 0 ?
-            gameState.selectedPlayableGenres :
-            Object.keys(playlists); // Fallback: Alle Genres, wenn nichts ausgewählt ist.
-        // Du könntest hier auch einen alert/Fehler ausgeben, wenn selectedPlayableGenres leer ist
-        // und du _nicht_ alle Genres als Fallback möchtest.
+// AKTUALISIERT: getTrack-Funktion
+async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Klarheit geändert
+    // 'selectedGenreName' ist das spezifische Genre, das der Spieler im Spiel geklickt hat.
+    // Wir müssen hier KEINE weitere zufällige Auswahl treffen.
+    // Wir nutzen einfach direkt den Namen des geklickten Genres.
 
-        // NEU: Wähle ein zufälliges Genre aus den GLEICHERMASSEN ausgewählten Genres
-        const randomSelectedGenre = genresToPickFrom[Math.floor(Math.random() * genresToPickFrom.length)];
+    const playlistPool = playlists[selectedGenreName]; // <-- KORREKTUR: Nutze DIREKT den übergebenen Genre-Namen!
 
-        const playlistPool = playlists[randomSelectedGenre]; // Nutze das zufällig ausgewählte Genre
-
-        if (!playlistPool || playlistPool.length === 0) {
-            console.error(`Keine Playlists für Genre "${randomSelectedGenre}" definiert oder Pool ist leer.`);
-            alert(`Fehler: Für das Genre "${randomSelectedGenre}" sind keine Playlists verfügbar.`);
-            showGenreScreen(); // Oder showDiceScreen(), je nach gewünschtem Fallback
-            return null;
-        }
-
-        const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
-        console.log(`DEBUG: Ausgewähltes Genre: "${randomSelectedGenre}", Playlist-ID: "${randomPlaylistId}"`);
-
-        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), { // NEUE ZEILE
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-
-        if (!response.ok) {
-            console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
-            alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
-            showGenreScreen();
-            return null;
-        }
-
-        const data = await response.json();
-
-        if (!data.items || data.items.length === 0) {
-            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
-            alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
-            showGenreScreen();
-            return null;
-        }
-
-        // Filterung, wie zuvor besprochen (optional: .explicit === false hinzufügen)
-        const playableTracks = data.items.filter(item => item.track);
-        // Für explizite Inhalte: const playableTracks = data.items.filter(item => item.track && item.track.explicit === false);
-
-
-        if (playableTracks.length === 0) {
-            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
-            alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
-            showGenreScreen();
-            return null;
-        }
-
-        const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
-
-        // NEU: Loggen des ausgewählten Songs, bevor er zurückgegeben wird
-        if (randomTrack) {
-            console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
-        } else {
-            console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
-            alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
-            showGenreScreen();
-            return null;
-        }
-
-        return randomTrack;
+    if (!playlistPool || playlistPool.length === 0) {
+        console.error(`Keine Playlists für Genre "${selectedGenreName}" definiert oder Pool ist leer.`);
+        alert(`Fehler: Für das Genre "${selectedGenreName}" sind keine Playlists verfügbar. Bitte wähle ein anderes Genre.`);
+        showGenreScreen(); // Gehe zurück zum Genre-Auswahlbildschirm
+        return null;
     }
+
+    const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
+    console.log(`DEBUG: Ausgewähltes Genre (vom Spieler geklickt): "${selectedGenreName}", Playlist-ID (zufällig aus diesem Genre): "${randomPlaylistId}"`);
+
+
+    const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+
+    if (!response.ok) {
+        console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
+        alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
+        showGenreScreen();
+        return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.items || data.items.length === 0) {
+        console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
+        alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
+        showGenreScreen();
+        return null;
+    }
+
+    const playableTracks = data.items.filter(item => item.track);
+
+    if (playableTracks.length === 0) {
+        console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
+        alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
+        showGenreScreen();
+        return null;
+    }
+
+    const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
+
+    if (randomTrack) {
+        console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
+    } else {
+        console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
+        alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
+        showGenreScreen();
+        return null;
+    }
+
+    return randomTrack;
+}
+
 
     async function prepareAndShowRateScreen(genre) {
         gameState.currentTrack = await getTrack(genre);
