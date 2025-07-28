@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Optional: Einen Titel hinzufügen
         const title = document.createElement('h3');
-        title.innerText = 'Wähle Genres für dein Spiel:';
+        title.innerText = 'Genre-Auswahl:';
         allGenresScrollbox.appendChild(title);
 
         const allAvailableGenres = Object.keys(playlists); // Alle Genre-Namen aus dem playlists-Objekt
