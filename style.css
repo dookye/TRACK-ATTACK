@@ -616,7 +616,7 @@ body, html {
     transition: all 0.2s ease-in-out; /* Übergänge für visuelles Feedback */
     /* width: 100%; */ /* GEÄNDERT: Diese Zeile entfernen, um Breite an Inhalt anzupassen */
     text-align: center;
-    white-space: nowrap; /* NEU: Verhindert Zeilenumbruch im Button-Text */
+    /* white-space: nowrap; - NEU: Verhindert Zeilenumbruch im Button-Text */
 }
 
 .preselect-genre-button:hover {
