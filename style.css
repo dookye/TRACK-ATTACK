@@ -82,6 +82,7 @@ body, html {
     width: 100%;
     height: 100%;
     position: relative;
+    overflow: hidden;
     transition: background-color var(--transition-speed) ease-in-out;
 }
 
@@ -98,21 +99,7 @@ body, html {
 }
 
 /* ---- NEU ----*/
-#login-screen {
-    /* Deine bestehenden Styles, z.B. */
-    display: flex;
-    flex-direction: column; /* Wichtig, damit die Elemente untereinander stehen */
-    justify-content: center; /* Zentriert vertikal, wenn genug Platz ist */
-    align-items: center; /* Zentriert horizontal */
-    text-align: center;
-    padding: 20px; /* Füge etwas Polsterung hinzu */
-    box-sizing: border-box; /* Stellt sicher, dass Padding zur Größe beiträgt */
 
-    /* Die wichtigen neuen Eigenschaften für Scrollbarkeit: */
-    height: 100vh; /* Nimmt die volle Viewport-Höhe ein */
-    overflow-y: auto; /* Ermöglicht vertikales Scrollen, wenn Inhalt die Höhe übersteigt */
-    -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS */
-}
 
 /* Optional: Damit der Login-Button nicht zu groß wird und immer sichtbar bleibt */
 #login-screen #login-button {
