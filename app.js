@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastGameScreenVisible = '';
 
     const playlists = {
-        'Pop Hits 200ß-2025' ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
+        'Pop Hits 200ß-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         'Die grössten Hits aller Zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
         deutsch: ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
         party: ['53r5W67KJNIeHWAhVOWPDr'],
