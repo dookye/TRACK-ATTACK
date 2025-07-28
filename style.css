@@ -109,7 +109,7 @@ body, html {
     box-sizing: border-box; /* Stellt sicher, dass Padding zur Größe beiträgt */
 
     /* Die wichtigen neuen Eigenschaften für Scrollbarkeit: */
-    height: auto; /* (100vh Nimmt die volle Viewport-Höhe ein) */
+    height: 100vh; /* (100vh Nimmt die volle Viewport-Höhe ein) */
     overflow-y: auto; /* Ermöglicht vertikales Scrollen, wenn Inhalt die Höhe übersteigt */
     -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS */
 }
