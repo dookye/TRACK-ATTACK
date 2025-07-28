@@ -270,7 +270,7 @@ body, html {
     padding: 20px;
     
     /* --- NEU/AKTUALISIERT: Für den scrollbaren Bereich --- */
-    max-height: 70vh; /* Maximale Höhe: 70% der Viewport-Höhe. 
+    max-height: 80vh; /* Maximale Höhe: 70% der Viewport-Höhe. 
                          Du kannst diesen Wert anpassen (z.B. 60vh, 500px), 
                          je nachdem, wie viel Platz du für andere Elemente lassen möchtest. */
     overflow-y: auto; /* Erlaubt vertikales Scrollen, wenn der Inhalt die max-height überschreitet */
@@ -579,15 +579,17 @@ body, html {
 #start-genre-selection-container {
     position: absolute;
     left: 0; /* Links positioniert */
-    top: 0;
-    width: 30%; /* Breite der Scrollbox anpassen */
-    height: 90%; /* Volle Höhe des Bildschirms */
+    /* top: 0; */
+    max-height: 80vh;
+    width: 40%; /* Breite der Scrollbox anpassen */
+    /* height: 90%; - Volle Höhe des Bildschirms */
     background-color: rgba(0, 0, 0, 0.7); /* Leicht durchsichtiger Hintergrund */
     display: flex; /* Flexbox für Inhalt */
     flex-direction: column; /* Buttons untereinander */
     justify-content: flex-start; /* Oben beginnen */
     align-items: center; /* Mittig ausrichten */
-    padding: 20px 10px; /* Innenabstand */
+    gap: 15px; /* Abstand zwischen den Buttons */
+    padding: 20px;
     box-sizing: border-box; /* Padding wird in die Breite/Höhe einberechnet */
     z-index: 100; /* Sicherstellen, dass es über anderen Elementen liegt */
     /* border-right: 2px solid var(--white); - Optische Trennlinie */
