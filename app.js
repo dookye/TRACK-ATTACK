@@ -542,7 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Optional: Titel für diesen Screen
         const title = document.createElement('h2');
-        title.innerText = 'Wähle ein Genre für diese Runde:';
+        // title.innerText = 'Wähle ein Genre für diese Runde:';
         genreContainer.appendChild(title);
 
         // NEU: Hole die Genres, die im gameState ausgewählt wurden
