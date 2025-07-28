@@ -448,6 +448,9 @@ const diceConfig = {
         // NEU: Sound abspielen
         if (digitalDiceSound) { // Sicherstellen, dass das Audio-Element gefunden wurde
             digitalDiceSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück, falls er schonmal gespielt wurde
+            // --- HIER DIE LAUTSTÄRKE ANPASSEN ---
+            digitalDiceSound.volume = 0.4; // Beispiel: 30% der Originallautstärke. Spiele mit diesem Wert!
+                                   // 0.1 = 10%, 0.5 = 50%, 0.8 = 80% usw.
             digitalDiceSound.play().catch(error => {
                 // Fehlerbehandlung für Autoplay-Richtlinien (z.B. auf mobilen Geräten)
                 console.warn("Autoplay für digitalen Würfel Sound blockiert oder Fehler:", error);
