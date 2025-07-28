@@ -556,3 +556,67 @@ body, html {
         box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
     }
 }
+
+/* ------------- Genre-Startauswahl ------------------ */
+/* --- NEU: Basis-Stile für den Start-Genre-Container --- */
+#start-genre-selection-container {
+    position: absolute;
+    left: 0; /* Links positioniert */
+    top: 0;
+    width: 200px; /* Breite der Scrollbox anpassen */
+    height: 100%; /* Volle Höhe des Bildschirms */
+    background-color: rgba(0, 0, 0, 0.7); /* Leicht durchsichtiger Hintergrund */
+    display: flex; /* Flexbox für Inhalt */
+    flex-direction: column; /* Buttons untereinander */
+    justify-content: flex-start; /* Oben beginnen */
+    align-items: center; /* Mittig ausrichten */
+    padding: 20px 10px; /* Innenabstand */
+    box-sizing: border-box; /* Padding wird in die Breite/Höhe einberechnet */
+    z-index: 100; /* Sicherstellen, dass es über anderen Elementen liegt */
+    border-right: 2px solid var(--white); /* Optische Trennlinie */
+    overflow-y: auto; /* Scrollbar, wenn Inhalt zu lang */
+    -webkit-overflow-scrolling: touch; /* Flüssiges Scrollen auf iOS */
+    scrollbar-width: none; /* Scrollbar verstecken (Firefox) */
+    -ms-overflow-style: none; /* Scrollbar verstecken (IE/Edge) */
+}
+
+/* Für Webkit-Browser (Chrome, Safari) Scrollbar verstecken */
+#start-genre-selection-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* --- NEU: Stile für die Genre-Buttons in der Vorauswahl --- */
+.preselect-genre-button {
+    background-color: var(--black); /* Hintergrundfarbe für "unausgewählt" */
+    color: var(--white);
+    border: 2px solid var(--white);
+    padding: 10px 15px;
+    margin-bottom: 10px; /* Abstand zwischen den Buttons */
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out; /* Übergänge für visuelles Feedback */
+    width: 100%; /* Volle Breite im Container */
+    text-align: center;
+}
+
+.preselect-genre-button:hover {
+    transform: scale(1.03);
+    border-color: var(--player1-color); /* Oder eine andere Highlight-Farbe */
+}
+
+/* Stil für ausgewählte Genre-Buttons */
+.preselect-genre-button.selected {
+    background-color: var(--player1-color); /* Beispiel: Player1-Farbe für "ausgewählt" */
+    border-color: var(--player1-color);
+    color: var(--black);
+}
+
+/* Optional: Titel für die Sektion */
+#start-genre-selection-container h3 {
+    color: var(--white);
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    text-align: center;
+}
