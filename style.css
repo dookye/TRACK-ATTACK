@@ -500,19 +500,19 @@ body, html {
     position: absolute; /* Absolute Positionierung im dice-container */
     bottom: 20px;       /* 20px Abstand vom unteren Rand */
     left: 20px;         /* 20px Abstand vom linken Rand */
-    display: flex;      /* Elemente nebeneinander anordnen */
-    align-items: flex-end; /* Elemente an ihrer Unterkante ausrichten */
-    gap: 10px;          /* 10px Abstand zwischen dem Button und dem Ergebnisbild */
+    display: flex;      /* Um das einzelne Bild zu zentrieren oder einfach zu enthalten */
+    align-items: center; /* Vertikal zentrieren */
+    justify-content: center; /* Horizontal zentrieren */
     z-index: 50;        /* Sicherstellen, dass es über anderen Elementen liegt */
 }
 
-/* Styling für den klickbaren Animations-Button */
+/* Styling für das einzige Bild-Element (egal ob Startbild, Animation oder Ergebnis) */
 .digital-dice-icon {
-    width: 5%;        /* Kleinere Größe für den Button */
-    height: 5%;
-    cursor: pointer;    /* Zeigt an, dass das Element klickbar ist */
-    /* border-radius: 10px; - Leicht abgerundete Ecken */
-    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); - Leichter Schatten */
+    width: 70px;        /* Etwas größere und einheitliche Größe für alle Zustände */
+    height: 70px;
+    cursor: pointer;    /* Zeigt an, dass das Element klickbar ist (solange es kein GIF ist) */
+    border-radius: 10px; /* Leicht abgerundete Ecken */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Leichter Schatten */
     transition: transform 0.2s ease, opacity 0.2s ease; /* Sanfte Übergänge */
 }
 
@@ -521,9 +521,11 @@ body, html {
     opacity: 0.9;
 }
 
-/* Optional: Animation für den Button während des Würfelns
+/* Optional: Animation für den Button während des Würfelns (wenn es der digi-ani.gif ist) */
+/* Diese Klasse wird dynamisch hinzugefügt/entfernt, obwohl das GIF selbst animiert ist */
+/* Es könnte für einen visuellen Effekt um das GIF herum nützlich sein. */
 .digital-dice-icon.rolling {
-    animation: pulse-border 1s infinite alternate; - Fügt einen pulsierenden Rahmen hinzu -
+    animation: pulse-border 1s infinite alternate; /* Fügt einen pulsierenden Rahmen hinzu */
 }
 
 @keyframes pulse-border {
@@ -533,13 +535,4 @@ body, html {
     to {
         box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
     }
-}  
-*/
-
-/* Styling für das Ergebnisbild des Würfels */
-.digital-dice-result {
-    width: 50px;        /* Etwas größer als der Button für bessere Sichtbarkeit */
-    height: 50px;
-    object-fit: contain; /* Bildgröße anpassen, ohne es zu verzerren */
-    margin-bottom: -5px; /* Optische Korrektur, falls nötig, um es mit dem Button auszurichten */
 }
