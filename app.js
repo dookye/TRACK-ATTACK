@@ -118,14 +118,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const playlists = {
         'Pop Hits 200ß-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         'Die grössten Hits aller Zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
-        deutsch: ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
-        party: ['53r5W67KJNIeHWAhVOWPDr'],
-        skate: ['7qGvinYjBfVpl1FJFkzGqV'],
-        dpunk: ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
-        onehit: ['1t1iRfYh9is6FH6hvn58lt', '77IXl4Gh7AZLyVLx66NkqV'],
-        girlboy: ['11Q0O9t6MGGXrKFaeqRRwm'],
-        disney: ['6CdPoZsFja4LOrTYTvHrY5'],
-        lagerfeuer: ['3TfJ6iMeqPXPLW8sxuQgcd']
+        'deutsch Songs von früher bis heute': ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
+        'Party Hits': ['53r5W67KJNIeHWAhVOWPDr'],
+        'Skate-Punk': ['7qGvinYjBfVpl1FJFkzGqV'],
+        'Deutsch-Punk': ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
+        'Top 100 One Hit Wonders': ['1t1iRfYh9is6FH6hvn58lt', '77IXl4Gh7AZLyVLx66NkqV'],
+        'Girl- and Boybands': ['11Q0O9t6MGGXrKFaeqRRwm'],
+        'deutsche Disney-Songs': ['6CdPoZsFja4LOrTYTvHrY5'],
+        'Lagerfeuer Klassiker': ['3TfJ6iMeqPXPLW8sxuQgcd']
     };
 
     //=======================================================================
