@@ -487,7 +487,7 @@ const diceConfig = {
             digitalDiceMainImage.classList.remove('no-interaction');
             digitalDiceMainImage.style.cursor = 'pointer'; // Cursor wieder als Zeiger anzeigen
 
-        }, 1500); // Dauer der Animation in Millisekunden (1.5 Sekunden)
+        }, 1800); // Dauer der digital-dice Animation in Millisekunden (1.8 Sekunden)
     }
 
     // --- Event Listener für den digitalen Würfel-Button ---
