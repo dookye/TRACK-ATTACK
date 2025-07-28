@@ -962,29 +962,31 @@ function displayPointsAnimation(points, player) {
 
 // RESET ROUND ---------------------------------------------------------------------------------------------------------------
     function resetRoundUI() {
-        revealContainer.classList.add('hidden');
-        logoButton.classList.add('hidden');
-        genreContainer.classList.add('hidden');
-        diceContainer.classList.add('hidden');
-        revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
-        speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
-        correctButton.classList.remove('no-interaction');
-        wrongButton.classList.remove('no-interaction');          
-        
-        // Entfernen Sie den Listener, um mehrfaches Hinzufügen zu vermeiden,
-        // wenn der Logo-Button wieder verwendet wird.
-        logoButton.removeEventListener('click', playTrackSnippet);
+    // Verstecke alle relevanten UI-Elemente
+    revealContainer.classList.add('hidden');
+    logoButton.classList.add('hidden');
+    genreContainer.classList.add('hidden');
+    diceContainer.classList.add('hidden');
+    revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
+    speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
+    
+    // Setze die Interaktivität der Antwort-Buttons zurück
+    correctButton.classList.remove('no-interaction');
+    wrongButton.classList.remove('no-interaction');        
+    
+    // Entfernen Sie den Listener vom Logo-Button, um mehrfaches Hinzufügen zu vermeiden,
+    // wenn der Logo-Button wieder verwendet wird.
+    logoButton.removeEventListener('click', playTrackSnippet);
 
-       // Digitalen Würfel-Bereich IMMER verstecken, wenn eine Runde vorbei ist
-        digitalDiceArea.classList.add('hidden');
-        
-        // NEU: Setze das digitale Würfelbild auf seinen initialen Zustand zurück
-        digitalDiceMainImage.src = digitalDiceStartImage;
-        digitalDiceMainImage.classList.remove('no-interaction', 'rolling');
-        digitalDiceMainImage.style.cursor = 'pointer'; // Sicherstellen, dass es klickbar ist
-    }
+    // Digitalen Würfel-Bereich IMMER verstecken, wenn eine Runde vorbei ist
+    digitalDiceArea.classList.add('hidden');
+    
+    // Setze das digitale Würfelbild auf seinen initialen Zustand zurück
+    digitalDiceMainImage.src = digitalDiceStartImage;
+    digitalDiceMainImage.classList.remove('no-interaction', 'rolling');
+    digitalDiceMainImage.style.cursor = 'pointer'; // Sicherstellen, dass es klickbar ist
 
-        // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
+    // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
     clearTimeout(gameState.speedRoundTimeout);
     clearInterval(gameState.countdownInterval);
     clearTimeout(gameState.spotifyPlayTimeout);
@@ -997,7 +999,7 @@ function displayPointsAnimation(points, player) {
         gameState.isSongPlaying = false;
     }
 
-    // NEU: Lautstärke auf 100% zurücksetzen, BEVOR der nächste Song startet
+    // Lautstärke auf 100% zurücksetzen, BEVOR der nächste Song startet
     if (spotifyPlayer) { // Prüfen, ob der Player initialisiert ist
         spotifyPlayer.setVolume(1.0) // 1.0 entspricht 100%
             .then(() => {
@@ -1006,9 +1008,8 @@ function displayPointsAnimation(points, player) {
             .catch(error => {
                 console.error("Fehler beim Zurücksetzen der Lautstärke:", error);
             });
-        }
-
     }
+}
     
     //=======================================================================
     // Phase 5: Spielende & Reset
