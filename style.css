@@ -508,8 +508,8 @@ body, html {
 
 /* Styling für das einzige Bild-Element (egal ob Startbild, Animation oder Ergebnis) */
 .digital-dice-icon {
-    width: 70px;        /* Etwas größere und einheitliche Größe für alle Zustände */
-    height: 70px;
+    width: 50px;        /* Etwas größere und einheitliche Größe für alle Zustände */
+    height: 50px;
     cursor: pointer;    /* Zeigt an, dass das Element klickbar ist (solange es kein GIF ist) */
     border-radius: 10px; /* Leicht abgerundete Ecken */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Leichter Schatten */
