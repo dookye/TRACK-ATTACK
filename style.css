@@ -585,12 +585,12 @@ body, html {
     background-color: rgba(0, 0, 0, 0.7); /* Leicht durchsichtiger Hintergrund */
     display: flex; /* Flexbox für Inhalt */
     flex-direction: column; /* Buttons untereinander */
-    justify-content: center; /* Vertikal zentrieren */
-    align-items: center; /* **WICHTIG:** Buttons horizontal zentrieren */
+    justify-content: flex-start; /* Oben beginnen */
+    align-items: center; /* Mittig ausrichten */
     padding: 20px 10px; /* Innenabstand */
     box-sizing: border-box; /* Padding wird in die Breite/Höhe einberechnet */
     z-index: 100; /* Sicherstellen, dass es über anderen Elementen liegt */
-    /* border-right: 2px solid var(--white); */ /* Diese Zeile entfernt den vertikalen Strich */
+    /* border-right: 2px solid var(--white); - Optische Trennlinie */
     overflow-y: auto; /* Scrollbar, wenn Inhalt zu lang */
     -webkit-overflow-scrolling: touch; /* Flüssiges Scrollen auf iOS */
     scrollbar-width: none; /* Scrollbar verstecken (Firefox) */
@@ -602,7 +602,7 @@ body, html {
     display: none;
 }
 
-/* --- Stile für die Genre-Buttons in der Vorauswahl --- */
+/* --- NEU: Stile für die Genre-Buttons in der Vorauswahl --- */
 .preselect-genre-button {
     background-color: var(--black); /* Hintergrundfarbe für "unausgewählt" */
     color: var(--white);
@@ -614,17 +614,13 @@ body, html {
     font-weight: bold;
     border-radius: 8px;
     transition: all 0.2s ease-in-out; /* Übergänge für visuelles Feedback */
-    
-    /* **WICHTIGE ÄNDERUNGEN HIER:** */
-    width: 100%; /* **NEU:** Button nimmt volle Breite des Elterncontainers ein */
+    width: 100%; /* Volle Breite im Container */
     text-align: center;
-    white-space: normal; /* **GEÄNDERT:** Erlaubt Zeilenumbruch */
-    word-wrap: break-word; /* Stellt sicher, dass lange Wörter umgebrochen werden */
 }
 
 .preselect-genre-button:hover {
     transform: scale(1.03);
-    border-color: var(--white); /* Oder eine andere Highlight-Farbe z.b. (--player1-color) */
+    border-color: var(--black); /* Oder eine andere Highlight-Farbe z.b. (--player1-color) */
 }
 
 /* Stil für ausgewählte Genre-Buttons */
@@ -640,5 +636,4 @@ body, html {
     margin-bottom: 20px;
     font-size: 1.4em;
     text-align: center;
-    width: 100%; /* Sicherstellen, dass der Titel die volle Breite einnimmt, um zentriert zu bleiben */
 }
