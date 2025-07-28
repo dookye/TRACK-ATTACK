@@ -610,7 +610,7 @@ body, html {
     background-color: var(--black); /* Hintergrundfarbe für "unausgewählt" */
     margin-bottom: 30px; /* Abstand zwischen den Buttons */
     transition: all 0.2s ease-in-out; /* Übergänge für visuelles Feedback */
-    width: 100%; /* Volle Breite im Container */
+    width: 90%; /* Volle Breite im Container */
     padding: 20px 30px;
     text-align: center;
     flex-shrink: 0; 
@@ -624,6 +624,7 @@ body, html {
 }
 
 .preselect-genre-button:hover {
+    transform: scale(1.03);
     background-color: var(--white);
     color: var(--black);
 }
