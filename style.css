@@ -584,9 +584,9 @@ body, html {
     height: 90%; /* Volle Höhe des Bildschirms */
     background-color: rgba(0, 0, 0, 0.7); /* Leicht durchsichtiger Hintergrund */
     display: flex; /* Flexbox für Inhalt */
-    flex-direction: column; /* **WICHTIG:** Buttons untereinander */
+    flex-direction: column; /* Buttons untereinander */
     justify-content: center; /* Vertikal zentrieren */
-    align-items: center; /* **GEÄNDERT:** Buttons horizontal zentrieren */
+    align-items: center; /* **WICHTIG:** Buttons horizontal zentrieren */
     padding: 20px 10px; /* Innenabstand */
     box-sizing: border-box; /* Padding wird in die Breite/Höhe einberechnet */
     z-index: 100; /* Sicherstellen, dass es über anderen Elementen liegt */
@@ -614,11 +614,12 @@ body, html {
     font-weight: bold;
     border-radius: 8px;
     transition: all 0.2s ease-in-out; /* Übergänge für visuelles Feedback */
-    /* width: 100%; */ /* Diese Zeile entfernen, um Breite an Inhalt anzupassen */
+    
+    /* **WICHTIGE ÄNDERUNGEN HIER:** */
+    width: 100%; /* **NEU:** Button nimmt volle Breite des Elterncontainers ein */
     text-align: center;
-    white-space: nowrap; /* Verhindert Zeilenumbruch im Button-Text */
-    /* **NEU/WICHTIG:** Wenn du eine maximale Breite möchtest, die den Button nicht zu lang macht: */
-    max-width: 250px; /* Beispielwert, passe ihn an deine Bedürfnisse an */
+    white-space: normal; /* **GEÄNDERT:** Erlaubt Zeilenumbruch */
+    word-wrap: break-word; /* Stellt sicher, dass lange Wörter umgebrochen werden */
 }
 
 .preselect-genre-button:hover {
