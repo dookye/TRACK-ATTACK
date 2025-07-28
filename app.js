@@ -50,7 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Pfad zur digitalen Animation und dem Standard-Startbild
     const digitalDiceAnimationGif = 'assets/digi-ani.gif';
     const digitalDiceStartImage = 'assets/digi-ta.png'; // Das Bild, das standardmäßig angezeigt wird
+    
+    // Sounds
     const digitalDiceSound = document.getElementById('digital-dice-sound');
+    const logoFlyInSound = document.getElementById('logo-fly-in-sound');
 
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
@@ -359,6 +362,15 @@ const diceConfig = {
 
         // Speichere den Zustand, dass das Spiel gestartet wurde (Logo-Phase)
         lastGameScreenVisible = 'logo-button';
+
+        // NEU: Sound für das einfliegende Logo abspielen
+        if (logoFlyInSound) {
+            logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
+            logoFlyInSound.volume = 0.3; // Optional: Passe die Lautstärke an (z.B. 50%)
+            logoFlyInSound.play().catch(error => {
+                console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
+            });
+        }
         
         setTimeout(() => {
             appContainer.style.backgroundColor = 'var(--player1-color)';
