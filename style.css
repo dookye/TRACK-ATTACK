@@ -114,6 +114,11 @@ body, html {
     -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS */
 }
 
+#login-screen #login-button {
+    margin-top: auto; /* Schiebt den Button nach unten, wenn viel Platz ist */
+    flex-shrink: 0; /* Verhindert, dass der Button schrumpft */
+}
+
 .hidden {
     display: none !important;
 }
