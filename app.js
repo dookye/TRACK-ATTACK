@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Pfad zur digitalen Animation und dem Standard-Startbild
     const digitalDiceAnimationGif = 'assets/digi-ani.gif';
     const digitalDiceStartImage = 'assets/digi-ta.png'; // Das Bild, das standardmäßig angezeigt wird
+    const digitalDiceSound = document.getElementById('digital-dice-sound');
 
     // --- Spotify-Parameter (Phase 1.1) ---
     const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
@@ -443,6 +444,16 @@ const diceConfig = {
 
         // Setze die Quelle des Bildes auf das ANIMIERTE GIF
         digitalDiceMainImage.src = digitalDiceAnimationGif;
+
+        // NEU: Sound abspielen
+        if (digitalDiceSound) { // Sicherstellen, dass das Audio-Element gefunden wurde
+            digitalDiceSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück, falls er schonmal gespielt wurde
+            digitalDiceSound.play().catch(error => {
+                // Fehlerbehandlung für Autoplay-Richtlinien (z.B. auf mobilen Geräten)
+                console.warn("Autoplay für digitalen Würfel Sound blockiert oder Fehler:", error);
+                // Hier könntest du eine alternative Aktion planen oder den Benutzer informieren
+            });
+        }
 
         // Die Animation läuft einmal durch (ca. 1.5 Sekunden)
         setTimeout(() => {
