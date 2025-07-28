@@ -370,6 +370,25 @@ const diceConfig = {
     // Phase 3: Würfel- & Genre-Auswahl
     //=======================================================================
 
+// NEU: Funktion, die die Aktionen nach der Würfelanimation ausführt
+    function handleDiceAnimationEnd() {
+        // Stoppt den laufenden Timeout, falls er noch aktiv ist
+        // Dies ist wichtig, wenn die Animation manuell übersprungen wird,
+        // damit der setTimeout nicht später noch einmal triggert.
+        clearTimeout(gameState.diceAnimationTimeout); 
+        
+        diceAnimation.classList.add('hidden');     // Haupt-Würfelanimation ausblenden
+        diceSelection.classList.remove('hidden');  // Würfelauswahl anzeigen
+
+        // Den digitalen Würfelbereich anzeigen
+        digitalDiceArea.classList.remove('hidden');
+        
+        // Aktiviere die Möglichkeit, die physischen Würfel auszuwählen
+        document.querySelectorAll('.dice-option').forEach(dice => {
+            dice.classList.remove('no-interaction');
+        });
+    }
+    
     function showDiceScreen() {
         resetRoundUI();
         gameState.currentRound++;
@@ -401,20 +420,19 @@ const diceConfig = {
         // Speichere den Zustand: Würfel-Bildschirm
         lastGameScreenVisible = 'dice-container';
         
-        // Setze den Timeout für die Würfel-Animation
+       // Setze den Timeout für die Haupt-Würfel-Animation
+        // Dieser Timeout ruft jetzt die neue Helferfunktion auf
         gameState.diceAnimationTimeout = setTimeout(() => {
-            diceAnimation.classList.add('hidden');
-            diceSelection.classList.remove('hidden');
-
-             // Jetzt, und erst jetzt, den digitalen Würfelbereich anzeigen und initialisieren
-            digitalDiceArea.classList.remove('hidden'); // Hier wird er sichtbar gemacht!
-
-            // Aktiviere die Möglichkeit, die physischen Würfel auszuwählen
-            document.querySelectorAll('.dice-option').forEach(dice => {
-                dice.classList.remove('no-interaction');
-            });
-        }, 2000);
+            handleDiceAnimationEnd(); // Ruft die neue Funktion auf
+        }, 2000); // 2 Sekunden Dauer der Haupt-Würfel-Animation
     }
+
+    // --- Event Listener für den digitalen Würfel-Button (bleibt unverändert) ---
+    digitalDiceMainImage.addEventListener('click', rollDigitalDice);
+
+    // NEU: Event Listener für das Überspringen der Würfel-Animation
+    // Bei Klick auf die Würfel-Animation soll das gleiche passieren wie nach dem Timeout
+    diceAnimation.addEventListener('click', handleDiceAnimationEnd);
 
 // --- NEU: Funktion für den digitalen Würfelwurf ---
     function rollDigitalDice() {
