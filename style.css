@@ -98,23 +98,21 @@ body, html {
     left: 0;
 }
 
-/* ---- NEU ----*/
+#login-screen {
+    /* Deine bestehenden Styles, z.B. */
+    display: flex;
+    flex-direction: column; /* Wichtig, damit die Elemente untereinander stehen */
+    justify-content: center; /* Zentriert vertikal, wenn genug Platz ist */
+    align-items: center; /* Zentriert horizontal */
+    text-align: center;
+    padding: 20px; /* Füge etwas Polsterung hinzu */
+    box-sizing: border-box; /* Stellt sicher, dass Padding zur Größe beiträgt */
 
-
-/* Optional: Damit der Login-Button nicht zu groß wird und immer sichtbar bleibt */
-#login-screen #login-button {
-    margin-top: auto; /* Schiebt den Button nach unten, wenn viel Platz ist */
-    flex-shrink: 0; /* Verhindert, dass der Button schrumpft */
+    /* Die wichtigen neuen Eigenschaften für Scrollbarkeit: */
+    height: 100vh; /* Nimmt die volle Viewport-Höhe ein */
+    overflow-y: auto; /* Ermöglicht vertikales Scrollen, wenn Inhalt die Höhe übersteigt */
+    -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS */
 }
-
-/* Anpassung der Logo-Größe, falls sie im Landscape-Modus zu groß ist */
-#login-screen #login-logo {
-    max-width: 80%; /* Oder einen festen Wert, z.B. 300px */
-    height: auto;
-    margin-bottom: 20px; /* Abstand zum nächsten Element */
-}
-
-*/ ------- NEU ENDE ----- */
 
 .hidden {
     display: none !important;
