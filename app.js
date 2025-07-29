@@ -770,51 +770,55 @@ function playTrackSnippet() {
     const trackDurationMs = gameState.currentTrack.duration_ms;
     const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-    // Der Song sollte durch prepareAndShowRateScreen bereits stumm im Hintergrund laufen.
-    // Wir müssen ihn nur lauter stellen und springen.
     if (spotifyPlayer && gameState.isSongPlaying) {
-        spotifyPlayer.setVolume(1.0) // Lautstärke auf 100% setzen
-            .then(() => {
-                // Den bereits laufenden Song zur zufälligen Position springen lassen
-                return fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        uris: [gameState.currentTrack.uri], // Wieder die URI senden
-                        position_ms: randomStartPosition
-                    }),
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
-            })
-            .then(response => {
-                if (!response.ok) {
-                    console.error("Fehler beim Abspielen/Springen des Tracks:", response.status, response.statusText);
-                    alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-                    logoButton.classList.remove('inactive');
-                    return;
-                }
-
-                if (gameState.isSpeedRound) {
-                    startVisualSpeedRoundCountdown();
-                } else {
-                    gameState.spotifyPlayTimeout = setTimeout(() => {
-                        spotifyPlayer.setVolume(0) // Lautstärke wieder auf 0 setzen, Song aber weiterlaufen lassen
-                            .then(() => {
-                                console.log("Snippet beendet, Song stumm weiterlaufend.");
-                                if (gameState.attemptsMade < gameState.maxAttempts) {
-                                    logoButton.classList.remove('inactive');
-                                }
-                            })
-                            .catch(error => console.error("Fehler beim Stummschalten nach Snippet:", error));
-                    }, gameState.trackDuration);
-                }
-            })
-            .catch(error => {
-                console.error("Netzwerkfehler beim Abspielen des Tracks (nach Sprung):", error);
-                alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+        // SCHRITT 1: Zuerst den Play-Request senden, um den Song zur neuen Position zu springen.
+        // Die Lautstärke bleibt zu diesem Zeitpunkt noch auf 0.
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+            method: 'PUT',
+            body: JSON.stringify({
+                uris: [gameState.currentTrack.uri], // URI immer mitsenden, um den Kontext zu sichern
+                position_ms: randomStartPosition
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.error("Fehler beim Abspielen/Springen des Tracks:", response.status, response.statusText);
+                alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
                 logoButton.classList.remove('inactive');
-            });
+                throw new Error("Fehler beim Abspielen/Springen des Tracks"); // Fehler weitergeben
+            }
+            // SCHRITT 2: Wenn der Sprung erfolgreich war, die Lautstärke erhöhen.
+            return spotifyPlayer.setVolume(1.0);
+        })
+        .then(() => {
+            console.log("Snippet gestartet: Gesprungen zu", randomStartPosition, "ms und Lautstärke auf 1.0 gesetzt.");
+
+            if (gameState.isSpeedRound) {
+                startVisualSpeedRoundCountdown();
+            } else {
+                gameState.spotifyPlayTimeout = setTimeout(() => {
+                    spotifyPlayer.setVolume(0)
+                        .then(() => {
+                            console.log("Snippet beendet, Song stumm weiterlaufend.");
+                            if (gameState.attemptsMade < gameState.maxAttempts) {
+                                logoButton.classList.remove('inactive');
+                            }
+                        })
+                        .catch(error => console.error("Fehler beim Stummschalten nach Snippet:", error));
+                }, gameState.trackDuration);
+            }
+        })
+        .catch(error => {
+            console.error("Fehler im Play-Snippet-Prozess:", error);
+            // Alert wurde bereits im ersten Catch abgefangen, hier nur konsistent machen
+            if (!error.message.includes("Fehler beim Abspielen/Springen des Tracks")) { // Vermeide Doppel-Alerts
+                 alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+            }
+            logoButton.classList.remove('inactive');
+        });
     } else {
-        // Fallback: Wenn der Song aus irgendeinem Grund nicht stumm läuft (sollte nicht passieren)
+        // Fallback: Wenn der Song aus irgendeinem Grund nicht stumm läuft (sollte durch Preload nicht passieren)
         console.warn("Song nicht vorgeladen oder Player nicht bereit in playTrackSnippet. Fallback zum direkten Play-Request.");
         fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
             method: 'PUT',
@@ -830,6 +834,7 @@ function playTrackSnippet() {
                 logoButton.classList.remove('inactive');
                 return;
             }
+            // Auch hier: Lautstärke erst nach erfolgreichem Play setzen
             spotifyPlayer.setVolume(1.0);
             gameState.isSongPlaying = true; // Song spielt jetzt
 
