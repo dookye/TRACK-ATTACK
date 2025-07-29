@@ -643,3 +643,52 @@ body, html {
     font-size: 1.4em;
     text-align: center;
 }
+
+/* Statusbereich */
+#status-area {
+    position: fixed; /* Fixiert am Bildschirm */
+    bottom: 10px;    /* 10px vom unteren Rand */
+    left: 10px;      /* 10px vom linken Rand */
+    background-color: rgba(0, 0, 0, 0.7); /* Dunkler, leicht transparenter Hintergrund */
+    color: var(--white); /* Weiße Schrift */
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif; /* Deine Schriftart */
+    font-size: 0.9em;
+    display: flex; /* Für Flexbox-Layout (Timer und Spinner nebeneinander) */
+    align-items: center; /* Vertikal zentriert */
+    gap: 10px; /* Abstand zwischen Timer und Spinner */
+    z-index: 1000; /* Sicherstellen, dass er über anderen Elementen liegt */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s ease-in-out; /* Für sanftes Ein-/Ausblenden */
+}
+
+#status-area.hidden {
+    opacity: 0;
+    pointer-events: none; /* Keine Interaktion, wenn ausgeblendet */
+}
+
+/* Token-Timer */
+#token-timer {
+    white-space: nowrap; /* Verhindert Zeilenumbruch */
+}
+
+/* Lade-Spinner */
+#loading-spinner {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid var(--white);
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 0.8s linear infinite; /* Spinner-Animation */
+    display: none; /* Standardmäßig versteckt */
+}
+
+#loading-spinner.active {
+    display: block; /* Aktiv, wenn sichtbar */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
