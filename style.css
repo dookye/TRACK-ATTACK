@@ -645,28 +645,29 @@ body, html {
 }
 
 /* --------------- Ladeanzeige für den Song --------------
-/* Implikativ in Ihrem CSS */
 #loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8); /* Dunkler Hintergrund */
-    color: white;
-    display: flex;
-    flex-direction: column;
+    /* Positionierung relativ zum Elternelement (game-screen) */
+    position: absolute; /* Oder 'relative', je nachdem wie Sie es im Fluss haben wollen */
+    top: calc(50% + 50px); /* Positionierung unter dem Logo-Button (ca. 50% der Höhe des game-screen + 50px Offset für unter Logo) */
+    left: 50%;
+    transform: translate(-50%, -50%); /* Zum Zentrieren */
+    
+    /* Größe und Hintergrund anpassen, nur um den Spinner herum */
+    width: auto; /* Inhalt bestimmt die Breite */
+    height: auto; /* Inhalt bestimmt die Höhe */
+    background-color: transparent; /* Kein dunkler Hintergrund mehr */
+    
+    display: flex; /* Für den Spinner */
     justify-content: center;
     align-items: center;
-    font-size: 2em;
-    z-index: 1000; /* Sicherstellen, dass es über allem liegt */
+    z-index: 999; /* Etwas unterhalb der höchsten Ebenen, aber sichtbar */
 }
 
 #loading-overlay.hidden {
     display: none;
 }
 
-/* Optional: Ein einfacher Spinner */
+/* Spinner bleibt gleich oder kann angepasst werden */
 .spinner {
     border: 4px solid rgba(255, 255, 255, 0.3);
     border-top: 4px solid #fff;
@@ -674,7 +675,7 @@ body, html {
     width: 40px;
     height: 40px;
     animation: spin 1s linear infinite;
-    margin-top: 20px;
+    /* margin-top: 20px; Falls Sie hier zusätzlichen Platz brauchen */
 }
 
 @keyframes spin {
