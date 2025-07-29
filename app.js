@@ -703,94 +703,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // NEUER VERSUCH: prepareAndShowRateScreen-Funktion für Preloading
-    async function prepareAndShowRateScreen(genre) {
-        loadingOverlay.classList.remove('hidden'); // Ladeanzeige anzeigen
-        console.log("Ladeanzeige: Song wird geladen...");
+async function prepareAndShowRateScreen(genre) {
+    loadingOverlay.classList.remove('hidden'); // Ladeanzeige anzeigen
+    console.log("Ladeanzeige: Song wird geladen...");
 
-        gameState.currentTrack = await getTrack(genre);
+    gameState.currentTrack = await getTrack(genre);
 
-        if (!gameState.currentTrack) {
-            loadingOverlay.classList.add('hidden'); // Ladeanzeige verstecken, wenn Fehler auftritt
-            return;
-        }
-
-        if (!spotifyPlayer || !deviceId) {
-            console.warn("Spotify Player oder Device ID nicht bereit. Kann nicht preloade/spielen.");
-            alert("Konnte den Spotify Player nicht initialisieren. Bitte lade die Seite neu und stelle sicher, dass Spotify läuft.");
-            loadingOverlay.classList.add('hidden'); // Ladeanzeige verstecken
-            showGenreScreen();
-            return;
-        }
-
-        let trackReadyResolver;
-        // Erstellen eines Promises, das aufgelöst wird, wenn der Track geladen ist
-        const trackReadyPromise = new Promise(resolve => {
-            trackReadyResolver = resolve;
-        });
-
-        // WICHTIG: Event-Listener HINZUFÜGEN
-        // Dieser Listener wird ausgelöst, wenn sich der Player-Status ändert
-        spotifyPlayer.on('player_state_changed', state => {
-            if (!state) {
-                console.log("player_state_changed: State is null.");
-                return;
-            }
-
-            // Überprüfen, ob der aktuelle Track der erwartete Track ist und ob er bereit ist
-            if (state.track_window.current_track && state.track_window.current_track.id === gameState.currentTrack.id) {
-                // Wenn der Track pausiert ist (weil wir ihn stumm gestartet haben)
-                // UND seine Dauer bekannt ist (nicht 0), dann ist er geladen und bereit.
-                if (state.paused && state.duration > 0) {
-                    console.log("player_state_changed: Track geladen und bereit:", state.track_window.current_track.name);
-                    // Listener entfernen, um Mehrfachauslösung zu vermeiden
-                    spotifyPlayer.removeListener('player_state_changed');
-                    trackReadyResolver(); // Promise auflösen
-                } else if (!state.paused && state.position === 0 && state.duration > 0) {
-                    // Alternativ: Wenn er gerade zu spielen beginnt (stumm) und Dauer bekannt ist
-                    console.log("player_state_changed: Track beginnt stumm zu spielen und ist bereit.");
-                    spotifyPlayer.removeListener('player_state_changed');
-                    trackReadyResolver(); // Promise auflösen
-                }
-            }
-        });
-
-        try {
-            console.log(`Versuche, Track "${gameState.currentTrack.name}" stumm vorzuladen...`);
-            await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-                method: 'PUT',
-                body: JSON.stringify({
-                    uris: [gameState.currentTrack.uri],
-                    position_ms: 0 // Song am Anfang starten
-                }),
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-
-            await spotifyPlayer.setVolume(0);
-            gameState.isSongPlaying = true;
-            console.log(`Track "${gameState.currentTrack.name}" Play-Anfrage gesendet und Lautstärke auf 0.`);
-
-            // Warten, bis der Track wirklich geladen und bereit ist
-            await trackReadyPromise;
-            console.log("Track ist nun vollständig geladen und bereit zum Abspielen.");
-
-        } catch (error) {
-            console.error("Fehler beim Vorladen/stumm Starten des Tracks:", error);
-            alert(`Konnte den Song "${gameState.currentTrack.name}" nicht vorbereiten. Bitte versuche ein anderes Genre. (Fehler: ${error.message})`);
-            loadingOverlay.classList.add('hidden'); // Ladeanzeige verstecken
-            showGenreScreen();
-            return;
-        }
-
-        // Wenn alles erfolgreich war und der Track bereit ist
-        loadingOverlay.classList.add('hidden'); // Ladeanzeige verstecken
-        console.log("Ladeanzeige versteckt. UI-Elemente für Rate-Bildschirm vorbereiten.");
-
-        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-        logoButton.removeEventListener('click', playTrackSnippet);
-        logoButton.addEventListener('click', playTrackSnippet);
-
-        lastGameScreenVisible = 'reveal-container';
+    if (!gameState.currentTrack) {
+        loadingOverlay.classList.add('hidden'); // Ladeanzeige verstecken, wenn Fehler auftritt
+        return;
     }
+
+    if (!spotifyPlayer || !deviceId) {
+        console.warn("Spotify Player oder Device ID nicht bereit. Kann nicht preloade/spielen.");
+        alert("Konnte den Spotify Player nicht initialisieren. Bitte lade die Seite neu und stelle sicher, dass Spotify läuft.");
+        loadingOverlay.classList.add('hidden'); // Ladeanzeige verstecken
+        showGenreScreen();
+        return;
+    }
+
+    let trackReadyResolver;
+    // Erstellen eines Promises, das aufgelöst wird, wenn der Track geladen ist
+    const trackReadyPromise = new Promise(resolve => {
+        trackReadyResolver = resolve;
+    });
+
+    // WICHTIG: Event-Listener HINZUFÜGEN
+    // Dieser Listener wird ausgelöst, wenn sich der Player-Status ändert
+    spotifyPlayer.on('player_state_changed', state => {
+        if (!state) {
+            console.log("player_state_changed: State is null.");
+            return;
+        }
+
+        // Überprüfen, ob der aktuelle Track der erwartete Track ist und ob er bereit ist
+        if (state.track_window.current_track && state.track_window.current_track.id === gameState.currentTrack.id) {
+            // Wenn der Track pausiert ist (weil wir ihn stumm gestartet haben)
+            // UND seine Dauer bekannt ist (nicht 0), dann ist er geladen und bereit.
+            if (state.paused && state.duration > 0) {
+                console.log("player_state_changed: Track geladen und bereit:", state.track_window.current_track.name);
+                // Listener entfernen, um Mehrfachauslösung zu vermeiden
+                spotifyPlayer.removeListener('player_state_changed');
+                trackReadyResolver(); // Promise auflösen
+            } else if (!state.paused && state.position === 0 && state.duration > 0) {
+                // Alternativ: Wenn er gerade zu spielen beginnt (stumm) und Dauer bekannt ist
+                console.log("player_state_changed: Track beginnt stumm zu spielen und ist bereit.");
+                spotifyPlayer.removeListener('player_state_changed');
+                trackReadyResolver(); // Promise auflösen
+            }
+        }
+    });
+
+    try {
+        console.log(`Versuche, Track "${gameState.currentTrack.name}" stumm vorzuladen...`);
+        await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+            method: 'PUT',
+            body: JSON.stringify({
+                uris: [gameState.currentTrack.uri],
+                position_ms: 0 // Song am Anfang starten
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        await spotifyPlayer.setVolume(0);
+        gameState.isSongPlaying = true;
+        console.log(`Track "${gameState.currentTrack.name}" Play-Anfrage gesendet und Lautstärke auf 0.`);
+
+        // Warten, bis der Track wirklich geladen und bereit ist
+        await trackReadyPromise;
+        console.log("Track ist nun vollständig geladen und bereit zum Abspielen.");
+
+    } catch (error) {
+        console.error("Fehler beim Vorladen/stumm Starten des Tracks:", error);
+        alert(`Konnte den Song "${gameState.currentTrack.name}" nicht vorbereiten. Bitte versuche ein anderes Genre. (Fehler: ${error.message})`);
+        loadingOverlay.classList.add('hidden'); // Ladeanzeige verstecken
+        showGenreScreen();
+        return;
+    }
+
+    // Wenn alles erfolgreich war und der Track bereit ist
+    loadingOverlay.classList.add('hidden'); // Ladeanzeige verstecken
+    console.log("Ladeanzeige versteckt. UI-Elemente für Rate-Bildschirm vorbereiten.");
+
+    // logoButton ist der DIV-Container, der das logoImage enthält
+    logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+    logoButton.removeEventListener('click', playTrackSnippet); // Entferne alte Listener, falls vorhanden
+    logoButton.addEventListener('click', playTrackSnippet);
+
+    lastGameScreenVisible = 'reveal-container';
+}
 
     // playTrackSnippet (unverändert von Ihrer letzten Version)
     function playTrackSnippet() {
