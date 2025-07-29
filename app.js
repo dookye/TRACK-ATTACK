@@ -41,6 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const startGenreSelectionContainer = document.getElementById('start-genre-selection-container');
     const allGenresScrollbox = document.getElementById('all-genres-scrollbox');
 
+    // NEU: Statusbereich Elemente
+    const statusArea = document.getElementById('status-area');
+    const tokenTimerDisplay = document.getElementById('token-timer');
+    const loadingSpinner = document.getElementById('loading-spinner');
+
 
     const digitalDiceImages = {
         1: 'assets/digi-1.png',
@@ -102,6 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // NEU: Array für die ausgewählten Genres auf der Startseite
         selectedPlayableGenres: [],
+
+        // NEU: Für den Token-Timer
+        tokenRefreshInterval: null,
+        tokenExpiryTime: null,
     };
 
     // NEU: Zufälligen Startspieler festlegen
@@ -138,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
 
- // 1.4: Querformat-Prüfung
+    // 1.4: Querformat-Prüfung
     function checkOrientation() {
         if (window.innerHeight > window.innerWidth) {
             rotateDeviceOverlay.classList.remove('hidden');
@@ -185,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-    
+
     // 1.2: PKCE-Flow Helferfunktionen
     async function generateCodeChallenge(codeVerifier) {
         const data = new TextEncoder().encode(codeVerifier);
@@ -202,6 +211,57 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return text;
     }
+
+    // --- NEU: Funktionen für den Token-Timer ---
+    function startTokenTimer() {
+        // Berechne die Ablaufzeit (Spotify-Tokens sind meist 3600 Sekunden = 60 Minuten gültig)
+        // Sicherheitshalber setzen wir ihn auf 59 Minuten, um Puffer zu haben.
+        gameState.tokenExpiryTime = Date.now() + (59 * 60 * 1000); // 59 Minuten in Millisekunden
+
+        statusArea.classList.remove('hidden'); // Statusbereich einblenden
+
+        // Clear existing interval to prevent duplicates
+        if (gameState.tokenRefreshInterval) {
+            clearInterval(gameState.tokenRefreshInterval);
+        }
+
+        gameState.tokenRefreshInterval = setInterval(updateTokenTimer, 1000); // Jede Sekunde aktualisieren
+        updateTokenTimer(); // Sofortige erste Aktualisierung
+    }
+
+    function updateTokenTimer() {
+        const timeLeftMs = gameState.tokenExpiryTime - Date.now();
+
+        if (timeLeftMs <= 0) {
+            clearInterval(gameState.tokenRefreshInterval);
+            tokenTimerDisplay.innerText = "Token abgelaufen! Bitte neu anmelden.";
+            tokenTimerDisplay.style.color = 'var(--red)'; // Optional: Rot einfärben
+            return;
+        }
+
+        const minutes = Math.floor(timeLeftMs / (60 * 1000));
+        const seconds = Math.floor((timeLeftMs % (60 * 1000)) / 1000);
+
+        tokenTimerDisplay.innerText = `Token läuft ab in: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        tokenTimerDisplay.style.color = 'var(--white)'; // Sicherstellen, dass die Farbe weiß ist
+    }
+
+    function stopTokenTimer() {
+        clearInterval(gameState.tokenRefreshInterval);
+        gameState.tokenRefreshInterval = null;
+        tokenTimerDisplay.innerText = ''; // Timer leeren
+        statusArea.classList.add('hidden'); // Statusbereich ausblenden
+    }
+
+    // --- NEU: Funktionen für den Lade-Spinner ---
+    function showLoadingSpinner() {
+        loadingSpinner.classList.add('active');
+    }
+
+    function hideLoadingSpinner() {
+        loadingSpinner.classList.remove('active');
+    }
+
 
     // 1.2: Login-Prozess starten
     async function redirectToAuthCodeFlow() {
@@ -250,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             accessToken = token; // Hier wird der Access Token gesetzt!
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
             initializePlayer(); // Spotify-Player initialisieren
+            startTokenTimer(); // NEU: Starte den Token-Timer
 
             // HIER WIRD DER TIMEOUT EINGEFÜGT!
             // Er gibt iOS eine kurze Pause, um die UI-Änderungen zu verarbeiten.
@@ -267,12 +328,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Stelle sicher, dass der 'login-button' Listener noch aktiv ist
             document.getElementById('login-button').removeEventListener('click', redirectToAuthCodeFlow); // Duplizierte Listener vermeiden
             document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+            stopTokenTimer(); // NEU: Timer auch bei Fehler stoppen/ausblenden
         });
 
     } else {
         // Standard-Ansicht (noch nicht von Spotify zurückgekommen)
         loginScreen.classList.remove('hidden');
         document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+        stopTokenTimer(); // NEU: Timer stoppen/ausblenden, wenn kein Code vorhanden ist
     }
 
     // 1.3: Spotify Web Player SDK laden und initialisieren
@@ -628,649 +691,654 @@ document.addEventListener('DOMContentLoaded', () => {
         await prepareAndShowRateScreen(selectedGenre);
     }
 
-// ... (Ihr bestehender Code von Teil 2 bis hierher, einschließlich der globalen Variablen und API_ENDPOINTS)
+    //=======================================================================
+    // Phase 4: Rate-Bildschirm & Spielerwechsel
+    //=======================================================================
 
-//=======================================================================
-// Phase 4: Rate-Bildschirm & Spielerwechsel
-//=======================================================================
+    // AKTUALISIERT: getTrack-Funktion (unverändert aus Ihrer letzten Version)
+    async function getTrack(selectedGenreName) {
+        const playlistPool = playlists[selectedGenreName];
 
-// AKTUALISIERT: getTrack-Funktion (unverändert aus Ihrer letzten Version)
-async function getTrack(selectedGenreName) {
-    const playlistPool = playlists[selectedGenreName];
-
-    if (!playlistPool || playlistPool.length === 0) {
-        console.error(`Keine Playlists für Genre "${selectedGenreName}" definiert oder Pool ist leer.`);
-        alert(`Fehler: Für das Genre "${selectedGenreName}" sind keine Playlists verfügbar. Bitte wähle ein anderes Genre.`);
-        showGenreScreen();
-        return null;
-    }
-
-    const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
-    console.log(`DEBUG: Ausgewähltes Genre (vom Spieler geklickt): "${selectedGenreName}", Playlist-ID (zufällig aus diesem Genre): "${randomPlaylistId}"`);
-
-    try {
-        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-
-        if (!response.ok) {
-            console.error("Fehler beim Abrufen der Playlist-tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
-            alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
+        if (!playlistPool || playlistPool.length === 0) {
+            console.error(`Keine Playlists für Genre "${selectedGenreName}" definiert oder Pool ist leer.`);
+            alert(`Fehler: Für das Genre "${selectedGenreName}" sind keine Playlists verfügbar. Bitte wähle ein anderes Genre.`);
             showGenreScreen();
             return null;
         }
 
-        const data = await response.json();
+        const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
+        console.log(`DEBUG: Ausgewähltes Genre (vom Spieler geklickt): "${selectedGenreName}", Playlist-ID (zufällig aus diesem Genre): "${randomPlaylistId}"`);
 
-        if (!data.items || data.items.length === 0) {
-            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
-            alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
-            showGenreScreen();
-            return null;
-        }
+        try {
+            const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
 
-        const playableTracks = data.items.filter(item => item.track);
-
-        if (playableTracks.length === 0) {
-            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
-            alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
-            showGenreScreen();
-            return null;
-        }
-
-        const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
-
-        if (randomTrack) {
-            console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
-        } else {
-            console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
-            alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
-            showGenreScreen();
-            return null;
-        }
-
-        return randomTrack;
-    } catch (error) {
-        console.error("Netzwerkfehler beim Abrufen der Playlist-Tracks:", error);
-        alert(`Hoppla! Es gab ein Problem mit deiner Internetverbindung oder Spotify. Bitte überprüfe dein Internet und versuche es erneut. (Fehler: ${error.message})`);
-        showGenreScreen();
-        return null;
-    }
-}
-
-
-// NEUER VERSUCH: prepareAndShowRateScreen-Funktion für Preloading
-async function prepareAndShowRateScreen(genre) {
-    gameState.currentTrack = await getTrack(genre);
-
-    if (!gameState.currentTrack) {
-        // Wenn getTrack() null zurückgibt, wurde bereits ein Fehler behandelt und die UI gewechselt.
-        return;
-    }
-
-    // Stellen Sie sicher, dass spotifyPlayer und deviceId verfügbar sind
-    if (!spotifyPlayer || !deviceId) {
-        console.warn("Spotify Player oder Device ID nicht bereit. Kann nicht preloade/spielen.");
-        alert("Konnte den Spotify Player nicht initialisieren. Bitte lade die Seite neu und stelle sicher, dass Spotify läuft.");
-        showGenreScreen(); // Fallback zur Genre-Auswahl
-        return;
-    }
-
-    try {
-        // Den Track zum Preloading starten und sofort stumm schalten
-        console.log(`Versuche, Track "${gameState.currentTrack.name}" stumm vorzuladen...`);
-        await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-            method: 'PUT',
-            body: JSON.stringify({
-                uris: [gameState.currentTrack.uri],
-                position_ms: 0 // Song am Anfang starten
-            }),
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-
-        // Die Lautstärke direkt nach dem Start auf 0 setzen
-        await spotifyPlayer.setVolume(0);
-        gameState.isSongPlaying = true; // Setzen, dass der Song im Hintergrund läuft
-
-        console.log(`Track "${gameState.currentTrack.name}" erfolgreich stumm vorgeladen und läuft im Hintergrund.`);
-
-    } catch (error) {
-        console.error("Fehler beim Vorladen/stumm Starten des Tracks:", error);
-        alert(`Konnte den Song "${gameState.currentTrack.name}" nicht vorbereiten. Bitte versuche ein anderes Genre. (Fehler: ${error.message})`);
-        showGenreScreen(); // Bei Fehler zurück zur Genre-Auswahl
-        return;
-    }
-
-    // UI-Elemente für den Rate-Bildschirm vorbereiten
-    logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-    logoButton.removeEventListener('click', playTrackSnippet); // Alten Listener entfernen, falls vorhanden
-    logoButton.addEventListener('click', playTrackSnippet); // Neuen Listener hinzufügen
-
-    // Speichere den Zustand: Raten-Bildschirm
-    lastGameScreenVisible = 'reveal-container'; // Der Rate-Bildschirm hat Elemente vom Reveal-Screen
-}
-
-// playTrackSnippet (unverändert von Ihrer letzten Version)
-function playTrackSnippet() {
-    if (logoButton.classList.contains('inactive')) {
-        return;
-    }
-
-    if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
-        return;
-    }
-    if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
-        return;
-    }
-
-    triggerBounce(logoButton);
-    logoButton.classList.add('inactive');
-    gameState.attemptsMade++;
-
-    const trackDurationMs = gameState.currentTrack.duration_ms;
-    const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
-
-    if (spotifyPlayer && gameState.isSongPlaying) {
-        // SCHRITT 1: Zuerst den Play-Request senden, um den Song zur neuen Position zu springen.
-        // Die Lautstärke bleibt zu diesem Zeitpunkt noch auf 0.
-        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-            method: 'PUT',
-            body: JSON.stringify({
-                uris: [gameState.currentTrack.uri], // URI immer mitsenden, um den Kontext zu sichern
-                position_ms: randomStartPosition
-            }),
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        })
-        .then(response => {
             if (!response.ok) {
-                console.error("Fehler beim Abspielen/Springen des Tracks:", response.status, response.statusText);
-                alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-                logoButton.classList.remove('inactive');
-                throw new Error("Fehler beim Abspielen/Springen des Tracks"); // Fehler weitergeben
+                console.error("Fehler beim Abrufen der Playlist-tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
+                alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
+                showGenreScreen();
+                return null;
             }
-            // SCHRITT 2: Wenn der Sprung erfolgreich war, die Lautstärke erhöhen.
-            return spotifyPlayer.setVolume(1.0);
-        })
-        .then(() => {
-            console.log("Snippet gestartet: Gesprungen zu", randomStartPosition, "ms und Lautstärke auf 1.0 gesetzt.");
 
-            if (gameState.isSpeedRound) {
-                startVisualSpeedRoundCountdown();
+            const data = await response.json();
+
+            if (!data.items || data.items.length === 0) {
+                console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
+                alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
+                showGenreScreen();
+                return null;
+            }
+
+            const playableTracks = data.items.filter(item => item.track);
+
+            if (playableTracks.length === 0) {
+                console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
+                alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
+                showGenreScreen();
+                return null;
+            }
+
+            const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
+
+            if (randomTrack) {
+                console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
             } else {
-                gameState.spotifyPlayTimeout = setTimeout(() => {
-                    spotifyPlayer.setVolume(0)
-                        .then(() => {
-                            console.log("Snippet beendet, Song stumm weiterlaufend.");
-                            if (gameState.attemptsMade < gameState.maxAttempts) {
-                                logoButton.classList.remove('inactive');
-                            }
-                        })
-                        .catch(error => console.error("Fehler beim Stummschalten nach Snippet:", error));
-                }, gameState.trackDuration);
+                console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
+                alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
+                showGenreScreen();
+                return null;
             }
-        })
-        .catch(error => {
-            console.error("Fehler im Play-Snippet-Prozess:", error);
-            // Alert wurde bereits im ersten Catch abgefangen, hier nur konsistent machen
-            if (!error.message.includes("Fehler beim Abspielen/Springen des Tracks")) { // Vermeide Doppel-Alerts
-                 alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
-            }
-            logoButton.classList.remove('inactive');
-        });
-    } else {
-        // Fallback: Wenn der Song aus irgendeinem Grund nicht stumm läuft (sollte durch Preload nicht passieren)
-        console.warn("Song nicht vorgeladen oder Player nicht bereit in playTrackSnippet. Fallback zum direkten Play-Request.");
-        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-            method: 'PUT',
-            body: JSON.stringify({
-                uris: [gameState.currentTrack.uri],
-                position_ms: randomStartPosition
-            }),
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        }).then(response => {
-            if (!response.ok) {
-                console.error("Fehler beim Abspielen des Tracks (Fallback):", response.status, response.statusText);
-                alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-                logoButton.classList.remove('inactive');
-                return;
-            }
-            // Auch hier: Lautstärke erst nach erfolgreichem Play setzen
-            spotifyPlayer.setVolume(1.0);
-            gameState.isSongPlaying = true; // Song spielt jetzt
 
-            if (gameState.isSpeedRound) {
-                startVisualSpeedRoundCountdown();
-            } else {
-                gameState.spotifyPlayTimeout = setTimeout(() => {
-                    spotifyPlayer.setVolume(0)
-                        .then(() => {
-                            console.log("Fallback Snippet beendet, Song stumm weiterlaufend.");
-                            if (gameState.attemptsMade < gameState.maxAttempts) {
-                                logoButton.classList.remove('inactive');
-                            }
-                        })
-                        .catch(error => console.error("Fehler beim Stummschalten nach Fallback-Snippet:", error));
-                }, gameState.trackDuration);
-            }
-        }).catch(error => {
-            console.error("Netzwerkfehler beim Abspielen des Tracks (Fallback):", error);
-            alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
-            logoButton.classList.remove('inactive');
-        });
-    }
-
-    if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
-        revealButton.classList.remove('hidden');
-        revealButton.classList.remove('no-interaction');
-    }
-}
-
-// AKTUALISIERT: showResolution-Funktion
-function showResolution() {
-    console.log("showResolution() aufgerufen.");
-    // Zuerst alle relevanten Timer und Intervalle stoppen
-    clearTimeout(gameState.speedRoundTimeout);
-    clearInterval(gameState.countdownInterval);
-    clearTimeout(gameState.spotifyPlayTimeout);
-    clearInterval(gameState.fadeInterval);
-
-    // Spotify Player explizit pausieren
-    if (spotifyPlayer && gameState.isSongPlaying) {
-        spotifyPlayer.pause();
-        gameState.isSongPlaying = false;
-        console.log("Song bei Auflösung explizit pausiert.");
-    }
-
-    // UI-Elemente ausblenden
-    countdownDisplay.classList.add('hidden');
-    countdownDisplay.classList.remove('countdown-animated');
-    countdownDisplay.innerText = '';
-
-    logoButton.classList.add('inactive', 'hidden');
-    revealButton.classList.add('hidden');
-    speedRoundTextDisplay.classList.add('hidden');
-
-    // WICHTIG: Diese Buttons NICHT ausblenden, da sie im Auflösungsbildschirm benötigt werden
-    // correctButton.classList.add('hidden'); // Diese Zeile ENTFÄLLT
-    // wrongButton.classList.add('hidden'); // Diese Zeile ENTFÄLLT
-
-    // Track-Infos im Reveal-Container aktualisieren
-    if (gameState.currentTrack) {
-        document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
-        document.getElementById('track-title').innerText = gameState.currentTrack.name;
-        document.getElementById('track-artist').innerText = gameState.currentTrack.artists.map(a => a.name).join(', ');
-        // KORREKTUR: Sicherstellen, dass die IDs für Album und Jahr existieren und korrekt sind
-        const trackAlbum = document.getElementById('track-album');
-        const trackYear = document.getElementById('track-year');
-        if (trackAlbum) trackAlbum.innerText = gameState.currentTrack.album.name;
-        if (trackYear) trackYear.innerText = `(${gameState.currentTrack.album.release_date.substring(0, 4)})`;
-    } else {
-        console.warn("Kein aktueller Track beim Versuch, die Auflösung anzuzeigen.");
-        document.getElementById('track-title').innerText = "Song-Informationen nicht verfügbar";
-        // Sicherstellen, dass Album/Jahr auch geleert werden, wenn Track fehlt
-        const trackAlbum = document.getElementById('track-album');
-        const trackYear = document.getElementById('track-year');
-        if (trackAlbum) trackAlbum.innerText = '';
-        if (trackYear) trackYear.innerText = '';
-    }
-
-    // Reveal-Container einblenden (dies ist der eigentliche Screen-Wechsel)
-    revealContainer.classList.remove('hidden');
-    console.log("revealContainer sollte jetzt sichtbar sein.");
-
-    // Speichere den Zustand: Auflösung-Bildschirm
-    lastGameScreenVisible = 'reveal-container';
-
-    // Song bei Auflösung abspielen (startet nach dem Screen-Wechsel)
-    playSongForResolution();
-}
-
-// playSongForResolution (unverändert von Ihrer letzten Version)
-async function playSongForResolution() {
-    if (!gameState.currentTrack || !deviceId) {
-        console.warn("Kein Track oder Gerät verfügbar, kann Song nicht abspielen.");
-        return;
-    }
-
-    const startPositionMs = 30 * 1000;
-    const targetVolume = 80;
-    const fadeDuration = 2000;
-    const fadeStep = 5;
-    const intervalTime = fadeDuration / (targetVolume / fadeStep);
-
-    try {
-        await spotifyPlayer.setVolume(0);
-        gameState.currentSongVolume = 0;
-
-        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-            method: 'PUT',
-            body: JSON.stringify({
-                uris: [gameState.currentTrack.uri],
-                position_ms: startPositionMs
-            }),
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-
-        if (!response.ok) {
-            console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
-            return;
+            return randomTrack;
+        } catch (error) {
+            console.error("Netzwerkfehler beim Abrufen der Playlist-Tracks:", error);
+            alert(`Hoppla! Es gab ein Problem mit deiner Internetverbindung oder Spotify. Bitte überprüfe dein Internet und versuche es erneut. (Fehler: ${error.message})`);
+            showGenreScreen();
+            return null;
         }
-        gameState.isSongPlaying = true;
-
-        gameState.fadeInterval = setInterval(() => {
-            if (gameState.currentSongVolume < targetVolume) {
-                gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
-                spotifyPlayer.setVolume(gameState.currentSongVolume / 100);
-            } else {
-                clearInterval(gameState.fadeInterval);
-            }
-        }, intervalTime);
-    } catch (error) {
-        console.error("Fehler in playSongForResolution:", error);
-        alert("Konnte den Auflösungs-Song nicht abspielen. Bitte versuchen Sie es erneut.");
     }
-}
 
-// fadeAudioOut (unverändert von Ihrer letzten Version)
-function fadeAudioOut() {
-    return new Promise(resolve => {
-        if (!spotifyPlayer) {
-            console.log("fadeAudioOut: Spotify Player nicht verfügbar, sofort aufgelöst.");
-            resolve();
+
+    // NEUER VERSUCH: prepareAndShowRateScreen-Funktion für Preloading
+    async function prepareAndShowRateScreen(genre) {
+        showLoadingSpinner(); // NEU: Spinner anzeigen, bevor der Track geladen wird
+
+        gameState.currentTrack = await getTrack(genre);
+
+        if (!gameState.currentTrack) {
+            hideLoadingSpinner(); // NEU: Spinner ausblenden, wenn getTrack fehlgeschlagen ist
             return;
         }
 
-        clearInterval(gameState.fadeInterval);
-        clearTimeout(gameState.spotifyPlayTimeout);
+        // Stellen Sie sicher, dass spotifyPlayer und deviceId verfügbar sind
+        if (!spotifyPlayer || !deviceId) {
+            console.warn("Spotify Player oder Device ID nicht bereit. Kann nicht preloade/spielen.");
+            alert("Konnte den Spotify Player nicht initialisieren. Bitte lade die Seite neu und stelle sicher, dass Spotify läuft.");
+            showGenreScreen(); // Fallback zur Genre-Auswahl
+            hideLoadingSpinner(); // NEU: Spinner ausblenden, wenn Player nicht bereit ist
+            return;
+        }
 
-        if (!gameState.isSongPlaying || gameState.currentSongVolume <= 0) {
-            spotifyPlayer.setVolume(0)
-                .then(() => spotifyPlayer.pause())
+        try {
+            // Den Track zum Preloading starten und sofort stumm schalten
+            console.log(`Versuche, Track "${gameState.currentTrack.name}" stumm vorzuladen...`);
+            await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+                method: 'PUT',
+                body: JSON.stringify({
+                    uris: [gameState.currentTrack.uri],
+                    position_ms: 0 // Song am Anfang starten
+                }),
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+
+            // Die Lautstärke direkt nach dem Start auf 0 setzen
+            await spotifyPlayer.setVolume(0);
+            gameState.isSongPlaying = true; // Setzen, dass der Song im Hintergrund läuft
+
+            console.log(`Track "${gameState.currentTrack.name}" erfolgreich stumm vorgeladen und läuft im Hintergrund.`);
+            hideLoadingSpinner(); // NEU: Spinner ausblenden, sobald der Song erfolgreich vorgeladen ist
+
+        } catch (error) {
+            console.error("Fehler beim Vorladen/stumm Starten des Tracks:", error);
+            alert(`Konnte den Song "${gameState.currentTrack.name}" nicht vorbereiten. Bitte versuche ein anderes Genre. (Fehler: ${error.message})`);
+            showGenreScreen(); // Bei Fehler zurück zur Genre-Auswahl
+            hideLoadingSpinner(); // NEU: Spinner ausblenden bei Fehler
+            return;
+        }
+
+        // UI-Elemente für den Rate-Bildschirm vorbereiten
+        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+        logoButton.removeEventListener('click', playTrackSnippet); // Alten Listener entfernen, falls vorhanden
+        logoButton.addEventListener('click', playTrackSnippet); // Neuen Listener hinzufügen
+
+        // Speichere den Zustand: Raten-Bildschirm
+        lastGameScreenVisible = 'reveal-container';
+    }
+
+    // playTrackSnippet (unverändert von Ihrer letzten Version)
+    function playTrackSnippet() {
+        if (logoButton.classList.contains('inactive')) {
+            return;
+        }
+
+        if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+            return;
+        }
+        if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
+            return;
+        }
+
+        triggerBounce(logoButton);
+        logoButton.classList.add('inactive');
+        gameState.attemptsMade++;
+
+        const trackDurationMs = gameState.currentTrack.duration_ms;
+        const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
+
+        if (spotifyPlayer && gameState.isSongPlaying) {
+            // SCHRITT 1: Zuerst den Play-Request senden, um den Song zur neuen Position zu springen.
+            // Die Lautstärke bleibt zu diesem Zeitpunkt noch auf 0.
+            fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+                method: 'PUT',
+                body: JSON.stringify({
+                    uris: [gameState.currentTrack.uri], // URI immer mitsenden, um den Kontext zu sichern
+                    position_ms: randomStartPosition
+                }),
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        console.error("Fehler beim Abspielen/Springen des Tracks:", response.status, response.statusText);
+                        alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
+                        logoButton.classList.remove('inactive');
+                        throw new Error("Fehler beim Abspielen/Springen des Tracks"); // Fehler weitergeben
+                    }
+                    // SCHRITT 2: Wenn der Sprung erfolgreich war, die Lautstärke erhöhen.
+                    return spotifyPlayer.setVolume(1.0);
+                })
                 .then(() => {
-                    gameState.isSongPlaying = false;
-                    console.log("fadeAudioOut: Song war bereits stumm oder pausiert, direkt pausiert und aufgelöst.");
-                    resolve();
+                    console.log("Snippet gestartet: Gesprungen zu", randomStartPosition, "ms und Lautstärke auf 1.0 gesetzt.");
+
+                    if (gameState.isSpeedRound) {
+                        startVisualSpeedRoundCountdown();
+                    } else {
+                        gameState.spotifyPlayTimeout = setTimeout(() => {
+                            spotifyPlayer.setVolume(0)
+                                .then(() => {
+                                    console.log("Snippet beendet, Song stumm weiterlaufend.");
+                                    if (gameState.attemptsMade < gameState.maxAttempts) {
+                                        logoButton.classList.remove('inactive');
+                                    }
+                                })
+                                .catch(error => console.error("Fehler beim Stummschalten nach Snippet:", error));
+                        }, gameState.trackDuration);
+                    }
                 })
                 .catch(error => {
-                    console.error("fadeAudioOut: Fehler beim Stummschalten/Pausieren eines nicht spielenden Songs:", error);
-                    resolve();
+                    console.error("Fehler im Play-Snippet-Prozess:", error);
+                    // Alert wurde bereits im ersten Catch abgefangen, hier nur konsistent machen
+                    if (!error.message.includes("Fehler beim Abspielen/Springen des Tracks")) { // Vermeide Doppel-Alerts
+                        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+                    }
+                    logoButton.classList.remove('inactive');
                 });
+        } else {
+            // Fallback: Wenn der Song aus irgendeinem Grund nicht stumm läuft (sollte durch Preload nicht passieren)
+            console.warn("Song nicht vorgeladen oder Player nicht bereit in playTrackSnippet. Fallback zum direkten Play-Request.");
+            fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+                method: 'PUT',
+                body: JSON.stringify({
+                    uris: [gameState.currentTrack.uri],
+                    position_ms: randomStartPosition
+                }),
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            }).then(response => {
+                if (!response.ok) {
+                    console.error("Fehler beim Abspielen des Tracks (Fallback):", response.status, response.statusText);
+                    alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
+                    logoButton.classList.remove('inactive');
+                    return;
+                }
+                // Auch hier: Lautstärke erst nach erfolgreichem Play setzen
+                spotifyPlayer.setVolume(1.0);
+                gameState.isSongPlaying = true; // Song spielt jetzt
+
+                if (gameState.isSpeedRound) {
+                    startVisualSpeedRoundCountdown();
+                } else {
+                    gameState.spotifyPlayTimeout = setTimeout(() => {
+                        spotifyPlayer.setVolume(0)
+                            .then(() => {
+                                console.log("Fallback Snippet beendet, Song stumm weiterlaufend.");
+                                if (gameState.attemptsMade < gameState.maxAttempts) {
+                                    logoButton.classList.remove('inactive');
+                                }
+                            })
+                            .catch(error => console.error("Fehler beim Stummschalten nach Fallback-Snippet:", error));
+                    }, gameState.trackDuration);
+                }
+            }).catch(error => {
+                console.error("Netzwerkfehler beim Abspielen des Tracks (Fallback):", error);
+                alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+                logoButton.classList.remove('inactive');
+            });
+        }
+
+        if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
+            revealButton.classList.remove('hidden');
+            revealButton.classList.remove('no-interaction');
+        }
+    }
+
+    // AKTUALISIERT: showResolution-Funktion
+    function showResolution() {
+        console.log("showResolution() aufgerufen.");
+        // Zuerst alle relevanten Timer und Intervalle stoppen
+        clearTimeout(gameState.speedRoundTimeout);
+        clearInterval(gameState.countdownInterval);
+        clearTimeout(gameState.spotifyPlayTimeout);
+        clearInterval(gameState.fadeInterval);
+
+        // Spotify Player explizit pausieren
+        if (spotifyPlayer && gameState.isSongPlaying) {
+            spotifyPlayer.pause();
+            gameState.isSongPlaying = false;
+            console.log("Song bei Auflösung explizit pausiert.");
+        }
+
+        // UI-Elemente ausblenden
+        countdownDisplay.classList.add('hidden');
+        countdownDisplay.classList.remove('countdown-animated');
+        countdownDisplay.innerText = '';
+
+        logoButton.classList.add('inactive', 'hidden');
+        revealButton.classList.add('hidden');
+        speedRoundTextDisplay.classList.add('hidden');
+
+        // WICHTIG: Diese Buttons NICHT ausblenden, da sie im Auflösungsbildschirm benötigt werden
+        // correctButton.classList.add('hidden'); // Diese Zeile ENTFÄLLT
+        // wrongButton.classList.add('hidden'); // Diese Zeile ENTFÄLLT
+
+        // Track-Infos im Reveal-Container aktualisieren
+        if (gameState.currentTrack) {
+            document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
+            document.getElementById('track-title').innerText = gameState.currentTrack.name;
+            document.getElementById('track-artist').innerText = gameState.currentTrack.artists.map(a => a.name).join(', ');
+            // KORREKTUR: Sicherstellen, dass die IDs für Album und Jahr existieren und korrekt sind
+            const trackAlbum = document.getElementById('track-album');
+            const trackYear = document.getElementById('track-year');
+            if (trackAlbum) trackAlbum.innerText = gameState.currentTrack.album.name;
+            if (trackYear) trackYear.innerText = `(${gameState.currentTrack.album.release_date.substring(0, 4)})`;
+        } else {
+            console.warn("Kein aktueller Track beim Versuch, die Auflösung anzuzeigen.");
+            document.getElementById('track-title').innerText = "Song-Informationen nicht verfügbar";
+            // Sicherstellen, dass Album/Jahr auch geleert werden, wenn Track fehlt
+            const trackAlbum = document.getElementById('track-album');
+            const trackYear = document.getElementById('track-year');
+            if (trackAlbum) trackAlbum.innerText = '';
+            if (trackYear) trackYear.innerText = '';
+        }
+
+        // Reveal-Container einblenden (dies ist der eigentliche Screen-Wechsel)
+        revealContainer.classList.remove('hidden');
+        console.log("revealContainer sollte jetzt sichtbar sein.");
+
+        // Speichere den Zustand: Auflösung-Bildschirm
+        lastGameScreenVisible = 'reveal-container';
+
+        // Song bei Auflösung abspielen (startet nach dem Screen-Wechsel)
+        playSongForResolution();
+    }
+
+    // playSongForResolution (unverändert von Ihrer letzten Version)
+    async function playSongForResolution() {
+        if (!gameState.currentTrack || !deviceId) {
+            console.warn("Kein Track oder Gerät verfügbar, kann Song nicht abspielen.");
             return;
         }
 
-        const fadeDuration = 500;
+        const startPositionMs = 30 * 1000;
+        const targetVolume = 80;
+        const fadeDuration = 2000;
         const fadeStep = 5;
-        const initialVolume = gameState.currentSongVolume || 100;
-        const intervalTime = fadeDuration / (initialVolume / fadeStep);
+        const intervalTime = fadeDuration / (targetVolume / fadeStep);
 
-        gameState.fadeInterval = setInterval(() => {
-            if (gameState.currentSongVolume > 0) {
-                gameState.currentSongVolume = Math.max(0, gameState.currentSongVolume - fadeStep);
-                spotifyPlayer.setVolume(gameState.currentSongVolume / 100);
-            } else {
-                clearInterval(gameState.fadeInterval);
-                gameState.fadeInterval = null;
-                spotifyPlayer.pause();
-                gameState.isSongPlaying = false;
-                console.log("fadeAudioOut: Song vollständig ausgeblendet und pausiert.");
-                resolve();
-            }
-        }, intervalTime);
-    });
-}
+        try {
+            await spotifyPlayer.setVolume(0);
+            gameState.currentSongVolume = 0;
 
-// revealButton.addEventListener (unverändert von Ihrer letzten Version, außer Hinzufügen von console.logs)
-revealButton.addEventListener('click', async () => {
-    console.log("Klick auf 'Auflösen' erkannt.");
-    revealButton.classList.add('no-interaction');
-
-    console.log("Warte 200ms für Button-Animation...");
-    await new Promise(resolve => setTimeout(resolve, 200));
-    console.log("200ms Wartezeit beendet.");
-
-    console.log("Starte fadeAudioOut()...");
-    await fadeAudioOut();
-    console.log("fadeAudioOut() abgeschlossen. Song sollte pausiert sein.");
-
-    console.log("Rufe showResolution() auf...");
-    showResolution();
-    console.log("showResolution() wurde aufgerufen.");
-});
-
-// handleFeedback (unverändert von Ihrer letzten Version)
-function handleFeedback(isCorrect) {
-    correctButton.classList.add('no-interaction');
-    wrongButton.classList.add('no-interaction');
-
-    fadeAudioOut().then(() => {
-        let pointsAwarded = 0;
-
-        if (isCorrect) {
-            pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1));
-            if (gameState.currentPlayer === 1) {
-                gameState.player1Score += pointsAwarded;
-            } else {
-                gameState.player2Score += pointsAwarded;
-            }
-        }
-
-        displayPointsAnimation(pointsAwarded, gameState.currentPlayer)
-            .then(() => {
-                gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
-                appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
-
-                lastGameScreenVisible = '';
-                setTimeout(showDiceScreen, 500);
+            const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+                method: 'PUT',
+                body: JSON.stringify({
+                    uris: [gameState.currentTrack.uri],
+                    position_ms: startPositionMs
+                }),
+                headers: { 'Authorization': `Bearer ${accessToken}` }
             });
-    });
-}
 
-// displayPointsAnimation (unverändert von Ihrer letzten Version)
-function displayPointsAnimation(points, player) {
-    return new Promise(resolve => {
-        countdownDisplay.classList.remove('hidden', 'countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2', 'points-pop-in');
-        countdownDisplay.innerText = `+${points}`;
-
-        countdownDisplay.style.opacity = '0';
-        countdownDisplay.style.transform = 'translate(-50%, -50%) scale(0.8)';
-        countdownDisplay.style.top = '50%';
-
-        if (player === 1) {
-            countdownDisplay.style.color = 'var(--punktefarbe-player1)';
-            countdownDisplay.style.left = '50%';
-        } else {
-            countdownDisplay.style.color = 'var(--punktefarbe-player2)';
-            countdownDisplay.style.left = '50%';
-        }
-
-        void countdownDisplay.offsetWidth;
-
-        countdownDisplay.classList.add('points-pop-in');
-
-        const popInDuration = 300;
-        const flyAnimationDuration = 500;
-
-        setTimeout(() => {
-            countdownDisplay.classList.remove('points-pop-in');
-            if (player === 1) {
-                countdownDisplay.classList.add('fly-to-corner-player1');
-            } else {
-                countdownDisplay.classList.add('fly-to-corner-player2');
+            if (!response.ok) {
+                console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
+                return;
             }
-        }, popInDuration);
+            gameState.isSongPlaying = true;
 
-        setTimeout(() => {
-            countdownDisplay.classList.add('hidden');
-            countdownDisplay.classList.remove('fly-to-corner-player1', 'fly-to-corner-player2');
-            countdownDisplay.innerText = '';
-
-            countdownDisplay.style.color = 'var(--white)';
-            countdownDisplay.style.left = '50%';
-            countdownDisplay.style.top = '50%';
-            countdownDisplay.style.opacity = '1';
-            countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)';
-            resolve();
-        }, popInDuration + flyAnimationDuration);
-    });
-}
-document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
-document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
-
-// RESET ROUND ---------------------------------------------------------------------------------------------------------------
-// resetRoundUI (unverändert von Ihrer letzten Version)
-function resetRoundUI() {
-    revealContainer.classList.add('hidden');
-    logoButton.classList.add('hidden');
-    genreContainer.classList.add('hidden');
-    diceContainer.classList.add('hidden');
-    revealButton.classList.add('hidden');
-    speedRoundTextDisplay.classList.add('hidden');
-
-    correctButton.classList.remove('no-interaction');
-    wrongButton.classList.remove('no-interaction');
-
-    logoButton.removeEventListener('click', playTrackSnippet);
-
-    digitalDiceArea.classList.add('hidden');
-
-    digitalDiceMainImage.src = digitalDiceStartImage;
-    digitalDiceMainImage.classList.remove('no-interaction', 'rolling');
-    digitalDiceMainImage.style.cursor = 'pointer';
-
-    clearTimeout(gameState.speedRoundTimeout);
-    clearInterval(gameState.countdownInterval);
-    clearTimeout(gameState.spotifyPlayTimeout);
-    clearInterval(gameState.fadeInterval);
-    clearTimeout(gameState.diceAnimationTimeout);
-
-    if (spotifyPlayer) {
-        spotifyPlayer.pause();
-        gameState.isSongPlaying = false;
-        spotifyPlayer.setVolume(1.0)
-            .then(() => console.log("Lautstärke auf 100% zurückgesetzt."))
-            .catch(error => console.error("Fehler beim Zurücksetzen der Lautstärke:", error));
+            gameState.fadeInterval = setInterval(() => {
+                if (gameState.currentSongVolume < targetVolume) {
+                    gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
+                    spotifyPlayer.setVolume(gameState.currentSongVolume / 100);
+                } else {
+                    clearInterval(gameState.fadeInterval);
+                }
+            }, intervalTime);
+        } catch (error) {
+            console.error("Fehler in playSongForResolution:", error);
+            alert("Konnte den Auflösungs-Song nicht abspielen. Bitte versuchen Sie es erneut.");
+        }
     }
-}
 
-//=======================================================================
-// Phase 5: Spielende & Reset
-//=======================================================================
+    // fadeAudioOut (unverändert von Ihrer letzten Version)
+    function fadeAudioOut() {
+        return new Promise(resolve => {
+            if (!spotifyPlayer) {
+                console.log("fadeAudioOut: Spotify Player nicht verfügbar, sofort aufgelöst.");
+                resolve();
+                return;
+            }
 
-scoreScreen.addEventListener('click', handleScoreScreenEnd);
+            clearInterval(gameState.fadeInterval);
+            clearTimeout(gameState.spotifyPlayTimeout);
 
-function handleScoreScreenEnd() {
-    clearTimeout(gameState.scoreScreenTimeout);
+            if (!gameState.isSongPlaying || gameState.currentSongVolume <= 0) {
+                spotifyPlayer.setVolume(0)
+                    .then(() => spotifyPlayer.pause())
+                    .then(() => {
+                        gameState.isSongPlaying = false;
+                        console.log("fadeAudioOut: Song war bereits stumm oder pausiert, direkt pausiert und aufgelöst.");
+                        resolve();
+                    })
+                    .catch(error => {
+                        console.error("fadeAudioOut: Fehler beim Stummschalten/Pausieren eines nicht spielenden Songs:", error);
+                        resolve();
+                    });
+                return;
+            }
 
-    scoreScreen.classList.add('hidden');
+            const fadeDuration = 500;
+            const fadeStep = 5;
+            const initialVolume = gameState.currentSongVolume || 100;
+            const intervalTime = fadeDuration / (initialVolume / fadeStep);
 
-    document.getElementById('player1-score-display').style.opacity = '0';
-    document.getElementById('player2-score-display').style.opacity = '0';
+            gameState.fadeInterval = setInterval(() => {
+                if (gameState.currentSongVolume > 0) {
+                    gameState.currentSongVolume = Math.max(0, gameState.currentSongVolume - fadeStep);
+                    spotifyPlayer.setVolume(gameState.currentSongVolume / 100);
+                } else {
+                    clearInterval(gameState.fadeInterval);
+                    gameState.fadeInterval = null;
+                    spotifyPlayer.pause();
+                    gameState.isSongPlaying = false;
+                    console.log("fadeAudioOut: Song vollständig ausgeblendet und pausiert.");
+                    resolve();
+                }
+            }, intervalTime);
+        });
+    }
 
-    resetGame();
-}
+    // revealButton.addEventListener (unverändert von Ihrer letzten Version, außer Hinzufügen von console.logs)
+    revealButton.addEventListener('click', async () => {
+        console.log("Klick auf 'Auflösen' erkannt.");
+        revealButton.classList.add('no-interaction');
 
-function endGame() {
-    gameScreen.classList.add('hidden');
-    scoreScreen.classList.remove('hidden');
-    appContainer.style.backgroundColor = 'transparent';
+        console.log("Warte 200ms für Button-Animation...");
+        await new Promise(resolve => setTimeout(resolve, 200));
+        console.log("200ms Wartezeit beendet.");
 
-    lastGameScreenVisible = 'score-screen';
+        console.log("Starte fadeAudioOut()...");
+        await fadeAudioOut();
+        console.log("fadeAudioOut() abgeschlossen. Song sollte pausiert sein.");
 
-    const p1ScoreEl = document.getElementById('player1-score-display');
-    const p2ScoreEl = document.getElementById('player2-score-display');
-    p1ScoreEl.innerText = gameState.player1Score;
-    p2ScoreEl.innerText = gameState.player2Score;
-    p1ScoreEl.style.opacity = '1';
-    p2ScoreEl.style.opacity = '1';
-
-    setTimeout(() => {
-        p1ScoreEl.style.opacity = '0';
-        p2ScoreEl.style.opacity = '0';
-    }, 7000);
-
-    gameState.scoreScreenTimeout = setTimeout(() => {
-        handleScoreScreenEnd();
-    }, 8000);
-}
-
-// AKTUALISIERT: resetGame-Funktion (unverändert von Ihrer letzten Version)
-function resetGame() {
-    scoreScreen.classList.add('hidden');
-    appContainer.style.backgroundColor = 'var(--black)';
-
-    gameState.player1Score = 0;
-    gameState.player2Score = 0;
-    gameState.currentPlayer = 1;
-    gameState.currentRound = 0;
-    gameState.diceValue = 0;
-    gameState.attemptsMade = 0;
-    gameState.maxAttempts = 0;
-    gameState.trackDuration = 0;
-    gameState.currentTrack = null;
-    gameState.isSpeedRound = false;
-    clearTimeout(gameState.speedRoundTimeout);
-
-    gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
-    gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
-
-    gameState.selectedPlayableGenres = [];
-    allGenresScrollbox.innerHTML = '';
-
-    gameScreen.classList.remove('hidden');
-    logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-    logoButton.removeEventListener('click', startGame);
-    logoButton.addEventListener('click', startGame, { once: true });
-
-    lastGameScreenVisible = '';
-
-    startGenreSelectionContainer.classList.remove('hidden');
-    renderPreselectionGenres();
-}
-
-//=======================================================================
-// Phase 6: Sonderfunktion "Speed-Round"
-//=======================================================================
-
-function showSpeedRoundAnimation() {
-    return new Promise(resolve => {
-        speedRoundTextDisplay.classList.remove('hidden');
-        setTimeout(() => {
-            speedRoundTextDisplay.classList.add('hidden');
-            resolve();
-        }, 3500);
-    });
-}
-
-// startVisualSpeedRoundCountdown (unverändert von Ihrer letzten Version)
-function startVisualSpeedRoundCountdown() {
-    let timeLeft = 7;
-    countdownDisplay.classList.remove('hidden');
-
-    gameState.speedRoundTimeout = setTimeout(() => {
+        console.log("Rufe showResolution() auf...");
         showResolution();
-    }, 7000);
+        console.log("showResolution() wurde aufgerufen.");
+    });
 
-    countdownDisplay.innerText = timeLeft;
-    countdownDisplay.classList.remove('countdown-animated');
-    void countdownDisplay.offsetWidth;
-    countdownDisplay.classList.add('countdown-animated');
+    // handleFeedback (unverändert von Ihrer letzten Version)
+    function handleFeedback(isCorrect) {
+        correctButton.classList.add('no-interaction');
+        wrongButton.classList.add('no-interaction');
 
-    gameState.countdownInterval = setInterval(() => {
-        timeLeft--;
+        fadeAudioOut().then(() => {
+            let pointsAwarded = 0;
 
-        if (timeLeft >= 0) {
-            countdownDisplay.innerText = timeLeft;
-            countdownDisplay.classList.remove('countdown-animated');
+            if (isCorrect) {
+                pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1));
+                if (gameState.currentPlayer === 1) {
+                    gameState.player1Score += pointsAwarded;
+                } else {
+                    gameState.player2Score += pointsAwarded;
+                }
+            }
+
+            displayPointsAnimation(pointsAwarded, gameState.currentPlayer)
+                .then(() => {
+                    gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+                    appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
+
+                    lastGameScreenVisible = '';
+                    setTimeout(showDiceScreen, 500);
+                });
+        });
+    }
+
+    // displayPointsAnimation (unverändert von Ihrer letzten Version)
+    function displayPointsAnimation(points, player) {
+        return new Promise(resolve => {
+            countdownDisplay.classList.remove('hidden', 'countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2', 'points-pop-in');
+            countdownDisplay.innerText = `+${points}`;
+
+            countdownDisplay.style.opacity = '0';
+            countdownDisplay.style.transform = 'translate(-50%, -50%) scale(0.8)';
+            countdownDisplay.style.top = '50%';
+
+            if (player === 1) {
+                countdownDisplay.style.color = 'var(--punktefarbe-player1)';
+                countdownDisplay.style.left = '50%';
+            } else {
+                countdownDisplay.style.color = 'var(--punktefarbe-player2)';
+                countdownDisplay.style.left = '50%';
+            }
+
             void countdownDisplay.offsetWidth;
-            countdownDisplay.classList.add('countdown-animated');
-        }
 
-        if (timeLeft < 0) {
-            clearInterval(gameState.countdownInterval);
-            countdownDisplay.classList.add('hidden');
-            countdownDisplay.innerText = '';
+            countdownDisplay.classList.add('points-pop-in');
+
+            const popInDuration = 300;
+            const flyAnimationDuration = 500;
+
+            setTimeout(() => {
+                countdownDisplay.classList.remove('points-pop-in');
+                if (player === 1) {
+                    countdownDisplay.classList.add('fly-to-corner-player1');
+                } else {
+                    countdownDisplay.classList.add('fly-to-corner-player2');
+                }
+            }, popInDuration);
+
+            setTimeout(() => {
+                countdownDisplay.classList.add('hidden');
+                countdownDisplay.classList.remove('fly-to-corner-player1', 'fly-to-corner-player2');
+                countdownDisplay.innerText = '';
+
+                countdownDisplay.style.color = 'var(--white)';
+                countdownDisplay.style.left = '50%';
+                countdownDisplay.style.top = '50%';
+                countdownDisplay.style.opacity = '1';
+                countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)';
+                resolve();
+            }, popInDuration + flyAnimationDuration);
+        });
+    }
+    document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
+    document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
+
+    // RESET ROUND ---------------------------------------------------------------------------------------------------------------
+    // resetRoundUI (unverändert von Ihrer letzten Version)
+    function resetRoundUI() {
+        revealContainer.classList.add('hidden');
+        logoButton.classList.add('hidden');
+        genreContainer.classList.add('hidden');
+        diceContainer.classList.add('hidden');
+        revealButton.classList.add('hidden');
+        speedRoundTextDisplay.classList.add('hidden');
+
+        correctButton.classList.remove('no-interaction');
+        wrongButton.classList.remove('no-interaction');
+
+        logoButton.removeEventListener('click', playTrackSnippet);
+
+        digitalDiceArea.classList.add('hidden');
+
+        digitalDiceMainImage.src = digitalDiceStartImage;
+        digitalDiceMainImage.classList.remove('no-interaction', 'rolling');
+        digitalDiceMainImage.style.cursor = 'pointer';
+
+        clearTimeout(gameState.speedRoundTimeout);
+        clearInterval(gameState.countdownInterval);
+        clearTimeout(gameState.spotifyPlayTimeout);
+        clearInterval(gameState.fadeInterval);
+        clearTimeout(gameState.diceAnimationTimeout);
+
+        if (spotifyPlayer) {
+            spotifyPlayer.pause();
+            gameState.isSongPlaying = false;
+            spotifyPlayer.setVolume(1.0)
+                .then(() => console.log("Lautstärke auf 100% zurückgesetzt."))
+                .catch(error => console.error("Fehler beim Zurücksetzen der Lautstärke:", error));
         }
-    }, 1000);
-}
+    }
+
+    //=======================================================================
+    // Phase 5: Spielende & Reset
+    //=======================================================================
+
+    scoreScreen.addEventListener('click', handleScoreScreenEnd);
+
+    function handleScoreScreenEnd() {
+        clearTimeout(gameState.scoreScreenTimeout);
+
+        scoreScreen.classList.add('hidden');
+
+        document.getElementById('player1-score-display').style.opacity = '0';
+        document.getElementById('player2-score-display').style.opacity = '0';
+
+        resetGame();
+    }
+
+    function endGame() {
+        gameScreen.classList.add('hidden');
+        scoreScreen.classList.remove('hidden');
+        appContainer.style.backgroundColor = 'transparent';
+
+        lastGameScreenVisible = 'score-screen';
+
+        const p1ScoreEl = document.getElementById('player1-score-display');
+        const p2ScoreEl = document.getElementById('player2-score-display');
+        p1ScoreEl.innerText = gameState.player1Score;
+        p2ScoreEl.innerText = gameState.player2Score;
+        p1ScoreEl.style.opacity = '1';
+        p2ScoreEl.style.opacity = '1';
+
+        setTimeout(() => {
+            p1ScoreEl.style.opacity = '0';
+            p2ScoreEl.style.opacity = '0';
+        }, 7000);
+
+        gameState.scoreScreenTimeout = setTimeout(() => {
+            handleScoreScreenEnd();
+        }, 8000);
+    }
+
+    // AKTUALISIERT: resetGame-Funktion (unverändert von Ihrer letzten Version)
+    function resetGame() {
+        scoreScreen.classList.add('hidden');
+        appContainer.style.backgroundColor = 'var(--black)';
+
+        gameState.player1Score = 0;
+        gameState.player2Score = 0;
+        gameState.currentPlayer = 1;
+        gameState.currentRound = 0;
+        gameState.diceValue = 0;
+        gameState.attemptsMade = 0;
+        gameState.maxAttempts = 0;
+        gameState.trackDuration = 0;
+        gameState.currentTrack = null;
+        gameState.isSpeedRound = false;
+        clearTimeout(gameState.speedRoundTimeout);
+
+        gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
+        gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
+
+        gameState.selectedPlayableGenres = [];
+        allGenresScrollbox.innerHTML = '';
+
+        gameScreen.classList.remove('hidden');
+        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+        logoButton.removeEventListener('click', startGame);
+        logoButton.addEventListener('click', startGame, { once: true });
+
+        lastGameScreenVisible = '';
+
+        startGenreSelectionContainer.classList.remove('hidden');
+        renderPreselectionGenres();
+
+        stopTokenTimer(); // NEU: Token-Timer stoppen/ausblenden bei Spiel-Reset
+    }
+
+    //=======================================================================
+    // Phase 6: Sonderfunktion "Speed-Round"
+    //=======================================================================
+
+    function showSpeedRoundAnimation() {
+        return new Promise(resolve => {
+            speedRoundTextDisplay.classList.remove('hidden');
+            setTimeout(() => {
+                speedRoundTextDisplay.classList.add('hidden');
+                resolve();
+            }, 3500);
+        });
+    }
+
+    // startVisualSpeedRoundCountdown (unverändert von Ihrer letzten Version)
+    function startVisualSpeedRoundCountdown() {
+        let timeLeft = 7;
+        countdownDisplay.classList.remove('hidden');
+
+        gameState.speedRoundTimeout = setTimeout(() => {
+            showResolution();
+        }, 7000);
+
+        countdownDisplay.innerText = timeLeft;
+        countdownDisplay.classList.remove('countdown-animated');
+        void countdownDisplay.offsetWidth;
+        countdownDisplay.classList.add('countdown-animated');
+
+        gameState.countdownInterval = setInterval(() => {
+            timeLeft--;
+
+            if (timeLeft >= 0) {
+                countdownDisplay.innerText = timeLeft;
+                countdownDisplay.classList.remove('countdown-animated');
+                void countdownDisplay.offsetWidth;
+                countdownDisplay.classList.add('countdown-animated');
+            }
+
+            if (timeLeft < 0) {
+                clearInterval(gameState.countdownInterval);
+                countdownDisplay.classList.add('hidden');
+                countdownDisplay.innerText = '';
+            }
+        }, 1000);
+    }
 
 }); // Ende DOMContentLoaded
