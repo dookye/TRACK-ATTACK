@@ -1,1 +1,99 @@
 
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>TRACK ATTACK120</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="assets/logo-icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="assets/logo-icon.png">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+    <div id="rotate-device-overlay" class="overlay hidden">
+        <p>Please rotate your device to landscape mode</p>
+    </div>
+
+    <div id="app-container">
+        <div id="login-screen" class="screen active">
+            <img src="assets/logo.png" alt="Quiz Game Logo" id="login-logo">
+                <a href="info.html" class="info-button">
+                  <img src="assets/info.png" alt="Info">
+                </a>
+            <p>Please log in with your Spotify-Premium-Account</p>
+            <button id="login-button">
+                <img src="spotify_icon.png" alt="Spotify Logo">
+                LOG IN WITH SPOTIFY
+            </button>
+        </div>
+
+        <div id="game-screen" class="screen hidden">
+            <img src="assets/logo.png" alt="Track Attack Logo" id="logo-button" class="hidden">
+
+            <div id="start-genre-selection-container" class="hidden">
+                <div id="all-genres-scrollbox">
+                    </div>
+            </div>
+            <div id="countdown-display" class="hidden"></div>
+
+            <div id="speed-round-text-display" class="hidden">
+                <p>SPEED-ROUND</p>
+            </div>
+            
+            <div id="dice-container" class="hidden">
+                <img src="assets/w-ani.gif" alt="Dice Animation" id="dice-animation">
+
+                <div id="dice-selection" class="hidden">
+                    <img src="assets/w-1.png" alt="Dice 1" class="dice-option" data-value="1">
+                    <img src="assets/w-2.png" alt="Dice 2" class="dice-option" data-value="2">
+                    <img src="assets/w-3.png" alt="Dice 3" class="dice-option" data-value="3">
+                    <img src="assets/w-4.png" alt="Dice 4" class="dice-option" data-value="4">
+                    <img src="assets/w-5.png" alt="Dice 5" class="dice-option" data-value="5">
+                    <img src="assets/w-7.png" alt="Dice 7" class="dice-option" data-value="7">
+
+                    <div id="digital-dice-area" class="hidden">
+                        <img id="digital-dice-main-image" src="assets/digi-ta.png" alt="Digitaler Würfel" class="digital-dice-icon">
+                    </div>
+                </div>
+            </div>
+
+            <div id="genre-container" class="hidden">
+                </div>
+
+            <div id="reveal-container" class="hidden">
+                <div id="track-info">
+                    <img id="album-cover" src="" alt="Album Cover">
+                    <div>
+                        <p id="track-title">Titel</p>
+                        <p id="track-artist">Interpret</p>
+                        <p id="track-album"></p>
+                        <p id="track-year"></p>
+                    </div>
+                </div>
+                <div id="feedback-buttons">
+                    <button id="correct-button">RICHTIG</button>
+                    <button id="wrong-button">FALSCH</button>
+                </div>
+            </div>
+            
+            <button id="reveal-button" class="hidden">AUFLÖSEN</button>
+            
+        </div>
+        
+        <div id="score-screen" class="screen hidden">
+            <div id="player1-score-display">0</div>
+            <div id="player2-score-display">0</div>
+        </div>
+
+    </div>
+    
+    <audio id="digital-dice-sound" src="assets/digi-ani-sound.mp3" preload="auto"></audio>
+    <audio id="logo-fly-in-sound" src="assets/ta-sound.mp3" preload="auto"></audio>
+    <script src="app.js"></script>
+</body>
+</html>
