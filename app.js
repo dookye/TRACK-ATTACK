@@ -633,79 +633,125 @@ document.addEventListener('DOMContentLoaded', () => {
     //=======================================================================
 
 // AKTUALISIERT: getTrack-Funktion
-async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Klarheit geändert
-    // 'selectedGenreName' ist das spezifische Genre, das der Spieler im Spiel geklickt hat.
-    // Wir müssen hier KEINE weitere zufällige Auswahl treffen.
-    // Wir nutzen einfach direkt den Namen des geklickten Genres.
-
-    const playlistPool = playlists[selectedGenreName]; // <-- KORREKTUR: Nutze DIREKT den übergebenen Genre-Namen!
+async function getTrack(selectedGenreName) {
+    const playlistPool = playlists[selectedGenreName];
 
     if (!playlistPool || playlistPool.length === 0) {
         console.error(`Keine Playlists für Genre "${selectedGenreName}" definiert oder Pool ist leer.`);
-        alert(`Fehler: Für das Genre "${selectedGenreName}" sind keine Playlists verfügbar. Bitte wähle ein anderes Genre.`);
-        showGenreScreen(); // Gehe zurück zum Genre-Auswahlbildschirm
-        return null;
+        // NEU: Klareres Feedback und Rücksprung
+        alert(`Entschuldigung! Für das Genre "${selectedGenreName}" sind keine Playlists verfügbar. Bitte wähle ein anderes Genre.`);
+        return null; // Wichtig: null zurückgeben, um Fehler im Aufrufenden zu signalisieren
     }
 
     const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
     console.log(`DEBUG: Ausgewähltes Genre (vom Spieler geklickt): "${selectedGenreName}", Playlist-ID (zufällig aus diesem Genre): "${randomPlaylistId}"`);
 
+    try {
+        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
 
-    const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
+        if (!response.ok) {
+            // NEU: Verbesserte Fehlerbehandlung für API-Abruf
+            console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
+            alert(`Upps! Beim Laden der Songs für das Genre "${selectedGenreName}" ist ein Fehler aufgetreten (Code: ${response.status}). Bitte versuche ein anderes Genre.`);
+            return null;
+        }
 
-    if (!response.ok) {
-        console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
-        alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
-        showGenreScreen();
+        const data = await response.json();
+
+        if (!data.items || data.items.length === 0) {
+            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
+            // NEU: Spezifischeres Feedback
+            alert(`Die ausgewählte Playlist für Genre "${selectedGenreName}" hat keine abspielbaren Songs. Bitte wähle ein anderes Genre.`);
+            return null;
+        }
+
+        const playableTracks = data.items.filter(item => item.track); // Filtert nur nach gültigen Track-Objekten
+
+        if (playableTracks.length === 0) {
+            console.warn(`Die Playlist ${randomPlaylistId} enthält keine gültigen oder abspielbaren Tracks nach Filterung.`);
+            // NEU: Spezifischeres Feedback
+            alert(`Keine gültigen Songs in der Playlist für Genre "${selectedGenreName}" gefunden. Bitte versuche ein anderes Genre.`);
+            return null;
+        }
+
+        const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
+
+        if (randomTrack) {
+            console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
+        } else {
+            // Dies sollte eigentlich nicht erreicht werden, wenn playableTracks gefiltert wurde.
+            console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
+            alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuche es erneut.");
+            return null;
+        }
+
+        return randomTrack;
+
+    } catch (error) {
+        // NEU: Generische Fehlerbehandlung für Netzwerkprobleme etc.
+        console.error("Netzwerkfehler beim Abrufen der Playlist-Tracks:", error);
+        alert(`Hoppla! Es gab ein Problem mit deiner Internetverbindung oder Spotify. Bitte überprüfe dein Internet und versuche es erneut. (Fehler: ${error.message})`);
         return null;
     }
-
-    const data = await response.json();
-
-    if (!data.items || data.items.length === 0) {
-        console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
-        alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
-        showGenreScreen();
-        return null;
-    }
-
-    const playableTracks = data.items.filter(item => item.track);
-
-    if (playableTracks.length === 0) {
-        console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
-        alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
-        showGenreScreen();
-        return null;
-    }
-
-    const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
-
-    if (randomTrack) {
-        console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
-    } else {
-        console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
-        alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
-        showGenreScreen();
-        return null;
-    }
-
-    return randomTrack;
 }
 
+async function prepareAndShowRateScreen(genre) {
+    // Anzeigen eines Lade-Overlays hier wäre ideal, um Wartezeit zu überbrücken
+    // loadingOverlay.classList.remove('hidden'); // Beispiel
 
-    async function prepareAndShowRateScreen(genre) {
-        gameState.currentTrack = await getTrack(genre);
-        console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
+    gameState.currentTrack = await getTrack(genre);
 
-        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-        logoButton.removeEventListener('click', playTrackSnippet);
-        logoButton.addEventListener('click', playTrackSnippet);
-
-        // Speichere den Zustand: Raten-Bildschirm
-        lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
+    // NEU: Prüfen, ob ein Track erfolgreich geladen wurde
+    if (!gameState.currentTrack) {
+        // Wenn getTrack null zurückgegeben hat, gab es ein Problem.
+        // Der Benutzer wurde bereits per Alert informiert.
+        // Wir gehen direkt zurück zum Genre-Auswahlbildschirm.
+        // loadingOverlay.classList.add('hidden'); // Lade-Overlay ausblenden
+        showGenreScreen(); // Zurück zur Genre-Auswahl
+        return; // Funktion beenden
     }
+
+    // NEU: Preloading des Tracks im Spotify Player
+    if (spotifyPlayer && deviceId) { // Sicherstellen, dass Player und Gerät bereit sind
+        try {
+            // await spotifyPlayer.load(gameState.currentTrack.uri); // Das war für eine frühere SDK Version
+            // Die moderne Methode ist play mit pause aufrufen.
+            // Zuerst den Player starten, dann pausieren, um das Buffering zu initiieren
+            await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+                method: 'PUT',
+                body: JSON.stringify({
+                    uris: [gameState.currentTrack.uri],
+                    // Optional: Start an einer bestimmten Position für schnelleres Buffering
+                    position_ms: 0 // Startet den Song am Anfang, um das Buffering zu initiieren
+                }),
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            await spotifyPlayer.pause(); // Sofort pausieren, damit es nicht abgespielt wird
+            console.log(`Track "${gameState.currentTrack.name}" erfolgreich zum Buffern geladen und pausiert.`);
+        } catch (error) {
+            console.warn("Fehler beim Vorladen/Buffern des Tracks im Spotify Player:", error);
+            alert(`Konnte den Song "${gameState.currentTrack.name}" nicht vorladen. Das Abspielen könnte verzögert sein oder fehlschlagen. (Fehler: ${error.message})`);
+            // Entscheidung: Trotz Fehler fortfahren oder zurück zum Genre-Screen?
+            // Für ein besseres Erlebnis wäre ein Rücksprung und erneuter Versuch hier sinnvoll.
+            // showGenreScreen();
+            // return;
+        }
+    } else {
+        console.warn("Spotify Player oder Device ID nicht bereit für Preloading.");
+    }
+
+    // loadingOverlay.classList.add('hidden'); // Lade-Overlay ausblenden
+
+    logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+    // Wichtig: removeEventListener VOR addEventListener, um Mehrfach-Listener zu vermeiden
+    logoButton.removeEventListener('click', playTrackSnippet);
+    logoButton.addEventListener('click', playTrackSnippet);
+
+    // Speichere den Zustand: Raten-Bildschirm
+    lastGameScreenVisible = 'reveal-container'; // Bleibt bestehen
+}
 
     function playTrackSnippet() {
         if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
