@@ -705,14 +705,10 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
     async function prepareAndShowRateScreen(genre) {
         gameState.currentTrack = await getTrack(genre);
 
-        // NEU: Wenn getTrack null zurückgibt, ist ein Fehler aufgetreten und der Benutzer wurde bereits benachrichtigt.
-        // Wir kehren hier direkt zur Genre-Auswahl zurück.
         if (!gameState.currentTrack) {
-            // showGenreScreen() wird bereits in getTrack aufgerufen, hier nur sicherstellen, dass nichts weiter passiert
-            return;
+            return; // getTrack hat bereits Fehlerbehandlung und UI-Wechsel übernommen
         }
 
-        // Sicherstellen, dass spotifyPlayer und deviceId verfügbar sind
         if (!spotifyPlayer || !deviceId) {
             console.warn("Spotify Player oder Device ID nicht bereit. Kann nicht preloade/spielen.");
             alert("Konnte den Spotify Player nicht initialisieren. Bitte lade die Seite neu und stelle sicher, dass Spotify läuft.");
@@ -721,8 +717,8 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         }
 
         try {
-            // Schritt 2: Song bei Position 0 starten und sofort auf Lautstärke 0 setzen
-            // Dadurch beginnt das Buffering sofort und lautlos
+            // Wichtig: Zuerst den Play-Request senden, dann die Lautstärke setzen.
+            // Dies stellt sicher, dass der Song beginnt zu buffern.
             await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
                 method: 'PUT',
                 body: JSON.stringify({
@@ -740,29 +736,25 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         } catch (error) {
             console.error("Fehler beim Vorladen/stumm Starten des Tracks:", error);
             alert(`Konnte den Song "${gameState.currentTrack.name}" nicht vorbereiten. Bitte versuche ein anderes Genre. (Fehler: ${error.message})`);
-            showGenreScreen(); // Bei kritischem Fehler zurück zur Genre-Auswahl
+            showGenreScreen();
             return;
         }
 
-        // UI-Elemente vorbereiten
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-        logoButton.removeEventListener('click', playTrackSnippet); // Alten Listener entfernen
-        logoButton.addEventListener('click', playTrackSnippet); // Neuen Listener hinzufügen
+        logoButton.removeEventListener('click', playTrackSnippet);
+        logoButton.addEventListener('click', playTrackSnippet);
 
-        // Speichere den Zustand: Raten-Bildschirm
         lastGameScreenVisible = 'reveal-container';
     }
 
 
+
     // AKTUALISIERT: playTrackSnippet-Funktion
-    function playTrackSnippet() {
-        // Verhindere mehrfache Klicks, wenn der Button inaktiv sein soll
+   function playTrackSnippet() {
         if (logoButton.classList.contains('inactive')) {
             return;
         }
 
-        // Prüfen, ob noch Versuche übrig sind (normaler Modus)
-        // oder ob es der erste Klick in der Speed-Round ist
         if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
             return;
         }
@@ -771,23 +763,21 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         }
 
         triggerBounce(logoButton);
-        logoButton.classList.add('inactive'); // Button während der Wiedergabe inaktiv machen
+        logoButton.classList.add('inactive');
         gameState.attemptsMade++;
 
         const trackDurationMs = gameState.currentTrack.duration_ms;
         const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        // Sicherstellen, dass der Player verfügbar ist und der Song läuft (wenn auch stumm)
         if (spotifyPlayer && gameState.isSongPlaying) {
-            // NEU: Zuerst Lautstärke setzen, dann springen
-            spotifyPlayer.setVolume(1.0) // Lautstärke auf 100% setzen
+            spotifyPlayer.setVolume(1.0)
                 .then(() => {
-                    // Den bereits laufenden Song zur zufälligen Position springen lassen
-                    // Der PLAY-Endpoint mit URIs ist auch zum Springen im laufenden Zustand nutzbar
+                    // Verwenden des Play-Endpoints mit position_ms ist der zuverlässigste Weg
+                    // um den Song an eine spezifische Stelle zu springen, auch wenn er schon läuft.
                     return fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
                         method: 'PUT',
                         body: JSON.stringify({
-                            uris: [gameState.currentTrack.uri], // Wieder die URI senden
+                            uris: [gameState.currentTrack.uri],
                             position_ms: randomStartPosition
                         }),
                         headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -797,21 +787,17 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
                     if (!response.ok) {
                         console.error("Fehler beim Abspielen/Springen des Tracks:", response.status, response.statusText);
                         alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-                        logoButton.classList.remove('inactive'); // Button wieder aktiv machen bei Fehler
+                        logoButton.classList.remove('inactive');
                         return;
                     }
 
-                    // Jetzt läuft der Song hörbar an der gewünschten Position
-                    // Starte den Timer für die Pausierung (oder die Auflösung in Speed-Round)
                     if (gameState.isSpeedRound) {
-                        startVisualSpeedRoundCountdown(); // Startet den 7s Countdown und löst danach auf
+                        startVisualSpeedRoundCountdown();
                     } else {
                         gameState.spotifyPlayTimeout = setTimeout(() => {
-                            // NEU: Lautstärke wieder auf 0 setzen, Song aber weiterlaufen lassen
                             spotifyPlayer.setVolume(0)
                                 .then(() => {
                                     console.log("Snippet beendet, Song stumm weiterlaufend.");
-                                    // Logo-Button wieder aktiv machen, wenn noch Versuche da sind
                                     if (gameState.attemptsMade < gameState.maxAttempts) {
                                         logoButton.classList.remove('inactive');
                                     }
@@ -823,12 +809,10 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
                 .catch(error => {
                     console.error("Netzwerkfehler beim Abspielen des Tracks (nach Sprung):", error);
                     alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
-                    logoButton.classList.remove('inactive'); // Button wieder aktiv machen bei Fehler
+                    logoButton.classList.remove('inactive');
                 });
         } else {
-            // Fallback für den unwahrscheinlichen Fall, dass der Player nicht bereit ist
-            // oder gameState.isSongPlaying false ist, obwohl es true sein sollte (z.B. nach Fehler)
-            console.warn("Song nicht vorgeladen oder Player nicht bereit. Starte regulären Play-Request als Fallback.");
+            console.warn("Song nicht vorgeladen oder Player nicht bereit. Fallback zum regulären Play-Request.");
             fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
                 method: 'PUT',
                 body: JSON.stringify({
@@ -843,14 +827,14 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
                     logoButton.classList.remove('inactive');
                     return;
                 }
-                spotifyPlayer.setVolume(1.0); // Bei Fallback direkt Lautstärke setzen
-                gameState.isSongPlaying = true; // Song spielt jetzt
-                
+                spotifyPlayer.setVolume(1.0);
+                gameState.isSongPlaying = true;
+
                 if (gameState.isSpeedRound) {
                     startVisualSpeedRoundCountdown();
                 } else {
                     gameState.spotifyPlayTimeout = setTimeout(() => {
-                        spotifyPlayer.setVolume(0) // Auch hier stumm schalten
+                        spotifyPlayer.setVolume(0)
                             .then(() => {
                                 console.log("Fallback Snippet beendet, Song stumm weiterlaufend.");
                                 if (gameState.attemptsMade < gameState.maxAttempts) {
@@ -867,7 +851,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
             });
         }
 
-        // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
             revealButton.classList.remove('hidden');
             revealButton.classList.remove('no-interaction');
@@ -876,21 +859,56 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 
     // AKTUALISIERT: showResolution-Funktion (Song pausieren)
     function showResolution() {
-        // ... (bestehender Code zum Stoppen von Timern etc.)
+        // Zuerst alle relevanten Timer und Intervalle stoppen
         clearTimeout(gameState.speedRoundTimeout);
         clearInterval(gameState.countdownInterval);
         clearTimeout(gameState.spotifyPlayTimeout);
         clearInterval(gameState.fadeInterval);
-
-        // NEU: Spotify Player explizit pausieren, da er im Hintergrund läuft
-        if (spotifyPlayer) { // Nur pausieren, wenn Player existiert
+        
+        // NEU: Sofort den Spotify Player pausieren, bevor UI-Änderungen gemacht werden
+        // Das sorgt für einen sauberen Übergang, falls der Song noch hörbar war.
+        if (spotifyPlayer && gameState.isSongPlaying) {
             spotifyPlayer.pause();
             gameState.isSongPlaying = false; // Zustand aktualisieren
             console.log("Song bei Auflösung explizit pausiert.");
         }
-        // ... (Restlicher Code bleibt wie gehabt)
-        // NEU: Song bei Auflösung abspielen
-        playSongForResolution(); // Diese Funktion startet den Song wieder neu für die Auflösung
+
+
+        // UI-Elemente ausblenden
+        countdownDisplay.classList.add('hidden');
+        countdownDisplay.classList.remove('countdown-animated');
+        countdownDisplay.innerText = '';
+
+        logoButton.classList.add('inactive', 'hidden');
+        revealButton.classList.add('hidden');
+        speedRoundTextDisplay.classList.add('hidden');
+        
+        // NEU: Antwort-Buttons ausblenden
+        correctButton.classList.add('hidden');
+        wrongButton.classList.add('hidden');
+
+
+        // Track-Infos im Reveal-Container aktualisieren
+        if (gameState.currentTrack) { // Sicherstellen, dass ein Track vorhanden ist
+            document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
+            document.getElementById('track-title').innerText = gameState.currentTrack.name;
+            document.getElementById('track-artist').innerText = gameState.currentTrack.artists.map(a => a.name).join(', ');
+            document.getElementById('track-album').innerText = gameState.currentTrack.album.name; // ID korrigiert
+            document.getElementById('track-year').innerText = `(${gameState.currentTrack.album.release_date.substring(0, 4)})`; // ID korrigiert
+        } else {
+            console.warn("Kein aktueller Track beim Versuch, die Auflösung anzuzeigen.");
+            // Hier könnten Sie Fallback-Texte anzeigen oder zurück zur Genre-Auswahl
+            document.getElementById('track-title').innerText = "Song-Informationen nicht verfügbar";
+        }
+
+        // Reveal-Container einblenden (dies ist der eigentliche Screen-Wechsel)
+        revealContainer.classList.remove('hidden');
+        
+        // Speichere den Zustand: Auflösung-Bildschirm
+        lastGameScreenVisible = 'reveal-container';
+
+        // Song bei Auflösung abspielen (startet nach dem Screen-Wechsel)
+        playSongForResolution();
     }
 
     // NEU: Funktion zum Abspielen des Songs bei Auflösung
@@ -900,102 +918,114 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
             return;
         }
 
-        const startPositionMs = 30 * 1000; // 30 Sekunden in Millisekunden
-        const targetVolume = 80; // Ziel-Lautstärke in %
-        const fadeDuration = 2000; // Fade-In Dauer in Millisekunden (z.B. 2 Sekunden)
-        const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
-        const intervalTime = fadeDuration / (targetVolume / fadeStep); // Intervallzeit für jeden Schritt
+        const startPositionMs = 30 * 1000;
+        const targetVolume = 80;
+        const fadeDuration = 2000;
+        const fadeStep = 5;
+        const intervalTime = fadeDuration / (targetVolume / fadeStep);
 
         // Sicherstellen, dass die Lautstärke auf 0 gesetzt ist, bevor wir starten
-        spotifyPlayer.setVolume(0).then(() => {
-            gameState.currentSongVolume = 0; // Setze interne Volume auf 0
+        try {
+            await spotifyPlayer.setVolume(0);
+            gameState.currentSongVolume = 0;
 
-            // Song bei Sekunde 30 starten
-            fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
+            const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
                 method: 'PUT',
                 body: JSON.stringify({
                     uris: [gameState.currentTrack.uri],
                     position_ms: startPositionMs
                 }),
                 headers: { 'Authorization': `Bearer ${accessToken}` }
-            }).then(response => {
-                if (!response.ok) {
-                    console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
-                    return;
-                }
-                gameState.isSongPlaying = true; // Song spielt jetzt
-
-                // Starte Fade-In
-                gameState.fadeInterval = setInterval(() => {
-                    if (gameState.currentSongVolume < targetVolume) {
-                        gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
-                        spotifyPlayer.setVolume(gameState.currentSongVolume / 100); // Spotify Volume erwartet 0.0 bis 1.0
-                    } else {
-                        clearInterval(gameState.fadeInterval); // Fade-In beendet
-                    }
-                }, intervalTime); // Intervall für den Fade-In
-
-                // Optional: Timer, um den Song am Ende zu pausieren, falls nicht geklickt wird
-                // Dies ist nicht unbedingt nötig, da Spotify den Track automatisch beendet.
-                // Wenn der Track sehr lang ist und du ihn explizit pausieren willst:
-                // const remainingTime = gameState.currentTrack.duration_ms - startPositionMs;
-                // gameState.spotifyPlayTimeout = setTimeout(() => {
-                //    if (gameState.isSongPlaying && spotifyPlayer) {
-                //        spotifyPlayer.pause();
-                //        gameState.isSongPlaying = false;
-                //    }
-                // }, remainingTime + 1000); // Kleine Pufferzeit
-            }).catch(error => {
-                console.error("Netzwerkfehler beim Starten des Songs für Auflösung:", error);
             });
-        }).catch(error => {
-            console.error("Fehler beim Setzen der Initiallautstärke auf 0:", error);
-        });
+
+            if (!response.ok) {
+                console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
+                return;
+            }
+            gameState.isSongPlaying = true;
+
+            // Starte Fade-In
+            gameState.fadeInterval = setInterval(() => {
+                if (gameState.currentSongVolume < targetVolume) {
+                    gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
+                    spotifyPlayer.setVolume(gameState.currentSongVolume / 100);
+                } else {
+                    clearInterval(gameState.fadeInterval);
+                }
+            }, intervalTime);
+        } catch (error) {
+            console.error("Fehler in playSongForResolution:", error);
+            alert("Konnte den Auflösungs-Song nicht abspielen. Bitte versuchen Sie es erneut.");
+        }
     }
 
-    // NEU: Funktion für Fade-Out
+    // AKTUALISIERT: Funktion für Fade-Out
     function fadeAudioOut() {
         return new Promise(resolve => {
             if (!spotifyPlayer) {
-                resolve(); // Nichts zu faden
+                console.log("fadeAudioOut: Spotify Player nicht verfügbar, sofort aufgelöst.");
+                resolve(); // Immer auflösen, auch wenn der Player nicht da ist
                 return;
             }
 
             clearInterval(gameState.fadeInterval); // Sicherstellen, dass kein Fade-In mehr läuft
             clearTimeout(gameState.spotifyPlayTimeout); // Sicherstellen, dass kein Snippet-Timer mehr läuft
-
-            // Falls der Song gerade hörbar ist, starte den Fade-Out
-            if (gameState.isSongPlaying && gameState.currentSongVolume > 0) { // Prüfen, ob der Song aktiv spielt und hörbar ist
-                const fadeDuration = 500; // Fade-Out Dauer in Millisekunden (z.B. 0.5 Sekunden)
-                const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
-                const currentVolumePercent = gameState.currentSongVolume; // Letzte Lautstärke vom Fade-In oder 100%
-
-                // Berechne die Intervallzeit basierend auf der aktuellen Lautstärke
-                const intervalTime = fadeDuration / (currentVolumePercent / fadeStep);
-
-                gameState.fadeInterval = setInterval(() => {
-                    if (gameState.currentSongVolume > 0) {
-                        gameState.currentSongVolume = Math.max(0, gameState.currentSongVolume - fadeStep);
-                        spotifyPlayer.setVolume(gameState.currentSongVolume / 100);
-                    } else {
-                        clearInterval(gameState.fadeInterval);
-                        gameState.fadeInterval = null;
-                        // Song nach Fade-Out pausieren, falls er vorher spielte und nun nicht mehr gebraucht wird
-                        spotifyPlayer.pause(); // Explizites Pausieren
-                        gameState.isSongPlaying = false; // Zustand aktualisieren
-                        resolve(); // Fade-Out abgeschlossen
-                    }
-                }, intervalTime);
-            } else {
-                // Wenn der Song nicht spielt oder bereits stumm ist, direkt auflösen
-                spotifyPlayer.setVolume(0).then(() => { // Sicherheitshalber Lautstärke auf 0
-                    if (spotifyPlayer) spotifyPlayer.pause(); // Und pausieren
-                    gameState.isSongPlaying = false;
-                    resolve();
-                }).catch(() => resolve()); // Im Fehlerfall auch auflösen
+            
+            // Wenn der Song bereits stumm ist oder pausiert war, direkt auflösen und pausieren
+            if (!gameState.isSongPlaying || gameState.currentSongVolume <= 0) {
+                 spotifyPlayer.setVolume(0)
+                    .then(() => spotifyPlayer.pause())
+                    .then(() => {
+                        gameState.isSongPlaying = false;
+                        console.log("fadeAudioOut: Song war bereits stumm oder pausiert, direkt pausiert und aufgelöst.");
+                        resolve();
+                    })
+                    .catch(error => {
+                        console.error("fadeAudioOut: Fehler beim Stummschalten/Pausieren eines nicht spielenden Songs:", error);
+                        resolve(); // Auch bei Fehler auflösen
+                    });
+                return;
             }
+
+
+            // Fade-Out starten
+            const fadeDuration = 500;
+            const fadeStep = 5;
+            const initialVolume = gameState.currentSongVolume || 100; // Wenn currentSongVolume nicht gesetzt ist, 100% annehmen
+            const intervalTime = fadeDuration / (initialVolume / fadeStep);
+
+            gameState.fadeInterval = setInterval(() => {
+                if (gameState.currentSongVolume > 0) {
+                    gameState.currentSongVolume = Math.max(0, gameState.currentSongVolume - fadeStep);
+                    spotifyPlayer.setVolume(gameState.currentSongVolume / 100);
+                } else {
+                    clearInterval(gameState.fadeInterval);
+                    gameState.fadeInterval = null;
+                    // Song nach vollständigem Fade-Out pausieren
+                    spotifyPlayer.pause();
+                    gameState.isSongPlaying = false;
+                    console.log("fadeAudioOut: Song vollständig ausgeblendet und pausiert.");
+                    resolve();
+                }
+            }, intervalTime);
         });
     }
+
+      // AKTUALISIERT: revealButton.addEventListener (Wichtig für den Screen-Wechsel)
+    revealButton.addEventListener('click', async () => {
+        // Zuerst den Button inaktiv machen
+        revealButton.classList.add('no-interaction');
+
+        // Kurze Verzögerung für die Button-Animation
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Audio ausblenden und pausieren (wartet, bis fadeAudioOut abgeschlossen ist)
+        await fadeAudioOut();
+        
+        // Erst danach den Auflösungsbildschirm anzeigen
+        showResolution();
+    });
+
 
 
     // ------------------------mit verzögerung zur Auflösung:.............................................
@@ -1024,18 +1054,11 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 
         // NEU: Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
         fadeAudioOut().then(() => {
-            // Dieser Code wird ausgeführt, NACHDEM der Fade-Out beendet ist
-            // Der Song sollte hier bereits pausiert sein durch fadeAudioOut
-            // if (gameState.isSongPlaying && spotifyPlayer) { // Diese Prüfung ist jetzt redundant
-            //    spotifyPlayer.pause(); // Da bereits im fadeAudioOut() passiert
-            //    gameState.isSongPlaying = false;
-            // }
-
-            let pointsAwarded = 0; // NEU: Variable für die vergebenen Punkte
+            // Der Song sollte hier bereits durch fadeAudioOut pausiert sein
+            let pointsAwarded = 0;
 
             if (isCorrect) {
-                // 5.1: Punkte berechnen und speichern
-                pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1)); // Punkte berechnen
+                pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1));
                 if (gameState.currentPlayer === 1) {
                     gameState.player1Score += pointsAwarded;
                 } else {
@@ -1043,18 +1066,15 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
                 }
             }
 
-            // NEU: Animation der vergebenen Punkte anzeigen
             displayPointsAnimation(pointsAwarded, gameState.currentPlayer)
-                .then(() => { // <--- HIER beginnt der .then()-Block für displayPointsAnimation
-                    // 4.4: Spieler wechseln
+                .then(() => {
                     gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
                     appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
 
-                    // Setze den Zustand zurück, bevor die nächste Runde beginnt
                     lastGameScreenVisible = '';
-                    setTimeout(showDiceScreen, 500); // Kurze Pause vor der nächsten Runde
-                }); // <--- HIER endet der .then()-Block für displayPointsAnimation
-        }); // <--- HIER endet der .then()-Block für fadeAudioOut
+                    setTimeout(showDiceScreen, 500);
+                });
+        });
     }
 
     // NEU: Funktion zur Anzeige der animierten Punkte
