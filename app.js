@@ -234,15 +234,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (timeLeftMs <= 0) {
             clearInterval(gameState.tokenRefreshInterval);
-            tokenTimerDisplay.innerText = "Token abgelaufen! Bitte neu anmelden.";
+            tokenTimerDisplay.innerText = "Sitzung abgelaufen";
             tokenTimerDisplay.style.color = 'var(--red)'; // Optional: Rot einfärben
             return;
         }
 
         const minutes = Math.floor(timeLeftMs / (60 * 1000));
-        const seconds = Math.floor((timeLeftMs % (60 * 1000)) / 1000);
+        // const seconds = Math.floor((timeLeftMs % (60 * 1000)) / 1000); -- für sekunden anzeige
 
-        tokenTimerDisplay.innerText = `Token läuft ab in: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // tokenTimerDisplay.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`; -- ffür sekunden anzeige
+        tokenTimerDisplay.innerText = `${minutes}`; // für nur minuten anzeige
         tokenTimerDisplay.style.color = 'var(--white)'; // Sicherstellen, dass die Farbe weiß ist
     }
 
