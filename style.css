@@ -304,8 +304,8 @@ body, html {
 
 .genre-button:hover:not(:disabled) {
     transform: scale(1.03);
-    background-color: var(--white);
-    color: var(--black);
+    /* background-color: var(--white); */
+    /* color: var(--black); */
 }
 .genre-button:disabled {
     opacity: 0.5;
