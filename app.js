@@ -698,43 +698,38 @@ async function getTrack(selectedGenreName) {
 }
 
 async function prepareAndShowRateScreen(genre) {
-    // Anzeigen eines Lade-Overlays hier wäre ideal, um Wartezeit zu überbrücken
-    // loadingOverlay.classList.remove('hidden'); // Beispiel
-
     gameState.currentTrack = await getTrack(genre);
 
-    // NEU: Prüfen, ob ein Track erfolgreich geladen wurde
     if (!gameState.currentTrack) {
-        // Wenn getTrack null zurückgegeben hat, gab es ein Problem.
-        // Der Benutzer wurde bereits per Alert informiert.
-        // Wir gehen direkt zurück zum Genre-Auswahlbildschirm.
-        // loadingOverlay.classList.add('hidden'); // Lade-Overlay ausblenden
-        showGenreScreen(); // Zurück zur Genre-Auswahl
-        return; // Funktion beenden
+        showGenreScreen();
+        return;
     }
 
-    // NEU: Preloading des Tracks im Spotify Player
-    if (spotifyPlayer && deviceId) { // Sicherstellen, dass Player und Gerät bereit sind
+    if (spotifyPlayer && deviceId) {
         try {
-            // await spotifyPlayer.load(gameState.currentTrack.uri); // Das war für eine frühere SDK Version
-            // Die moderne Methode ist play mit pause aufrufen.
-            // Zuerst den Player starten, dann pausieren, um das Buffering zu initiieren
+            // NEU: Song mit Lautstärke 0 starten, um ihn zu puffern
             await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
                 method: 'PUT',
                 body: JSON.stringify({
                     uris: [gameState.currentTrack.uri],
-                    // Optional: Start an einer bestimmten Position für schnelleres Buffering
-                    position_ms: 0 // Startet den Song am Anfang, um das Buffering zu initiieren
+                    // Wir starten den Song am Anfang, um das Buffering zu initiieren.
+                    // Die tatsächliche Startposition für das Snippet wird später in playTrackSnippet gewählt.
+                    position_ms: 0
                 }),
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             });
-            await spotifyPlayer.pause(); // Sofort pausieren, damit es nicht abgespielt wird
-            console.log(`Track "${gameState.currentTrack.name}" erfolgreich zum Buffern geladen und pausiert.`);
+
+            // Wichtig: Lautstärke SOFORT auf 0 setzen
+            await spotifyPlayer.setVolume(0);
+            // Wir setzen isSongPlaying auf true, um anzuzeigen, dass der Player aktiv ist und buffert,
+            // auch wenn der Song stumm ist.
+            gameState.isSongPlaying = true;
+            console.log(`Track "${gameState.currentTrack.name}" erfolgreich stumm geladen und zum Abspielen bereit.`);
+
         } catch (error) {
             console.warn("Fehler beim Vorladen/Buffern des Tracks im Spotify Player:", error);
             alert(`Konnte den Song "${gameState.currentTrack.name}" nicht vorladen. Das Abspielen könnte verzögert sein oder fehlschlagen. (Fehler: ${error.message})`);
-            // Entscheidung: Trotz Fehler fortfahren oder zurück zum Genre-Screen?
-            // Für ein besseres Erlebnis wäre ein Rücksprung und erneuter Versuch hier sinnvoll.
+            // Optional: Wenn das Vorladen so kritisch ist, dass das Spiel ohne es keinen Sinn macht:
             // showGenreScreen();
             // return;
         }
@@ -742,35 +737,76 @@ async function prepareAndShowRateScreen(genre) {
         console.warn("Spotify Player oder Device ID nicht bereit für Preloading.");
     }
 
-    // loadingOverlay.classList.add('hidden'); // Lade-Overlay ausblenden
-
     logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-    // Wichtig: removeEventListener VOR addEventListener, um Mehrfach-Listener zu vermeiden
     logoButton.removeEventListener('click', playTrackSnippet);
     logoButton.addEventListener('click', playTrackSnippet);
 
-    // Speichere den Zustand: Raten-Bildschirm
-    lastGameScreenVisible = 'reveal-container'; // Bleibt bestehen
+    lastGameScreenVisible = 'reveal-container';
 }
 
-    function playTrackSnippet() {
-        if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
-            // Im normalen Modus: Keine weiteren Versuche
-            return;
-        }
-        if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
-            // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
-            return;
-        }
+function playTrackSnippet() {
+    if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+        return;
+    }
+    if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
+        return;
+    }
 
-        triggerBounce(logoButton);
-        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
-        gameState.attemptsMade++;
+    triggerBounce(logoButton);
+    logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
+    gameState.attemptsMade++;
 
-        const trackDurationMs = gameState.currentTrack.duration_ms;
-        const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
+    const trackDurationMs = gameState.currentTrack.duration_ms;
+    const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
+    // NEU: Nur Lautstärke auf 100% setzen und zur zufälligen Position springen
+    // Der Song wurde bereits in prepareAndShowRateScreen mit Lautstärke 0 gestartet.
+    if (spotifyPlayer && gameState.isSongPlaying) { // Sicherstellen, dass der Player aktiv ist und der Song geladen wurde
+        spotifyPlayer.setVolume(1.0) // Lautstärke auf 100% setzen
+            .then(() => {
+                // Dann den Song zur gewünschten Startposition springen lassen und abspielen
+                return fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        uris: [gameState.currentTrack.uri],
+                        position_ms: randomStartPosition
+                    }),
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText, `Playlist ID: ${gameState.currentTrack.id}`);
+                    alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
+                    logoButton.classList.remove('inactive');
+                    return;
+                }
+                // gameState.isSongPlaying ist bereits true vom Preloading
+                // Hier beginnt die Zeitmessung für das Snippet
+                if (gameState.isSpeedRound) {
+                    startVisualSpeedRoundCountdown();
+                    // Der Song wird nur einmal gespielt. Nach 10s wird aufgelöst.
+                    // spotifyPlayer.pause() wird im countdown-timer gemacht oder durch showResolution
+                } else {
+                    // Normaler Modus: Song pausiert nach trackDuration
+                    gameState.spotifyPlayTimeout = setTimeout(() => {
+                        spotifyPlayer.pause();
+                        gameState.isSongPlaying = false;
+                        if (gameState.attemptsMade < gameState.maxAttempts) {
+                            logoButton.classList.remove('inactive'); // Wieder aktiv, wenn noch Versuche da sind
+                        }
+                    }, gameState.trackDuration);
+                }
+            }).catch(error => {
+                console.error("Netzwerkfehler beim Abspielen des Tracks (nach Preload):", error);
+                alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+                logoButton.classList.remove('inactive');
+            });
+    } else {
+        // Fallback: Wenn der Song aus irgendeinem Grund nicht vorgeladen wurde oder der Player nicht bereit ist,
+        // den Song regulär starten (dies sollte mit der neuen Preload-Logik seltener passieren)
+        console.warn("Song nicht vorgeladen oder Player nicht bereit, starte regulären Play-Request.");
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // Ursprünglicher Aufruf hier
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
@@ -778,42 +814,39 @@ async function prepareAndShowRateScreen(genre) {
             }),
             headers: { 'Authorization': `Bearer ${accessToken}` }
         }).then(response => {
-            if (!response.ok) { // Fehlerbehandlung für Play-Request
+            if (!response.ok) {
                 console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
                 alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-                logoButton.classList.remove('inactive'); // Button wieder aktiv machen
+                logoButton.classList.remove('inactive');
                 return;
             }
-            gameState.isSongPlaying = true; // Song spielt
+            gameState.isSongPlaying = true;
 
             if (gameState.isSpeedRound) {
-                startVisualSpeedRoundCountdown(); // Startet den 10s Countdown
-                // Der Song wird nur einmal gespielt. Nach 10s wird aufgelöst.
-                // spotifyPlayer.pause() wird im countdown-timer gemacht oder durch showResolution
+                startVisualSpeedRoundCountdown();
             } else {
-                // Normaler Modus: Song pausiert nach trackDuration
                 gameState.spotifyPlayTimeout = setTimeout(() => {
                     spotifyPlayer.pause();
                     gameState.isSongPlaying = false;
                     if (gameState.attemptsMade < gameState.maxAttempts) {
-                        logoButton.classList.remove('inactive'); // Wieder aktiv, wenn noch Versuche da sind
+                        logoButton.classList.remove('inactive');
                     }
                 }, gameState.trackDuration);
             }
-        }).catch(error => { // Fehlerbehandlung für den Fetch-Request selbst
-            console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
+        }).catch(error => {
+            console.error("Netzwerkfehler beim Abspielen des Tracks (Fallback):", error);
             alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
             logoButton.classList.remove('inactive');
         });
-
-        // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
-        if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
-            revealButton.classList.remove('hidden');
-
-            // --------------------------------------- wenn verzögerung nicht klappt, nächste zeile wieder löschen --------------------------------------
-            revealButton.classList.remove('no-interaction');
-        }
     }
+
+
+    // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
+    if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
+        revealButton.classList.remove('hidden');
+        revealButton.classList.remove('no-interaction');
+    }
+}
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
