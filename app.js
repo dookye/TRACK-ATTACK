@@ -65,12 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Konfiguration für jeden Würfelwert
     const diceConfig = {
-        1: { attempts: 1, duration: 7000 },
-        2: { attempts: 2, duration: 7000 },
-        3: { attempts: 3, duration: 7000 },
-        4: { attempts: 4, duration: 7000 },
-        5: { attempts: 5, duration: 7000 },
-        7: { attempts: 7, duration: 2000 }
+        1: { attempts: 1, duration: 7100 },
+        2: { attempts: 2, duration: 7100 },
+        3: { attempts: 3, duration: 7100 },
+        4: { attempts: 4, duration: 7100 },
+        5: { attempts: 5, duration: 7100 },
+        7: { attempts: 7, duration: 2100 }
     };
 
     // --- Spielstatus-Variablen ---
