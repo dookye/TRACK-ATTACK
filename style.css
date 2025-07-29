@@ -581,7 +581,7 @@ body, html {
     position: absolute;
     left: 0; /* Links positioniert */
     top: 10%; 
-    max-height: 80vh;
+    max-height: 95vh;
     width: 35%; /* Breite der Scrollbox anpassen */
     gap: 15;
     padding: 20; 
