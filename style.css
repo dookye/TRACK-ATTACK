@@ -662,34 +662,54 @@ body, html {
 
 /* --------------- Ladeanzeige für den Song --------------
 #loading-overlay {
-    position: absolute; /* Jetzt absolut zum #logo-button-Container positioniert */
-    bottom: -30px; /* Beispiel: 30px unterhalb des logo-button-Containers */
-    left: 50%;
-    transform: translateX(-50%); /* Horizontal zentrieren */
-    
-    width: auto;
-    height: auto;
-    background-color: transparent;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10; /* Stellen Sie sicher, dass es über anderen Elementen liegt, aber nicht zu hoch */
+    position: fixed; /* Bleibt an Ort und Stelle, auch beim Scrollen */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Dunkler, halbtransparenter Hintergrund */
+    display: flex; /* Für zentrierte Ausrichtung des Spinners */
+    justify-content: center; /* Zentriert horizontal */
+    align-items: center; /* Zentriert vertikal */
+    z-index: 1000; /* Stellt sicher, dass es über allen anderen Elementen liegt */
+    transition: opacity 0.3s ease; /* Sanfteres Ein- und Ausblenden */
+    opacity: 1; /* Standardmäßig sichtbar, wird durch 'hidden' gesteuert */
 }
 
 #loading-overlay.hidden {
-    display: none;
+    opacity: 0; /* Unsichtbar machen, aber noch im DOM */
+    pointer-events: none; /* Verhindert Klicks, wenn unsichtbar */
 }
 
+/* Der eigentliche Spinner (Beispiel: rotierender Kreis) */
 .spinner {
-    border: 3px solid rgba(255, 255, 255, 0.3); /* Etwas kleinerer Rand, da es kleiner sein soll */
-    border-top: 3px solid #fff;
-    border-radius: 50%;
-    width: 25px; /* Kleinerer Spinner */
-    height: 25px; /* Kleinerer Spinner */
-    animation: spin 1s linear infinite;
+    border: 8px solid rgba(255, 255, 255, 0.3); /* Heller Kreisrand */
+    border-top: 8px solid var(--player1-color); /* Farbiger Teil des Kreises */
+    border-radius: 50%; /* Macht es rund */
+    width: 60px; /* Größe des Spinners */
+    height: 60px;
+    animation: spin 1s linear infinite; /* Animationsdefinition */
 }
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* Optional: Weitere Styles für den Logo-Button, um sicherzustellen, dass er nicht verschoben wird */
+/* Wenn der Logo-Button flexbox/grid verwendet, muss hier evtl. noch angepasst werden,
+   damit er seine Position unabhängig vom Spinner beibehält.
+   Im Allgemeinen sollte 'position: absolute' oder 'fixed' für das Overlay das Problem lösen. */
+#logo-button {
+    /* Stelle sicher, dass logo-button selbst zentriert und unbeeinflusst ist */
+    position: absolute; /* Oder relative, je nach deinem Layout-Kontext */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* Eventuell weitere Anpassungen wie z-index, falls es vom Spinner verdeckt wird */
+    z-index: 50; /* Muss niedriger sein als der Spinner-Overlay */
+}
+
+/* Oder, wenn logo-button als flex-item in einem Container ist, und sich bewegt: */
+/* Dein game-screen Container muss ggf. 'display: flex; justify-content: center; align-items: center;' haben,
+   damit der Logo-Button immer mittig bleibt. */
