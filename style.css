@@ -270,7 +270,7 @@ body, html {
     padding: 20px;
     
     /* --- NEU/AKTUALISIERT: Für den scrollbaren Bereich --- */
-    max-height: 80vh; /* Maximale Höhe: 70% der Viewport-Höhe. 
+    max-height: 95vh; /* Maximale Höhe: 70% der Viewport-Höhe. 
                          Du kannst diesen Wert anpassen (z.B. 60vh, 500px), 
                          je nachdem, wie viel Platz du für andere Elemente lassen möchtest. */
     overflow-y: auto; /* Erlaubt vertikales Scrollen, wenn der Inhalt die max-height überschreitet */
