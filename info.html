@@ -6,6 +6,11 @@
     <title>TRACK ATTACK - Spielregeln</title>
     <link rel="stylesheet" href="style.css">
     <style>
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
         body {
             font-family: Arial, sans-serif;
             background-color: var(--black);
@@ -29,6 +34,8 @@
             margin-bottom: 20px;
             overflow-y: auto;
             max-height: calc(100vh - 150px);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         .info-content h1 {
@@ -50,6 +57,12 @@
 
         .info-content ul {
             padding-left: 20px;
+        }
+
+        table {
+            width: 100%;
+            table-layout: fixed;
+            word-wrap: break-word;
         }
 
         .back-button-container {
@@ -150,25 +163,27 @@
         <h2>Punktesystem</h2>
         <p>Nur der erste Hörversuch ist kostenlos. Weitere Versuche kosten je -1 Punkt. Falsch raten bringt 0 Punkte. Die Auswertung erfolgt am Ende.</p>
 
-        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-            <thead>
-                <tr style="background-color: rgba(255,255,255,0.2);">
-                    <th>Würfelwert</th>
-                    <th>Max. Punkte</th>
-                    <th>Hörversuche</th>
-                    <th>Abspieldauer</th>
-                    <th>Punkteabzug pro Extra-Versuch</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td>1</td><td>1</td><td>1</td><td>7 Sekunden</td><td>Entfällt</td></tr>
-                <tr><td>2</td><td>2</td><td>2</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
-                <tr><td>3</td><td>3</td><td>3</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
-                <tr><td>4</td><td>4</td><td>4</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
-                <tr><td>5</td><td>5</td><td>5</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
-                <tr><td>6 (TRACK ATTACK)</td><td>7</td><td>7</td><td>2 Sekunden</td><td>-1 Punkt</td></tr>
-            </tbody>
-        </table>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr style="background-color: rgba(255,255,255,0.2);">
+                        <th>Würfelwert</th>
+                        <th>Max. Punkte</th>
+                        <th>Hörversuche</th>
+                        <th>Abspieldauer</th>
+                        <th>Punkteabzug pro Extra-Versuch</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>1</td><td>1</td><td>1</td><td>7 Sekunden</td><td>Entfällt</td></tr>
+                    <tr><td>2</td><td>2</td><td>2</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
+                    <tr><td>3</td><td>3</td><td>3</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
+                    <tr><td>4</td><td>4</td><td>4</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
+                    <tr><td>5</td><td>5</td><td>5</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
+                    <tr><td>6 (TRACK ATTACK)</td><td>7</td><td>7</td><td>2 Sekunden</td><td>-1 Punkt</td></tr>
+                </tbody>
+            </table>
+        </div>
 
         <h2>Beispiel</h2>
         <p>Würfel 5 → 5 Punkte möglich. Du hörst den Song regulär (1. Versuch) und dann zwei weitere Male (zusätzliche Versuche). Bei richtiger Antwort erhältst du 5 - 2 = 3 Punkte.</p>
