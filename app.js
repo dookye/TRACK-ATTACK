@@ -140,7 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'alte schlagerschoten': ['68SxsyVUJ1DEGByUcEMrr4', '7dmg14Fnm9stKYkU4IthAG'],
         lovesongs: ['6oNsYDhN95gkENsdFcAwTh'],
         'serien unserer kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
-        'deutscher hip hop': ['1bG3S6G5BmmgN08EBDfzE5']
+        'deutscher hip hop': ['1bG3S6G5BmmgN08EBDfzE5'],
+        weihnachten: ['0cy6DJ0CIg050McHHtRldr', '2RJP45Q9nPa5hucFyukeLF']
     };
 
     //=======================================================================
