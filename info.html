@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRACK ATTACK - Spielregeln</title>
-    <link rel="stylesheet" href="style.css"> <style>
-        /* Grundlegendes Styling für die Infoseite, anpassbar an dein Design */
+    <link rel="stylesheet" href="style.css">
+    <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: var(--black); /* Oder deine Hintergrundfarbe */
+            background-color: var(--black);
             color: var(--white);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Inhalt oben ausrichten */
+            justify-content: flex-start;
             min-height: 100vh;
             padding: 20px;
             box-sizing: border-box;
@@ -21,19 +21,19 @@
 
         .info-content {
             max-width: 800px;
-            background-color: rgba(255, 255, 255, 0.1); /* Leicht transparenter Hintergrund */
+            background-color: rgba(255, 255, 255, 0.1);
             padding: 30px;
             border-radius: 15px;
             text-align: left;
-            margin-top: 50px; /* Abstand nach oben */
+            margin-top: 50px;
             margin-bottom: 20px;
-            overflow-y: auto; /* Wenn der Inhalt länger ist, wird gescrollt */
-            max-height: calc(100vh - 150px); /* Maximale Höhe, damit der Button noch sichtbar ist */
+            overflow-y: auto;
+            max-height: calc(100vh - 150px);
         }
 
         .info-content h1 {
             text-align: center;
-            color: var(--player1-color); /* Oder eine passende Akzentfarbe */
+            color: var(--player1-color);
             margin-bottom: 20px;
         }
 
@@ -60,7 +60,7 @@
         }
 
         .back-button {
-            background-color: var(--player1-color); /* Deine Akzentfarbe */
+            background-color: var(--player1-color);
             color: var(--white);
             border: none;
             padding: 15px 30px;
@@ -68,12 +68,12 @@
             font-size: 1.2em;
             cursor: pointer;
             transition: background-color 0.3s ease;
-            text-decoration: none; /* Für den Link-Stil */
-            display: inline-block; /* Für padding und Abstände */
+            text-decoration: none;
+            display: inline-block;
         }
 
         .back-button:hover {
-            background-color: var(--player2-color); /* Hover-Farbe */
+            background-color: var(--player2-color);
         }
     </style>
 </head>
@@ -81,27 +81,99 @@
     <div class="info-content">
         <h1>TRACK ATTACK - Spielregeln</h1>
 
-        <p>Willkommen bei TRACK ATTACK! Teste dein Musikwissen und tritt gegen deine Freunde an. Schaffst du es, die Songs zu erraten?</p>
+        <p>Willkommen bei <strong>TRACK ATTACK</strong>, dem spannungsgeladenen Music Guessing Game! Fordere deine Freunde heraus und beweise, wer von euch den umfassendsten Musikgeschmack hat.</p>
+        <p>Für dieses Spiel benötigst du ein smartes Gerät mit Bildschirm sowie einen aktiven Spotify Premium-Account. Optional kommen ein Würfel und ein beliebiger Gegenstand – der sogenannte „Trackitacki“ – zum Einsatz.</p>
 
-        <h2>So funktioniert's:</h2>
+        <h2>Spielmaterial</h2>
         <ul>
-            <li>Jeder Spieler würfelt abwechselnd, um die Anzahl der Versuche und die Länge des Musik-Snippets zu bestimmen.</li>
-            <li>Hör dir das Snippet an und versuche, den Songtitel und/oder den Interpreten zu erraten.</li>
-            <li>Wähle "Richtig" oder "Falsch", nachdem du geraten hast oder die "Auflösen"-Taste gedrückt hast.</li>
-            <li>Punkte gibt es für richtige Antworten – je schneller du rätst und je weniger Versuche du brauchst, desto mehr Punkte!</li>
+            <li>Ein digitales Würfel-Feature ist enthalten. Für mehr Spaß: verwendet einen echten Würfel (1–6).</li>
+            <li>Ein beliebiger Gegenstand als „Trackitacki“.</li>
         </ul>
 
-        <h2>Würfel-Erklärung:</h2>
-        <p>Jeder Würfelwert beeinflusst die Spieldauer und die Anzahl der dir zur Verfügung stehenden Hinweise:</p>
+        <h2>Spielvorbereitung</h2>
+        <p>Um TRACK ATTACK wie eine App zu nutzen, füge es deinem Startbildschirm hinzu:</p>
         <ul>
-            <li><strong>Würfel 1-5:</strong> Du erhältst entsprechend viele Versuche, um den Song zu erraten. Das Musik-Snippet ist 7 Sekunden lang.</li>
-            <li><strong>Würfel 7 (Speed-Round):</strong> Dies ist eine schnelle Runde! Du hast nur einen einzigen Versuch und musst den Song innerhalb von 7 Sekunden erraten. Aber Achtung: Eines der Genres ist bei dieser Runde nicht verfügbar.</li>
+            <li>Tippe im Browser auf das Menü (meist drei Punkte oder ein Teilen-Symbol).</li>
+            <li>Wähle „Zum Startbildschirm hinzufügen“.</li>
+        </ul>
+        <p>Fertig! Du findest nun das TRACK ATTACK-Logo als App-Symbol auf deinem Startbildschirm.</p>
+
+        <h2>Anmeldung</h2>
+        <p>Öffne die App und melde dich mit deinem Spotify Premium-Account an. Ohne Premium-Konto ist das Spiel nicht nutzbar.</p>
+
+        <h2>Spielablauf</h2>
+        <p>Gespielt wird in Runden zwischen Spieler 1 (Farbe: Blau) und Spieler 2 (Farbe: Pink), bis jeder 10 Songs geraten hat. Der Hintergrund zeigt an, wer an der Reihe ist.</p>
+
+        <h3>1. Genreauswahl</h3>
+        <p>Wähle zu Beginn deine bevorzugten Genres (mindestens zwei).</p>
+
+        <h3>2. Würfeln & Spielbedingungen</h3>
+        <p>Würfle und bestätige deinen Wurf. Die Augenzahl bestimmt:</p>
+        <ul>
+            <li>Maximale Punktzahl</li>
+            <li>Anzahl der Hörversuche</li>
+            <li>Abspieldauer des Snippets</li>
         </ul>
 
-        <h2>Ziel des Spiels:</h2>
-        <p>Sammle die meisten Punkte, indem du die Songs schneller und effizienter errätst als dein Gegner!</p>
+        <h3>3. Genre-Wahl nach Wurf</h3>
+        <ul>
+            <li><strong>Würfel 1–5:</strong> Ein zufälliges Genre wird ausgewählt und muss bestätigt werden.</li>
+            <li><strong>Würfel 6 (TRACK ATTACK):</strong> Ein Genre wird entfernt. Wähle aus den verbleibenden Genres.</li>
+        </ul>
 
-        <p>Viel Spaß beim Raten und möge der Beste gewinnen!</p>
+        <h3>4. Song hören & raten</h3>
+        <p>Ein Snippet wird entsprechend der Würfelzahl abgespielt. Errate den Songtitel oder den Interpreten (optional auch das Erscheinungsjahr).</p>
+        <p>Drücke „Auflösen“, um die Lösung zu sehen. Dann „Richtig“ oder „Falsch“ auswählen.</p>
+        <p>Jeder weitere Hörversuch kostet 1 Punkt. Der erste Versuch ist kostenlos.</p>
+
+        <h2>Der Trackitacki</h2>
+        <p>Errätst du sowohl Titel als auch Interpreten korrekt, erhältst du den Trackitacki – selbst wenn er deinem Gegner gehört.</p>
+        <p>Nutze ihn:</p>
+        <ul>
+            <li>In der Würfelphase deines Gegners: Zwinge ihn zu einem neuen Wurf.</li>
+            <li>In deiner eigenen Runde: Würfle erneut.</li>
+        </ul>
+        <p>Nach dem Einsatz wird der Trackitacki zurückgelegt. Am Spielende bringt er +1 Punkt.</p>
+
+        <h2>Sonderevent: Speed-Round</h2>
+        <p>Jeder Spieler erlebt einmal eine überraschende Speed-Runde. Nach der Genre-Wahl angekündigt:</p>
+        <ul>
+            <li>Snippet läuft 7 Sekunden.</li>
+            <li>Countdown läuft – automatische Auflösung nach Ablauf.</li>
+            <li>Antwort muss in dieser Zeit erfolgen – sonst 0 Punkte.</li>
+        </ul>
+
+        <h2>Spielende & Wertung</h2>
+        <p>Das Spiel endet nach 10 Songs pro Spieler. Der Trackitacki-Besitzer erhält +1 Punkt.</p>
+        <p>Der Spieler mit den meisten Punkten gewinnt.</p>
+
+        <h2>Punktesystem</h2>
+        <p>Nur der erste Hörversuch ist kostenlos. Weitere Versuche kosten je -1 Punkt. Falsch raten bringt 0 Punkte. Die Auswertung erfolgt am Ende.</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+                <tr style="background-color: rgba(255,255,255,0.2);">
+                    <th>Würfelwert</th>
+                    <th>Max. Punkte</th>
+                    <th>Hörversuche</th>
+                    <th>Abspieldauer</th>
+                    <th>Punkteabzug pro Extra-Versuch</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>1</td><td>1</td><td>1</td><td>7 Sekunden</td><td>Entfällt</td></tr>
+                <tr><td>2</td><td>2</td><td>2</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
+                <tr><td>3</td><td>3</td><td>3</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
+                <tr><td>4</td><td>4</td><td>4</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
+                <tr><td>5</td><td>5</td><td>5</td><td>7 Sekunden</td><td>-1 Punkt</td></tr>
+                <tr><td>6 (TRACK ATTACK)</td><td>7</td><td>7</td><td>2 Sekunden</td><td>-1 Punkt</td></tr>
+            </tbody>
+        </table>
+
+        <h2>Beispiel</h2>
+        <p>Würfel 5 → 5 Punkte möglich. Du hörst den Song regulär (1. Versuch) und dann zwei weitere Male (zusätzliche Versuche). Bei richtiger Antwort erhältst du 5 - 2 = 3 Punkte.</p>
+
+        <p><em>Viel Spaß beim Spielen!<br>© 2025 TRACK ATTACK<br>Ein Spiel von Maik Niemeier – Made with ❤️ for Music</em></p>
     </div>
 
     <div class="back-button-container">
