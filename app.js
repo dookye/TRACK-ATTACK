@@ -1,7 +1,6 @@
 // Wichtiger Hinweis: Dieser Code muss von einem Webserver bereitgestellt werden (z.B. über "Live Server" in VS Code).
 // Ein direktes Öffnen der HTML-Datei im Browser funktioniert wegen der Sicherheitsrichtlinien (CORS) bei API-Anfragen nicht.
 
-
 // --- API Endpunkte --- NEU HINZUGEFÜGT
 const API_ENDPOINTS = {
     SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
@@ -188,34 +187,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startTokenTimer() {
-    const totalDuration = 60 * 60; // 60 Minuten in Sekunden
-    let timeLeft = totalDuration;
+        const totalDuration = 60 * 60; // 60 Minuten in Sekunden
+        let timeLeft = totalDuration;
 
-    tokenTimer.classList.remove('hidden');
+        tokenTimer.classList.remove('hidden');
 
-    // Countdown-Anzeige initialisieren
-    function updateTimerDisplay() {
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        tokenTimer.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-
-    updateTimerDisplay(); // Initialen Wert setzen
-
-    const timerInterval = setInterval(() => {
-        timeLeft--;
-        updateTimerDisplay();
-
-        // Timer stoppen, wenn 0 erreicht ist
-        if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            tokenTimer.innerText = 'Token abgelaufen!';
-            // Hier könntest du eine Funktion aufrufen, die das Spiel neu startet oder den Benutzer zum erneuten Login auffordert
-            // z.B. alert("Sitzung abgelaufen. Bitte neu anmelden.");
-            // window.location.reload(); // Seite neu laden für erneuten Login
+        // Countdown-Anzeige initialisieren
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            tokenTimer.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
-    }, 1000); // Jede Sekunde aktualisieren
-}
+
+        updateTimerDisplay(); // Initialen Wert setzen
+
+        const timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimerDisplay();
+
+            // Timer stoppen, wenn 0 erreicht ist
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                tokenTimer.innerText = 'Token abgelaufen!';
+                // Hier könntest du eine Funktion aufrufen, die das Spiel neu startet oder den Benutzer zum erneuten Login auffordert
+                // z.B. alert("Sitzung abgelaufen. Bitte neu anmelden.");
+                // window.location.reload(); // Seite neu laden für erneuten Login
+            }
+        }, 1000); // Jede Sekunde aktualisieren
+    }
 
     // 1.2: PKCE-Flow Helferfunktionen
     async function generateCodeChallenge(codeVerifier) {
@@ -246,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         params.append("scope", "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state");
         params.append("code_challenge_method", "S256");
         params.append("code_challenge", challenge);
-        document.location = `${API_ENDPOINTS.SPOTIFY_AUTH}?${params.toString()}`; // NEUE ZEILE
+        document.location = `${API_ENDPOINTS.SPOTIFY_AUTH}?${params.toString()}`;
     }
 
     // 1.2: Access Token abrufen
@@ -259,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
         params.append("redirect_uri", REDIRECT_URI);
         params.append("code_verifier", verifier);
 
-        const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, { // NEUE ZEILE
+        const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: params
@@ -329,19 +328,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Device ID has gone offline', device_id);
             });
 
-           // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG START
-            spotifyPlayer.addListener('player_state_changed', ({ track_window, position, paused, playback_id }) => {
+            // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG START
+            spotifyPlayer.addListener('player_state_changed', ({ track_window, paused, playback_id }) => {
+                // Stellen Sie sicher, dass der Player nicht pausiert ist und die Wiedergabe tatsächlich aktiv ist
+                const isPlaying = !paused && playback_id;
                 const currentTrackUri = gameState.currentTrack ? gameState.currentTrack.uri : null;
                 const isCorrectTrack = currentTrackUri && track_window.current_track.uri === currentTrackUri;
 
-                // Prüfen, ob der Song spielt UND der Timer noch nicht gestartet wurde
-                if (isCorrectTrack && !paused && !gameState.isSongPlaying) {
-                    // Starten des Timers, da die Wiedergabe nun tatsächlich läuft
+                // Nur fortfahren, wenn der Player den richtigen Song spielt und er tatsächlich gestartet ist
+                if (isCorrectTrack && isPlaying && !gameState.isSongPlaying) {
                     console.log("Song hat begonnen. Starte den Snippet-Timer jetzt.");
                     gameState.isSongPlaying = true;
 
                     if (gameState.isSpeedRound) {
+                        // Speed-Round
                         startVisualSpeedRoundCountdown();
+                        gameState.spotifyPlayTimeout = setTimeout(() => {
+                            spotifyPlayer.pause();
+                            gameState.isSongPlaying = false;
+                            // Da es nur einen Versuch gibt, wird der Button nicht wieder aktiv
+                            // Die Auflösung erfolgt über den Countdown
+                        }, gameState.trackDuration);
+
                     } else {
                         // Normale Runde
                         gameState.spotifyPlayTimeout = setTimeout(() => {
@@ -766,71 +774,55 @@ document.addEventListener('DOMContentLoaded', () => {
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-function playTrackSnippet() {
-    if (logoButton.classList.contains('inactive')) {
-        return;
-    }
-    if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
-        // Im normalen Modus: Keine weiteren Versuche
-        return;
-    }
-    if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
-        // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
-        return;
-    }
-
-    triggerBounce(logoButton);
-    logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
-    gameState.attemptsMade++;
-
-    const trackDurationMs = gameState.currentTrack.duration_ms;
-    const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
-
-    // Song abspielen
-    fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-        method: 'PUT',
-        body: JSON.stringify({
-            uris: [gameState.currentTrack.uri],
-            position_ms: randomStartPosition
-        }),
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-    }).then(response => {
-        if (!response.ok) { // Fehlerbehandlung für Play-Request
-            console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
-            alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-            logoButton.classList.remove('inactive'); // Button wieder aktiv machen
+    function playTrackSnippet() {
+        if (logoButton.classList.contains('inactive')) {
+            return;
+        }
+        if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+            return;
+        }
+        if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
             return;
         }
 
-        // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG
-        // Starten des Timers, da die Wiedergabe nun tatsächlich läuft
-        console.log("Song hat begonnen. Starte den Snippet-Timer jetzt.");
-        gameState.isSongPlaying = true;
+        triggerBounce(logoButton);
+        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
+        gameState.attemptsMade++;
 
-        if (gameState.isSpeedRound) {
-            startVisualSpeedRoundCountdown();
-        } else {
-            // Normale Runde
-            gameState.spotifyPlayTimeout = setTimeout(() => {
-                spotifyPlayer.pause();
-                gameState.isSongPlaying = false;
-                if (gameState.attemptsMade < gameState.maxAttempts) {
-                    logoButton.classList.remove('inactive');
-                }
-            }, gameState.trackDuration);
+        const trackDurationMs = gameState.currentTrack.duration_ms;
+        const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
+
+        // Song abspielen
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+            method: 'PUT',
+            body: JSON.stringify({
+                uris: [gameState.currentTrack.uri],
+                position_ms: randomStartPosition
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        }).then(response => {
+            if (!response.ok) { // Fehlerbehandlung für Play-Request
+                console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+                alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
+                logoButton.classList.remove('inactive'); // Button wieder aktiv machen
+                return;
+            }
+
+            // Die Timer-Logik WIRD HIER NICHT MEHR AUSGEFÜHRT
+            // Sie wird nun ausschließlich im 'player_state_changed' Listener ausgeführt.
+
+        }).catch(error => { // Fehlerbehandlung für den Fetch-Request selbst
+            console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
+            alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+            logoButton.classList.remove('inactive');
+        });
+
+        // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
+        if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
+            revealButton.classList.remove('hidden');
+            revealButton.classList.remove('no-interaction');
         }
-    }).catch(error => { // Fehlerbehandlung für den Fetch-Request selbst
-        console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
-        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
-        logoButton.classList.remove('inactive');
-    });
-
-    // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
-    if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
-        revealButton.classList.remove('hidden');
-        revealButton.classList.remove('no-interaction');
     }
-}
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
