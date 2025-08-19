@@ -329,32 +329,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Device ID has gone offline', device_id);
             });
 
-            // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG START
-          spotifyPlayer.addListener('player_state_changed', (state) => {
-              // Wenn der Song gestartet wurde und nicht pausiert ist...
-              if (state.track_window.current_track && !state.paused && !gameState.isSongPlaying) {
-        
-                  // Verhindert, dass der Timer mehrmals startet, wenn der Zustand sich ändert
-                  gameState.isSongPlaying = true;
-        
-                  console.log("Song hat begonnen. Starte den Snippet-Timer jetzt.");
+           // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG START
+            spotifyPlayer.addListener('player_state_changed', ({ track_window, position, paused, playback_id }) => {
+                const currentTrackUri = gameState.currentTrack ? gameState.currentTrack.uri : null;
+                const isCorrectTrack = currentTrackUri && track_window.current_track.uri === currentTrackUri;
 
-                  // Starte den Timer basierend auf der tatsächlichen Spielzeit
-                  gameState.spotifyPlayTimeout = setTimeout(() => {
-                      spotifyPlayer.pause();
-                      gameState.isSongPlaying = false; // Zurücksetzen für den nächsten Durchlauf
-                      if (gameState.attemptsMade < gameState.maxAttempts) {
-                          logoButton.classList.remove('inactive');
-                      }
-                  }, gameState.trackDuration);
-              }
+                // Prüfen, ob der Song spielt UND der Timer noch nicht gestartet wurde
+                if (isCorrectTrack && !paused && !gameState.isSongPlaying) {
+                    // Starten des Timers, da die Wiedergabe nun tatsächlich läuft
+                    console.log("Song hat begonnen. Starte den Snippet-Timer jetzt.");
+                    gameState.isSongPlaying = true;
 
-          // Wenn der Player pausiert ist, stoppe den Timer, falls er noch läuft
-          if (state.paused) {
-                  clearTimeout(gameState.spotifyPlayTimeout);
-                  gameState.isSongPlaying = false;
-             }
-          });
+                    if (gameState.isSpeedRound) {
+                        startVisualSpeedRoundCountdown();
+                    } else {
+                        // Normale Runde
+                        gameState.spotifyPlayTimeout = setTimeout(() => {
+                            spotifyPlayer.pause();
+                            gameState.isSongPlaying = false;
+                            if (gameState.attemptsMade < gameState.maxAttempts) {
+                                logoButton.classList.remove('inactive');
+                            }
+                        }, gameState.trackDuration);
+                    }
+                }
+            });
             // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG ENDE
 
             spotifyPlayer.connect();
@@ -768,18 +767,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 function playTrackSnippet() {
-    // ... (bestehender Code für UI und Spielstatus) ...
     if (logoButton.classList.contains('inactive')) {
         return;
     }
-    // ...
+    if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+        // Im normalen Modus: Keine weiteren Versuche
+        return;
+    }
+    if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
+        // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
+        return;
+    }
 
-    gameState.isSongPlaying = false; // Wichtig: Vor dem Start zurücksetzen
+    triggerBounce(logoButton);
+    logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
+    gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
     const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
-    console.log(`Starte Song-Snippet bei: ${randomStartPosition}ms`);
 
+    // Song abspielen
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -788,20 +795,37 @@ function playTrackSnippet() {
         }),
         headers: { 'Authorization': `Bearer ${accessToken}` }
     }).then(response => {
-        if (!response.ok) {
+        if (!response.ok) { // Fehlerbehandlung für Play-Request
             console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
             alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-            logoButton.classList.remove('inactive');
+            logoButton.classList.remove('inactive'); // Button wieder aktiv machen
             return;
         }
 
-        // Kein setTimeout mehr hier! Der Event-Listener kümmert sich darum.
-    }).catch(error => {
+        // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG
+        // Starten des Timers, da die Wiedergabe nun tatsächlich läuft
+        console.log("Song hat begonnen. Starte den Snippet-Timer jetzt.");
+        gameState.isSongPlaying = true;
+
+        if (gameState.isSpeedRound) {
+            startVisualSpeedRoundCountdown();
+        } else {
+            // Normale Runde
+            gameState.spotifyPlayTimeout = setTimeout(() => {
+                spotifyPlayer.pause();
+                gameState.isSongPlaying = false;
+                if (gameState.attemptsMade < gameState.maxAttempts) {
+                    logoButton.classList.remove('inactive');
+                }
+            }, gameState.trackDuration);
+        }
+    }).catch(error => { // Fehlerbehandlung für den Fetch-Request selbst
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
         alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
         logoButton.classList.remove('inactive');
     });
 
+    // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
     if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
         revealButton.classList.remove('hidden');
         revealButton.classList.remove('no-interaction');
