@@ -330,38 +330,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG START
             spotifyPlayer.addListener('player_state_changed', ({ track_window, paused, playback_id }) => {
-                // Stellen Sie sicher, dass der Player nicht pausiert ist und die Wiedergabe tatsächlich aktiv ist
-                const isPlaying = !paused && playback_id;
-                const currentTrackUri = gameState.currentTrack ? gameState.currentTrack.uri : null;
-                const isCorrectTrack = currentTrackUri && track_window.current_track.uri === currentTrackUri;
+    // Stellen Sie sicher, dass der Player nicht pausiert ist und die Wiedergabe tatsächlich aktiv ist
+    const isPlaying = !paused && playback_id;
+    const currentTrackUri = gameState.currentTrack ? gameState.currentTrack.uri : null;
+    const isCorrectTrack = currentTrackUri && track_window.current_track.uri === currentTrackUri;
 
-                // Nur fortfahren, wenn der Player den richtigen Song spielt und er tatsächlich gestartet ist
-                if (isCorrectTrack && isPlaying && !gameState.isSongPlaying) {
-                    console.log("Song hat begonnen. Starte den Snippet-Timer jetzt.");
-                    gameState.isSongPlaying = true;
+    // Logik für den Start des Timers
+    if (isCorrectTrack && isPlaying && !gameState.isSongPlaying) {
+        console.log("Song hat begonnen. Starte den Snippet-Timer jetzt.");
 
-                    if (gameState.isSpeedRound) {
-                        // Speed-Round
-                        startVisualSpeedRoundCountdown();
-                        gameState.spotifyPlayTimeout = setTimeout(() => {
-                            spotifyPlayer.pause();
-                            gameState.isSongPlaying = false;
-                            // Da es nur einen Versuch gibt, wird der Button nicht wieder aktiv
-                            // Die Auflösung erfolgt über den Countdown
-                        }, gameState.trackDuration);
+        // Setzen Sie das Flag auf true, um zu verhindern, dass der Timer mehrmals startet.
+        gameState.isSongPlaying = true;
 
-                    } else {
-                        // Normale Runde
-                        gameState.spotifyPlayTimeout = setTimeout(() => {
-                            spotifyPlayer.pause();
-                            gameState.isSongPlaying = false;
-                            if (gameState.attemptsMade < gameState.maxAttempts) {
-                                logoButton.classList.remove('inactive');
-                            }
-                        }, gameState.trackDuration);
-                    }
-                }
-            });
+        if (gameState.isSpeedRound) {
+            startVisualSpeedRoundCountdown();
+        }
+
+        // Verwenden Sie ein Timeout, um den Song nach der festgelegten Dauer zu pausieren.
+        // Dies ist der zuverlässigste Weg, die Wiedergabe zu stoppen.
+        gameState.spotifyPlayTimeout = setTimeout(() => {
+            spotifyPlayer.pause();
+            gameState.isSongPlaying = false; // Setzen Sie das Flag zurück, da der Song gestoppt ist.
+            if (!gameState.isSpeedRound && gameState.attemptsMade < gameState.maxAttempts) {
+                logoButton.classList.remove('inactive');
+            }
+        }, gameState.trackDuration);
+
+    } else if (!isCorrectTrack && isPlaying) {
+        // Falls ein anderer Track als erwartet spielt (z.B. vom letzten Spiel),
+        // stoppen wir ihn, um Konflikte zu vermeiden.
+        spotifyPlayer.pause();
+    }
+});
             // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG ENDE
 
             spotifyPlayer.connect();
