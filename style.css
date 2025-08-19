@@ -304,8 +304,8 @@ body, html {
 
 .genre-button:hover:not(:disabled) {
     transform: scale(1.03);
-    /* background-color: var(--white); */
-    /* color: var(--black); */
+    background-color: var(--white);
+    color: var(--black);
 }
 .genre-button:disabled {
     opacity: 0.5;
@@ -625,8 +625,8 @@ body, html {
 
 .preselect-genre-button:hover {
     transform: scale(1.03);
-    /* background-color: var(--white); */
-    /* color: var(--black); */
+    background-color: var(--white);
+    color: var(--black);
 }
 
 /* Stil für ausgewählte Genre-Buttons */
@@ -642,54 +642,4 @@ body, html {
     margin-bottom: 20px;
     font-size: 1.4em;
     text-align: center;
-}
-
-/* Statusbereich */
-#status-area {
-    position: fixed; /* Fixiert am Bildschirm */
-    bottom: 10px;    /* 10px vom unteren Rand */
-    right: 10px;     /* **NEU: 10px vom rechten Rand** */
-    /* background-color: rgba(0, 0, 0, 0.7);  ENTFERNT: Keine Hintergrundbox */
-    color: var(--white); /* Weiße Schrift bleibt */
-    padding: 0; /* **NEU: Kein Padding** */
-    border-radius: 0; /* **NEU: Kein Border-Radius** */
-    font-family: 'Montserrat', sans-serif; /* Deine Schriftart */
-    font-size: 0.9em;
-    display: flex; /* Für Flexbox-Layout (Timer und Spinner nebeneinander) */
-    align-items: center; /* Vertikal zentriert */
-    gap: 10px; /* Abstand zwischen Timer und Spinner */
-    z-index: 1000; /* Sicherstellen, dass er über anderen Elementen liegt */
-    box-shadow: none; /* **ENTFERNT: Kein Schatten** */
-    transition: opacity 0.3s ease-in-out; /* Für sanftes Ein-/Ausblenden */
-}
-
-#status-area.hidden {
-    opacity: 0;
-    pointer-events: none; /* Keine Interaktion, wenn ausgeblendet */
-}
-
-/* Token-Timer */
-#token-timer {
-    white-space: nowrap; /* Verhindert Zeilenumbruch */
-    /* color: var(--white); wird jetzt direkt von #status-area geerbt */
-}
-
-/* Lade-Spinner (bleibt unverändert) */
-#loading-spinner {
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top: 3px solid var(--white);
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    animation: spin 0.8s linear infinite; /* Spinner-Animation */
-    display: none; /* Standardmäßig versteckt */
-}
-
-#loading-spinner.active {
-    display: block; /* Aktiv, wenn sichtbar */
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
 }
