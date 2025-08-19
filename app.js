@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
 
- // 1.4: Querformat-Prüfung
+    // 1.4: Querformat-Prüfung
     function checkOrientation() {
         if (window.innerHeight > window.innerWidth) {
             rotateDeviceOverlay.classList.remove('hidden');
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-    
+
     // 1.2: PKCE-Flow Helferfunktionen
     async function generateCodeChallenge(codeVerifier) {
         const data = new TextEncoder().encode(codeVerifier);
@@ -296,6 +296,33 @@ document.addEventListener('DOMContentLoaded', () => {
             spotifyPlayer.addListener('not_ready', ({ device_id }) => {
                 console.log('Device ID has gone offline', device_id);
             });
+
+            // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG START
+            spotifyPlayer.addListener('player_state_changed', ({ track_window, position, paused, playback_id }) => {
+                const currentTrackUri = gameState.currentTrack ? gameState.currentTrack.uri : null;
+                const isCorrectTrack = currentTrackUri && track_window.current_track.uri === currentTrackUri;
+
+                // Prüfen, ob der Song spielt UND der Timer noch nicht gestartet wurde
+                if (isCorrectTrack && !paused && !gameState.isSongPlaying) {
+                    // Starten des Timers, da die Wiedergabe nun tatsächlich läuft
+                    console.log("Song hat begonnen. Starte den Snippet-Timer jetzt.");
+                    gameState.isSongPlaying = true;
+
+                    if (gameState.isSpeedRound) {
+                        startVisualSpeedRoundCountdown();
+                    } else {
+                        // Normale Runde
+                        gameState.spotifyPlayTimeout = setTimeout(() => {
+                            spotifyPlayer.pause();
+                            gameState.isSongPlaying = false;
+                            if (gameState.attemptsMade < gameState.maxAttempts) {
+                                logoButton.classList.remove('inactive');
+                            }
+                        }, gameState.trackDuration);
+                    }
+                }
+            });
+            // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG ENDE
 
             spotifyPlayer.connect();
         };
@@ -632,67 +659,67 @@ document.addEventListener('DOMContentLoaded', () => {
     // Phase 4: Rate-Bildschirm & Spielerwechsel
     //=======================================================================
 
-// AKTUALISIERT: getTrack-Funktion
-async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Klarheit geändert
-    // 'selectedGenreName' ist das spezifische Genre, das der Spieler im Spiel geklickt hat.
-    // Wir müssen hier KEINE weitere zufällige Auswahl treffen.
-    // Wir nutzen einfach direkt den Namen des geklickten Genres.
+    // AKTUALISIERT: getTrack-Funktion
+    async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Klarheit geändert
+        // 'selectedGenreName' ist das spezifische Genre, das der Spieler im Spiel geklickt hat.
+        // Wir müssen hier KEINE weitere zufällige Auswahl treffen.
+        // Wir nutzen einfach direkt den Namen des geklickten Genres.
 
-    const playlistPool = playlists[selectedGenreName]; // <-- KORREKTUR: Nutze DIREKT den übergebenen Genre-Namen!
+        const playlistPool = playlists[selectedGenreName]; // <-- KORREKTUR: Nutze DIREKT den übergebenen Genre-Namen!
 
-    if (!playlistPool || playlistPool.length === 0) {
-        console.error(`Keine Playlists für Genre "${selectedGenreName}" definiert oder Pool ist leer.`);
-        alert(`Fehler: Für das Genre "${selectedGenreName}" sind keine Playlists verfügbar. Bitte wähle ein anderes Genre.`);
-        showGenreScreen(); // Gehe zurück zum Genre-Auswahlbildschirm
-        return null;
+        if (!playlistPool || playlistPool.length === 0) {
+            console.error(`Keine Playlists für Genre "${selectedGenreName}" definiert oder Pool ist leer.`);
+            alert(`Fehler: Für das Genre "${selectedGenreName}" sind keine Playlists verfügbar. Bitte wähle ein anderes Genre.`);
+            showGenreScreen(); // Gehe zurück zum Genre-Auswahlbildschirm
+            return null;
+        }
+
+        const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
+        console.log(`DEBUG: Ausgewähltes Genre (vom Spieler geklickt): "${selectedGenreName}", Playlist-ID (zufällig aus diesem Genre): "${randomPlaylistId}"`);
+
+
+        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!response.ok) {
+            console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
+            alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
+            showGenreScreen();
+            return null;
+        }
+
+        const data = await response.json();
+
+        if (!data.items || data.items.length === 0) {
+            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
+            alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
+            showGenreScreen();
+            return null;
+        }
+
+        const playableTracks = data.items.filter(item => item.track);
+
+        if (playableTracks.length === 0) {
+            console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
+            alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
+            showGenreScreen();
+            return null;
+        }
+
+        const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
+
+        if (randomTrack) {
+            console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
+        } else {
+            console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
+            alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
+            showGenreScreen();
+            return null;
+        }
+
+        return randomTrack;
     }
-
-    const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
-    console.log(`DEBUG: Ausgewähltes Genre (vom Spieler geklickt): "${selectedGenreName}", Playlist-ID (zufällig aus diesem Genre): "${randomPlaylistId}"`);
-
-
-    const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-
-    if (!response.ok) {
-        console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
-        alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
-        showGenreScreen();
-        return null;
-    }
-
-    const data = await response.json();
-
-    if (!data.items || data.items.length === 0) {
-        console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
-        alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
-        showGenreScreen();
-        return null;
-    }
-
-    const playableTracks = data.items.filter(item => item.track);
-
-    if (playableTracks.length === 0) {
-        console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
-        alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
-        showGenreScreen();
-        return null;
-    }
-
-    const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
-
-    if (randomTrack) {
-        console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
-    } else {
-        console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
-        alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
-        showGenreScreen();
-        return null;
-    }
-
-    return randomTrack;
-}
 
 
     async function prepareAndShowRateScreen(genre) {
@@ -707,7 +734,11 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
+
     function playTrackSnippet() {
+        if (logoButton.classList.contains('inactive')) {
+            return;
+        }
         if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
             // Im normalen Modus: Keine weiteren Versuche
             return;
@@ -724,7 +755,9 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         const trackDurationMs = gameState.currentTrack.duration_ms;
         const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
+        // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG START
+        // Song abspielen
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
@@ -738,27 +771,13 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
                 logoButton.classList.remove('inactive'); // Button wieder aktiv machen
                 return;
             }
-            gameState.isSongPlaying = true; // Song spielt
-
-            if (gameState.isSpeedRound) {
-                startVisualSpeedRoundCountdown(); // Startet den 10s Countdown
-                // Der Song wird nur einmal gespielt. Nach 10s wird aufgelöst.
-                // spotifyPlayer.pause() wird im countdown-timer gemacht oder durch showResolution
-            } else {
-                // Normaler Modus: Song pausiert nach trackDuration
-                gameState.spotifyPlayTimeout = setTimeout(() => {
-                    spotifyPlayer.pause();
-                    gameState.isSongPlaying = false;
-                    if (gameState.attemptsMade < gameState.maxAttempts) {
-                        logoButton.classList.remove('inactive'); // Wieder aktiv, wenn noch Versuche da sind
-                    }
-                }, gameState.trackDuration);
-            }
+            // KEIN SETTIMEOUT MEHR HIER! Die Synchronisation übernimmt der Event-Listener
         }).catch(error => { // Fehlerbehandlung für den Fetch-Request selbst
             console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
             alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
             logoButton.classList.remove('inactive');
         });
+        // NEUE LOGIK FÜR TIMER-SYNCHRONISIERUNG ENDE
 
         // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
