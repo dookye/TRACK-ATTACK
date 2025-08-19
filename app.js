@@ -755,6 +755,9 @@ function playTrackSnippet() {
     const trackDurationMs = gameState.currentTrack.duration_ms;
     const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
+        // NEU: Konsoleneintrag hinzufügen
+    console.log(`Starte Song-Snippet bei: ${randomStartPosition}ms`);
+
     // Song abspielen
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
