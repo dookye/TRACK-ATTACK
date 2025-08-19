@@ -808,13 +808,6 @@ function playTrackSnippet() {
     }
 }
 
-    // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
-    if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
-        revealButton.classList.remove('hidden');
-        revealButton.classList.remove('no-interaction');
-    }
-}
-
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
         clearTimeout(gameState.speedRoundTimeout);
