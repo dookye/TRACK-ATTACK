@@ -743,67 +743,85 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-    function playTrackSnippet() {
-        if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
-            // Im normalen Modus: Keine weiteren Versuche
-            return;
-        }
-        if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
-            // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
-            return;
-        }
+async function playTrackSnippet() {
+    if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+        return;
+    }
+    if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
+        return;
+    }
 
-        triggerBounce(logoButton);
-        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
-        gameState.attemptsMade++;
+    triggerBounce(logoButton);
+    logoButton.classList.add('inactive');
+    gameState.attemptsMade++;
 
-        const trackDurationMs = gameState.currentTrack.duration_ms;
-        const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
+    const trackDurationMs = gameState.currentTrack.duration_ms;
+    const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
+    // NEU: Schritt 1 - Wiedergabesteuerung an dieses Gerät übertragen
+    // Diese Operation muss erfolgreich sein, bevor der Song-Play-Befehl gesendet wird.
+    try {
+        await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER(), {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                device_ids: [deviceId],
+                play: false // Wichtig: Wir wollen die Wiedergabe nicht hier starten
+            })
+        });
+        console.log("Wiedergabesteuerung erfolgreich übertragen.");
+    } catch (error) {
+        console.error("Fehler beim Übertragen der Wiedergabe:", error);
+        alert("Fehler bei der Verbindung mit Spotify. Bitte stellen Sie sicher, dass ein Gerät ausgewählt ist.");
+        logoButton.classList.remove('inactive');
+        return; // Funktion abbrechen, wenn die Übertragung fehlschlägt
+    }
+
+    // NEU: Schritt 2 - Den eigentlichen 'play'-Befehl senden, der jetzt sicher auf diesem Gerät ausgeführt wird
+    try {
+        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
             method: 'PUT',
             body: JSON.stringify({
                 uris: [gameState.currentTrack.uri],
                 position_ms: randomStartPosition
             }),
             headers: { 'Authorization': `Bearer ${accessToken}` }
-        }).then(response => {
-            if (!response.ok) { // Fehlerbehandlung für Play-Request
-                console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
-                alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-                logoButton.classList.remove('inactive'); // Button wieder aktiv machen
-                return;
-            }
-            gameState.isSongPlaying = true; // Song spielt
-
-            if (gameState.isSpeedRound) {
-                startVisualSpeedRoundCountdown(); // Startet den 10s Countdown
-                // Der Song wird nur einmal gespielt. Nach 10s wird aufgelöst.
-                // spotifyPlayer.pause() wird im countdown-timer gemacht oder durch showResolution
-            } else {
-                // Normaler Modus: Song pausiert nach trackDuration
-                gameState.spotifyPlayTimeout = setTimeout(() => {
-                    spotifyPlayer.pause();
-                    gameState.isSongPlaying = false;
-                    if (gameState.attemptsMade < gameState.maxAttempts) {
-                        logoButton.classList.remove('inactive'); // Wieder aktiv, wenn noch Versuche da sind
-                    }
-                }, gameState.trackDuration);
-            }
-        }).catch(error => { // Fehlerbehandlung für den Fetch-Request selbst
-            console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
-            alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
-            logoButton.classList.remove('inactive');
         });
 
-        // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
+        if (!response.ok) {
+            console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+            alert("Konnte den Song nicht abspielen. Bitte versuchen Sie es erneut.");
+            logoButton.classList.remove('inactive');
+            return;
+        }
+
+        gameState.isSongPlaying = true;
+        
+        if (gameState.isSpeedRound) {
+            startVisualSpeedRoundCountdown();
+        } else {
+            gameState.spotifyPlayTimeout = setTimeout(() => {
+                spotifyPlayer.pause();
+                gameState.isSongPlaying = false;
+                if (gameState.attemptsMade < gameState.maxAttempts) {
+                    logoButton.classList.remove('inactive');
+                }
+            }, gameState.trackDuration);
+        }
+
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
             revealButton.classList.remove('hidden');
-
-            // --------------------------------------- wenn verzögerung nicht klappt, nächste zeile wieder löschen --------------------------------------
             revealButton.classList.remove('no-interaction');
         }
+    } catch (error) {
+        console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
+        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+        logoButton.classList.remove('inactive');
     }
+}
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
