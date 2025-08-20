@@ -780,6 +780,10 @@ async function playTrackSnippet() {
         return; // Funktion abbrechen, wenn die Übertragung fehlschlägt
     }
 
+        // NEU: Verzögerung hier einfügen, nachdem die Wiedergabesteuerung übertragen wurde.
+        // Dies gibt iOS die nötige Zeit, den Audio-Kontext zu initialisieren.
+        await new Promise(resolve => setTimeout(resolve, 500)); 
+
     // NEU: Schritt 2 - Den eigentlichen 'play'-Befehl senden, der jetzt sicher auf diesem Gerät ausgeführt wird
     try {
         const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
