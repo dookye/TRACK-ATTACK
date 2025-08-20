@@ -133,7 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
         'alte schlagerschoten': ['68SxsyVUJ1DEGByUcEMrr4', '7dmg14Fnm9stKYkU4IthAG'],
         lovesongs: ['6oNsYDhN95gkENsdFcAwTh'],
         'serien unserer kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
-        'deutscher hip hop and internationaler rap': ['1bG3S6G5BmmgN08EBDfzE5', '0h8A0Qt4TD2cl74CrgldWj']
+        'deutscher hip hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
+        'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
+        'deutscher pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
     };
 
     //=======================================================================
