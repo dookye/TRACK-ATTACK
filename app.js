@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const trackYear = document.getElementById('track-year');
     const correctButton = document.getElementById('correct-button');
     const wrongButton = document.getElementById('wrong-button');
+    const tokenTimer = document.getElementById('token-timer');
+
 
     // NEU: Konstante für das EINE digitale Würfelbild
     const digitalDiceArea = document.getElementById('digital-dice-area');
@@ -185,7 +187,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-    
+
+    function startTokenTimer() {
+    const totalDuration = 60 * 60; // 60 Minuten in Sekunden
+    let timeLeft = totalDuration;
+
+    tokenTimer.classList.remove('hidden');
+
+    // Countdown-Anzeige initialisieren
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        tokenTimer.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    updateTimerDisplay(); // Initialen Wert setzen
+
+    const timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+
+        // Timer stoppen, wenn 0 erreicht ist
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            tokenTimer.innerText = 'Token abgelaufen!';
+            // Hier könntest du eine Funktion aufrufen, die das Spiel neu startet oder den Benutzer zum erneuten Login auffordert
+            // z.B. alert("Sitzung abgelaufen. Bitte neu anmelden.");
+            // window.location.reload(); // Seite neu laden für erneuten Login
+        }
+    }, 1000); // Jede Sekunde aktualisieren
+}
+
     // 1.2: PKCE-Flow Helferfunktionen
     async function generateCodeChallenge(codeVerifier) {
         const data = new TextEncoder().encode(codeVerifier);
@@ -250,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
             accessToken = token; // Hier wird der Access Token gesetzt!
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
             initializePlayer(); // Spotify-Player initialisieren
+            startTokenTimer(); // start des timer für Access Token 60min zur visualisierung (Token läuft nach 60 min ab) im Quotenerweiterungs modus kann dieser automatisch mit backend-server erneuert werden.
 
             // HIER WIRD DER TIMEOUT EINGEFÜGT!
             // Er gibt iOS eine kurze Pause, um die UI-Änderungen zu verarbeiten.
