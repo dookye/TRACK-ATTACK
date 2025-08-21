@@ -742,73 +742,59 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-function playTrackSnippet() {
+    function playTrackSnippet() {
         if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
-            // Im normalen Modus: Keine weiteren Versuche
             return;
         }
         if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
-            // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
             return;
         }
 
         triggerBounce(logoButton);
-        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
+        logoButton.classList.add('inactive');
         gameState.attemptsMade++;
 
         const trackDurationMs = gameState.currentTrack.duration_ms;
-        const desiredDuration = gameState.trackDuration; // Die gewünschte Dauer vom Würfel (7000 oder 2000)
+        const desiredDuration = gameState.trackDuration;
         
-        // Sicherstellen, dass der Startpunkt das Lied nicht über das Ende hinaus spielt
-        const maxStart = trackDurationMs - desiredDuration;
+        const maxStart = trackDurationMs - desiredDuration - 500;
         const randomStartPosition = Math.floor(Math.random() * maxStart);
 
-        // Neuer Endpunkt in Millisekunden berechnen
-        const endPositionMs = randomStartPosition + desiredDuration;
+        // Logge den Startpunkt und die gewünschte Dauer in der Konsole
+        console.log(`[DEBUG] Startposition des Songs: ${randomStartPosition}ms. Gewünschte Dauer: ${desiredDuration}ms.`);
 
-        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-            method: 'PUT',
-            body: JSON.stringify({
-                uris: [gameState.currentTrack.uri],
-                position_ms: randomStartPosition
-            }),
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        }).then(response => {
-            if (!response.ok) {
-                console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
-                alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-                logoButton.classList.remove('inactive');
-                return;
-            }
-            gameState.isSongPlaying = true; // Song spielt
-            
-            if (gameState.isSpeedRound) {
-                startVisualSpeedRoundCountdown();
-            } else {
-                // NEUE LOGIK: Setze den Timer, um den Song bei der berechneten Endposition zu stoppen
-                // Hole die aktuelle Wiedergabeposition, um Verzögerungen zu kompensieren
-                spotifyPlayer.getCurrentState().then(state => {
-                    if (!state) {
-                        console.warn("Player-Status nicht verfügbar.");
-                        return;
-                    }
-                    const currentPosition = state.position;
-                    const remainingTime = desiredDuration - (currentPosition - randomStartPosition);
-                   
-                    gameState.spotifyPlayTimeout = setTimeout(() => {
-                        spotifyPlayer.pause();
-                        gameState.isSongPlaying = false;
-                        if (gameState.attemptsMade < gameState.maxAttempts) {
-                            logoButton.classList.remove('inactive');
+        spotifyPlayer.pause().then(() => {
+            fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            }).then(() => {
+                spotifyPlayer.seek(randomStartPosition).then(() => {
+                    spotifyPlayer.resume().then(() => {
+                        gameState.isSongPlaying = true;
+                        console.log("Song gestartet und fortgesetzt.");
+
+                        if (gameState.isSpeedRound) {
+                            startVisualSpeedRoundCountdown();
+                        } else {
+                            // Timer-Startzeit in der Konsole loggen
+                            console.log(`[TIMER] Timer für ${desiredDuration / 1000} Sekunden gestartet.`);
+                            gameState.spotifyPlayTimeout = setTimeout(() => {
+                                spotifyPlayer.pause();
+                                gameState.isSongPlaying = false;
+                                if (gameState.attemptsMade < gameState.maxAttempts) {
+                                    logoButton.classList.remove('inactive');
+                                }
+                                console.log(`[TIMER] Wiedergabe nach ${desiredDuration}ms gestoppt.`);
+                            }, desiredDuration);
                         }
-                    }, remainingTime); // Stoppe basierend auf der verbleibenden Zeit
-                });
-            }
-        }).catch(error => {
-            console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
-            alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
-            logoButton.classList.remove('inactive');
-        });
+                    }).catch(error => console.error("Fehler beim Abspielen (resume):", error));
+                }).catch(error => console.error("Fehler beim Suchen der Position (seek):", error));
+            }).catch(error => {
+                console.error("Fehler beim Aktivieren des Geräts:", error);
+                alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass Ihr Spotify-Gerät aktiv ist.");
+                logoButton.classList.remove('inactive');
+            });
+        }).catch(error => console.error("Fehler beim Pausieren des Players:", error));
 
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
             revealButton.classList.remove('hidden');
