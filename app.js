@@ -742,7 +742,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-    function playTrackSnippet() {
+function playTrackSnippet() {
         if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
             return;
         }
@@ -757,17 +757,19 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         const trackDurationMs = gameState.currentTrack.duration_ms;
         const desiredDuration = gameState.trackDuration;
         
-        const maxStart = trackDurationMs - desiredDuration - 500;
+        // Sicherstellen, dass der Startpunkt das Lied nicht über das Ende hinaus spielt
+        const maxStart = trackDurationMs - desiredDuration - 500; // Puffer von 0,5s
         const randomStartPosition = Math.floor(Math.random() * maxStart);
 
-        // Logge den Startpunkt und die gewünschte Dauer in der Konsole
-        console.log(`[DEBUG] Startposition des Songs: ${randomStartPosition}ms. Gewünschte Dauer: ${desiredDuration}ms.`);
-
+        // Die eigentliche Wiedergabe-Logik
+        // Pausiere zuerst den Player, um einen sauberen Start zu ermöglichen
         spotifyPlayer.pause().then(() => {
+            // Stelle sicher, dass das Gerät aktiv ist, bevor wir versuchen, etwas abzuspielen.
             fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${accessToken}` }
             }).then(() => {
+                // Jetzt, da wir sicher sind, dass das Gerät aktiv ist, setzen wir die Position und spielen ab
                 spotifyPlayer.seek(randomStartPosition).then(() => {
                     spotifyPlayer.resume().then(() => {
                         gameState.isSongPlaying = true;
@@ -776,16 +778,13 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
                         if (gameState.isSpeedRound) {
                             startVisualSpeedRoundCountdown();
                         } else {
-                            // Timer-Startzeit in der Konsole loggen
-                            console.log(`[TIMER] Timer für ${desiredDuration / 1000} Sekunden gestartet.`);
                             gameState.spotifyPlayTimeout = setTimeout(() => {
                                 spotifyPlayer.pause();
                                 gameState.isSongPlaying = false;
                                 if (gameState.attemptsMade < gameState.maxAttempts) {
                                     logoButton.classList.remove('inactive');
                                 }
-                                console.log(`[TIMER] Wiedergabe nach ${desiredDuration}ms gestoppt.`);
-                            }, desiredDuration);
+                            }, desiredDuration); // Einfacher Timer ist wieder OK
                         }
                     }).catch(error => console.error("Fehler beim Abspielen (resume):", error));
                 }).catch(error => console.error("Fehler beim Suchen der Position (seek):", error));
