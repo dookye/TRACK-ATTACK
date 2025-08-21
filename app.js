@@ -327,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
             spotifyPlayer.addListener('ready', ({ device_id }) => {
                 console.log('Ready with Device ID', device_id);
                 deviceId = device_id;
+                console.log('Device ID gesetzt:', deviceId);
             });
 
             spotifyPlayer.addListener('not_ready', ({ device_id }) => {
@@ -822,6 +823,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
             revealButton.classList.remove('hidden');
             revealButton.classList.remove('no-interaction');
+
+            } catch (error) {
+        // Dieser Block wird ausgeführt, wenn das Abspielen fehlschlägt
+        console.error("Fehler beim Abspielen des Songs:", error);
+        alert("Konnte den Song nicht abspielen. Bitte stellen Sie sicher, dass die Spotify-App geöffnet ist und ein Gerät verbunden ist. Möglicherweise ist Ihr Token abgelaufen.");
+        logoButton.classList.remove('inactive'); // Button wieder aktivieren, damit es erneut versucht werden kann
+        gameState.isSongPlaying = false;
         }
     }
 
