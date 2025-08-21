@@ -328,6 +328,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('Ready with Device ID', device_id);
                 deviceId = device_id;
                 console.log('Device ID gesetzt:', deviceId);
+                
+                // AKTIVIEREN Sie den "TRACK ATTACK"-Button erst, wenn der Player bereit ist
+                logoButton.classList.remove('inactive'); 
+                logoButton.classList.add('ready'); // Optional: eine Klasse hinzufügen, um den visuellen Zustand zu markieren
             });
 
             spotifyPlayer.addListener('not_ready', ({ device_id }) => {
