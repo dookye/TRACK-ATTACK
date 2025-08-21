@@ -815,6 +815,7 @@ function playTrackSnippet() {
             revealButton.classList.remove('no-interaction');
         }
     }
+    
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
         clearTimeout(gameState.speedRoundTimeout);
