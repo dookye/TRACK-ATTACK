@@ -767,53 +767,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ÜBERARBEITET: playTrackSnippet Funktion
-    async function playTrackSnippet() {
-        if (!spotifyPlayer || !deviceId) {
-            alert("Spotify Player ist nicht bereit. Bitte warten Sie einen Moment.");
-            return;
-        }
+async function playTrackSnippet() {
+    if (!spotifyPlayer || !deviceId) {
+        alert("Spotify Player ist nicht bereit. Bitte warten Sie einen Moment.");
+        return;
+    }
 
-        if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
-            // Im normalen Modus: Keine weiteren Versuche
-            return;
-        }
-        if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
-            // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
-            return;
-        }
+    if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+        // Im normalen Modus: Keine weiteren Versuche
+        return;
+    }
+    if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
+        // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
+        return;
+    }
 
-        // Starte die Vorbereitung für das Abspielen
-        triggerBounce(logoButton);
-        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
-        gameState.attemptsMade++;
+    // Starte die Vorbereitung für das Abspielen
+    triggerBounce(logoButton);
+    logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
+    gameState.attemptsMade++;
 
-        // Berechne zufällige Startposition
-        const trackDurationMs = gameState.currentTrack.duration_ms;
-        const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
-        gameState.startPositionMs = randomStartPosition; // Speichere die Startposition im State
+    // Berechne zufällige Startposition
+    const trackDurationMs = gameState.currentTrack.duration_ms;
+    const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
+    gameState.startPositionMs = randomStartPosition; // Speichere die Startposition im State
 
-        // Song vorladen (aber nicht abspielen)
+    // NEU: Umschließe die gesamte asynchrone Logik in einem try-Block
+    try {
+        // Song vorladen und abspielen
         await spotifyPlayer.play({
             uris: [gameState.currentTrack.uri],
-            position_ms: randomStartPosition,
-        }).catch(error => {
-            console.error("Fehler beim Vorladen des Tracks:", error);
-            alert("Konnte den Song nicht vorladen. Bitte stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-            logoButton.classList.remove('inactive');
+            position_ms: randomStartPosition
         });
 
-        // WICHTIG: Den Player fortsetzen
-        await spotifyPlayer.resume().catch(error => {
-            console.error("Fehler beim Abspielen des Tracks mit resume:", error);
-            alert("Konnte den Song nicht abspielen. Bitte stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-            logoButton.classList.remove('inactive');
-        });
+        // WICHTIG: Den Player nach dem Abspielbefehl wieder fortsetzen.
+        // Die play-Methode initialisiert den Track, resume startet die Wiedergabe.
+        await spotifyPlayer.resume();
 
         gameState.isSongPlaying = true; // Flag setzen
-
-        // Der Timer für das Pausieren wird jetzt vom player_state_changed Listener übernommen
-        // Dieser setTimeout-Codeblock wird entfernt:
-        // gameState.spotifyPlayTimeout = setTimeout(() => { ... });
 
         if (gameState.isSpeedRound) {
             startVisualSpeedRoundCountdown(); // Startet den 10s Countdown
@@ -823,15 +814,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
             revealButton.classList.remove('hidden');
             revealButton.classList.remove('no-interaction');
+        }
 
-            } catch (error) {
-        // Dieser Block wird ausgeführt, wenn das Abspielen fehlschlägt
+    } catch (error) {
+        // Dieser Block wird ausgeführt, wenn irgendein Fehler im try-Block auftritt.
         console.error("Fehler beim Abspielen des Songs:", error);
         alert("Konnte den Song nicht abspielen. Bitte stellen Sie sicher, dass die Spotify-App geöffnet ist und ein Gerät verbunden ist. Möglicherweise ist Ihr Token abgelaufen.");
+        
+        // UI-Zustand zurücksetzen
         logoButton.classList.remove('inactive'); // Button wieder aktivieren, damit es erneut versucht werden kann
         gameState.isSongPlaying = false;
-        }
     }
+}
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
