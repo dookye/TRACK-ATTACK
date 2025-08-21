@@ -782,7 +782,7 @@ async function playTrackSnippet() {
 
         // NEU: Verzögerung hier einfügen, nachdem die Wiedergabesteuerung übertragen wurde.
         // Dies gibt iOS die nötige Zeit, den Audio-Kontext zu initialisieren.
-     // await new Promise(resolve => setTimeout(resolve, 500)); 
+     await new Promise(resolve => setTimeout(resolve, 500)); 
 
     // NEU: Schritt 2 - Den eigentlichen 'play'-Befehl senden, der jetzt sicher auf diesem Gerät ausgeführt wird
     try {
