@@ -757,13 +757,11 @@ function playTrackSnippet() {
     const trackDurationMs = gameState.currentTrack.duration_ms;
     const desiredDuration = gameState.trackDuration;
     
-    // Ensure the start position doesn't go over the end of the track
     const maxStart = trackDurationMs - desiredDuration - 500;
     const randomStartPosition = Math.floor(Math.random() * maxStart);
 
-    console.log(`[DEBUG] Desired duration: ${desiredDuration}ms. Start position: ${randomStartPosition}ms.`);
+    console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
 
-    // Use the Web API to initiate playback
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -773,8 +771,8 @@ function playTrackSnippet() {
         headers: { 'Authorization': `Bearer ${accessToken}` }
     }).then(response => {
         if (!response.ok) {
-            console.error("Error playing track:", response.status, response.statusText);
-            alert("Could not play the song. Make sure a device is selected.");
+            console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+            alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
             logoButton.classList.remove('inactive');
             return;
         }
@@ -783,18 +781,16 @@ function playTrackSnippet() {
         if (gameState.isSpeedRound) {
             startVisualSpeedRoundCountdown();
         } else {
-            // Start the timer to stop playback after the desired duration
-            // Get the current player state to compensate for any network latency
             spotifyPlayer.getCurrentState().then(state => {
                 if (!state) {
-                    console.warn("Player status not available, pausing immediately.");
+                    console.warn("Player-Status nicht verfügbar, Pausiere sofort.");
                     spotifyPlayer.pause();
                     return;
                 }
                 const currentPosition = state.position;
                 const remainingTime = desiredDuration - (currentPosition - randomStartPosition);
                 
-                console.log(`[DEBUG] Latency detected. Timer duration adjusted to: ${remainingTime}ms.`);
+                console.log(`[DEBUG] Verzögerung erkannt. Timer-Laufzeit angepasst auf: ${remainingTime}ms.`);
 
                 gameState.spotifyPlayTimeout = setTimeout(() => {
                     spotifyPlayer.pause();
@@ -802,13 +798,25 @@ function playTrackSnippet() {
                     if (gameState.attemptsMade < gameState.maxAttempts) {
                         logoButton.classList.remove('inactive');
                     }
-                    console.log(`[TIMER] Playback stopped after ${desiredDuration}ms.`);
+                    
+                    // NEU: Rufe den Player-Status nach dem Pausieren erneut ab
+                    spotifyPlayer.getCurrentState().then(finalState => {
+                        if (finalState) {
+                            const actualStopPosition = finalState.position;
+                            console.log(`[PAUSE] Wiedergabe wurde bei Position: ${actualStopPosition}ms gestoppt.`);
+                        } else {
+                            console.warn("Konnte die Endposition nicht abrufen.");
+                        }
+                    }).catch(error => {
+                        console.error("Fehler beim Abrufen der Pausenposition:", error);
+                    });
+
                 }, remainingTime);
             });
         }
     }).catch(error => {
-        console.error("Network error when playing track:", error);
-        alert("Problem connecting to Spotify. Please check your internet connection.");
+        console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
+        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
         logoButton.classList.remove('inactive');
     });
 
