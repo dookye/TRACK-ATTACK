@@ -757,43 +757,61 @@ function playTrackSnippet() {
     const trackDurationMs = gameState.currentTrack.duration_ms;
     const desiredDuration = gameState.trackDuration;
     
+    // Ensure the start position doesn't go over the end of the track
     const maxStart = trackDurationMs - desiredDuration - 500;
     const randomStartPosition = Math.floor(Math.random() * maxStart);
 
-    console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms. Geplante End-Position: ${randomStartPosition + desiredDuration}ms.`);
+    console.log(`[DEBUG] Desired duration: ${desiredDuration}ms. Start position: ${randomStartPosition}ms.`);
 
-    // NEUE LOGIK: Wir verwenden jetzt die Methoden des SDKs für eine zuverlässigere Wiedergabe
-    spotifyPlayer.pause().then(() => {
-        // Starte die Wiedergabe über die SDK-Methode
-        spotifyPlayer.start({
+    // Use the Web API to initiate playback
+    fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+        method: 'PUT',
+        body: JSON.stringify({
             uris: [gameState.currentTrack.uri],
             position_ms: randomStartPosition
-        }).then(() => {
-            gameState.isSongPlaying = true;
-            console.log("Song gestartet und fortgesetzt.");
+        }),
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+    }).then(response => {
+        if (!response.ok) {
+            console.error("Error playing track:", response.status, response.statusText);
+            alert("Could not play the song. Make sure a device is selected.");
+            logoButton.classList.remove('inactive');
+            return;
+        }
+        gameState.isSongPlaying = true;
+        
+        if (gameState.isSpeedRound) {
+            startVisualSpeedRoundCountdown();
+        } else {
+            // Start the timer to stop playback after the desired duration
+            // Get the current player state to compensate for any network latency
+            spotifyPlayer.getCurrentState().then(state => {
+                if (!state) {
+                    console.warn("Player status not available, pausing immediately.");
+                    spotifyPlayer.pause();
+                    return;
+                }
+                const currentPosition = state.position;
+                const remainingTime = desiredDuration - (currentPosition - randomStartPosition);
+                
+                console.log(`[DEBUG] Latency detected. Timer duration adjusted to: ${remainingTime}ms.`);
 
-            // Jetzt, da die Wiedergabe beginnt, starten wir den Timer
-            if (gameState.isSpeedRound) {
-                startVisualSpeedRoundCountdown();
-            } else {
-                // Ein einfacher Timeout ist jetzt zuverlässiger, da die Wiedergabe
-                // über die SDK-Methode bereits sichergestellte wird
                 gameState.spotifyPlayTimeout = setTimeout(() => {
                     spotifyPlayer.pause();
                     gameState.isSongPlaying = false;
                     if (gameState.attemptsMade < gameState.maxAttempts) {
                         logoButton.classList.remove('inactive');
                     }
-                    console.log(`[TIMER] Wiedergabe nach ${desiredDuration}ms gestoppt.`);
-                }, desiredDuration);
-            }
-        }).catch(error => {
-            console.error("Fehler beim Abspielen mit dem SDK:", error);
-            alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-            logoButton.classList.remove('inactive');
-        });
-    }).catch(error => console.error("Fehler beim Pausieren des Players:", error));
-    
+                    console.log(`[TIMER] Playback stopped after ${desiredDuration}ms.`);
+                }, remainingTime);
+            });
+        }
+    }).catch(error => {
+        console.error("Network error when playing track:", error);
+        alert("Problem connecting to Spotify. Please check your internet connection.");
+        logoButton.classList.remove('inactive');
+    });
+
     if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
         revealButton.classList.remove('hidden');
         revealButton.classList.remove('no-interaction');
