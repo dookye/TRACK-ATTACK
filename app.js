@@ -765,7 +765,7 @@ function playTrackSnippet() {
     // NEUE LOGIK: Wir verwenden jetzt die Methoden des SDKs für eine zuverlässigere Wiedergabe
     spotifyPlayer.pause().then(() => {
         // Starte die Wiedergabe über die SDK-Methode
-        spotifyPlayer.play({
+        spotifyPlayer.start({
             uris: [gameState.currentTrack.uri],
             position_ms: randomStartPosition
         }).then(() => {
