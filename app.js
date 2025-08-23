@@ -805,9 +805,9 @@ function playTrackSnippet() {
                     if (state && !state.paused) {
                     console.warn("Pausieren fehlgeschlagen, versuche es erneut.");
                     spotifyPlayer.pause();
-                               }
-                            });
-                    }, 500);
+                         }
+                       });
+                  }, 500);
                     
                     gameState.isSongPlaying = false;
                     if (gameState.attemptsMade < gameState.maxAttempts) {
@@ -1305,6 +1305,17 @@ function startVisualSpeedRoundCountdown() {
             countdownDisplay.innerText = '';
             
             spotifyPlayer.pause();
+
+                    // HIER EINFÜGEN: Zusätzliche Prüfung, ob das Pausieren erfolgreich war
+                    setTimeout(() => {
+                    spotifyPlayer.getCurrentState().then(state => {
+                    if (state && !state.paused) {
+                    console.warn("Pausieren fehlgeschlagen, versuche es erneut.");
+                    spotifyPlayer.pause();
+                         }
+                       });
+                  }, 500);
+
             gameState.isSongPlaying = false;
             logoButton.classList.remove('inactive');
             
