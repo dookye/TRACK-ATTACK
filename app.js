@@ -749,7 +749,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 
 // Optimierte Funktion playTrackSnippet
 function playTrackSnippet() {
-    // Überprüfe, ob Wiedergabe gestartet werden kann
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
         return;
     }
@@ -759,8 +758,7 @@ function playTrackSnippet() {
 
     triggerBounce(logoButton);
     logoButton.classList.add('inactive');
-
-    // Erhöhung der Versuche nur, wenn ein neuer Versuch gestartet wird
+    
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
@@ -768,7 +766,8 @@ function playTrackSnippet() {
     const maxStart = trackDurationMs - desiredDuration - 500;
     const randomStartPosition = Math.floor(Math.random() * maxStart);
 
-    // Entferne alte Listener und Timeouts
+    console.log(`[Wiedergabeanfrage] Starte Song bei: ${randomStartPosition}ms. Gewünschte Abspieldauer: ${desiredDuration}ms.`);
+
     if (playbackStateListener) {
         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
     }
@@ -778,14 +777,16 @@ function playTrackSnippet() {
     // NEU: Listener wartet auf den startenden Song
     const playListener = (state) => {
         if (state.track_window.current_track.uri === gameState.currentTrack.uri && !state.paused) {
-            // Song hat erfolgreich gestartet
             spotifyPlayer.removeListener('player_state_changed', playListener);
-            console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
+            console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen. Warte ${desiredDuration}ms.`);
+
+            const startTime = performance.now(); // Startzeitpunkt für die Messung
 
             // Timer für das Pausieren setzen
             gameState.spotifyPlayTimeout = setTimeout(() => {
                 spotifyPlayer.pause();
-                console.log("[PAUSE] Song pausiert durch Timer.");
+                const actualDuration = performance.now() - startTime;
+                console.log(`[PAUSE] Song pausiert durch Timer. Tatsächliche Abspielzeit: ${Math.round(actualDuration)}ms.`);
 
                 // Hinzufügen der Pausier-Fallback-Logik
                 setTimeout(() => {
@@ -807,7 +808,6 @@ function playTrackSnippet() {
 
     spotifyPlayer.addListener('player_state_changed', playListener);
 
-    // Starte die Wiedergabe
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({ uris: [gameState.currentTrack.uri], position_ms: randomStartPosition }),
@@ -815,7 +815,6 @@ function playTrackSnippet() {
     }).catch(error => {
         console.error("Fehler beim Abspielen des Tracks:", error);
         alert("Konnte den Song nicht abspielen.");
-        // Setze den Zustand zurück, da der Play-Befehl fehlgeschlagen ist
         logoButton.classList.remove('inactive');
         gameState.attemptsMade--;
         spotifyPlayer.removeListener('player_state_changed', playListener);
@@ -825,7 +824,6 @@ function playTrackSnippet() {
         revealButton.classList.remove('hidden', 'no-interaction');
     }
 
-    // NEU: Countdown-Logik in playTrackSnippet
     if (gameState.isSpeedRound) {
         startVisualSpeedRoundCountdown();
     }
@@ -1247,48 +1245,86 @@ function showResolution() {
         });
     }
 
-    // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
-// Optimierte Funktion startVisualSpeedRoundCountdown
-function startVisualSpeedRoundCountdown() {
-    let timeLeft = 7;
-    countdownDisplay.classList.remove('hidden');
+// Optimierte Funktion playTrackSnippet
+function playTrackSnippet() {
+    if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+        return;
+    }
+    if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
+        return;
+    }
 
-    countdownDisplay.innerText = timeLeft;
-    countdownDisplay.classList.remove('countdown-animated');
-    void countdownDisplay.offsetWidth;
-    countdownDisplay.classList.add('countdown-animated');
+    triggerBounce(logoButton);
+    logoButton.classList.add('inactive');
+    
+    gameState.attemptsMade++;
 
-    gameState.countdownInterval = setInterval(() => {
-        timeLeft--;
-        if (timeLeft >= 0) {
-            countdownDisplay.innerText = timeLeft;
-            countdownDisplay.classList.remove('countdown-animated');
-            void countdownDisplay.offsetWidth;
-            countdownDisplay.classList.add('countdown-animated');
-        } else {
-            // Logik, wenn der Countdown abgelaufen ist
-            clearInterval(gameState.countdownInterval);
-            countdownDisplay.classList.add('hidden');
-            countdownDisplay.innerText = '';
+    const trackDurationMs = gameState.currentTrack.duration_ms;
+    const desiredDuration = gameState.isSpeedRound ? SPEED_ROUND_DURATION : gameState.trackDuration;
+    const maxStart = trackDurationMs - desiredDuration - 500;
+    const randomStartPosition = Math.floor(Math.random() * maxStart);
 
-            spotifyPlayer.pause();
-            console.log("[PAUSE] Song pausiert durch Speedround-Timer.");
-            
-            // Hinzufügen der Pausier-Fallback-Logik
-            setTimeout(() => {
-                spotifyPlayer.getCurrentState().then(currentState => {
-                    if (currentState && !currentState.paused) {
-                        console.warn("Pausieren fehlgeschlagen, versuche es erneut.");
-                        spotifyPlayer.pause();
-                    }
-                });
-            }, 500);
+    console.log(`[Wiedergabeanfrage] Starte Song bei: ${randomStartPosition}ms. Gewünschte Abspieldauer: ${desiredDuration}ms.`);
 
-            gameState.isSongPlaying = false;
-            
-            showResolution();
+    if (playbackStateListener) {
+        spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+    }
+    clearTimeout(gameState.spotifyPlayTimeout);
+    clearTimeout(fallbackTimeout);
+
+    // NEU: Listener wartet auf den startenden Song
+    const playListener = (state) => {
+        if (state.track_window.current_track.uri === gameState.currentTrack.uri && !state.paused) {
+            spotifyPlayer.removeListener('player_state_changed', playListener);
+            console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen. Warte ${desiredDuration}ms.`);
+
+            const startTime = performance.now(); // Startzeitpunkt für die Messung
+
+            // Timer für das Pausieren setzen
+            gameState.spotifyPlayTimeout = setTimeout(() => {
+                spotifyPlayer.pause();
+                const actualDuration = performance.now() - startTime;
+                console.log(`[PAUSE] Song pausiert durch Timer. Tatsächliche Abspielzeit: ${Math.round(actualDuration)}ms.`);
+
+                // Hinzufügen der Pausier-Fallback-Logik
+                setTimeout(() => {
+                    spotifyPlayer.getCurrentState().then(currentState => {
+                        if (currentState && !currentState.paused) {
+                            console.warn("Pausieren fehlgeschlagen, versuche es erneut.");
+                            spotifyPlayer.pause();
+                        }
+                    });
+                }, 500); // Überprüfe nach 500ms
+
+                gameState.isSongPlaying = false;
+                if (gameState.attemptsMade < gameState.maxAttempts) {
+                    logoButton.classList.remove('inactive');
+                }
+            }, desiredDuration);
         }
-    }, 1000);
+    };
+
+    spotifyPlayer.addListener('player_state_changed', playListener);
+
+    fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+        method: 'PUT',
+        body: JSON.stringify({ uris: [gameState.currentTrack.uri], position_ms: randomStartPosition }),
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+    }).catch(error => {
+        console.error("Fehler beim Abspielen des Tracks:", error);
+        alert("Konnte den Song nicht abspielen.");
+        logoButton.classList.remove('inactive');
+        gameState.attemptsMade--;
+        spotifyPlayer.removeListener('player_state_changed', playListener);
+    });
+
+    if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
+        revealButton.classList.remove('hidden', 'no-interaction');
+    }
+
+    if (gameState.isSpeedRound) {
+        startVisualSpeedRoundCountdown();
+    }
 }
 
 }); // Ende DOMContentLoaded
