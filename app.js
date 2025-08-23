@@ -797,6 +797,18 @@ function playTrackSnippet() {
                 // Pausieren des Songs und Reaktivierung des Buttons
                 gameState.spotifyPlayTimeout = setTimeout(() => {
                     spotifyPlayer.pause();
+
+                    // HIER EINFÜGEN: Zusätzliche Prüfung, ob das Pausieren erfolgreich war
+                    setTimeout(() => {
+                    spotifyPlayer.getCurrentState().then(state => {
+                    // Wenn der Player nicht im Pausiert-Zustand ist, versuche es erneut
+                    if (state && !state.paused) {
+                    console.warn("Pausieren fehlgeschlagen, versuche es erneut.");
+                    spotifyPlayer.pause();
+                               }
+                            });
+                    }, 500);
+                    
                     gameState.isSongPlaying = false;
                     if (gameState.attemptsMade < gameState.maxAttempts) {
                         logoButton.classList.remove('inactive');
