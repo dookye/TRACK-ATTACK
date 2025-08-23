@@ -1317,7 +1317,7 @@ function startVisualSpeedRoundCountdown() {
                   }, 500);
 
             gameState.isSongPlaying = false;
-            logoButton.classList.remove('inactive');
+            // logoButton.classList.remove('inactive');
             
             showResolution(); // Auflösung direkt nach Ablauf des Countdowns
         }
