@@ -747,7 +747,9 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
+// Optimierte Funktion playTrackSnippet
 function playTrackSnippet() {
+    // Überprüfe, ob Wiedergabe gestartet werden kann
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
         return;
     }
@@ -757,147 +759,123 @@ function playTrackSnippet() {
 
     triggerBounce(logoButton);
     logoButton.classList.add('inactive');
-    
+
+    // Erhöhung der Versuche nur, wenn ein neuer Versuch gestartet wird
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
-    // Bestimme die Dauer basierend auf dem Spielmodus
     const desiredDuration = gameState.isSpeedRound ? SPEED_ROUND_DURATION : gameState.trackDuration;
-    
     const maxStart = trackDurationMs - desiredDuration - 500;
     const randomStartPosition = Math.floor(Math.random() * maxStart);
 
-    console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
-
+    // Entferne alte Listener und Timeouts
     if (playbackStateListener) {
         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
     }
-    if (fallbackTimeout) {
-        clearTimeout(fallbackTimeout);
-    }
-    hasPlaybackStarted = false;
+    clearTimeout(gameState.spotifyPlayTimeout);
+    clearTimeout(fallbackTimeout);
 
-    playbackStateListener = (state) => {
-        if (state.track_window.current_track.uri === gameState.currentTrack.uri) {
-            if (!state.paused && state.position > 0 && !hasPlaybackStarted) {
-                
-                hasPlaybackStarted = true;
-                clearTimeout(fallbackTimeout);
-                
-                spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                playbackStateListener = null;
+    // NEU: Listener wartet auf den startenden Song
+    const playListener = (state) => {
+        if (state.track_window.current_track.uri === gameState.currentTrack.uri && !state.paused) {
+            // Song hat erfolgreich gestartet
+            spotifyPlayer.removeListener('player_state_changed', playListener);
+            console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
 
-                console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
-                
-                // NEU: Countdown wird gestartet, wenn der Song tatsächlich spielt
-                if (gameState.isSpeedRound) {
-                    startVisualSpeedRoundCountdown();
+            // Timer für das Pausieren setzen
+            gameState.spotifyPlayTimeout = setTimeout(() => {
+                spotifyPlayer.pause();
+                console.log("[PAUSE] Song pausiert durch Timer.");
+
+                // Hinzufügen der Pausier-Fallback-Logik
+                setTimeout(() => {
+                    spotifyPlayer.getCurrentState().then(currentState => {
+                        if (currentState && !currentState.paused) {
+                            console.warn("Pausieren fehlgeschlagen, versuche es erneut.");
+                            spotifyPlayer.pause();
+                        }
+                    });
+                }, 500); // Überprüfe nach 500ms
+
+                gameState.isSongPlaying = false;
+                if (gameState.attemptsMade < gameState.maxAttempts) {
+                    logoButton.classList.remove('inactive');
                 }
-
-                // Pausieren des Songs und Reaktivierung des Buttons
-                gameState.spotifyPlayTimeout = setTimeout(() => {
-                    spotifyPlayer.pause();
-                    
-                    gameState.isSongPlaying = false;
-                    if (gameState.attemptsMade < gameState.maxAttempts) {
-                        logoButton.classList.remove('inactive');
-                    }
-                }, desiredDuration);
-            }
+            }, desiredDuration);
         }
     };
-    spotifyPlayer.addListener('player_state_changed', playbackStateListener);
 
+    spotifyPlayer.addListener('player_state_changed', playListener);
+
+    // Starte die Wiedergabe
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
-        body: JSON.stringify({
-            uris: [gameState.currentTrack.uri],
-            position_ms: randomStartPosition
-        }),
+        body: JSON.stringify({ uris: [gameState.currentTrack.uri], position_ms: randomStartPosition }),
         headers: { 'Authorization': `Bearer ${accessToken}` }
-    }).then(response => {
-        if (!response.ok) {
-            console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
-            alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-            logoButton.classList.remove('inactive');
-            if (playbackStateListener) {
-                spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                playbackStateListener = null;
-            }
-            gameState.attemptsMade--;
-        } else {
-            // NEU: Robuster Fallback-Timer
-            fallbackTimeout = setTimeout(() => {
-                // Prüfe, ob der Song wirklich nicht spielt
-                spotifyPlayer.getCurrentState().then(state => {
-                    if (!state || state.paused) {
-                        console.warn("Fallback-Timer ausgelöst. Player-Status-Änderung wurde nicht erkannt.");
-                        gameState.attemptsMade--;
-                        spotifyPlayer.pause();
-                        gameState.isSongPlaying = false;
-                        logoButton.classList.remove('inactive');
-                        if (playbackStateListener) {
-                            spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                            playbackStateListener = null;
-                        }
-                    }
-                });
-            }, 3000); 
-        }
     }).catch(error => {
-        console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
-        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+        console.error("Fehler beim Abspielen des Tracks:", error);
+        alert("Konnte den Song nicht abspielen.");
+        // Setze den Zustand zurück, da der Play-Befehl fehlgeschlagen ist
         logoButton.classList.remove('inactive');
-        if (playbackStateListener) {
-            spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-            playbackStateListener = null;
-        }
         gameState.attemptsMade--;
+        spotifyPlayer.removeListener('player_state_changed', playListener);
     });
 
     if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
-        revealButton.classList.remove('hidden');
-        revealButton.classList.remove('no-interaction');
+        revealButton.classList.remove('hidden', 'no-interaction');
+    }
+
+    // NEU: Countdown-Logik in playTrackSnippet
+    if (gameState.isSpeedRound) {
+        startVisualSpeedRoundCountdown();
     }
 }
     
-    function showResolution() {
-        // Alle Timer und Intervalle der Speed-Round stoppen
-        clearTimeout(gameState.speedRoundTimeout);
-        clearInterval(gameState.countdownInterval);
-        //clearTimeout(gameState.spotifyPlayTimeout); // Auch den Song-Pause-Timer stoppen
-        clearInterval(gameState.fadeInterval); // WICHTIG: Fade-In-Intervall stoppen
-
-
-        // Spotify Player pausieren, falls noch aktiv
-        //if (gameState.isSongPlaying && spotifyPlayer) {
-        //   spotifyPlayer.pause();
-        //    gameState.isSongPlaying = false;
-        //}
-
-        // UI-Elemente ausblenden
-        countdownDisplay.classList.add('hidden');
-        countdownDisplay.classList.remove('countdown-animated'); // Animationsklasse entfernen
-        countdownDisplay.innerText = ''; // Inhalt leeren
-
-        logoButton.classList.add('inactive', 'hidden');
-        revealButton.classList.add('hidden');
-        speedRoundTextDisplay.classList.add('hidden'); // Der Speed-Round Text sollte auch weg
-
-        // Track-Infos anzeigen
-        document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
-        document.getElementById('track-title').innerText = gameState.currentTrack.name;
-        document.getElementById('track-artist').innerText = gameState.currentTrack.artists.map(a => a.name).join(', ');
-        trackAlbum.innerText = gameState.currentTrack.album.name; // NEU
-        trackYear.innerText = `(${gameState.currentTrack.album.release_date.substring(0, 4)})`; // NEU: Nur das Jahr
-
-        revealContainer.classList.remove('hidden');
-        // Speichere den Zustand: Auflösung-Bildschirm
-        lastGameScreenVisible = 'reveal-container';
-
-        // NEU: Song bei Auflösung abspielen
-        playSongForResolution();
+// Optimierte Funktion showResolution
+function showResolution() {
+    // Stoppe alle laufenden Timer und Intervalle
+    clearTimeout(gameState.speedRoundTimeout);
+    clearInterval(gameState.countdownInterval);
+    clearInterval(gameState.fadeInterval);
+    clearTimeout(gameState.spotifyPlayTimeout);
+    
+    // Sicherstellen, dass der Song pausiert ist (doppelte Sicherheit)
+    if (gameState.isSongPlaying && spotifyPlayer) {
+        spotifyPlayer.pause();
+        gameState.isSongPlaying = false;
     }
+
+    // UI-Elemente ausblenden
+    countdownDisplay.classList.add('hidden');
+    countdownDisplay.classList.remove('countdown-animated');
+    countdownDisplay.innerText = '';
+    logoButton.classList.add('inactive', 'hidden');
+    revealButton.classList.add('hidden');
+    speedRoundTextDisplay.classList.add('hidden');
+
+    // Track-Infos anzeigen
+    document.getElementById('album-cover').src = gameState.currentTrack.album.images[0].url;
+    document.getElementById('track-title').innerText = gameState.currentTrack.name;
+    document.getElementById('track-artist').innerText = gameState.currentTrack.artists.map(a => a.name).join(', ');
+    trackAlbum.innerText = gameState.currentTrack.album.name;
+    trackYear.innerText = `(${gameState.currentTrack.album.release_date.substring(0, 4)})`;
+
+    revealContainer.classList.remove('hidden');
+    lastGameScreenVisible = 'reveal-container';
+
+    // NEU: Song bei Auflösung abspielen
+    playSongForResolution().then(() => {
+        // HIER: Aktiviere den Logo-Button erst, wenn die Auflösung angezeigt wird UND der Song für die Auflösung zu Ende ist.
+        // Dafür müsste die playSongForResolution() Funktion ein Promise zurückgeben, das auflöst, wenn der Song beendet ist.
+        // Das ist jedoch nicht in deinem Code implementiert.
+        // Da die Auflösung ohnehin meist nur eine kurze Pause ist, ist es oft besser, den Button direkt nach der Auflösungs-Anzeige zu aktivieren.
+
+        // Aktivierung des Buttons für den nächsten Spielzug
+        logoButton.classList.remove('inactive');
+        logoButton.classList.remove('hidden');
+        logoButton.addEventListener('click', playTrackSnippet); // Füge den Event-Listener wieder hinzu
+    });
+}
 
     // NEU: Funktion zum Abspielen des Songs bei Auflösung
     async function playSongForResolution() {
@@ -1270,16 +1248,16 @@ function playTrackSnippet() {
     }
 
     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
+// Optimierte Funktion startVisualSpeedRoundCountdown
 function startVisualSpeedRoundCountdown() {
-    let timeLeft = 7; // Startwert des Countdowns
+    let timeLeft = 7;
     countdownDisplay.classList.remove('hidden');
 
     countdownDisplay.innerText = timeLeft;
     countdownDisplay.classList.remove('countdown-animated');
-    void countdownDisplay.offsetWidth; // Reflow
+    void countdownDisplay.offsetWidth;
     countdownDisplay.classList.add('countdown-animated');
 
-    // Interval für den visuellen Countdown jede Sekunde
     gameState.countdownInterval = setInterval(() => {
         timeLeft--;
         if (timeLeft >= 0) {
@@ -1288,17 +1266,27 @@ function startVisualSpeedRoundCountdown() {
             void countdownDisplay.offsetWidth;
             countdownDisplay.classList.add('countdown-animated');
         } else {
-            // NEU: Logik, wenn der Countdown abgelaufen ist
+            // Logik, wenn der Countdown abgelaufen ist
             clearInterval(gameState.countdownInterval);
             countdownDisplay.classList.add('hidden');
             countdownDisplay.innerText = '';
-            
+
             spotifyPlayer.pause();
+            console.log("[PAUSE] Song pausiert durch Speedround-Timer.");
+            
+            // Hinzufügen der Pausier-Fallback-Logik
+            setTimeout(() => {
+                spotifyPlayer.getCurrentState().then(currentState => {
+                    if (currentState && !currentState.paused) {
+                        console.warn("Pausieren fehlgeschlagen, versuche es erneut.");
+                        spotifyPlayer.pause();
+                    }
+                });
+            }, 500);
 
             gameState.isSongPlaying = false;
-            // logoButton.classList.remove('inactive');
             
-            showResolution(); // Auflösung direkt nach Ablauf des Countdowns
+            showResolution();
         }
     }, 1000);
 }
