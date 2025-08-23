@@ -747,7 +747,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
     }
 
 // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
-let playbackStateListener = null;
+// let playbackStateListener = null;
 
 // Globale Variablen müssen einmalig am Anfang deines Skripts deklariert werden
 // let playbackStateListener = null;
