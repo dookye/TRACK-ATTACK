@@ -797,17 +797,6 @@ function playTrackSnippet() {
                 // Pausieren des Songs und Reaktivierung des Buttons
                 gameState.spotifyPlayTimeout = setTimeout(() => {
                     spotifyPlayer.pause();
-
-                // HIER EINFÜGEN: Zusätzliche Prüfung, ob das Pausieren erfolgreich war
-                //  setTimeout(() => {
-                //  spotifyPlayer.getCurrentState().then(state => {
-                //  // Wenn der Player nicht im Pausiert-Zustand ist, versuche es erneut
-                //  if (state && !state.paused) {
-                //  console.warn("Pausieren fehlgeschlagen, versuche es erneut.");
-                //  spotifyPlayer.pause();
-                //         }
-                //       });
-                //  }, 500);
                     
                     gameState.isSongPlaying = false;
                     if (gameState.attemptsMade < gameState.maxAttempts) {
@@ -876,15 +865,15 @@ function playTrackSnippet() {
         // Alle Timer und Intervalle der Speed-Round stoppen
         clearTimeout(gameState.speedRoundTimeout);
         clearInterval(gameState.countdownInterval);
-        clearTimeout(gameState.spotifyPlayTimeout); // Auch den Song-Pause-Timer stoppen
+        //clearTimeout(gameState.spotifyPlayTimeout); // Auch den Song-Pause-Timer stoppen
         clearInterval(gameState.fadeInterval); // WICHTIG: Fade-In-Intervall stoppen
 
 
         // Spotify Player pausieren, falls noch aktiv
-        if (gameState.isSongPlaying && spotifyPlayer) {
-            spotifyPlayer.pause();
-            gameState.isSongPlaying = false;
-        }
+        //if (gameState.isSongPlaying && spotifyPlayer) {
+        //   spotifyPlayer.pause();
+        //    gameState.isSongPlaying = false;
+        /}
 
         // UI-Elemente ausblenden
         countdownDisplay.classList.add('hidden');
@@ -1305,16 +1294,6 @@ function startVisualSpeedRoundCountdown() {
             countdownDisplay.innerText = '';
             
             spotifyPlayer.pause();
-
-                    // HIER EINFÜGEN: Zusätzliche Prüfung, ob das Pausieren erfolgreich war
-                    setTimeout(() => {
-                    spotifyPlayer.getCurrentState().then(state => {
-                    if (state && !state.paused) {
-                    console.warn("Pausieren fehlgeschlagen, versuche es erneut.");
-                    spotifyPlayer.pause();
-                         }
-                       });
-                  }, 500);
 
             gameState.isSongPlaying = false;
             // logoButton.classList.remove('inactive');
