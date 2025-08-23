@@ -116,6 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
     let lastGameScreenVisible = '';
+    let playbackStateListener = null;
+    let fallbackTimeout = null;
+    let hasPlaybackStarted = false;
 
     const playlists = {
         'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
@@ -742,11 +745,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-// Globale Variablen müssen einmalig am Anfang deines Skripts deklariert werden
- let playbackStateListener = null;
- let fallbackTimeout = null;
- let hasPlaybackStarted = false;
-
 function playTrackSnippet() {
     // 1. Prüfungen am Anfang der Funktion
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
@@ -794,6 +792,11 @@ function playTrackSnippet() {
 
                 console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
                 
+                // --- NEU: Hier wird die Logik für beide Modi ausgeführt ---
+                if (gameState.isSpeedRound) {
+                    startVisualSpeedRoundCountdown();
+                }
+
                 gameState.spotifyPlayTimeout = setTimeout(() => {
                     spotifyPlayer.pause();
                     gameState.isSongPlaying = false;
@@ -846,7 +849,7 @@ function playTrackSnippet() {
                     spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                     playbackStateListener = null;
                 }
-            }, 3000); // 3 Sekunden als Fallback-Zeit
+            }, desiredDuration + 1000); // 1 Sekunde Puffer zur Sicherheit
         }
     }).catch(error => {
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
