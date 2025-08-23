@@ -117,10 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
     let lastGameScreenVisible = '';
 
-    let playbackStateListener = null;
-    let fallbackTimeout = null;
-    let hasPlaybackStarted = false;
-
     const playlists = {
         'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         'die größten hits aller zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
@@ -746,13 +742,10 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-// Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
-// let playbackStateListener = null;
-
 // Globale Variablen müssen einmalig am Anfang deines Skripts deklariert werden
-// let playbackStateListener = null;
-// let fallbackTimeout = null;
-// let hasPlaybackStarted = false;
+ let playbackStateListener = null;
+ let fallbackTimeout = null;
+ let hasPlaybackStarted = false;
 
 function playTrackSnippet() {
     // 1. Prüfungen am Anfang der Funktion
