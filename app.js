@@ -873,7 +873,7 @@ function playTrackSnippet() {
         //if (gameState.isSongPlaying && spotifyPlayer) {
         //   spotifyPlayer.pause();
         //    gameState.isSongPlaying = false;
-        /}
+        //}
 
         // UI-Elemente ausblenden
         countdownDisplay.classList.add('hidden');
