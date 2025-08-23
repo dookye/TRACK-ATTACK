@@ -1270,14 +1270,15 @@ function playTrackSnippet() {
 
     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
 function startVisualSpeedRoundCountdown() {
-    let timeLeft = 7;
+    let timeLeft = 7; // Startwert des Countdowns
     countdownDisplay.classList.remove('hidden');
 
     countdownDisplay.innerText = timeLeft;
     countdownDisplay.classList.remove('countdown-animated');
-    void countdownDisplay.offsetWidth;
+    void countdownDisplay.offsetWidth; // Reflow
     countdownDisplay.classList.add('countdown-animated');
 
+    // Interval für den visuellen Countdown jede Sekunde
     gameState.countdownInterval = setInterval(() => {
         timeLeft--;
         if (timeLeft >= 0) {
@@ -1286,9 +1287,16 @@ function startVisualSpeedRoundCountdown() {
             void countdownDisplay.offsetWidth;
             countdownDisplay.classList.add('countdown-animated');
         } else {
+            // NEU: Logik, wenn der Countdown abgelaufen ist
             clearInterval(gameState.countdownInterval);
             countdownDisplay.classList.add('hidden');
             countdownDisplay.innerText = '';
+            
+            spotifyPlayer.pause();
+            gameState.isSongPlaying = false;
+            logoButton.classList.remove('inactive');
+            
+            showResolution(); // Auflösung direkt nach Ablauf des Countdowns
         }
     }, 1000);
 }
