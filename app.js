@@ -117,6 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
     let lastGameScreenVisible = '';
 
+    let playbackStateListener = null;
+    let fallbackTimeout = null;
+    let hasPlaybackStarted = false;
+
     const playlists = {
         'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         'die größten hits aller zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
