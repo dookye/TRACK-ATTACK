@@ -748,7 +748,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
     }
 
 function playTrackSnippet() {
-    // 1. Prüfungen am Anfang der Funktion
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
         return;
     }
@@ -759,20 +758,17 @@ function playTrackSnippet() {
     triggerBounce(logoButton);
     logoButton.classList.add('inactive');
     
-    // 2. Erhöhe die Versuche und bestimme die Dauer
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
     // Bestimme die Dauer basierend auf dem Spielmodus
     const desiredDuration = gameState.isSpeedRound ? SPEED_ROUND_DURATION : gameState.trackDuration;
     
-    // Sicherstellen, dass der Startpunkt das Lied nicht über das Ende hinaus spielt
     const maxStart = trackDurationMs - desiredDuration - 500;
     const randomStartPosition = Math.floor(Math.random() * maxStart);
 
     console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
 
-    // 3. Bestehende Timer und Listener bereinigen
     if (playbackStateListener) {
         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
     }
@@ -781,7 +777,6 @@ function playTrackSnippet() {
     }
     hasPlaybackStarted = false;
 
-    // 4. Haupt-Listener einrichten
     playbackStateListener = (state) => {
         if (state.track_window.current_track.uri === gameState.currentTrack.uri) {
             if (!state.paused && state.position > 0 && !hasPlaybackStarted) {
@@ -794,24 +789,24 @@ function playTrackSnippet() {
 
                 console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
                 
-                // NEU: Logik für Speedround vs. Normalrunde
+                // NEU: Countdown wird gestartet, wenn der Song tatsächlich spielt
                 if (gameState.isSpeedRound) {
                     startVisualSpeedRoundCountdown();
-                } else {
-                    gameState.spotifyPlayTimeout = setTimeout(() => {
-                        spotifyPlayer.pause();
-                        gameState.isSongPlaying = false;
-                        if (gameState.attemptsMade < gameState.maxAttempts) {
-                            logoButton.classList.remove('inactive');
-                        }
-                    }, desiredDuration);
                 }
+
+                // Pausieren des Songs und Reaktivierung des Buttons
+                gameState.spotifyPlayTimeout = setTimeout(() => {
+                    spotifyPlayer.pause();
+                    gameState.isSongPlaying = false;
+                    if (gameState.attemptsMade < gameState.maxAttempts) {
+                        logoButton.classList.remove('inactive');
+                    }
+                }, desiredDuration);
             }
         }
     };
     spotifyPlayer.addListener('player_state_changed', playbackStateListener);
 
-    // 5. Wiedergabe starten und Fallback einrichten
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -830,19 +825,22 @@ function playTrackSnippet() {
             }
             gameState.attemptsMade--;
         } else {
-            // Starte den Fallback-Timer
+            // NEU: Robuster Fallback-Timer
             fallbackTimeout = setTimeout(() => {
-                console.warn("Fallback-Timer ausgelöst. Player-Status-Änderung wurde nicht erkannt.");
-                gameState.attemptsMade--;
-                
-                spotifyPlayer.pause();
-                gameState.isSongPlaying = false;
-                logoButton.classList.remove('inactive');
-                
-                if (playbackStateListener) {
-                    spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                    playbackStateListener = null;
-                }
+                // Prüfe, ob der Song wirklich nicht spielt
+                spotifyPlayer.getCurrentState().then(state => {
+                    if (!state || state.paused) {
+                        console.warn("Fallback-Timer ausgelöst. Player-Status-Änderung wurde nicht erkannt.");
+                        gameState.attemptsMade--;
+                        spotifyPlayer.pause();
+                        gameState.isSongPlaying = false;
+                        logoButton.classList.remove('inactive');
+                        if (playbackStateListener) {
+                            spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+                            playbackStateListener = null;
+                        }
+                    }
+                });
             }, 3000); 
         }
     }).catch(error => {
@@ -1272,7 +1270,7 @@ function playTrackSnippet() {
 
     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
 function startVisualSpeedRoundCountdown() {
-    let timeLeft = 7; // Startwert des Countdowns
+    let timeLeft = 7;
     countdownDisplay.classList.remove('hidden');
 
     countdownDisplay.innerText = timeLeft;
@@ -1280,26 +1278,17 @@ function startVisualSpeedRoundCountdown() {
     void countdownDisplay.offsetWidth;
     countdownDisplay.classList.add('countdown-animated');
 
-    // Interval für den visuellen Countdown jede Sekunde
     gameState.countdownInterval = setInterval(() => {
         timeLeft--;
-
         if (timeLeft >= 0) {
             countdownDisplay.innerText = timeLeft;
             countdownDisplay.classList.remove('countdown-animated');
             void countdownDisplay.offsetWidth;
             countdownDisplay.classList.add('countdown-animated');
         } else {
-            // Logik, wenn der Countdown abgelaufen ist
             clearInterval(gameState.countdownInterval);
             countdownDisplay.classList.add('hidden');
             countdownDisplay.innerText = '';
-            
-            spotifyPlayer.pause();
-            gameState.isSongPlaying = false;
-            logoButton.classList.remove('inactive');
-            
-            showResolution(); 
         }
     }, 1000);
 }
