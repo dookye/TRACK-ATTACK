@@ -525,11 +525,11 @@ body, html {
   }
 }
 
-.fly-to-corner-player1 {
+.fly-up-player1 {
   animation: flyToCornerPlayer1 0.4s ease-in forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
 
-.fly-to-corner-player2 {
+.fly-down-player2 {
   animation: flyToCornerPlayer2 0.4s ease-in forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
 
