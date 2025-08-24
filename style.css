@@ -1,67 +1,42 @@
-/* Grundlayout */
 body {
-    margin: 0;
-    padding: 0;
-    background-color: #000; /* schwarzer Hintergrund */
-    color: #fff;
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f0f0f0;
+  flex-direction: column;
 }
 
-/* Zentrierter Container */
-.container {
-    text-align: center;
-    width: 90%;
-    max-width: 400px;
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  font-size: 16px;
 }
 
-/* App-Logo */
-.logo {
-    width: 150px;
-    margin-bottom: 30px;
+#songInfo {
+  margin-top: 10px;
+  font-weight: bold;
 }
 
-/* Anleitung-Link */
-.instruction-link {
-    display: block;
-    margin-bottom: 40px;
-    font-size: 16px;
-    color: #1DB954; /* Spotify Grün für Links */
-    text-decoration: none;
+#progressBar {
+  width: 100%;
+  height: 20px;
+  background: #ddd;
+  margin-top: 10px;
+  border-radius: 5px;
+  overflow: hidden;
 }
 
-.instruction-link:hover {
-    text-decoration: underline;
+#progress {
+  height: 100%;
+  width: 0;
+  background: #1DB954;
+  transition: width 0.2s;
 }
 
-/* Spotify Login Button Style gemäß Spotify Branding Guidelines */
-.spotify-login-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #1DB954;
-    color: #fff;
-    font-size: 16px;
-    font-weight: bold;
-    text-decoration: none;
-    padding: 12px 24px;
-    border-radius: 999px; /* Spotify empfiehlt stark gerundete Ecken */
-    border: none;
-    cursor: pointer;
-    transition: background 0.2s;
-    width: 100%;
-    max-width: 300px;
-}
-
-.spotify-login-btn:hover {
-    background-color: #1ed760; /* etwas helleres Grün beim Hover */
-}
-
-/* Optional: Spotify Icon links im Button */
-.spotify-login-btn img {
-    height: 20px;
-    margin-right: 10px;
+#countdown {
+  margin-top: 5px;
 }
