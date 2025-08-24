@@ -869,8 +869,8 @@ function showResolution() {
         // Da die Auflösung ohnehin meist nur eine kurze Pause ist, ist es oft besser, den Button direkt nach der Auflösungs-Anzeige zu aktivieren.
 
         // Aktivierung des Buttons für den nächsten Spielzug
-        logoButton.classList.remove('inactive');
-        logoButton.classList.remove('hidden');
+        // logoButton.classList.remove('inactive');
+        // logoButton.classList.remove('hidden');
         logoButton.addEventListener('click', playTrackSnippet); // Füge den Event-Listener wieder hinzu
     });
 }
