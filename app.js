@@ -147,19 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
 
-    // 1.4: Querformat-Prüfung - ENTFÄLLT
-    // const rotateDeviceOverlay = document.getElementById('rotate-device-overlay');
-    // function checkOrientation() {
-    //     if (window.innerHeight > window.innerWidth) {
-    //         rotateDeviceOverlay.classList.remove('hidden');
-    //     } else {
-    //         rotateDeviceOverlay.classList.add('hidden');
-    //         if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
-    //             startGameAfterOrientation();
-    //         }
-    //     }
-    // }
-
     // NEU: Funktion, die das Spiel direkt startet, da keine Orientierung geprüft wird
 function startGameOnLoad() {
     gameScreen.classList.remove(HIDDEN_CLASS);
@@ -428,18 +415,15 @@ preselectionStartButton.addEventListener('click', () => {
 
     // AKTUALISIERT: startGame-Funktion
 function startGame() {
-    triggerBounce(logoButton);
-    logoButton.classList.add('inactive');
-    lastGameScreenVisible = 'logo-button';
-    
-    // Entferne die Genre-Auswahl Ansicht bei Spielstart
-    startGenreSelectionContainer.classList.add('hidden');
+    // Entferne die sanfte Einblendung
+    startGenreSelectionContainer.classList.remove(FADE_IN_CLASS);
+    // Verstecke den Container nach dem Klick
+    startGenreSelectionContainer.classList.add(HIDDEN_CLASS);
 
-    setTimeout(() => {
-        appContainer.style.backgroundColor = 'var(--player1-color)';
-        logoButton.classList.add('hidden');
-        showDiceScreen();
-    }, 800); // Warten, bis Bounce-Effekt und Blur sichtbar sind
+    // Füge die Startlogik hier ein, da das Spiel jetzt vom "LET'S GO"-Button gestartet wird
+    appContainer.style.backgroundColor = 'var(--player1-color)';
+    logoButton.classList.add(HIDDEN_CLASS);
+    showDiceScreen();
 }
 
     //=======================================================================
@@ -1055,19 +1039,26 @@ function startGame() {
         gameState.selectedPlayableGenres = [];
         allGenresScrollbox.innerHTML = '';
 
-        gameScreen.classList.remove('hidden');
-        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-        logoButton.removeEventListener('click', startGame);
+    gameScreen.classList.remove(HIDDEN_CLASS);
+    logoButton.classList.remove(HIDDEN_CLASS);
+    logoButton.classList.add(INITIAL_FLY_IN_CLASS); // Starte mit der Animation
 
-         logoButton.addEventListener('click', () => {
-        startGenreSelectionContainer.classList.remove('hidden');
-    });
+    // Füge den Klick-Listener wieder hinzu, der die Genre-Auswahl anzeigt
+    logoButton.addEventListener('click', () => {
+        startGenreSelectionContainer.classList.remove(HIDDEN_CLASS);
+        setTimeout(() => {
+            startGenreSelectionContainer.classList.add(FADE_IN_CLASS);
+        }, 10);
+        logoButton.removeEventListener('click', this);
+        logoButton.classList.add(HIDDEN_CLASS);
+    }, { once: true });
 
-        lastGameScreenVisible = '';
+    lastGameScreenVisible = '';
 
-        startGenreSelectionContainer.classList.remove('hidden');
-        renderPreselectionGenres();
-    }
+    // Die Genre-Auswahl Ansicht wieder anzeigen und neu rendern
+    startGenreSelectionContainer.classList.remove(HIDDEN_CLASS);
+    renderPreselectionGenres();
+}
 
     //=======================================================================
     // Phase 6: Sonderfunktion "Speed-Round"
