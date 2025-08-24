@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spotify PKCE Test 008</title>
+<title>Spotify PKCE Test 009</title>
 <style>
 body { font-family: Arial, sans-serif; margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; flex-direction:column; }
 button { padding: 10px 20px; margin: 5px; font-size: 16px; }
@@ -11,21 +11,17 @@ button { padding: 10px 20px; margin: 5px; font-size: 16px; }
 #progress { height: 100%; width: 0; background: #1DB954; transition: width 0.2s; }
 #spinner { border: 6px solid #f3f3f3; border-top: 6px solid #1DB954; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; display:none; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-#playerReady { font-size: 20px; color:#1DB954; opacity:0; transition: opacity 0.5s; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
-#iosNotice { color: red; font-weight:bold; margin-top:10px; display:none; text-align:center; max-width:80%; }
+#playerReady { font-size: 20px; color:#1DB954; opacity:0; transition: opacity 0.5s; margin-bottom:10px; }
+#songInfo { margin-top:10px; font-weight:bold; }
 </style>
 </head>
 <body>
 
 <div id="spinner"></div>
 <div id="playerReady">Player is ready</div>
-<div id="iosNotice">
-    Bitte öffne die Spotify App, um Musik auf iOS abzuspielen.<br>
-    <button id="openSpotifyButton" style="margin-top:10px;">Playlist in Spotify öffnen</button>
-</div>
 
 <div id="loginDiv">
-    <button id="loginButton">Mit Spotify einloggen</button>
+    <button id="loginButton">Mit Spotify einloggen & Player starten</button>
 </div>
 
 <div id="appDiv" style="display:none;">
@@ -61,7 +57,7 @@ async function sha256(baseString) {
     return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// Spotify Login
+// Spotify Login + Player starten nach Klick
 document.getElementById('loginButton').addEventListener('click', async () => {
     const codeVerifier = generateRandomString(128);
     localStorage.setItem('code_verifier', codeVerifier);
@@ -95,21 +91,21 @@ async function handleRedirect() {
 
     if (accessToken) {
         document.getElementById('loginDiv').style.display = 'none';
-        if (!isIos) {
-            document.getElementById('appDiv').style.display = 'block';
-            document.getElementById('spinner').style.display = 'block';
-            initPlayer();
-        } else {
-            document.getElementById('iosNotice').style.display = 'block';
-        }
+        document.getElementById('appDiv').style.display = 'block';
+        document.getElementById('spinner').style.display = 'block';
+        initPlayer();
     }
 }
 handleRedirect();
 
-// Web Playback SDK bereitstellen
-window.onSpotifyWebPlaybackSDKReady = () => { console.log("Spotify Web Playback SDK loaded"); };
+// Spotify Web Playback SDK laden
+const script = document.createElement('script');
+script.src = "https://sdk.scdn.co/spotify-player.js";
+document.body.appendChild(script);
 
-// Player initialisieren (Android/Windows)
+window.onSpotifyWebPlaybackSDKReady = () => { console.log("Spotify SDK ready"); };
+
+// Player initialisieren
 function initPlayer() {
     player = new Spotify.Player({
         name: 'TRACK-ATTACK Player',
@@ -124,24 +120,13 @@ function initPlayer() {
         const readyEl = document.getElementById('playerReady');
         readyEl.style.opacity = '1';
         setTimeout(() => { readyEl.style.opacity = '0'; }, 1500);
-        document.getElementById('appDiv').style.display = 'block';
         document.getElementById('selectButton').disabled = false;
     });
 
     player.connect();
 }
 
-// Spotify SDK laden
-const script = document.createElement('script');
-script.src = "https://sdk.scdn.co/spotify-player.js";
-document.body.appendChild(script);
-
-// iOS: Deeplink Button
-document.getElementById('openSpotifyButton').addEventListener('click', () => {
-    window.location.href = `spotify://playlist/${playlistId}`;
-});
-
-// Android/Windows: Zufälligen Song auswählen
+// Zufälligen Song auswählen
 document.getElementById('selectButton').addEventListener('click', async () => {
     if (!deviceId) return;
     const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, { headers: { Authorization: 'Bearer ' + accessToken } });
@@ -153,7 +138,7 @@ document.getElementById('selectButton').addEventListener('click', async () => {
     document.getElementById('playButton').disabled = false;
 });
 
-// Song 10 Sekunden abspielen (Android/Windows)
+// Song 10 Sekunden abspielen
 document.getElementById('playButton').addEventListener('click', async () => {
     if (!selectedTrackUri || !deviceId) return;
 
