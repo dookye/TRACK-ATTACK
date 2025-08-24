@@ -34,6 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const wrongButton = document.getElementById('wrong-button');
     const tokenTimer = document.getElementById('token-timer');
 
+    const startGenreSelectionContainer = document.getElementById('start-genre-selection-container');
+    const allGenresScrollbox = document.getElementById('all-genres-scrollbox');
+    const preselectionStartButton = document.getElementById('preselection-start-button'); // NEU
+    const preselectionTitle = document.getElementById('preselection-title'); // NEU
+
+
 
     // NEU: Konstante für das EINE digitale Würfelbild
     const digitalDiceArea = document.getElementById('digital-dice-area');
