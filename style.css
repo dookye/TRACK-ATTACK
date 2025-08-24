@@ -671,6 +671,13 @@ body, html {
     padding: 20px;
     box-sizing: border-box;
     z-index: 100;
+    opacity: 0; /* Startet transparent */
+    transition: opacity 0.5s ease-in-out; /* NEU: Fügt einen sanften Übergang hinzu */
+}
+
+/* NEU: Klasse für das Sichtbarwerden */
+.full-screen-container.fade-in-visible {
+    opacity: 1;
 }
 
 #genre-preselection-content {
@@ -680,6 +687,7 @@ body, html {
     height: 95%; /* 95% des Eltern-Containers für Abstand oben und unten */
     width: 100%;
     max-width: 600px; /* Optional: Maximale Breite für größere Bildschirme */
+    width: 90%; /* NEU: Ändert die Breite auf 90% für einen Rand */
 }
 
 #preselection-title {
@@ -717,6 +725,8 @@ body, html {
     background-color: rgba(255, 255, 255, 0.1);
     color: var(--white);
     transition: all 0.3s ease;
+    width: 100%; /* Stellt sicher, dass der Button die volle Breite des Eltern-Containers einnimmt */
+    max-width: none; /* Entfernt die maximale Breite, um die volle Breite zu nutzen */
 }
 
 #preselection-start-button:hover:not(.disabled) {
