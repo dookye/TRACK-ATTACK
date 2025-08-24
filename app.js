@@ -44,6 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const preselectionStartButton = document.getElementById('preselection-start-button'); // NEU
     const preselectionTitle = document.getElementById('preselection-title'); // NEU
 
+    const HIDDEN_CLASS = 'hidden';
+    const INACTIVE_CLASS = 'inactive';
+    const INITIAL_FLY_IN_CLASS = 'initial-fly-in';
+    const FADE_IN_CLASS = 'fade-in-visible'; // NEU: Klasse für das sanfte Einblenden
+
     const digitalDiceImages = {
         1: 'assets/digi-1.png',
         2: 'assets/digi-2.png',
@@ -156,34 +161,56 @@ document.addEventListener('DOMContentLoaded', () => {
     // }
 
     // NEU: Funktion, die das Spiel direkt startet, da keine Orientierung geprüft wird
-    function startGameOnLoad() {
-        gameScreen.classList.remove('hidden');
+function startGameOnLoad() {
+    gameScreen.classList.remove(HIDDEN_CLASS);
 
-        if (logoFlyInSound) {
-            logoFlyInSound.currentTime = 0;
-            logoFlyInSound.volume = 0.3;
-            logoFlyInSound.play().catch(error => {
-                console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
-            });
-        }
+    // Der Logo-Button darf nicht sofort klickbar sein, während er reinfliegt
+    logoButton.classList.add(INACTIVE_CLASS);
 
-        if (lastGameScreenVisible === 'dice-container') {
-            showDiceScreen();
-        } else if (lastGameScreenVisible === 'genre-container') {
-            showGenreScreen();
-        } else if (lastGameScreenVisible === 'reveal-container') {
-            showResolution();
-        } else {
-            logoButton.classList.remove('hidden');
-            logoButton.classList.add('initial-fly-in');
-            logoButton.addEventListener('click', startGame, { once: true });
+    if (logoFlyInSound) {
+        logoFlyInSound.currentTime = 0;
+        logoFlyInSound.volume = 0.3;
+        logoFlyInSound.play().catch(error => {
+            console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
+        });
+    }
 
-            startGenreSelectionContainer.classList.remove('hidden');
-            if (allGenresScrollbox.children.length === 0) {
-                renderPreselectionGenres();
-            }
+    if (lastGameScreenVisible === 'dice-container') {
+        showDiceScreen();
+    } else if (lastGameScreenVisible === 'genre-container') {
+        showGenreScreen();
+    } else if (lastGameScreenVisible === 'reveal-container') {
+        showResolution();
+    } else {
+        logoButton.classList.remove(HIDDEN_CLASS);
+        logoButton.classList.add(INITIAL_FLY_IN_CLASS);
+
+        // Nach der Fly-In-Animation den Klick-Listener hinzufügen
+        logoButton.addEventListener('click', () => {
+            // Zeigt die Vorauswahl an
+            startGenreSelectionContainer.classList.remove(HIDDEN_CLASS);
+            // UND blendet sie sanft ein
+            setTimeout(() => {
+                startGenreSelectionContainer.classList.add(FADE_IN_CLASS);
+            }, 10); // Kurzer Timeout, um den Übergang zu ermöglichen
+
+            // Entfernt den Event-Listener, damit er nicht mehrfach ausgelöst wird
+            logoButton.removeEventListener('click', this);
+            
+            // Versteckt den Logo-Button
+            logoButton.classList.add(HIDDEN_CLASS);
+        }, { once: true }); // Der Listener wird nur einmal ausgeführt
+
+        // Füge den Klick-Listener für den "LET'S GO"-Button hinzu
+        preselectionStartButton.addEventListener('click', startGame, { once: true });
+
+        // Stellt sicher, dass die Genres gerendert werden, wenn der Container angezeigt wird
+        if (allGenresScrollbox.children.length === 0) {
+            renderPreselectionGenres();
         }
     }
+}
+
 
     function startTokenTimer() {
         const totalDuration = 60 * 60; // 60 Minuten in Sekunden
