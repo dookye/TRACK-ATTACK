@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spotify PKCE Test 001</title>
-<script src="https://sdk.scdn.co/spotify-player.js"></script>
+<title>Spotify PKCE Test 009</title>
 <style>
     body { font-family: Arial, sans-serif; margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; flex-direction:column; }
     button { padding: 10px 20px; margin: 5px; font-size: 16px; }
@@ -97,36 +96,44 @@ async function handleRedirect() {
 }
 handleRedirect();
 
+// Web Playback SDK bereitstellen
+window.onSpotifyWebPlaybackSDKReady = () => {
+    console.log("Spotify Web Playback SDK loaded");
+};
+
 // Player initialisieren und verbinden
 function initPlayer() {
-    window.onSpotifyWebPlaybackSDKReady = () => {
-        player = new Spotify.Player({
-            name: 'TRACK-ATTACK Player',
-            getOAuthToken: cb => { cb(accessToken); },
-            volume: 0.8
-        });
+    player = new Spotify.Player({
+        name: 'TRACK-ATTACK Player',
+        getOAuthToken: cb => { cb(accessToken); },
+        volume: 0.8
+    });
 
-        player.addListener('ready', ({device_id}) => {
-            deviceId = device_id;
-            console.log('Player ready, Device ID:', device_id);
-            document.getElementById('spinner').style.display = 'none'; // Spinner ausblenden
+    player.addListener('ready', ({device_id}) => {
+        deviceId = device_id;
+        console.log('Player ready, Device ID:', device_id);
+        document.getElementById('spinner').style.display = 'none'; // Spinner ausblenden
 
-            // Kurz Text „Player is ready“ anzeigen
-            const readyEl = document.getElementById('playerReady');
-            readyEl.style.opacity = '1';
-            setTimeout(() => { readyEl.style.opacity = '0'; }, 1500);
+        // Kurz Text „Player is ready“ anzeigen
+        const readyEl = document.getElementById('playerReady');
+        readyEl.style.opacity = '1';
+        setTimeout(() => { readyEl.style.opacity = '0'; }, 1500);
 
-            // Buttons aktivieren
-            document.getElementById('selectButton').disabled = false;
-        });
+        // Buttons aktivieren
+        document.getElementById('selectButton').disabled = false;
+    });
 
-        player.addListener('not_ready', ({device_id}) => {
-            console.log('Player not ready', device_id);
-        });
+    player.addListener('not_ready', ({device_id}) => {
+        console.log('Player not ready', device_id);
+    });
 
-        player.connect();
-    };
+    player.connect();
 }
+
+// Spotify SDK laden
+const script = document.createElement('script');
+script.src = "https://sdk.scdn.co/spotify-player.js";
+document.body.appendChild(script);
 
 // Zufälligen Song auswählen
 document.getElementById('selectButton').addEventListener('click', async () => {
