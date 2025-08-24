@@ -303,22 +303,27 @@ function handleLogoClick() {
     }
 
     // 1.3: Spotify Web Player SDK laden und initialisieren
-    function initializePlayer() {
-        const script = document.createElement('script');
-        script.src = "https://sdk.scdn.co/spotify-player.js";
-        script.async = true;
-        document.body.appendChild(script);
+function initializePlayer() {
+    const script = document.createElement('script');
+    script.src = "https://sdk.scdn.co/spotify-player.js";
+    script.async = true;
+    document.body.appendChild(script);
 
-        window.onSpotifyWebPlaybackSDKReady = () => {
-            spotifyPlayer = new Spotify.Player({
-                name: 'TRACK ATTACK',
-                getOAuthToken: cb => { cb(accessToken); }
-            });
+    window.onSpotifyWebPlaybackSDKReady = () => {
+        spotifyPlayer = new Spotify.Player({
+            name: 'TRACK ATTACK',
+            getOAuthToken: cb => { cb(accessToken); }
+        });
 
-            spotifyPlayer.addListener('ready', ({ device_id }) => {
-                console.log('Ready with Device ID', device_id);
-                deviceId = device_id;
-            });
+        spotifyPlayer.addListener('ready', ({ device_id }) => {
+            console.log('Player ready! Device ID:', device_id);
+            deviceId = device_id;
+
+            // Wir haben die Gerätedaten, jetzt kann das Spiel fortgesetzt werden
+            // Dein aktueller Code macht das schon über den Klick-Listener auf den Logo-Button,
+            // der die Funktion `playTrackSnippet()` auslöst.
+            // Es ist keine weitere Logik hier notwendig.
+        });
 
             spotifyPlayer.addListener('not_ready', ({ device_id }) => {
                 console.log('Device ID has gone offline', device_id);
@@ -416,12 +421,13 @@ function startGame() {
     if (!spotifyPlayer) {
         initializePlayer();
     }
+
     // Entferne die sanfte Einblendung
     startGenreSelectionContainer.classList.remove(FADE_IN_CLASS);
     // Verstecke den Container nach dem Klick
     startGenreSelectionContainer.classList.add(HIDDEN_CLASS);
 
-    // Füge die Startlogik hier ein, da das Spiel jetzt vom "LET'S GO"-Button gestartet wird
+    // Die restliche Spielstartlogik
     appContainer.style.backgroundColor = 'var(--player1-color)';
     logoButton.classList.add(HIDDEN_CLASS);
     showDiceScreen();
