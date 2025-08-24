@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spotify PKCE Test 009</title>
+<title>Spotify PKCE Test 002</title>
 <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; flex-direction:column; }
-    button { padding: 10px 20px; margin: 5px; font-size: 16px; }
-    #progressBar { width: 100%; height: 20px; background: #ddd; margin-top: 10px; border-radius: 5px; overflow: hidden; }
-    #progress { height: 100%; width: 0; background: #1DB954; transition: width 0.2s; }
-    #spinner { border: 6px solid #f3f3f3; border-top: 6px solid #1DB954; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; display:none; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    #playerReady { font-size: 20px; color:#1DB954; opacity:0; transition: opacity 0.5s; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
+body { font-family: Arial, sans-serif; margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; flex-direction:column; }
+button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+#progressBar { width: 100%; height: 20px; background: #ddd; margin-top: 10px; border-radius: 5px; overflow: hidden; }
+#progress { height: 100%; width: 0; background: #1DB954; transition: width 0.2s; }
+#spinner { border: 6px solid #f3f3f3; border-top: 6px solid #1DB954; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; display:none; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+#playerReady { font-size: 20px; color:#1DB954; opacity:0; transition: opacity 0.5s; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
 </style>
 </head>
 <body>
@@ -90,18 +90,16 @@ async function handleRedirect() {
     if (accessToken) {
         document.getElementById('loginDiv').style.display = 'none';
         document.getElementById('appDiv').style.display = 'block';
-        document.getElementById('spinner').style.display = 'block'; // Spinner zeigen
+        document.getElementById('spinner').style.display = 'block';
         initPlayer();
     }
 }
 handleRedirect();
 
 // Web Playback SDK bereitstellen
-window.onSpotifyWebPlaybackSDKReady = () => {
-    console.log("Spotify Web Playback SDK loaded");
-};
+window.onSpotifyWebPlaybackSDKReady = () => { console.log("Spotify Web Playback SDK loaded"); };
 
-// Player initialisieren und verbinden
+// Player initialisieren
 function initPlayer() {
     player = new Spotify.Player({
         name: 'TRACK-ATTACK Player',
@@ -112,21 +110,16 @@ function initPlayer() {
     player.addListener('ready', ({device_id}) => {
         deviceId = device_id;
         console.log('Player ready, Device ID:', device_id);
-        document.getElementById('spinner').style.display = 'none'; // Spinner ausblenden
+        document.getElementById('spinner').style.display = 'none';
 
-        // Kurz Text „Player is ready“ anzeigen
         const readyEl = document.getElementById('playerReady');
         readyEl.style.opacity = '1';
         setTimeout(() => { readyEl.style.opacity = '0'; }, 1500);
 
-        // Buttons aktivieren
         document.getElementById('selectButton').disabled = false;
     });
 
-    player.addListener('not_ready', ({device_id}) => {
-        console.log('Player not ready', device_id);
-    });
-
+    player.addListener('not_ready', ({device_id}) => { console.log('Player not ready', device_id); });
     player.connect();
 }
 
@@ -138,10 +131,7 @@ document.body.appendChild(script);
 // Zufälligen Song auswählen
 document.getElementById('selectButton').addEventListener('click', async () => {
     if (!deviceId) return;
-
-    const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-        headers: { Authorization: 'Bearer ' + accessToken }
-    });
+    const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, { headers: { Authorization: 'Bearer ' + accessToken } });
     const data = await resp.json();
     const tracks = data.items.map(item => item.track);
     const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
@@ -150,18 +140,17 @@ document.getElementById('selectButton').addEventListener('click', async () => {
     document.getElementById('playButton').disabled = false;
 });
 
-// Song 10 Sekunden abspielen
+// Song 10 Sekunden abspielen (Apple-kompatibel)
 document.getElementById('playButton').addEventListener('click', async () => {
     if (!selectedTrackUri || !deviceId) return;
+
     document.getElementById('playButton').disabled = true;
     document.getElementById('selectButton').disabled = true;
 
+    // Erstes Play direkt im Klick-Event für iOS
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
         method: 'PUT',
-        headers: {
-            Authorization: 'Bearer ' + accessToken,
-            'Content-Type': 'application/json'
-        },
+        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
         body: JSON.stringify({ uris: [selectedTrackUri] })
     });
 
@@ -177,10 +166,7 @@ document.getElementById('playButton').addEventListener('click', async () => {
         progressEl.style.width = `${(10 - remaining)/10*100}%`;
         if (remaining <= 0) {
             clearInterval(interval);
-            fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
-                method: 'PUT',
-                headers: { Authorization: 'Bearer ' + accessToken }
-            });
+            fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, { method: 'PUT', headers: { Authorization: 'Bearer ' + accessToken } });
             countdownEl.innerText = 'Abspielzeit beendet';
             progressEl.style.width = '100%';
             document.getElementById('playButton').disabled = false;
