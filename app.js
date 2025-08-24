@@ -151,9 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function startGameOnLoad() {
     gameScreen.classList.remove(HIDDEN_CLASS);
 
-    // Der Logo-Button darf nicht sofort klickbar sein, während er reinfliegt
-    logoButton.classList.add(INACTIVE_CLASS);
-
     if (logoFlyInSound) {
         logoFlyInSound.currentTime = 0;
         logoFlyInSound.volume = 0.3;
@@ -162,42 +159,54 @@ function startGameOnLoad() {
         });
     }
 
-    if (lastGameScreenVisible === 'dice-container') {
-        showDiceScreen();
-    } else if (lastGameScreenVisible === 'genre-container') {
-        showGenreScreen();
-    } else if (lastGameScreenVisible === 'reveal-container') {
-        showResolution();
-    } else {
+    // Wenn das Spiel noch nicht gestartet ist (kein lastGameScreenVisible)...
+    if (!lastGameScreenVisible) {
+        // Starte mit dem Logo-Button-Flug
         logoButton.classList.remove(HIDDEN_CLASS);
         logoButton.classList.add(INITIAL_FLY_IN_CLASS);
-
-        // Nach der Fly-In-Animation den Klick-Listener hinzufügen
-        logoButton.addEventListener('click', () => {
-            // Zeigt die Vorauswahl an
-            startGenreSelectionContainer.classList.remove(HIDDEN_CLASS);
-            // UND blendet sie sanft ein
-            setTimeout(() => {
-                startGenreSelectionContainer.classList.add(FADE_IN_CLASS);
-            }, 10); // Kurzer Timeout, um den Übergang zu ermöglichen
-
-            // Entfernt den Event-Listener, damit er nicht mehrfach ausgelöst wird
-            logoButton.removeEventListener('click', this);
-            
-            // Versteckt den Logo-Button
-            logoButton.classList.add(HIDDEN_CLASS);
-        }, { once: true }); // Der Listener wird nur einmal ausgeführt
-
+        
+        // Verhindere Klicks, bis die Animation vorbei ist
+        logoButton.classList.add(INACTIVE_CLASS);
+        
+        // Nach der Animation den Button klickbar machen und den Listener hinzufügen
+        setTimeout(() => {
+            logoButton.classList.remove(INACTIVE_CLASS);
+            logoButton.addEventListener('click', () => {
+                // Das Logo verstecken
+                logoButton.classList.add(HIDDEN_CLASS);
+                // Genre-Vorauswahl sanft einblenden
+                startGenreSelectionContainer.classList.remove(HIDDEN_CLASS);
+                setTimeout(() => {
+                    startGenreSelectionContainer.classList.add(FADE_IN_CLASS);
+                }, 10);
+            }, { once: true });
+        }, 800); // 800ms, um mit der CSS-Animation zu synchronisieren
+        
+        // Die Genres einmalig rendern
+        renderPreselectionGenres();
+        
         // Füge den Klick-Listener für den "LET'S GO"-Button hinzu
-        preselectionStartButton.addEventListener('click', startGame, { once: true });
+        preselectionStartButton.addEventListener('click', () => {
+            if (!preselectionStartButton.disabled) {
+                // Genre-Auswahl ausblenden
+                startGenreSelectionContainer.classList.remove(FADE_IN_CLASS);
+                startGenreSelectionContainer.classList.add(HIDDEN_CLASS);
+                // Spiel starten
+                startGame();
+            }
+        });
 
-        // Stellt sicher, dass die Genres gerendert werden, wenn der Container angezeigt wird
-        if (allGenresScrollbox.children.length === 0) {
-            renderPreselectionGenres();
+    } else {
+        // Falls ein Spielstand existiert, zeige den letzten Screen
+        if (lastGameScreenVisible === 'dice-container') {
+            showDiceScreen();
+        } else if (lastGameScreenVisible === 'genre-container') {
+            showGenreScreen();
+        } else if (lastGameScreenVisible === 'reveal-container') {
+            showResolution();
         }
     }
 }
-
 
     function startTokenTimer() {
         const totalDuration = 60 * 60; // 60 Minuten in Sekunden
@@ -1043,16 +1052,9 @@ function startGame() {
     logoButton.classList.remove(HIDDEN_CLASS);
     logoButton.classList.add(INITIAL_FLY_IN_CLASS); // Starte mit der Animation
 
-    // Füge den Klick-Listener wieder hinzu, der die Genre-Auswahl anzeigt
-    logoButton.addEventListener('click', () => {
-        startGenreSelectionContainer.classList.remove(HIDDEN_CLASS);
-        setTimeout(() => {
-            startGenreSelectionContainer.classList.add(FADE_IN_CLASS);
-        }, 10);
-        logoButton.removeEventListener('click', this);
-        logoButton.classList.add(HIDDEN_CLASS);
-    }, { once: true });
-
+     // Stelle sicher, dass der Logo-Button sichtbar ist und die Animation startet
+    logoButton.classList.remove(HIDDEN_CLASS, INACTIVE_CLASS);
+    logoButton.classList.add(INITIAL_FLY_IN_CLASS);
     lastGameScreenVisible = '';
 
     // Die Genre-Auswahl Ansicht wieder anzeigen und neu rendern
