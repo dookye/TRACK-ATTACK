@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Spotify PKCE Test</title>
 <script src="https://sdk.scdn.co/spotify-player.js"></script>
+<style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+    #progressBar { width: 100%; height: 20px; background: #ddd; margin-top: 10px; border-radius: 5px; overflow: hidden; }
+    #progress { height: 100%; width: 0; background: #1DB954; transition: width 0.2s; }
+</style>
 </head>
 <body>
 <h1>Spotify PKCE Test</h1>
@@ -16,7 +22,9 @@
 <div id="appDiv" style="display:none;">
     <button id="selectButton">Zufälligen Song auswählen</button>
     <button id="playButton" disabled>Play 10 Sekunden</button>
-    <p id="songInfo"></p>
+    <p id="songInfo">Kein Song ausgewählt</p>
+    <div id="progressBar"><div id="progress"></div></div>
+    <p id="countdown"></p>
 </div>
 
 <script>
@@ -25,36 +33,34 @@ const redirectUri = 'https://dookye.github.io/TRACK-ATTACK/';
 const playlistId = '6Aq2xcWvFXBoExv64eGm5o';
 let accessToken = '';
 let selectedTrackUri = '';
+let player;
 
+// PKCE Helferfunktionen
 function generateRandomString(length) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
-    for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    for (let i = 0; i < length; i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
     return result;
 }
 
-// SHA256 & Base64URL encoding
 async function sha256(baseString) {
     const encoder = new TextEncoder();
     const data = encoder.encode(baseString);
     const hash = await crypto.subtle.digest('SHA-256', data);
-    return btoa(String.fromCharCode(...new Uint8Array(hash)))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-// PKCE Flow: Login
+// Spotify Login
 document.getElementById('loginButton').addEventListener('click', async () => {
     const codeVerifier = generateRandomString(128);
     localStorage.setItem('code_verifier', codeVerifier);
     const codeChallenge = await sha256(codeVerifier);
 
-    const authUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=streaming%20user-read-email%20user-read-private&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge_method=S256&code_challenge=${codeChallenge}`;
+    const authUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=streaming%20user-read-email%20user-read-private%20user-modify-playback-state&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge_method=S256&code_challenge=${codeChallenge}`;
     window.location = authUrl;
 });
 
-// After redirect: exchange code for token
+// Nach Redirect: Token holen
 async function handleRedirect() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
@@ -82,11 +88,9 @@ async function handleRedirect() {
         initPlayer();
     }
 }
-
 handleRedirect();
 
-// Spotify Web Player
-let player;
+// Player initialisieren
 function initPlayer() {
     window.onSpotifyWebPlaybackSDKReady = () => {
         player = new Spotify.Player({
@@ -95,11 +99,19 @@ function initPlayer() {
             volume: 0.8
         });
 
+        player.addListener('ready', ({device_id}) => {
+            console.log('Player ready, Device ID:', device_id);
+        });
+
+        player.addListener('not_ready', ({device_id}) => {
+            console.log('Player not ready', device_id);
+        });
+
         player.connect();
     };
 }
 
-// Zufallssong auswählen
+// Zufälligen Song auswählen
 document.getElementById('selectButton').addEventListener('click', async () => {
     const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
         headers: { Authorization: 'Bearer ' + accessToken }
@@ -112,11 +124,14 @@ document.getElementById('selectButton').addEventListener('click', async () => {
     document.getElementById('playButton').disabled = false;
 });
 
-// Song abspielen für 10 Sekunden
+// Song 10 Sekunden abspielen mit Countdown
 document.getElementById('playButton').addEventListener('click', async () => {
     if (!selectedTrackUri) return;
+    document.getElementById('playButton').disabled = true;
+    document.getElementById('selectButton').disabled = true;
 
-    const resp = await fetch(`https://api.spotify.com/v1/me/player/play`, {
+    // Play starten
+    await fetch(`https://api.spotify.com/v1/me/player/play`, {
         method: 'PUT',
         headers: {
             Authorization: 'Bearer ' + accessToken,
@@ -125,12 +140,27 @@ document.getElementById('playButton').addEventListener('click', async () => {
         body: JSON.stringify({ uris: [selectedTrackUri] })
     });
 
-    setTimeout(() => {
-        fetch(`https://api.spotify.com/v1/me/player/pause`, {
-            method: 'PUT',
-            headers: { Authorization: 'Bearer ' + accessToken }
-        });
-    }, 10000); // 10 Sekunden
+    // Countdown & Progress
+    let remaining = 10;
+    const countdownEl = document.getElementById('countdown');
+    const progressEl = document.getElementById('progress');
+
+    countdownEl.innerText = `Verbleibende Zeit: ${remaining}s`;
+    progressEl.style.width = '0%';
+
+    const interval = setInterval(() => {
+        remaining--;
+        countdownEl.innerText = `Verbleibende Zeit: ${remaining}s`;
+        progressEl.style.width = `${(10 - remaining)/10*100}%`;
+        if (remaining <= 0) {
+            clearInterval(interval);
+            fetch(`https://api.spotify.com/v1/me/player/pause`, { method: 'PUT', headers: { Authorization: 'Bearer ' + accessToken } });
+            countdownEl.innerText = 'Abspielzeit beendet';
+            progressEl.style.width = '100%';
+            document.getElementById('playButton').disabled = false;
+            document.getElementById('selectButton').disabled = false;
+        }
+    }, 1000);
 });
 </script>
 </body>
