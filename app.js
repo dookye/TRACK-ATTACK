@@ -283,7 +283,7 @@ function handleLogoClick() {
         getAccessToken(code).then(token => {
             accessToken = token;
             loginScreen.classList.add('hidden');
-            initializePlayer();
+            // initializePlayer();
             startTokenTimer();
             
             // RUFT JETZT DIE NEUE FUNKTION FÜR DEN SPIELSTART AUF
@@ -412,6 +412,10 @@ preselectionStartButton.addEventListener('click', () => {
 
     // AKTUALISIERT: startGame-Funktion
 function startGame() {
+    // Rufe initializePlayer() nur auf, wenn der Player noch nicht existiert
+    if (!spotifyPlayer) {
+        initializePlayer();
+    }
     // Entferne die sanfte Einblendung
     startGenreSelectionContainer.classList.remove(FADE_IN_CLASS);
     // Verstecke den Container nach dem Klick
