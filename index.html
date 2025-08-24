@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spotify PKCE Test 001</title>
+<title>Spotify PKCE Test</title>
 <script src="https://sdk.scdn.co/spotify-player.js"></script>
 <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
@@ -20,7 +20,7 @@
 </div>
 
 <div id="appDiv" style="display:none;">
-    <button id="selectButton">Zufälligen Song auswählen</button>
+    <button id="selectButton" disabled>Zufälligen Song auswählen</button>
     <button id="playButton" disabled>Play 10 Sekunden</button>
     <p id="songInfo">Kein Song ausgewählt</p>
     <div id="progressBar"><div id="progress"></div></div>
@@ -33,9 +33,10 @@ const redirectUri = 'https://dookye.github.io/TRACK-ATTACK/';
 const playlistId = '6Aq2xcWvFXBoExv64eGm5o';
 let accessToken = '';
 let selectedTrackUri = '';
+let deviceId = '';
 let player;
 
-// PKCE Helferfunktionen
+// PKCE Helper
 function generateRandomString(length) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -60,7 +61,7 @@ document.getElementById('loginButton').addEventListener('click', async () => {
     window.location = authUrl;
 });
 
-// Nach Redirect: Token holen
+// Token holen nach Redirect
 async function handleRedirect() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
@@ -90,17 +91,20 @@ async function handleRedirect() {
 }
 handleRedirect();
 
-// Player initialisieren
+// Player initialisieren und verbinden
 function initPlayer() {
     window.onSpotifyWebPlaybackSDKReady = () => {
         player = new Spotify.Player({
-            name: 'PKCE Test Player',
+            name: 'TRACK-ATTACK Player',
             getOAuthToken: cb => { cb(accessToken); },
             volume: 0.8
         });
 
         player.addListener('ready', ({device_id}) => {
+            deviceId = device_id;
             console.log('Player ready, Device ID:', device_id);
+            // Erst jetzt Buttons aktivieren
+            document.getElementById('selectButton').disabled = false;
         });
 
         player.addListener('not_ready', ({device_id}) => {
@@ -113,6 +117,8 @@ function initPlayer() {
 
 // Zufälligen Song auswählen
 document.getElementById('selectButton').addEventListener('click', async () => {
+    if (!deviceId) return;
+
     const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
         headers: { Authorization: 'Bearer ' + accessToken }
     });
@@ -124,14 +130,14 @@ document.getElementById('selectButton').addEventListener('click', async () => {
     document.getElementById('playButton').disabled = false;
 });
 
-// Song 10 Sekunden abspielen mit Countdown
+// Song 10 Sekunden abspielen
 document.getElementById('playButton').addEventListener('click', async () => {
-    if (!selectedTrackUri) return;
+    if (!selectedTrackUri || !deviceId) return;
     document.getElementById('playButton').disabled = true;
     document.getElementById('selectButton').disabled = true;
 
-    // Play starten
-    await fetch(`https://api.spotify.com/v1/me/player/play`, {
+    // Play starten auf Browser-Webplayer
+    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
         method: 'PUT',
         headers: {
             Authorization: 'Bearer ' + accessToken,
@@ -140,11 +146,10 @@ document.getElementById('playButton').addEventListener('click', async () => {
         body: JSON.stringify({ uris: [selectedTrackUri] })
     });
 
-    // Countdown & Progress
+    // Countdown & Fortschritt
     let remaining = 10;
     const countdownEl = document.getElementById('countdown');
     const progressEl = document.getElementById('progress');
-
     countdownEl.innerText = `Verbleibende Zeit: ${remaining}s`;
     progressEl.style.width = '0%';
 
@@ -154,7 +159,10 @@ document.getElementById('playButton').addEventListener('click', async () => {
         progressEl.style.width = `${(10 - remaining)/10*100}%`;
         if (remaining <= 0) {
             clearInterval(interval);
-            fetch(`https://api.spotify.com/v1/me/player/pause`, { method: 'PUT', headers: { Authorization: 'Bearer ' + accessToken } });
+            fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceId}`, {
+                method: 'PUT',
+                headers: { Authorization: 'Bearer ' + accessToken }
+            });
             countdownEl.innerText = 'Abspielzeit beendet';
             progressEl.style.width = '100%';
             document.getElementById('playButton').disabled = false;
