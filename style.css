@@ -656,3 +656,78 @@ body, html {
     font-size: 14px;
     z-index: 1000;
 }
+
+/* Neue Klasse für den Vollbild-Container */
+.full-screen-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Dunkler, transparenter Hintergrund */
+    display: flex;
+    justify-content: center; /* Horizontale Zentrierung */
+    align-items: center; /* Vertikale Zentrierung */
+    padding: 20px;
+    box-sizing: border-box;
+    z-index: 100;
+}
+
+#genre-preselection-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 95%; /* 95% des Eltern-Containers für Abstand oben und unten */
+    width: 100%;
+    max-width: 600px; /* Optional: Maximale Breite für größere Bildschirme */
+}
+
+#preselection-title {
+    color: var(--white);
+    text-align: center;
+    font-size: 2em;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+}
+
+#all-genres-scrollbox {
+    flex-grow: 1; /* Nimmt den restlichen vertikalen Platz ein */
+    overflow-y: auto; /* Aktiviert das Scrollen bei Bedarf */
+    padding: 10px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    margin: 20px 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+#preselection-start-button {
+    font-size: 1.5em;
+    padding: 15px 30px;
+    margin-top: 20px;
+    width: 100%;
+    max-width: 400px;
+    align-self: center; /* Zentriert den Button horizontal */
+    border: 2px solid var(--white);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--white);
+    transition: all 0.3s ease;
+}
+
+#preselection-start-button:hover:not(.disabled) {
+    background-color: var(--white);
+    color: var(--black);
+}
+
+/* Stil für den deaktivierten Button */
+#preselection-start-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: scale(1);
+    box-shadow: none;
+}
