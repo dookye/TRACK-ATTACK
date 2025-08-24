@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spotify PKCE Test 002</title>
+<title>Spotify PKCE Test 005</title>
 <style>
 body { font-family: Arial, sans-serif; margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; flex-direction:column; }
 button { padding: 10px 20px; margin: 5px; font-size: 16px; }
@@ -12,12 +12,17 @@ button { padding: 10px 20px; margin: 5px; font-size: 16px; }
 #spinner { border: 6px solid #f3f3f3; border-top: 6px solid #1DB954; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; display:none; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 #playerReady { font-size: 20px; color:#1DB954; opacity:0; transition: opacity 0.5s; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
+#iosNotice { color: red; font-weight:bold; margin-top:10px; display:none; text-align:center; max-width:80%; }
 </style>
 </head>
 <body>
 
 <div id="spinner"></div>
 <div id="playerReady">Player is ready</div>
+<div id="iosNotice">
+    Bitte öffne die Spotify App, um Musik auf iOS abzuspielen.<br>
+    <button id="openSpotifyButton" style="margin-top:10px;">Spotify App öffnen</button>
+</div>
 
 <div id="loginDiv">
     <button id="loginButton">Mit Spotify einloggen</button>
@@ -39,6 +44,8 @@ let accessToken = '';
 let selectedTrackUri = '';
 let deviceId = '';
 let player;
+let isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+let iosDeviceCheckInterval;
 
 // PKCE Helper
 function generateRandomString(length) {
@@ -91,7 +98,8 @@ async function handleRedirect() {
         document.getElementById('loginDiv').style.display = 'none';
         document.getElementById('appDiv').style.display = 'block';
         document.getElementById('spinner').style.display = 'block';
-        initPlayer();
+        if (!isIos) initPlayer();
+        checkActiveDevice();
     }
 }
 handleRedirect();
@@ -119,7 +127,6 @@ function initPlayer() {
         document.getElementById('selectButton').disabled = false;
     });
 
-    player.addListener('not_ready', ({device_id}) => { console.log('Player not ready', device_id); });
     player.connect();
 }
 
@@ -128,9 +135,39 @@ const script = document.createElement('script');
 script.src = "https://sdk.scdn.co/spotify-player.js";
 document.body.appendChild(script);
 
+// Prüfen, ob aktives Gerät vorhanden
+async function checkActiveDevice() {
+    const resp = await fetch('https://api.spotify.com/v1/me/player/devices', { headers: { Authorization: 'Bearer ' + accessToken } });
+    const data = await resp.json();
+    const activeDevice = data.devices.find(d => d.is_active);
+    if (activeDevice) {
+        deviceId = activeDevice.id;
+        document.getElementById('iosNotice').style.display = 'none';
+        if (iosDeviceCheckInterval) clearInterval(iosDeviceCheckInterval);
+    } else if (isIos) {
+        document.getElementById('iosNotice').style.display = 'block';
+        // alle 2 Sekunden erneut prüfen
+        iosDeviceCheckInterval = setInterval(async () => {
+            const resp = await fetch('https://api.spotify.com/v1/me/player/devices', { headers: { Authorization: 'Bearer ' + accessToken } });
+            const data = await resp.json();
+            const activeDevice = data.devices.find(d => d.is_active);
+            if (activeDevice) {
+                deviceId = activeDevice.id;
+                document.getElementById('iosNotice').style.display = 'none';
+                clearInterval(iosDeviceCheckInterval);
+            }
+        }, 2000);
+    }
+}
+
+// Spotify App auf iOS öffnen
+document.getElementById('openSpotifyButton').addEventListener('click', () => {
+    window.location.href = 'spotify://';
+});
+
 // Zufälligen Song auswählen
 document.getElementById('selectButton').addEventListener('click', async () => {
-    if (!deviceId) return;
+    if (!deviceId && !isIos) return;
     const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, { headers: { Authorization: 'Bearer ' + accessToken } });
     const data = await resp.json();
     const tracks = data.items.map(item => item.track);
@@ -140,14 +177,18 @@ document.getElementById('selectButton').addEventListener('click', async () => {
     document.getElementById('playButton').disabled = false;
 });
 
-// Song 10 Sekunden abspielen (Apple-kompatibel)
+// Song 10 Sekunden abspielen
 document.getElementById('playButton').addEventListener('click', async () => {
-    if (!selectedTrackUri || !deviceId) return;
+    if (!selectedTrackUri) return;
+
+    if (!deviceId && isIos) {
+        alert("Bitte öffne zuerst die Spotify App auf deinem iOS Gerät.");
+        return;
+    }
 
     document.getElementById('playButton').disabled = true;
     document.getElementById('selectButton').disabled = true;
 
-    // Erstes Play direkt im Klick-Event für iOS
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
         method: 'PUT',
         headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
