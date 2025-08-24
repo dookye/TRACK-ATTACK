@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>TRACK-ATTACK Startseite 001</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotify PKCE Test 011</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
-    <!-- App-Logo -->
-    <img src="assets/logo.png" alt="TRACK-ATTACK Logo" class="logo">
+<div id="loginDiv">
+  <button id="loginButton">Mit Spotify einloggen</button>
+</div>
 
-    <!-- Link zur Spielanleitung -->
-    <a href="anleitung.html" class="instruction-link">Spielanleitung</a>
-
-    <!-- Spotify Login Button -->
-    <button id="spotifyLogin" class="spotify-login-btn">
-        <img src="spotify_icon.png" alt="Spotify Icon"> Mit Spotify einloggen
-    </button>
+<div id="appDiv" style="display:none;">
+  <button id="startPlayerButton" disabled>Player starten</button>
+  <button id="selectButton" disabled>Zufälligen Song auswählen</button>
+  <button id="playButton" disabled>Play 10 Sekunden</button>
+  <p id="songInfo">Kein Song ausgewählt</p>
+  <div id="progressBar"><div id="progress"></div></div>
+  <p id="countdown"></p>
 </div>
 
 <script src="app.js"></script>
