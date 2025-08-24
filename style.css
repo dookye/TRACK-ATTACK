@@ -578,26 +578,23 @@ body, html {
 /* ------------- Genre-Startauswahl ------------------ */
 /* --- NEU: Basis-Stile für den Start-Genre-Container --- */
 #start-genre-selection-container {
-    position: absolute;
-    left: 0; /* Links positioniert */
-    top: 10%; 
-    max-height: 95vh;
-    width: 35%; /* Breite der Scrollbox anpassen */
-    gap: 15;
-    padding: 20; 
-    /* height: 90%; - Volle Höhe des Bildschirms */
-    background-color: rgba(0, 0, 0, 0.7); /* Leicht durchsichtiger Hintergrund */
-    display: flex; /* Flexbox für Inhalt */
-    flex-direction: column; /* Buttons untereinander */
-    justify-content: flex-start; /* Oben beginnen */
-    align-items: center; /* Mittig ausrichten */
-    box-sizing: border-box; /* Padding wird in die Breite/Höhe einberechnet */
-    z-index: 100; /* Sicherstellen, dass es über anderen Elementen liegt */
-    /* border-right: 2px solid var(--white); - Optische Trennlinie */
-    overflow-y: auto; /* Scrollbar, wenn Inhalt zu lang */
-    -webkit-overflow-scrolling: touch; /* Flüssiges Scrollen auf iOS */
-    scrollbar-width: none; /* Scrollbar verstecken (Firefox) */
-    -ms-overflow-style: none; /* Scrollbar verstecken (IE/Edge) */
+    display: flex;
+    flex-wrap: wrap; /* Wichtig, damit die Buttons in die nächste Zeile umbrechen */
+    justify-content: center;
+    align-items: center;
+    gap: 15px; /* Abstand zwischen den Buttons */
+    padding: 20px;
+    
+    /* --- NEU/AKTUALISIERT: Für den scrollbaren Bereich --- */
+    max-height: 95vh; /* Maximale Höhe: 70% der Viewport-Höhe. 
+                         Du kannst diesen Wert anpassen (z.B. 60vh, 500px), 
+                         je nachdem, wie viel Platz du für andere Elemente lassen möchtest. */
+    overflow-y: auto; /* Erlaubt vertikales Scrollen, wenn der Inhalt die max-height überschreitet */
+    -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS-Geräten */
+    
+    /* Optional: Scrollbar verstecken für einen saubereren Look */
+    scrollbar-width: none; /* Für Firefox */
+    -ms-overflow-style: none; /* Für Internet Explorer und Edge */
 }
 
 /* Für Webkit-Browser (Chrome, Safari) Scrollbar verstecken */
