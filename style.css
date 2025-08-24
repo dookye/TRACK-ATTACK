@@ -686,7 +686,6 @@ body, html {
     justify-content: space-between;
     height: 95%; /* 95% des Eltern-Containers für Abstand oben und unten */
     width: 100%;
-    max-width: 600px; /* Optional: Maximale Breite für größere Bildschirme */
     width: 90%; /* NEU: Ändert die Breite auf 90% für einen Rand */
 }
 
