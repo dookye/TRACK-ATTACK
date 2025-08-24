@@ -1,98 +1,137 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>TRACK ATTACK002</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="assets/logo-icon.png" type="image/png">
-    <link rel="apple-touch-icon" href="assets/logo-icon.png">
-    <link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotify PKCE Test</title>
+<script src="https://sdk.scdn.co/spotify-player.js"></script>
 </head>
 <body>
+<h1>Spotify PKCE Test</h1>
 
-    <div id="rotate-device-overlay" class="overlay hidden">
-        <p>Please rotate your device to landscape mode</p>
-    </div>
+<div id="loginDiv">
+    <button id="loginButton">Mit Spotify einloggen</button>
+</div>
 
-    <div id="app-container">
-        <div id="login-screen" class="screen active">
-            <img src="assets/logo.png" alt="Quiz Game Logo" id="login-logo">
-                <a href="info.html" class="info-button">
-                  <img src="assets/info.png" alt="Info">
-                </a>
-            <p>Please log in with your Spotify-Premium-Account</p>
-            <button id="login-button">
-                <img src="spotify_icon.png" alt="Spotify Logo">
-                LOG IN WITH SPOTIFY
-            </button>
-        </div>
+<div id="appDiv" style="display:none;">
+    <button id="selectButton">Zufälligen Song auswählen</button>
+    <button id="playButton" disabled>Play 10 Sekunden</button>
+    <p id="songInfo"></p>
+</div>
 
-        <div id="game-screen" class="screen hidden">
-            <img src="assets/logo.png" alt="Track Attack Logo" id="logo-button" class="hidden">
+<script>
+const clientId = '53257f6a1c144d3f929a60d691a0c6f6';
+const redirectUri = 'https://dookye.github.io/TRACK-ATTACK/';
+const playlistId = '6Aq2xcWvFXBoExv64eGm5o';
+let accessToken = '';
+let selectedTrackUri = '';
 
-            <div id="start-genre-selection-container" class="hidden">
-                <div id="all-genres-scrollbox">
-                    </div>
-            </div>
-            <div id="countdown-display" class="hidden"></div>
+function generateRandomString(length) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
 
-            <div id="speed-round-text-display" class="hidden">
-                <p>SPEED-ROUND</p>
-            </div>
-            
-            <div id="dice-container" class="hidden">
-                <img src="assets/w-ani.gif" alt="Dice Animation" id="dice-animation">
+// SHA256 & Base64URL encoding
+async function sha256(baseString) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(baseString);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return btoa(String.fromCharCode(...new Uint8Array(hash)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
 
-                <div id="dice-selection" class="hidden">
-                    <img src="assets/w-1.png" alt="Dice 1" class="dice-option" data-value="1">
-                    <img src="assets/w-2.png" alt="Dice 2" class="dice-option" data-value="2">
-                    <img src="assets/w-3.png" alt="Dice 3" class="dice-option" data-value="3">
-                    <img src="assets/w-4.png" alt="Dice 4" class="dice-option" data-value="4">
-                    <img src="assets/w-5.png" alt="Dice 5" class="dice-option" data-value="5">
-                    <img src="assets/w-7.png" alt="Dice 7" class="dice-option" data-value="7">
+// PKCE Flow: Login
+document.getElementById('loginButton').addEventListener('click', async () => {
+    const codeVerifier = generateRandomString(128);
+    localStorage.setItem('code_verifier', codeVerifier);
+    const codeChallenge = await sha256(codeVerifier);
 
-                    <div id="digital-dice-area" class="hidden">
-                        <img id="digital-dice-main-image" src="assets/digi-ta.png" alt="Digitaler Würfel" class="digital-dice-icon">
-                    </div>
-                </div>
-            </div>
+    const authUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=streaming%20user-read-email%20user-read-private&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge_method=S256&code_challenge=${codeChallenge}`;
+    window.location = authUrl;
+});
 
-            <div id="genre-container" class="hidden">
-                </div>
+// After redirect: exchange code for token
+async function handleRedirect() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (!code) return;
 
-            <div id="reveal-container" class="hidden">
-                <div id="track-info">
-                    <img id="album-cover" src="" alt="Album Cover">
-                    <div>
-                        <p id="track-title">Titel</p>
-                        <p id="track-artist">Interpret</p>
-                        <p id="track-album"></p>
-                        <p id="track-year"></p>
-                    </div>
-                </div>
-                <div id="feedback-buttons">
-                    <button id="correct-button">RICHTIG</button>
-                    <button id="wrong-button">FALSCH</button>
-                </div>
-            </div>
-            
-            <button id="reveal-button" class="hidden">AUFLÖSEN</button>
-            
-        </div>
-        
-        <div id="score-screen" class="screen hidden">
-            <div id="player1-score-display">0</div>
-            <div id="player2-score-display">0</div>
-        </div>
-        <div id="token-timer" class="hidden"></div>
-    </div>
-    
-    <audio id="digital-dice-sound" src="assets/digi-ani-sound.mp3" preload="auto"></audio>
-    <audio id="logo-fly-in-sound" src="assets/ta-sound.mp3" preload="auto"></audio>
-    <script src="app.js"></script>
+    const codeVerifier = localStorage.getItem('code_verifier');
+    const body = new URLSearchParams();
+    body.append('client_id', clientId);
+    body.append('grant_type', 'authorization_code');
+    body.append('code', code);
+    body.append('redirect_uri', redirectUri);
+    body.append('code_verifier', codeVerifier);
+
+    const resp = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: body
+    });
+    const data = await resp.json();
+    accessToken = data.access_token;
+
+    if (accessToken) {
+        document.getElementById('loginDiv').style.display = 'none';
+        document.getElementById('appDiv').style.display = 'block';
+        initPlayer();
+    }
+}
+
+handleRedirect();
+
+// Spotify Web Player
+let player;
+function initPlayer() {
+    window.onSpotifyWebPlaybackSDKReady = () => {
+        player = new Spotify.Player({
+            name: 'PKCE Test Player',
+            getOAuthToken: cb => { cb(accessToken); },
+            volume: 0.8
+        });
+
+        player.connect();
+    };
+}
+
+// Zufallssong auswählen
+document.getElementById('selectButton').addEventListener('click', async () => {
+    const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    const data = await resp.json();
+    const tracks = data.items.map(item => item.track);
+    const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+    selectedTrackUri = randomTrack.uri;
+    document.getElementById('songInfo').innerText = `Ausgewählt: ${randomTrack.name} - ${randomTrack.artists.map(a => a.name).join(', ')}`;
+    document.getElementById('playButton').disabled = false;
+});
+
+// Song abspielen für 10 Sekunden
+document.getElementById('playButton').addEventListener('click', async () => {
+    if (!selectedTrackUri) return;
+
+    const resp = await fetch(`https://api.spotify.com/v1/me/player/play`, {
+        method: 'PUT',
+        headers: {
+            Authorization: 'Bearer ' + accessToken,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ uris: [selectedTrackUri] })
+    });
+
+    setTimeout(() => {
+        fetch(`https://api.spotify.com/v1/me/player/pause`, {
+            method: 'PUT',
+            headers: { Authorization: 'Bearer ' + accessToken }
+        });
+    }, 10000); // 10 Sekunden
+});
+</script>
 </body>
 </html>
