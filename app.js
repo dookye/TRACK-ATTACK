@@ -34,12 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const wrongButton = document.getElementById('wrong-button');
     const tokenTimer = document.getElementById('token-timer');
 
-    const startGenreSelectionContainer = document.getElementById('start-genre-selection-container');
-    const allGenresScrollbox = document.getElementById('all-genres-scrollbox');
-    const preselectionStartButton = document.getElementById('preselection-start-button'); // NEU
-    const preselectionTitle = document.getElementById('preselection-title'); // NEU
-
-
 
     // NEU: Konstante für das EINE digitale Würfelbild
     const digitalDiceArea = document.getElementById('digital-dice-area');
@@ -323,39 +317,77 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
-    function renderPreselectionGenres() {
-        allGenresScrollbox.innerHTML = '';
-        const allAvailableGenres = Object.keys(playlists);
-        allAvailableGenres.forEach(genreName => {
-            const button = document.createElement('button');
-            button.classList.add('preselect-genre-button');
-            button.dataset.genre = genreName;
-            button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
+// --- NEU: Funktion: Genres für die Vorauswahl rendern ---
+function renderPreselectionGenres() {
+    allGenresScrollbox.innerHTML = '';
+    const allAvailableGenres = Object.keys(playlists);
+    
+    // Sortiere die Genres alphabetisch, um eine konsistente Reihenfolge zu gewährleisten
+    allAvailableGenres.sort();
 
-            if (gameState.selectedPlayableGenres.includes(genreName)) {
-                button.classList.add('selected');
-            }
-            button.addEventListener('click', () => {
-                toggleGenreSelection(genreName, button);
-            });
-            allGenresScrollbox.appendChild(button);
+    allAvailableGenres.forEach(genreName => {
+        const button = document.createElement('button');
+        button.classList.add('preselect-genre-button');
+        button.dataset.genre = genreName;
+        // Passe den Text für die Anzeige an: "pop hits 2000-2025" -> "Pop Hits 2000-2025"
+        const formattedGenreName = genreName.split(' ').map(word => {
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        }).join(' ');
+
+        button.innerText = formattedGenreName;
+
+        if (gameState.selectedPlayableGenres.includes(genreName)) {
+            button.classList.add('selected');
+        }
+        button.addEventListener('click', () => {
+            toggleGenreSelection(genreName, button);
         });
-    }
+        allGenresScrollbox.appendChild(button);
+    });
+    // Überprüfe den Status des Buttons nach dem Rendern
+    updatePreselectionButtonState();
+}
 
     // --- NEU: Funktion: Genre in der Vorauswahl auswählen/abwählen ---
-    function toggleGenreSelection(genreName, buttonElement) {
-        const index = gameState.selectedPlayableGenres.indexOf(genreName);
+function toggleGenreSelection(genreName, buttonElement) {
+    const index = gameState.selectedPlayableGenres.indexOf(genreName);
 
-        if (index > -1) {
-            gameState.selectedPlayableGenres.splice(index, 1);
-            buttonElement.classList.remove('selected');
-        } else {
-            gameState.selectedPlayableGenres.push(genreName);
-            buttonElement.classList.add('selected');
-        }
-        console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
+    if (index > -1) {
+        // Genre abwählen
+        gameState.selectedPlayableGenres.splice(index, 1);
+        buttonElement.classList.remove('selected');
+    } else {
+        // Genre auswählen
+        gameState.selectedPlayableGenres.push(genreName);
+        buttonElement.classList.add('selected');
     }
+    console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
+    // Überprüfe den Status des Buttons nach jeder Auswahl
+    updatePreselectionButtonState();
+}
+
+    // NEU: Funktion zum Aktualisieren des "LET'S GO"-Buttons
+function updatePreselectionButtonState() {
+    if (gameState.selectedPlayableGenres.length >= 3) {
+        preselectionStartButton.classList.remove('disabled');
+        preselectionStartButton.disabled = false;
+    } else {
+        preselectionStartButton.classList.add('disabled');
+        preselectionStartButton.disabled = true;
+    }
+}
+
+// NEU: Event-Listener für den "LET'S GO"-Button
+preselectionStartButton.addEventListener('click', () => {
+    // Wenn der Button aktiv ist...
+    if (!preselectionStartButton.classList.contains('disabled')) {
+        startGenreSelectionContainer.classList.add('hidden');
+        logoButton.classList.remove('hidden');
+        
+        // Führe die Logik für den Start des Spiels aus
+        startGame();
+    }
+});
 
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
@@ -368,18 +400,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // AKTUALISIERT: startGame-Funktion
-    function startGame() {
-        triggerBounce(logoButton);
-        logoButton.classList.add('inactive');
-        lastGameScreenVisible = 'logo-button';
-        startGenreSelectionContainer.classList.add('hidden');
+function startGame() {
+    triggerBounce(logoButton);
+    logoButton.classList.add('inactive');
+    lastGameScreenVisible = 'logo-button';
+    
+    // Entferne die Genre-Auswahl Ansicht bei Spielstart
+    startGenreSelectionContainer.classList.add('hidden');
 
-        setTimeout(() => {
-            appContainer.style.backgroundColor = 'var(--player1-color)';
-            logoButton.classList.add('hidden');
-            showDiceScreen();
-        }, 800); // Warten, bis Bounce-Effekt und Blur sichtbar sind
-    }
+    setTimeout(() => {
+        appContainer.style.backgroundColor = 'var(--player1-color)';
+        logoButton.classList.add('hidden');
+        showDiceScreen();
+    }, 800); // Warten, bis Bounce-Effekt und Blur sichtbar sind
+}
 
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
@@ -997,7 +1031,10 @@ document.addEventListener('DOMContentLoaded', () => {
         gameScreen.classList.remove('hidden');
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
         logoButton.removeEventListener('click', startGame);
-        logoButton.addEventListener('click', startGame, { once: true });
+
+         logoButton.addEventListener('click', () => {
+        startGenreSelectionContainer.classList.remove('hidden');
+    });
 
         lastGameScreenVisible = '';
 
