@@ -151,6 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
 function startGameOnLoad() {
     gameScreen.classList.remove(HIDDEN_CLASS);
 
+    // Der Logo-Button ist von Anfang an klickbar
+    logoButton.classList.remove(HIDDEN_CLASS, INACTIVE_CLASS);
+    logoButton.classList.add(INITIAL_FLY_IN_CLASS);
+
     if (logoFlyInSound) {
         logoFlyInSound.currentTime = 0;
         logoFlyInSound.volume = 0.3;
@@ -159,53 +163,37 @@ function startGameOnLoad() {
         });
     }
 
-    // Wenn das Spiel noch nicht gestartet ist (kein lastGameScreenVisible)...
-    if (!lastGameScreenVisible) {
-        // Starte mit dem Logo-Button-Flug
-        logoButton.classList.remove(HIDDEN_CLASS);
-        logoButton.classList.add(INITIAL_FLY_IN_CLASS);
-        
-        // Verhindere Klicks, bis die Animation vorbei ist
-        logoButton.classList.add(INACTIVE_CLASS);
-        
-        // Nach der Animation den Button klickbar machen und den Listener hinzufügen
-        setTimeout(() => {
-            logoButton.classList.remove(INACTIVE_CLASS);
-            logoButton.addEventListener('click', () => {
-                // Das Logo verstecken
-                logoButton.classList.add(HIDDEN_CLASS);
-                // Genre-Vorauswahl sanft einblenden
-                startGenreSelectionContainer.classList.remove(HIDDEN_CLASS);
-                setTimeout(() => {
-                    startGenreSelectionContainer.classList.add(FADE_IN_CLASS);
-                }, 10);
-            }, { once: true });
-        }, 800); // 800ms, um mit der CSS-Animation zu synchronisieren
-        
-        // Die Genres einmalig rendern
-        renderPreselectionGenres();
-        
-        // Füge den Klick-Listener für den "LET'S GO"-Button hinzu
-        preselectionStartButton.addEventListener('click', () => {
-            if (!preselectionStartButton.disabled) {
-                // Genre-Auswahl ausblenden
-                startGenreSelectionContainer.classList.remove(FADE_IN_CLASS);
-                startGenreSelectionContainer.classList.add(HIDDEN_CLASS);
-                // Spiel starten
-                startGame();
-            }
-        });
-
-    } else {
-        // Falls ein Spielstand existiert, zeige den letzten Screen
-        if (lastGameScreenVisible === 'dice-container') {
-            showDiceScreen();
-        } else if (lastGameScreenVisible === 'genre-container') {
-            showGenreScreen();
-        } else if (lastGameScreenVisible === 'reveal-container') {
-            showResolution();
+    // Wenn der Benutzer auf das Logo klickt, wird die Genre-Auswahl angezeigt
+    logoButton.addEventListener('click', handleLogoClick, { once: true });
+    
+    // Die Genres einmalig rendern
+    renderPreselectionGenres();
+    
+    // Füge den Klick-Listener für den "LET'S GO"-Button hinzu
+    preselectionStartButton.addEventListener('click', () => {
+        if (!preselectionStartButton.disabled) {
+            // Genre-Auswahl ausblenden
+            startGenreSelectionContainer.classList.remove(FADE_IN_CLASS);
+            startGenreSelectionContainer.classList.add(HIDDEN_CLASS);
+            // Spiel starten
+            startGame();
         }
-    }
+    });
+}
+
+    // NEU: Separater Handler für den Logo-Klick
+function handleLogoClick() {
+    // Stoppt die Animation des Logos
+    logoButton.classList.remove(INITIAL_FLY_IN_CLASS);
+    
+    // Versteckt das Logo
+    logoButton.classList.add(HIDDEN_CLASS);
+    
+    // Zeigt die Genre-Vorauswahl an und startet den Fade-In
+    startGenreSelectionContainer.classList.remove(HIDDEN_CLASS);
+    setTimeout(() => {
+        startGenreSelectionContainer.classList.add(FADE_IN_CLASS);
+    }, 10);
 }
 
     function startTokenTimer() {
@@ -1055,10 +1043,15 @@ function startGame() {
      // Stelle sicher, dass der Logo-Button sichtbar ist und die Animation startet
     logoButton.classList.remove(HIDDEN_CLASS, INACTIVE_CLASS);
     logoButton.classList.add(INITIAL_FLY_IN_CLASS);
+
     lastGameScreenVisible = '';
 
-    // Die Genre-Auswahl Ansicht wieder anzeigen und neu rendern
-    startGenreSelectionContainer.classList.remove(HIDDEN_CLASS);
+    startGenreSelectionContainer.classList.add(HIDDEN_CLASS);
+    startGenreSelectionContainer.classList.remove(FADE_IN_CLASS); // Stelle sicher, dass der Fade-In-Zustand zurückgesetzt wird
+
+    // Füge den Klick-Listener für einen neuen Durchgang hinzu
+    logoButton.addEventListener('click', handleLogoClick, { once: true });
+    
     renderPreselectionGenres();
 }
 
