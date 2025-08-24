@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spotify PKCE Test 007</title>
+<title>Spotify PKCE Test 008</title>
 <style>
 body { font-family: Arial, sans-serif; margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; flex-direction:column; }
 button { padding: 10px 20px; margin: 5px; font-size: 16px; }
@@ -21,8 +21,7 @@ button { padding: 10px 20px; margin: 5px; font-size: 16px; }
 <div id="playerReady">Player is ready</div>
 <div id="iosNotice">
     Bitte öffne die Spotify App, um Musik auf iOS abzuspielen.<br>
-    <button id="openSpotifyButton" style="margin-top:10px;">Spotify App öffnen</button><br>
-    <button id="checkSpotifyButton" style="margin-top:10px;">Check Spotify App</button>
+    <button id="openSpotifyButton" style="margin-top:10px;">Playlist in Spotify öffnen</button>
 </div>
 
 <div id="loginDiv">
@@ -96,8 +95,8 @@ async function handleRedirect() {
 
     if (accessToken) {
         document.getElementById('loginDiv').style.display = 'none';
-        document.getElementById('appDiv').style.display = 'block';
         if (!isIos) {
+            document.getElementById('appDiv').style.display = 'block';
             document.getElementById('spinner').style.display = 'block';
             initPlayer();
         } else {
@@ -125,6 +124,7 @@ function initPlayer() {
         const readyEl = document.getElementById('playerReady');
         readyEl.style.opacity = '1';
         setTimeout(() => { readyEl.style.opacity = '0'; }, 1500);
+        document.getElementById('appDiv').style.display = 'block';
         document.getElementById('selectButton').disabled = false;
     });
 
@@ -136,32 +136,12 @@ const script = document.createElement('script');
 script.src = "https://sdk.scdn.co/spotify-player.js";
 document.body.appendChild(script);
 
-// iOS: Geräte prüfen
-async function checkActiveDevice() {
-    const resp = await fetch('https://api.spotify.com/v1/me/player/devices', { headers: { Authorization: 'Bearer ' + accessToken } });
-    const data = await resp.json();
-    const activeDevice = data.devices.find(d => d.is_active);
-    if (activeDevice) {
-        deviceId = activeDevice.id;
-        document.getElementById('iosNotice').style.display = 'none';
-        document.getElementById('selectButton').disabled = false;
-        return true;
-    } 
-    return false;
-}
-
 // iOS: Deeplink Button
 document.getElementById('openSpotifyButton').addEventListener('click', () => {
-    window.location.href = 'spotify://';
+    window.location.href = `spotify://playlist/${playlistId}`;
 });
 
-// iOS: Check Button
-document.getElementById('checkSpotifyButton').addEventListener('click', async () => {
-    const ok = await checkActiveDevice();
-    if (!ok) alert("Bitte öffne die Spotify App, damit ein aktives Gerät verfügbar ist.");
-});
-
-// Zufälligen Song auswählen
+// Android/Windows: Zufälligen Song auswählen
 document.getElementById('selectButton').addEventListener('click', async () => {
     if (!deviceId) return;
     const resp = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, { headers: { Authorization: 'Bearer ' + accessToken } });
@@ -173,14 +153,9 @@ document.getElementById('selectButton').addEventListener('click', async () => {
     document.getElementById('playButton').disabled = false;
 });
 
-// Song 10 Sekunden abspielen
+// Song 10 Sekunden abspielen (Android/Windows)
 document.getElementById('playButton').addEventListener('click', async () => {
     if (!selectedTrackUri || !deviceId) return;
-
-    if (isIos) {
-        const ok = await checkActiveDevice();
-        if (!ok) return;
-    }
 
     document.getElementById('playButton').disabled = true;
     document.getElementById('selectButton').disabled = true;
