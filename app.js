@@ -111,6 +111,23 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedPlayableGenres: [],
     };
 
+    // Variable zum Speichern des Geräte-Typs
+    let isIos = false;
+
+// Funktion zur Prüfung des User-Agents
+function checkDevice() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        isIos = true;
+        console.log("Gerät ist ein iOS-Gerät.");
+    } else {
+        isIos = false;
+        console.log("Gerät ist KEIN iOS-Gerät.");
+    }
+}
+// Rufe die Funktion beim Laden der Seite auf
+checkDevice();
+
     // NEU: Zufälligen Startspieler festlegen
     // Diese Zeile sollte NACH der gameState-Definition stehen,
     // idealerweise in deiner initGame() Funktion oder dort, wo das Spiel gestartet wird.
@@ -146,6 +163,20 @@ document.addEventListener('DOMContentLoaded', () => {
     //=======================================================================
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
+
+    // Funktion zur Prüfung des User-Agents
+function checkDevice() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        isIos = true;
+        console.log("Gerät ist ein iOS-Gerät.");
+    } else {
+        isIos = false;
+        console.log("Gerät ist KEIN iOS-Gerät.");
+    }
+}
+// Rufe die Funktion beim Laden der Seite auf
+checkDevice();
 
     // NEU: Funktion, die das Spiel direkt startet, da keine Orientierung geprüft wird
 function startGameOnLoad() {
