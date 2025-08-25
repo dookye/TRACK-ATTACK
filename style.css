@@ -525,11 +525,11 @@ body, html {
   }
 }
 
-.fly-up-player1 {
+.fly-to-corner-player1 {
   animation: flyToCornerPlayer1 0.4s ease-in forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
 
-.fly-down-player2 {
+.fly-to-corner-player2 {
   animation: flyToCornerPlayer2 0.4s ease-in forwards; /* 0.7 Sekunden Dauer, bleibt am Ende */
 }
 
@@ -578,23 +578,26 @@ body, html {
 /* ------------- Genre-Startauswahl ------------------ */
 /* --- NEU: Basis-Stile für den Start-Genre-Container --- */
 #start-genre-selection-container {
-    display: flex;
-    flex-wrap: wrap; /* Wichtig, damit die Buttons in die nächste Zeile umbrechen */
-    justify-content: center;
-    align-items: center;
-    gap: 15px; /* Abstand zwischen den Buttons */
-    padding: 20px;
-    
-    /* --- NEU/AKTUALISIERT: Für den scrollbaren Bereich --- */
-    max-height: 95vh; /* Maximale Höhe: 70% der Viewport-Höhe. 
-                         Du kannst diesen Wert anpassen (z.B. 60vh, 500px), 
-                         je nachdem, wie viel Platz du für andere Elemente lassen möchtest. */
-    overflow-y: auto; /* Erlaubt vertikales Scrollen, wenn der Inhalt die max-height überschreitet */
-    -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS-Geräten */
-    
-    /* Optional: Scrollbar verstecken für einen saubereren Look */
-    scrollbar-width: none; /* Für Firefox */
-    -ms-overflow-style: none; /* Für Internet Explorer und Edge */
+    position: absolute;
+    left: 0; /* Links positioniert */
+    top: 10%; 
+    max-height: 95vh;
+    width: 35%; /* Breite der Scrollbox anpassen */
+    gap: 15;
+    padding: 20; 
+    /* height: 90%; - Volle Höhe des Bildschirms */
+    background-color: rgba(0, 0, 0, 0.7); /* Leicht durchsichtiger Hintergrund */
+    display: flex; /* Flexbox für Inhalt */
+    flex-direction: column; /* Buttons untereinander */
+    justify-content: flex-start; /* Oben beginnen */
+    align-items: center; /* Mittig ausrichten */
+    box-sizing: border-box; /* Padding wird in die Breite/Höhe einberechnet */
+    z-index: 100; /* Sicherstellen, dass es über anderen Elementen liegt */
+    /* border-right: 2px solid var(--white); - Optische Trennlinie */
+    overflow-y: auto; /* Scrollbar, wenn Inhalt zu lang */
+    -webkit-overflow-scrolling: touch; /* Flüssiges Scrollen auf iOS */
+    scrollbar-width: none; /* Scrollbar verstecken (Firefox) */
+    -ms-overflow-style: none; /* Scrollbar verstecken (IE/Edge) */
 }
 
 /* Für Webkit-Browser (Chrome, Safari) Scrollbar verstecken */
@@ -652,118 +655,4 @@ body, html {
     font-family: 'Poppins', sans-serif;
     font-size: 14px;
     z-index: 1000;
-}
-
-/* Neue Klasse für den Vollbild-Container */
-.full-screen-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.85); /* Dunkler, transparenter Hintergrund */
-    display: flex;
-    justify-content: center; /* Horizontale Zentrierung */
-    align-items: center; /* Vertikale Zentrierung */
-    padding: 20px;
-    box-sizing: border-box;
-    z-index: 100;
-    opacity: 0; /* Startet transparent */
-    transition: opacity 0.5s ease-in-out; /* NEU: Fügt einen sanften Übergang hinzu */
-}
-
-/* NEU: Klasse für das Sichtbarwerden */
-.full-screen-container.fade-in-visible {
-    opacity: 1;
-}
-
-#genre-preselection-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 95%; /* 95% des Eltern-Containers für Abstand oben und unten */
-    width: 100%;
-    width: 90%; /* NEU: Ändert die Breite auf 90% für einen Rand */
-}
-
-#preselection-title {
-    color: var(--white);
-    text-align: center;
-    font-size: 2em;
-    font-family: 'Bebas Neue', sans-serif;
-    letter-spacing: 0.1em;
-    margin-bottom: 20px;
-}
-
-#all-genres-scrollbox {
-    flex-grow: 1; /* Nimmt den restlichen vertikalen Platz ein */
-    overflow-y: auto; /* Aktiviert das Scrollen bei Bedarf */
-    padding: 10px;
-    border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    margin: 20px 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-}
-
-#preselection-start-button {
-    font-size: 1.5em;
-    padding: 15px 30px;
-    margin-top: 20px;
-    width: 100%;
-    max-width: 400px;
-    align-self: center; /* Zentriert den Button horizontal */
-    border: 2px solid var(--white);
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--white);
-    transition: all 0.3s ease;
-    width: 100%; /* Stellt sicher, dass der Button die volle Breite des Eltern-Containers einnimmt */
-    max-width: none; /* Entfernt die maximale Breite, um die volle Breite zu nutzen */
-}
-
-#preselection-start-button:hover:not(.disabled) {
-    background-color: var(--white);
-    color: var(--black);
-}
-
-/* Stil für den deaktivierten Button */
-#preselection-start-button.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: scale(1);
-    box-shadow: none;
-}
-
-#ios-player-button {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000; /* Stellt sicher, dass der Button über anderen Elementen liegt */
-    padding: 20px 40px;
-    font-size: 1.2em;
-    font-weight: bold;
-    color: var(--black);
-    background-color: var(--white);
-    border: 2px solid var(--black);
-    border-radius: 10px;
-    cursor: pointer;
-    text-transform: uppercase;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-}
-
-#ios-player-button:hover {
-    background-color: var(--secondary-color);
-    border-color: var(--secondary-color);
-    color: var(--white);
-}
-
-/* Versteckt den Button, wenn die 'hidden' Klasse aktiv ist */
-#ios-player-button.hidden {
-    display: none;
 }
