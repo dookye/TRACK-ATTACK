@@ -1099,4 +1099,4 @@ function startGame() {
         }, 1000);
     }
 
-}); // Ende DOMContentLoaded
+}}); // Ende DOMContentLoaded
