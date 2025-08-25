@@ -169,24 +169,17 @@ function startGameOnLoad() {
     // Die Genres einmalig rendern
     renderPreselectionGenres();
     
-  // NEU: Event-Listener für den "LET'S GO"-Button
-preselectionStartButton.addEventListener('click', () => {
-    // Wenn der Button aktiv ist...
-    if (!preselectionStartButton.disabled) {
-        // SCHRITT 1: Player SOFORT initialisieren,
-        // da dies die erste direkte Nutzerinteraktion ist
-        if (!spotifyPlayer) {
-            initializePlayer();
+    // Füge den Klick-Listener für den "LET'S GO"-Button hinzu
+    preselectionStartButton.addEventListener('click', () => {
+        if (!preselectionStartButton.disabled) {
+            // Genre-Auswahl ausblenden
+            startGenreSelectionContainer.classList.remove(FADE_IN_CLASS);
+            startGenreSelectionContainer.classList.add(HIDDEN_CLASS);
+            // Spiel starten
+            startGame();
         }
-
-        // SCHRITT 2: Genre-Auswahl ausblenden
-        startGenreSelectionContainer.classList.remove(FADE_IN_CLASS);
-        startGenreSelectionContainer.classList.add(HIDDEN_CLASS);
-
-        // SCHRITT 3: Das Spiel starten (restliche Logik)
-        startGame();
-    }
-});
+    });
+}
 
     // NEU: Separater Handler für den Logo-Klick
 function handleLogoClick() {
@@ -400,6 +393,18 @@ function updatePreselectionButtonState() {
     }
 }
 
+// NEU: Event-Listener für den "LET'S GO"-Button
+preselectionStartButton.addEventListener('click', () => {
+    // Wenn der Button aktiv ist...
+    if (!preselectionStartButton.classList.contains('disabled')) {
+        startGenreSelectionContainer.classList.add('hidden');
+        logoButton.classList.remove('hidden');
+        
+        // Führe die Logik für den Start des Spiels aus
+        startGame();
+    }
+});
+
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
     //=======================================================================
@@ -412,6 +417,11 @@ function updatePreselectionButtonState() {
 
     // AKTUALISIERT: startGame-Funktion
 function startGame() {
+    // Rufe initializePlayer() nur auf, wenn der Player noch nicht existiert
+    if (!spotifyPlayer) {
+        initializePlayer();
+    }
+
     // Entferne die sanfte Einblendung
     startGenreSelectionContainer.classList.remove(FADE_IN_CLASS);
     // Verstecke den Container nach dem Klick
@@ -1099,4 +1109,4 @@ function startGame() {
         }, 1000);
     }
 
-}}); // Ende DOMContentLoaded
+}); // Ende DOMContentLoaded
