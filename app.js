@@ -400,18 +400,6 @@ function updatePreselectionButtonState() {
     }
 }
 
-// NEU: Event-Listener für den "LET'S GO"-Button
-preselectionStartButton.addEventListener('click', () => {
-    // Wenn der Button aktiv ist...
-    if (!preselectionStartButton.classList.contains('disabled')) {
-        startGenreSelectionContainer.classList.add('hidden');
-        logoButton.classList.remove('hidden');
-        
-        // Führe die Logik für den Start des Spiels aus
-        startGame();
-    }
-});
-
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
     //=======================================================================
