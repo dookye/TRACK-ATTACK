@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRACK-ATTACK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js für Soundeffekte hinzufügen -->
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.7.58/build/Tone.min.js"></script>
+    <style>
+        /* Import Inter font for modern aesthetics */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap');
+        
+        :root {
+            --player-blue: #3B82F6; /* Tailwind blue-500 */
+            --player-pink: #EC4899; /* Tailwind pink-500 */
+            --dice-result-color: #FACC15; /* Tailwind amber-400 */
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            user-select: none;
+            overflow: hidden;
+            transition: background-color 0.5s ease;
+        }
+        
+        /* Mobile Portrait Optimization (Warns in Landscape on small screens) */
+        @media (max-width: 768px) and (orientation: landscape) {
+            body::before {
+                content: "Bitte drehen Sie Ihr Gerät ins Hochformat (Portrait-Modus).";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                font-size: 1.5rem;
+                z-index: 1000;
+            }
+            #mainAppContainer > * {
+                display: none !important;
+            }
+        }
+
+        /* Custom Large Text Hint Style (General Template) */
+        .large-text-hint {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            z-index: 20;
+        }
+        .large-text-hint .line-1 {
+            font-size: 2rem; /* Beispiel: SPIELER, WÄHLE */
+            font-weight: 600;
+            margin-bottom: -1rem; /* Overlap slightly */
+            opacity: 0;
+            animation: textFadeIn 1s ease-out 0.5s forwards;
+        }
+        .large-text-hint .line-2 {
+            font-size: 6rem; /* Beispiel: BLAU, GENRE */
+            font-weight: 900;
+            opacity: 0;
+            animation: textFadeIn 1s ease-out 1s forwards;
+        }
+        @media (min-width: 768px) {
+            .large-text-hint .line-1 { font-size: 4rem; margin-bottom: -2rem; }
+            .large-text-hint .line-2 { font-size: 12rem; }
+        }
+        @keyframes textFadeIn {
+            to { opacity: 1; }
+        }
+
+        /* Glücksrad Styling */
+        .scrolling-container::-webkit-scrollbar {
+            width: 0;
+            background: transparent;
+        }
+        .list-item {
+            will-change: transform, opacity;
+            transition: none;
+            list-style: none;
+            cursor: pointer;
+        }
+        .list-item.selected {
+            color: #10B981;
+            text-shadow: 0 0 5px #10B981, 0 0 15px #10B981;
+            font-weight: 900;
+            transform: scale(1.05);
+        }
+        .list-item.chosen {
+             text-shadow: 0 0 10px #ffffff, 0 0 20px #ffffff, 0 0 30px #ffffff, 0 0 40px #ffffff;
+             font-weight: 900;
+        }
+        .spinner-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent 0%, var(--dice-result-color) 50%, transparent 100%);
+            box-shadow: 0 0 20px 5px rgba(234, 179, 8, 0.7);
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* Button Styles */
+        .main-button {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+            border: 2px solid var(--dice-result-color);
+            background-color: var(--dice-result-color);
+            color: #18181B;
+        }
+        .main-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(234, 179, 8, 0.5);
+            background-color: #FBBF24;
+        }
+        .main-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: #4B5563;
+            background-color: #374151;
+            color: #9CA3AF;
+            box-shadow: none;
+        }
+        
+        /* Dice Animation */
+        .dice-face {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 15px;
+            display: grid;
+            grid-template-areas:
+                "a . c"
+                "e g f"
+                "d . b";
+            padding: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            transition: transform 0.5s ease;
+        }
+        .dice-dot {
+            display: block;
+            width: 20px;
+            height: 20px;
+            background: var(--player-blue); /* Default dot color */
+            border-radius: 50%;
+            justify-self: center;
+            align-self: center;
+        }
+        .dice-dot:nth-child(1) { grid-area: a; }
+        .dice-dot:nth-child(2) { grid-area: b; }
+        .dice-dot:nth-child(3) { grid-area: c; }
+        .dice-dot:nth-child(4) { grid-area: d; }
+        .dice-dot:nth-child(5) { grid-area: e; }
+        .dice-dot:nth-child(6) { grid-area: f; }
+        .dice-dot:nth-child(7) { grid-area: g; }
+
+        /* Points Animation */
+        @keyframes slideInFromBottom {
+            from { transform: translateY(100vh); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideInFromTop {
+            from { transform: translateY(-100vh); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .point-animation-blue {
+            animation: slideInFromBottom 0.5s ease-out forwards;
+            background-color: var(--player-blue);
+        }
+        .point-animation-pink {
+            animation: slideInFromTop 0.5s ease-out forwards;
+            background-color: var(--player-pink);
+        }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div id="mainAppContainer" class="w-full h-full absolute inset-0">
+
+        <!-- Phase 1: Splash Screen (Simulated Login/Logo) -->
+        <div id="splashScreen" class="absolute inset-0 flex items-center justify-center bg-black text-white text-5xl font-black z-50">
+            <div class="animate-pulse">
+                 
+            </div>
+        </div>
+
+        <!-- Phase 2: Intro Text Hint -->
+        <div id="introText" class="hidden absolute inset-0 bg-black text-white z-40">
+            <div class="large-text-hint">
+                <span class="line-1">WÄHLE DIE</span>
+                <span class="line-2">SPIEL GENRE</span>
+            </div>
+        </div>
+
+        <!-- Phase 3: Auswahl-Szene (Selection Scene) -->
+        <div id="selectionScene" class="hidden absolute inset-0 flex flex-col items-center justify-center p-4 bg-black">
+            <!-- Spinner Indicator for visual focus -->
+            <div class="spinner-indicator"></div>
+
+            <div class="scrolling-container w-full overflow-y-scroll relative" style="height: 80vh;">
+                <div id="selectionList" class="h-full w-full relative"></div>
+            </div>
+            
+            <p class="text-white text-sm mt-2 mb-4 text-center">Wähle **mindestens 3** Genres, um fortzufahren.</p>
+            
+            <button id="trackAttackBtn" class="main-button px-8 py-3 text-xl font-bold rounded-full opacity-50 cursor-not-allowed" disabled>
+                TRACK-ATTACK
+            </button>
+        </div>
+        
+        <!-- Phase 4: Würfel Intro (Spielerwechsel) -->
+        <div id="diceIntro" class="hidden absolute inset-0 text-white z-40">
+            <div id="diceIntroHint" class="large-text-hint">
+                <!-- Text wird per JS gesetzt -->
+            </div>
+        </div>
+
+        <!-- Phase 5: Würfel-Szene (Dice Roll Scene) -->
+        <div id="diceRollScene" class="hidden absolute inset-0 flex items-center justify-center">
+            <div id="diceContainer" class="p-8 rounded-2xl">
+                <!-- Digitaler Würfel wird hier per JS gerendert -->
+            </div>
+        </div>
+
+        <!-- Phase 6: Genre-Szene (Glücksrad Game Mode) -->
+        <div id="gameScene" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black">
+            <!-- Spinner Indicator for visual focus -->
+            <div class="spinner-indicator"></div>
+
+            <div class="scrolling-container absolute inset-0 overflow-y-scroll relative" style="height: 80vh;">
+                <div id="gameList" class="h-full w-full relative"></div>
+            </div>
+
+            <!-- Buttons am unteren Rand: Nur sichtbar bei Würfelwert 7 (manuelle Auswahl) -->
+            <div id="gameButtons" class="absolute bottom-10 flex space-x-4">
+                <button id="spinBtn" class="main-button px-8 py-3 text-xl font-bold rounded-full hidden">
+                    Auswahl bestätigen
+                </button>
+                <button id="startOverBtn" class="main-button px-6 py-3 text-xl font-bold rounded-full">
+                    <span role="img" aria-label="Zurückpfeil">↩️</span> Neustart
+                </button>
+            </div>
+            
+            <!-- Result Message (Modal) -->
+            <div id="resultMessageGame" class="hidden fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center text-center p-8">
+                 <div class="bg-gray-900 p-8 rounded-xl shadow-2xl border-2 border-yellow-500 max-w-sm">
+                    <h3 class="text-4xl font-extrabold text-yellow-400 mb-4">GEWÄHLT!</h3>
+                    <p id="finalResultGame" class="text-2xl text-white font-bold"></p>
+                    <button id="continueToRateBtn" class="main-button mt-6 px-6 py-2 text-lg rounded-full">
+                        Weiter zum Raten
+                    </button>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Phase 7: Rate-Screen (Minimalistisches Design) -->
+        <div id="rateScreen" class="hidden absolute inset-0 flex flex-col justify-between items-center p-4">
+            <p class="text-white text-lg font-bold">RATE DIESES GENRE:</p>
+            <h2 id="ratedGenre" class="text-6xl text-white font-extrabold my-8 text-center">ROCK</h2>
+            <button id="resolveBtn" class="main-button px-8 py-3 text-xl font-bold rounded-full mb-8">
+                AUFLÖSEN
+            </button>
+        </div>
+
+        <!-- Phase 8: Auflöse-Screen (Punktevergabe) -->
+        <div id="resolveScreen" class="hidden absolute inset-0 flex flex-col justify-between items-center p-4">
+            <!-- Falsch Button (Oben) -->
+            <button id="wrongBtn" class="bg-red-600 text-white px-8 py-3 text-2xl font-bold rounded-full mt-8 w-11/12 max-w-sm">
+                FALSCH
+            </button>
+            
+            <!-- Ergebnis-Anzeige (Mitte) -->
+            <div class="text-center">
+                <p class="text-white text-lg font-bold">Künstler & Song: </p>
+                <h3 class="text-3xl text-yellow-400 font-extrabold">AC/DC - Thunderstruck</h3>
+            </div>
+
+            <!-- Richtig Button (Unten) -->
+            <button id="correctBtn" class="bg-green-600 text-white px-8 py-3 text-2xl font-bold rounded-full mb-8 w-11/12 max-w-sm">
+                RICHTIG
+            </button>
+        </div>
+
+        <!-- Phase 9: Punkte-Screen (Animation) -->
+        <div id="pointsScreen" class="hidden absolute inset-0 flex flex-col justify-center items-center">
+            <div id="playerPinkScore" class="flex-1 w-full flex items-center justify-center text-white text-6xl font-black">
+                <!-- Pink (Top) -->
+            </div>
+            <div id="playerBlueScore" class="flex-1 w-full flex items-center justify-center text-white text-6xl font-black">
+                <!-- Blau (Bottom) -->
+            </div>
+            <div class="absolute text-5xl font-black text-white z-30">
+                <span id="scoreAnimationText"></span>
+            </div>
+        </div>
+        
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // --- Konfiguration ---
+            const initialTimeout = 2000; // 2 Sekunden Timeout für automatische Schritte
+            const fullListMultiplier = 5; 
+            const spinDuration = 3000; 
+            const minGenres = 3;
+
+            const allTerms = [
+                "Rock", "Pop", "Jazz", "Hip Hop", "Klassik", "Punk", "Metal", 
+                "Elektronisch", "Folk", "Schlager", "Rock'n Roll", "Indie", 
+                "Blues", "Soul", "Reggae", "Country", "EDM", "Gospel", "Experimental",
+                "Ambient", "Techno", "House"
+            ];
+            
+            // --- Game State & Data ---
+            let state = {
+                currentPlayer: 'blue', // 'blue' oder 'pink'
+                score: { blue: 0, pink: 0 },
+                diceResult: 0,
+                selectedTerms: new Set(),
+                currentTerms: [],
+                currentListElement: null,
+                currentContainer: null,
+                itemHeight: 0,
+                isAutoScrolling: false,
+                isSoundActive: false, // Für iOS/Apple Sound Fix
+                currentTimeout: null,
+            };
+
+            // --- Tone.js Sound Setup (Beibehalten) ---
+            const clickSynth = new Tone.MembraneSynth({ volume: -10, envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.01 } }).toDestination();
+            const wheelFrequencies = ["C5", "E5", "G5", "C6"];
+            let wheelIndex = 0;
+            const wheelSynth = new Tone.MonoSynth({ volume: -15, oscillator: { type: "sawtooth" }, envelope: { attack: 0.005, decay: 0.05, sustain: 0.01, release: 0.01 } }).toDestination();
+            let spinEvent = null;
+
+            const playSelectionSound = () => {
+                if(state.isSoundActive) clickSynth.triggerAttackRelease("C4", "8n");
+            };
+            
+            const startSpinSound = () => {
+                if(!state.isSoundActive) return;
+                if (spinEvent) Tone.Transport.clear(spinEvent);
+                spinEvent = Tone.Transport.scheduleRepeat((time) => {
+                    const freq = wheelFrequencies[wheelIndex % wheelFrequencies.length];
+                    wheelSynth.triggerAttackRelease(freq, "32n", time);
+                    wheelIndex++;
+                }, "16n");
+                Tone.Transport.start();
+            };
+
+            const stopSpinSound = () => {
+                if (spinEvent) {
+                    Tone.Transport.clear(spinEvent);
+                    spinEvent = null;
+                }
+                wheelSynth.triggerRelease(); 
+            };
+            
+            // --- DOM Elemente ---
+            const elements = {
+                mainAppContainer: document.getElementById('mainAppContainer'),
+                splashScreen: document.getElementById('splashScreen'),
+                introText: document.getElementById('introText'),
+                selectionScene: document.getElementById('selectionScene'),
+                trackAttackBtn: document.getElementById('trackAttackBtn'),
+                selectionList: document.getElementById('selectionList'),
+                diceIntro: document.getElementById('diceIntro'),
+                diceIntroHint: document.getElementById('diceIntroHint'),
+                diceRollScene: document.getElementById('diceRollScene'),
+                diceContainer: document.getElementById('diceContainer'),
+                gameScene: document.getElementById('gameScene'),
+                gameList: document.getElementById('gameList'),
+                gameButtons: document.getElementById('gameButtons'),
+                spinBtn: document.getElementById('spinBtn'),
+                startOverBtn: document.getElementById('startOverBtn'),
+                resultMessageGame: document.getElementById('resultMessageGame'),
+                finalResultGame: document.getElementById('finalResultGame'),
+                continueToRateBtn: document.getElementById('continueToRateBtn'),
+                rateScreen: document.getElementById('rateScreen'),
+                ratedGenre: document.getElementById('ratedGenre'),
+                resolveBtn: document.getElementById('resolveBtn'),
+                resolveScreen: document.getElementById('resolveScreen'),
+                correctBtn: document.getElementById('correctBtn'),
+                wrongBtn: document.getElementById('wrongBtn'),
+                pointsScreen: document.getElementById('pointsScreen'),
+                playerBlueScore: document.getElementById('playerBlueScore'),
+                playerPinkScore: document.getElementById('playerPinkScore'),
+                scoreAnimationText: document.getElementById('scoreAnimationText'),
+            };
+
+            // --- Utility Functions (Glücksrad Visuals/Scroll) ---
+
+            const updateVisuals = () => {
+                if (!state.currentContainer || !state.currentListElement) return;
+                
+                const center = state.currentContainer.scrollTop + state.currentContainer.clientHeight / 2; 
+                const items = state.currentListElement.querySelectorAll('.list-item');
+                const fadeZone = state.currentContainer.clientHeight * 0.45;
+
+                items.forEach(item => {
+                    const itemCenter = item.offsetTop + state.itemHeight / 2;
+                    const distance = Math.abs(center - itemCenter);
+                    
+                    let opacity, scale;
+                    if (distance <= state.itemHeight / 2) {
+                        opacity = 1; scale = 1.0;
+                        item.classList.add('chosen');
+                    } else if (distance >= fadeZone) {
+                        opacity = 0; scale = 0.5;
+                        item.classList.remove('chosen');
+                    } else {
+                        const relativeDistance = (distance - state.itemHeight / 2) / (fadeZone - state.itemHeight / 2);
+                        opacity = 1 - relativeDistance;
+                        scale = 1.0 - relativeDistance * 0.5;
+                        item.classList.remove('chosen');
+                    }
+                    
+                    item.style.opacity = opacity;
+                    item.style.transform = `scale(${scale})`;
+                });
+            };
+
+            const animate = () => {
+                updateVisuals();
+                requestAnimationFrame(animate);
+            };
+
+            const snapToNearestItem = () => {
+                if (state.isAutoScrolling || !state.currentContainer || !state.currentListElement) return;
+
+                const centerScroll = state.currentContainer.scrollTop + state.currentContainer.clientHeight / 2;
+                const items = state.currentListElement.querySelectorAll('.list-item');
+                
+                let nearestItem = null;
+                let minDistance = Infinity;
+                let targetScrollTop = state.currentContainer.scrollTop;
+
+                items.forEach(item => {
+                    const itemCenter = item.offsetTop + state.itemHeight / 2;
+                    const distance = Math.abs(centerScroll - itemCenter);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        nearestItem = item;
+                        targetScrollTop = item.offsetTop + (state.itemHeight / 2) - (state.currentContainer.clientHeight / 2);
+                    }
+                });
+
+                if (nearestItem) {
+                    state.currentContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+                }
+            };
+
+            const handleScrollJump = () => {
+                const scrollPos = state.currentContainer.scrollTop;
+                const singleListHeight = state.itemHeight * state.currentTerms.length;
+
+                if (scrollPos >= singleListHeight * (fullListMultiplier - 1)) {
+                    state.currentContainer.scrollTop = scrollPos - singleListHeight;
+                } 
+                else if (scrollPos < singleListHeight) {
+                    state.currentContainer.scrollTop = scrollPos + singleListHeight;
+                }
+            };
+
+            const commonScrollHandler = () => {
+                handleScrollJump();
+                window.clearTimeout(state.currentContainer.scrollTimeout);
+                state.currentContainer.scrollTimeout = setTimeout(() => {
+                    if (!state.isAutoScrolling) snapToNearestItem();
+                }, 150);
+            };
+
+            const setupList = (listElement, containerElement, termsArray) => {
+                listElement.innerHTML = '';
+                state.currentListElement = listElement;
+                state.currentContainer = containerElement.closest('.scrolling-container');
+                state.currentTerms = termsArray;
+
+                // Itemhöhe basiert auf der sichtbaren Höhe
+                state.itemHeight = state.currentContainer.clientHeight / 3;
+                
+                const totalListHeight = state.currentTerms.length * fullListMultiplier * state.itemHeight;
+                state.currentListElement.style.height = `${totalListHeight}px`;
+
+                const fragment = document.createDocumentFragment();
+                for (let i = 0; i < fullListMultiplier; i++) {
+                    state.currentTerms.forEach((term, indexInList) => {
+                        const div = document.createElement('div');
+                        const textSize = term.length > 20 ? 'text-2xl' : 'text-5xl md:text-7xl lg:text-8xl';
+                        
+                        div.className = `list-item absolute flex items-center justify-center text-white w-full text-center font-bold ${textSize} tracking-tight`;
+                        div.textContent = term;
+                        div.dataset.term = term; 
+                        
+                        const index = i * state.currentTerms.length + indexInList;
+                        div.style.height = `${state.itemHeight}px`;
+                        div.style.top = `${state.itemHeight * index}px`;
+                        
+                        fragment.appendChild(div);
+                    });
+                }
+                state.currentListElement.appendChild(fragment);
+
+                state.currentContainer.scrollTop = state.currentTerms.length * state.itemHeight;
+
+                if (listElement === elements.selectionList) updateSelectionVisuals();
+            };
+
+            const updateSelectionVisuals = () => {
+                const items = elements.selectionList.querySelectorAll('.list-item');
+                items.forEach(item => {
+                    if (state.selectedTerms.has(item.dataset.term)) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+                
+                const isEnabled = state.selectedTerms.size >= minGenres;
+                elements.trackAttackBtn.disabled = !isEnabled;
+                if (isEnabled) {
+                    elements.trackAttackBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    elements.trackAttackBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            };
+            
+            // --- Würfel Funktionen ---
+            
+            const rollDice = () => Math.floor(Math.random() * 6) + 1;
+
+            const updateDiceVisual = (result, color) => {
+                elements.diceContainer.innerHTML = '';
+                const diceFace = document.createElement('div');
+                diceFace.className = 'dice-face';
+                diceFace.style.setProperty('--player-blue', color); // Setzt die Farbe für die Punkte
+
+                const dotMap = { 1: [7], 2: [1, 2], 3: [1, 2, 7], 4: [1, 2, 3, 4], 5: [1, 2, 3, 4, 7], 6: [1, 2, 3, 4, 5, 6], 7: [1, 2, 3, 4, 5, 6, 7] };
+                const dots = dotMap[result] || [];
+                
+                // Erstellt die Punkte
+                dots.forEach(areaIndex => {
+                    const dot = document.createElement('span');
+                    dot.className = 'dice-dot';
+                    dot.style.gridArea = `dot-${areaIndex}`;
+                    diceFace.appendChild(dot);
+                });
+
+                elements.diceContainer.appendChild(diceFace);
+            };
+
+            const animateDiceRoll = (duration) => {
+                let startTime = null;
+                const totalRolls = 20; // Anzahl der Zwischenwürfe
+                let rollCount = 0;
+
+                const rollStep = (timestamp) => {
+                    if (!startTime) startTime = timestamp;
+                    const elapsed = timestamp - startTime;
+
+                    if (elapsed < duration) {
+                        // Zufällige Zwischenergebnisse
+                        const tempResult = rollDice();
+                        const tempColor = state.currentPlayer === 'blue' ? '#3B82F6' : '#EC4899';
+                        updateDiceVisual(tempResult, tempColor);
+                        requestAnimationFrame(rollStep);
+                    } else {
+                        // Endergebnis anzeigen
+                        state.diceResult = rollDice();
+                        updateDiceVisual(state.diceResult, 'var(--dice-result-color)');
+                        // Weiter zum nächsten Screen nach 2s
+                        state.currentTimeout = setTimeout(() => showScreen('gameScene'), initialTimeout);
+                    }
+                };
+                requestAnimationFrame(rollStep);
+            };
+
+            // --- Glücksrad Spin Logik ---
+            const spinWheel = (isAuto) => {
+                state.isAutoScrolling = true;
+                if (!isAuto) {
+                    elements.spinBtn.disabled = true;
+                }
+
+                startSpinSound();
+
+                const termsArray = [...state.selectedTerms];
+                const selectedTerm = termsArray[Math.floor(Math.random() * termsArray.length)];
+                
+                const items = elements.gameList.querySelectorAll('.list-item');
+                const matchingItems = Array.from(items).filter(item => item.dataset.term === selectedTerm);
+                
+                // Wählt ein Element in der 3. oder 4. Wiederholung für eine lange, sichere Drehung
+                const targetItem = matchingItems.find((item, index) => {
+                    const listIndex = Math.floor(index / state.currentTerms.length);
+                    return listIndex === 2 || listIndex === 3;
+                });
+                
+                if (!targetItem) {
+                     stopSpinSound();
+                     state.isAutoScrolling = false;
+                     return;
+                }
+
+                const targetScrollTop = targetItem.offsetTop + (state.itemHeight / 2) - (state.currentContainer.clientHeight / 2);
+                
+                // Drehzeit zwischen 2 und 4 Sekunden
+                const calculatedDuration = isAuto ? 2000 + Math.random() * 2000 : spinDuration; 
+                
+                elements.currentContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+
+                state.currentTimeout = setTimeout(() => {
+                    stopSpinSound();
+                    state.isAutoScrolling = false;
+                    snapToNearestItem();
+
+                    // Ergebnis anzeigen und zur Rate-Screen wechseln
+                    const centeredItem = Array.from(items).find(item => item.classList.contains('chosen'));
+                    const result = centeredItem ? centeredItem.dataset.term : selectedTerm;
+
+                    elements.finalResultGame.textContent = result;
+                    elements.resultMessageGame.style.display = 'flex';
+                    
+                    // Nach 2s zum Rate Screen weiter (wenn Auto-Spin)
+                    if (isAuto) {
+                         state.currentTimeout = setTimeout(() => {
+                            elements.resultMessageGame.style.display = 'none';
+                            showScreen('rateScreen', result);
+                        }, initialTimeout);
+                    } else {
+                        // Bei manuellem Spin muss der Benutzer klicken
+                        elements.continueToRateBtn.onclick = () => {
+                            elements.resultMessageGame.style.display = 'none';
+                            showScreen('rateScreen', result);
+                        };
+                        elements.spinBtn.disabled = false; // Button wieder aktivieren, falls es keine Auto-Weiterleitung gibt
+                    }
+                    
+                }, calculatedDuration + 200); 
+            };
+            
+            // --- Screen Management State Machine ---
+
+            const showScreen = (screenName, data = null) => {
+                // Clear any pending timeouts
+                if (state.currentTimeout) clearTimeout(state.currentTimeout);
+                
+                // Hide all screens
+                Object.values(elements).forEach(el => {
+                    if (el && el.id && !['mainAppContainer'].includes(el.id)) el.style.display = 'none';
+                });
+                
+                // Reset background
+                elements.mainAppContainer.style.backgroundColor = 'black';
+                
+                state.currentTimeout = null;
+                state.isAutoScrolling = false;
+
+                switch (screenName) {
+                    case 'splashScreen':
+                        elements.splashScreen.style.display = 'flex';
+                        state.currentTimeout = setTimeout(() => showScreen('introText'), initialTimeout);
+                        break;
+
+                    case 'introText':
+                        elements.introText.style.display = 'flex';
+                        state.currentTimeout = setTimeout(() => showScreen('selectionScene'), initialTimeout);
+                        break;
+
+                    case 'selectionScene':
+                        elements.selectionScene.style.display = 'flex';
+                        setupList(elements.selectionList, elements.selectionScene.querySelector('.scrolling-container'), allTerms);
+                        updateSelectionVisuals();
+                        break;
+                        
+                    case 'diceIntro':
+                        const playerColor = state.currentPlayer === 'blue' ? 'var(--player-blue)' : 'var(--player-pink)';
+                        const playerText = state.currentPlayer === 'blue' ? 'BLAU' : 'PINK';
+                        elements.mainAppContainer.style.backgroundColor = playerColor;
+                        elements.diceIntro.style.display = 'flex';
+                        elements.diceIntroHint.innerHTML = `
+                            <span class="line-1">SPIELER</span>
+                            <span class="line-2">${playerText}</span>
+                        `;
+                        state.currentTimeout = setTimeout(() => showScreen('diceRollScene'), initialTimeout);
+                        break;
+                        
+                    case 'diceRollScene':
+                        elements.diceRollScene.style.display = 'flex';
+                        animateDiceRoll(initialTimeout); // 2s Animation
+                        break;
+
+                    case 'gameScene':
+                        elements.gameScene.style.display = 'flex';
+                        elements.gameButtons.style.display = 'flex'; // Default show buttons
+                        setupList(elements.gameList, elements.gameScene.querySelector('.scrolling-container'), [...state.selectedTerms]);
+                        
+                        // Würfel Logik: 1-5 (oder 6) = Auto-Spin, 7 = Manuell
+                        if (state.diceResult === 7) {
+                            elements.spinBtn.textContent = "Auswahl bestätigen";
+                            elements.spinBtn.classList.remove('hidden');
+                            // Scrollen ist standardmäßig erlaubt, Klick-Handler muss hinzugefügt werden
+                            elements.spinBtn.onclick = () => {
+                                // Findet das aktuell gewählte Genre manuell und springt zur Rate-Scene
+                                const centeredItem = Array.from(elements.gameList.querySelectorAll('.list-item')).find(item => item.classList.contains('chosen'));
+                                const result = centeredItem ? centeredItem.dataset.term : 'Genre';
+                                elements.finalResultGame.textContent = result;
+                                elements.resultMessageGame.style.display = 'flex';
+                                elements.continueToRateBtn.onclick = () => {
+                                    elements.resultMessageGame.style.display = 'none';
+                                    showScreen('rateScreen', result);
+                                };
+                            };
+                        } else { // Würfelwert 1-6 (Auto-Spin)
+                            elements.spinBtn.classList.add('hidden'); // Versteckt den Spin/Confirm Button
+                            spinWheel(true);
+                        }
+                        break;
+
+                    case 'rateScreen':
+                        elements.rateScreen.style.display = 'flex';
+                        elements.ratedGenre.textContent = data; // Das gewählte Genre
+                        break;
+
+                    case 'resolveScreen':
+                        elements.resolveScreen.style.display = 'flex';
+                        // Aktualisiere Hintergrundfarbe basierend auf aktuellem Spieler
+                        elements.mainAppContainer.style.backgroundColor = state.currentPlayer === 'blue' ? 'var(--player-blue)' : 'var(--player-pink)';
+                        break;
+
+                    case 'pointsScreen':
+                        elements.pointsScreen.style.display = 'flex';
+                        elements.playerBlueScore.style.backgroundColor = 'var(--player-blue)';
+                        elements.playerPinkScore.style.backgroundColor = 'var(--player-pink)';
+                        
+                        // Anzeige des aktuellen Scores (temporär)
+                        elements.playerBlueScore.textContent = `Score Blau: ${state.score.blue}`;
+                        elements.playerPinkScore.textContent = `Score Pink: ${state.score.pink}`;
+                        
+                        // Animation Placeholder
+                        elements.scoreAnimationText.innerHTML = ''; // Clear previous
+                        const winnerColor = data.winner === 'blue' ? 'var(--player-blue)' : 'var(--player-pink)';
+                        elements.scoreAnimationText.style.color = winnerColor;
+                        elements.scoreAnimationText.textContent = `+1 Punkt (${data.winner.toUpperCase()})`;
+                        
+                        // Next turn (Speedround/Next player - Placeholder)
+                        state.currentTimeout = setTimeout(() => {
+                            // Spieler wechseln
+                            state.currentPlayer = state.currentPlayer === 'blue' ? 'pink' : 'blue';
+                            showScreen('diceIntro');
+                        }, initialTimeout * 2); 
+                        break;
+                }
+            };
+            
+            // --- Initialisierung und Event Listener ---
+            
+            // Start Visuals
+            requestAnimationFrame(animate);
+
+            // Initialen Screen starten
+            showScreen('splashScreen');
+
+            // --- Event Listeners ---
+            
+            elements.selectionList.addEventListener('click', (e) => {
+                const item = e.target.closest('.list-item');
+                if (!item) return;
+                
+                const term = item.dataset.term;
+                if (state.selectedTerms.has(term)) {
+                    state.selectedTerms.delete(term);
+                } else {
+                    state.selectedTerms.add(term);
+                }
+                
+                updateSelectionVisuals();
+                playSelectionSound();
+            });
+
+            elements.trackAttackBtn.addEventListener('click', async () => {
+                if (elements.trackAttackBtn.disabled) return;
+                
+                // Apple Funktion / Sound-Aktivierung bei erstem Klick
+                if (!state.isSoundActive) {
+                    try {
+                        if (Tone.context.state !== 'running') await Tone.start();
+                        state.isSoundActive = true;
+                    } catch (e) {
+                        console.error("Audio Context failed to start:", e);
+                    }
+                }
+                
+                state.currentTerms = [...state.selectedTerms];
+                showScreen('diceIntro');
+            });
+            
+            elements.startOverBtn.addEventListener('click', () => {
+                // Beim Neustart alle Daten zurücksetzen
+                state.currentPlayer = 'blue';
+                state.score = { blue: 0, pink: 0 };
+                state.selectedTerms.clear();
+                showScreen('selectionScene');
+            });
+
+            elements.resolveBtn.addEventListener('click', () => showScreen('resolveScreen'));
+            
+            elements.correctBtn.addEventListener('click', () => {
+                state.score[state.currentPlayer]++;
+                showScreen('pointsScreen', { winner: state.currentPlayer });
+            });
+            
+            elements.wrongBtn.addEventListener('click', () => {
+                // Punktevergabe an den Gegner
+                const loser = state.currentPlayer;
+                const winner = loser === 'blue' ? 'pink' : 'blue';
+                state.score[winner]++;
+                showScreen('pointsScreen', { winner: winner });
+            });
+            
+            // Attach scroll handlers for both scenes
+            elements.selectionScene.querySelector('.scrolling-container').addEventListener('scroll', commonScrollHandler);
+            elements.gameScene.querySelector('.scrolling-container').addEventListener('scroll', commonScrollHandler);
+
+            // Recalculate layout on window resize
+            window.addEventListener('resize', () => {
+                // Nur neu aufbauen, wenn die Listen-Szenen sichtbar sind
+                if (elements.selectionScene.style.display === 'flex') {
+                    setupList(elements.selectionList, elements.selectionScene.querySelector('.scrolling-container'), allTerms);
+                    updateSelectionVisuals();
+                } else if (elements.gameScene.style.display === 'flex') {
+                    setupList(elements.gameList, elements.gameScene.querySelector('.scrolling-container'), [...state.selectedTerms]);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
