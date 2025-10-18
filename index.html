@@ -2,97 +2,97 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>TRACK ATTACK 002</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Song Tiler</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="assets/logo-icon.png" type="image/png">
-    <link rel="apple-touch-icon" href="assets/logo-icon.png">
-    <link rel="manifest" href="manifest.json">
-</head>
+    </head>
 <body>
-
-    <div id="rotate-device-overlay" class="overlay hidden">
-        <p>Please rotate your device to landscape mode</p>
-    </div>
-
     <div id="app-container">
-        <div id="login-screen" class="screen active">
-            <img src="assets/logo.png" alt="Quiz Game Logo" id="login-logo">
-                <a href="info.html" class="info-button">
-                  <img src="assets/info.png" alt="Info">
-                </a>
-            <p>Please log in with your Spotify-Premium-Account</p>
+        
+        <div id="login-screen" class="screen">
+            <img id="login-logo" src="img/logo.png" alt="Song Tiler Logo">
+            <h1>Melde dich mit Spotify an, um zu starten</h1>
+            
             <button id="login-button">
-                <img src="spotify_icon.png" alt="Spotify Logo">
-                LOG IN WITH SPOTIFY
+                <img src="img/spotify-icon.svg" alt="Spotify Icon">
+                Mit Spotify Anmelden
             </button>
+
+            <div class="info-button">
+                <img src="img/info-icon.svg" alt="Info Icon">
+            </div>
+
+            <p id="token-timer" class="hidden">Token läuft ab in: <span id="timer-display"></span></p>
+
         </div>
 
-        <div id="game-screen" class="screen hidden">
-            <img src="assets/logo.png" alt="Track Attack Logo" id="logo-button" class="hidden">
+        <div id="genre-screen" class="screen hidden">
+            <div id="start-genre-selection-container">
+                <h3>Vorauswahl Genre</h3>
+                </div>
 
-            <div id="start-genre-selection-container" class="hidden">
-                <div id="all-genres-scrollbox">
+            <div id="game-area">
+                <img id="logo-button" src="img/logo.png" alt="Song Tiler Logo">
+                
+                <div id="dice-container" class="hidden">
+                    <div id="dice-selection" class="hidden">
+                        <img class="dice-option" data-value="1" src="img/dice-1.png" alt="Dice 1">
+                        <img class="dice-option" data-value="2" src="img/dice-2.png" alt="Dice 2">
+                        <img class="dice-option" data-value="3" src="img/dice-3.png" alt="Dice 3">
+                        <img class="dice-option" data-value="4" src="img/dice-4.png" alt="Dice 4">
+                        <img class="dice-option" data-value="5" src="img/dice-5.png" alt="Dice 5">
+                        <img class="dice-option" data-value="6" src="img/dice-6.png" alt="Dice 6">
+                    </div>
+                    
+                    <img id="dice-animation" class="hidden" src="img/dice-animation.gif" alt="Würfel Animation">
+                </div>
+
+                <div id="genre-container">
                     </div>
             </div>
-            <div id="countdown-display" class="hidden"></div>
 
-            <div id="speed-round-text-display" class="hidden">
-                <p>SPEED-ROUND</p>
-            </div>
+            <div id="digital-dice-area">
+                </div>
             
-            <div id="dice-container" class="hidden">
-                <img src="assets/w-ani.gif" alt="Dice Animation" id="dice-animation">
+        </div>
 
-                <div id="dice-selection" class="hidden">
-                    <img src="assets/w-1.png" alt="Dice 1" class="dice-option" data-value="1">
-                    <img src="assets/w-2.png" alt="Dice 2" class="dice-option" data-value="2">
-                    <img src="assets/w-3.png" alt="Dice 3" class="dice-option" data-value="3">
-                    <img src="assets/w-4.png" alt="Dice 4" class="dice-option" data-value="4">
-                    <img src="assets/w-5.png" alt="Dice 5" class="dice-option" data-value="5">
-                    <img src="assets/w-7.png" alt="Dice 7" class="dice-option" data-value="7">
-
-                    <div id="digital-dice-area" class="hidden">
-                        <img id="digital-dice-main-image" src="assets/digi-ta.png" alt="Digitaler Würfel" class="digital-dice-icon">
-                    </div>
-                </div>
-            </div>
-
-            <div id="genre-container" class="hidden">
-                </div>
+        <div id="guess-screen" class="screen hidden">
+            
+            <h1 id="current-track-title">Welcher Song ist das?</h1>
+            
+            <button id="reveal-button">AUFLÖSEN</button>
 
             <div id="reveal-container" class="hidden">
                 <div id="track-info">
-                    <img id="album-cover" src="" alt="Album Cover">
+                    <img id="album-cover" src="img/default-cover.png" alt="Album Cover">
                     <div>
-                        <p id="track-title">Titel</p>
                         <p id="track-artist">Interpret</p>
-                        <p id="track-album"></p>
-                        <p id="track-year"></p>
+                        <p id="track-title">Titel</p>
+                        <p id="track-album">Album</p>
+                        <p id="track-year">Jahr</p>
                     </div>
                 </div>
+
                 <div id="feedback-buttons">
                     <button id="correct-button">RICHTIG</button>
                     <button id="wrong-button">FALSCH</button>
                 </div>
             </div>
-            
-            <button id="reveal-button" class="hidden">AUFLÖSEN</button>
-            
         </div>
         
         <div id="score-screen" class="screen hidden">
             <div id="player1-score-display">0</div>
             <div id="player2-score-display">0</div>
         </div>
-        <div id="token-timer" class="hidden"></div>
+
+        <div id="speed-round-screen" class="screen hidden">
+            <div id="speed-round-text-display">SPEED-ROUND</div>
+        </div>
+
+        <div id="countdown-display" class="hidden">5</div>
+
     </div>
-    
-    <audio id="digital-dice-sound" src="assets/digi-ani-sound.mp3" preload="auto"></audio>
-    <audio id="logo-fly-in-sound" src="assets/ta-sound.mp3" preload="auto"></audio>
+
     <script src="app.js"></script>
 </body>
 </html>
