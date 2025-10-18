@@ -119,7 +119,7 @@ body, html {
 }
 
 /* Overlay für Hochformat & Vollbild */
-.overlay {
+/* .overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -131,7 +131,7 @@ body, html {
     justify-content: center;
     align-items: center;
     font-size: 1.5em;
-}
+} */
 
 /* Stil für das Logo auf dem Login-Screen */
 #login-logo {
