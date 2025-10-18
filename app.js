@@ -143,17 +143,17 @@ document.addEventListener('DOMContentLoaded', () => {
     //=======================================================================
 
  // 1.4: Querformat-Prüfung
-    function checkOrientation() {
-        if (window.innerHeight > window.innerWidth) {
-            rotateDeviceOverlay.classList.remove('hidden');
-        } else {
-            rotateDeviceOverlay.classList.add('hidden');
-            // Wenn die Ausrichtung korrekt ist, starte das Spiel (falls noch nicht gestartet)
-            if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
-                startGameAfterOrientation();
-            }
-        }
-    }
+ //   function checkOrientation() {
+ //       if (window.innerHeight > window.innerWidth) {
+ //           rotateDeviceOverlay.classList.remove('hidden');
+ //       } else {
+ //           rotateDeviceOverlay.classList.add('hidden');
+ //           // Wenn die Ausrichtung korrekt ist, starte das Spiel (falls noch nicht gestartet)
+ //           if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
+ //               startGameAfterOrientation();
+ //           }
+ //       }
+ //   }
 
     // NEU: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
