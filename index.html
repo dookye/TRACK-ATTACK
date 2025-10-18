@@ -2,119 +2,97 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>TRACK ATTACK099</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>TRACK ATTACK 001</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="assets/logo-icon.png" type="image/png">
     <link rel="apple-touch-icon" href="assets/logo-icon.png">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
-    <!-- App Container -->
-    <div id="app-container">
+    <div id="rotate-device-overlay" class="overlay hidden">
+        <p>Please rotate your device to landscape mode</p>
+    </div>
 
-        <!-- Login Screen -->
-        <div id="login-screen" class="screen">
-            <img src="assets/logo.png" alt="Track Attack Logo" class="login-logo">
-            <p>Bitte mit Spotify-Premium einloggen</p>
+    <div id="app-container">
+        <div id="login-screen" class="screen active">
+            <img src="assets/logo.png" alt="Quiz Game Logo" id="login-logo">
+                <a href="info.html" class="info-button">
+                  <img src="assets/info.png" alt="Info">
+                </a>
+            <p>Please log in with your Spotify-Premium-Account</p>
             <button id="login-button">
                 <img src="spotify_icon.png" alt="Spotify Logo">
                 LOG IN WITH SPOTIFY
             </button>
         </div>
 
-        <!-- Game Screen -->
         <div id="game-screen" class="screen hidden">
-
-            <!-- Logo Button (initial start) -->
             <img src="assets/logo.png" alt="Track Attack Logo" id="logo-button" class="hidden">
 
-            <!-- Genre Pre-Selection Screen -->
-            <div id="genre-preselection-container" class="screen hidden">
-                <div class="wheel-container">
-                    <div id="wheel" class="wheel">
-                        <!-- Genre items will be injected by JS -->
+            <div id="start-genre-selection-container" class="hidden">
+                <div id="all-genres-scrollbox">
                     </div>
-                    <div class="wheel-overlay-top"></div>
-                    <div class="wheel-overlay-bottom"></div>
-                    <div class="selection-marker"></div>
-                </div>
-                <button id="start-game-button" disabled>TRACK-ATTACK</button>
+            </div>
+            <div id="countdown-display" class="hidden"></div>
+
+            <div id="speed-round-text-display" class="hidden">
+                <p>SPEED-ROUND</p>
             </div>
             
-            <!-- Dice Screen -->
-            <div id="dice-container" class="screen hidden">
-                 <img src="assets/digi-ta.png" alt="Digital Dice" id="digital-dice-image">
+            <div id="dice-container" class="hidden">
+                <img src="assets/w-ani.gif" alt="Dice Animation" id="dice-animation">
+
+                <div id="dice-selection" class="hidden">
+                    <img src="assets/w-1.png" alt="Dice 1" class="dice-option" data-value="1">
+                    <img src="assets/w-2.png" alt="Dice 2" class="dice-option" data-value="2">
+                    <img src="assets/w-3.png" alt="Dice 3" class="dice-option" data-value="3">
+                    <img src="assets/w-4.png" alt="Dice 4" class="dice-option" data-value="4">
+                    <img src="assets/w-5.png" alt="Dice 5" class="dice-option" data-value="5">
+                    <img src="assets/w-7.png" alt="Dice 7" class="dice-option" data-value="7">
+
+                    <div id="digital-dice-area" class="hidden">
+                        <img id="digital-dice-main-image" src="assets/digi-ta.png" alt="Digitaler Würfel" class="digital-dice-icon">
+                    </div>
+                </div>
             </div>
 
-            <!-- In-Game Genre Screen (Wheel) -->
-            <div id="genre-container" class="screen hidden">
-                <div class="wheel-container">
-                    <div id="game-wheel" class="wheel">
-                         <!-- Filtered genre items will be injected by JS -->
+            <div id="genre-container" class="hidden">
+                </div>
+
+            <div id="reveal-container" class="hidden">
+                <div id="track-info">
+                    <img id="album-cover" src="" alt="Album Cover">
+                    <div>
+                        <p id="track-title">Titel</p>
+                        <p id="track-artist">Interpret</p>
+                        <p id="track-album"></p>
+                        <p id="track-year"></p>
                     </div>
-                    <div class="wheel-overlay-top"></div>
-                    <div class="wheel-overlay-bottom"></div>
-                    <div class="selection-marker"></div>
+                </div>
+                <div id="feedback-buttons">
+                    <button id="correct-button">RICHTIG</button>
+                    <button id="wrong-button">FALSCH</button>
                 </div>
             </div>
             
-            <!-- Rate Screen (Logo to play snippet) -->
-            <div id="rate-container" class="screen hidden">
-                <img src="assets/logo.png" alt="Track Attack Logo zum Abspielen" id="rate-logo-button">
-            </div>
-
-            <!-- Reveal Screen -->
-            <div id="reveal-container" class="screen hidden">
-                <div class="reveal-content">
-                    <img id="album-cover" src="assets/cover-placeholder.png" alt="Album Cover">
-                    <h2 id="track-title">Song Titel</h2>
-                    <h3 id="track-artist">Künstler</h3>
-                    <p id="track-album">Album</p>
-                    <p id="track-year">(Jahr)</p>
-                </div>
-            </div>
-
-             <!-- Buttons for Rate/Reveal phase -->
-            <button id="reveal-button" class="hidden bottom-button">AUFLÖSEN</button>
-            <button id="correct-button" class="hidden bottom-button">RICHTIG</button>
-            <button id="wrong-button" class="hidden top-button">FALSCH</button>
-
-            <!-- Score Screen -->
-            <div id="score-screen" class="screen hidden">
-                <div id="player2-score-container" class="score-half">
-                    <span id="player2-score-display">0</span>
-                </div>
-                <div id="player1-score-container" class="score-half">
-                    <span id="player1-score-display">0</span>
-                </div>
-            </div>
-
-        </div> <!-- End Game Screen -->
+            <button id="reveal-button" class="hidden">AUFLÖSEN</button>
+            
+        </div>
         
-        <!-- Overlays -->
-        <div id="animated-text-overlay" class="overlay hidden">
-            <div id="animated-text-content"></div>
+        <div id="score-screen" class="screen hidden">
+            <div id="player1-score-display">0</div>
+            <div id="player2-score-display">0</div>
         </div>
-
-        <div id="points-overlay" class="overlay hidden no-interaction">
-            <span id="points-display"></span>
-        </div>
-         <div id="landscape-blocker" class="overlay hidden">
-            <p>Bitte drehe dein Gerät ins Hochformat.</p>
-        </div>
-
         <div id="token-timer" class="hidden"></div>
-
-    </div> <!-- End App Container -->
-
-    <!-- Audio-Elemente -->
+    </div>
+    
     <audio id="digital-dice-sound" src="assets/digi-ani-sound.mp3" preload="auto"></audio>
     <audio id="logo-fly-in-sound" src="assets/ta-sound.mp3" preload="auto"></audio>
-    <audio id="wheel-spin-sound" src="assets/wheel-sound.mp3" preload="auto" loop></audio>
-
-    <script src="script.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
