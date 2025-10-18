@@ -237,9 +237,12 @@ body, html {
 /* Würfel Auswahl (Die Würfel-Buttons selbst) */
 #dice-selection {
     display: flex;
+    /* *** GEÄNDERT: Standard ist jetzt Hochformat (untereinander) *** */
+    flex-direction: column; 
     justify-content: center;
     align-items: center;
-    gap: 30px; /* ändert den Abstand zwischen den Würfeln */
+    /* Erhöhten Abstand für bessere Bedienbarkeit auf Handys */
+    gap: 15px; /* Reduziert von 30px, da die Buttons jetzt vertikal angeordnet sind */ 
 }
 
 #dice-selection img:active {
@@ -247,8 +250,8 @@ body, html {
 }
 
 .dice-option {
-    width: 100px;
-    height: auto;
+    width: 80px; /* Leicht reduziert, damit die vertikale Liste nicht zu dominant ist */
+    height: 80px; /* Setze feste Höhe für Einheitlichkeit */
     cursor: pointer;
     transition: transform 0.1s;
 }
@@ -554,6 +557,16 @@ body, html {
 @media screen and (min-width: 769px), /* Ab 769px (Desktop) */
        screen and (orientation: landscape) /* ODER im Querformat auf jedem Gerät */
 {
+    /* *** NEU: Würfel-Auswahl im Querformat (nebeneinander) *** */
+    #dice-selection {
+        flex-direction: row; /* Elemente nebeneinander */
+        gap: 30px; /* Ursprünglicher Abstand */
+    }
+    .dice-option {
+        width: 100px; /* Zurück zur größeren Größe */
+        height: auto;
+    }
+    
     /* ... (Score-Screen Anpassungen von vorhin) ... */
     #score-screen {
         /* Zurück zur Querformat-Anordnung (links/rechts) */
