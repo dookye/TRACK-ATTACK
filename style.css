@@ -399,10 +399,10 @@ body, html {
     /* *** GEÄNDERT: Standard ist jetzt Hochformat (unten/oben) *** */
     flex-direction: column; /* Elemente übereinander (Blau oben, Pink unten) */
     background: linear-gradient(0deg, /* Gradient von unten (Pink) nach oben (Blau) */
-        var(--player1-color) 0%, 
-        var(--player1-color) 45%, 
-        var(--player2-color) 55%, 
-        var(--player2-color) 100%);
+        var(--player2-color) 0%, 
+        var(--player2-color) 45%, 
+        var(--player1-color) 55%, 
+        var(--player1-color) 100%);
     /* Höhe und Breite der Displays bleiben 50%, aber jetzt in der Höhe */
 }
 
