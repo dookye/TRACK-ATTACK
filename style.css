@@ -623,8 +623,8 @@ body, html {
 /* Container für den digitalen Würfel */
 #digital-dice-area {
     position: absolute; /* Absolute Positionierung im dice-container */
-    bottom: 0;        /* 0px Abstand vom unteren Rand */
-    left: 0;          /* 0px Abstand vom linken Rand */
+    bottom: -20;        /* 0px Abstand vom unteren Rand */
+    left: -20;          /* 0px Abstand vom linken Rand */
     display: flex;    /* Um das einzelne Bild zu zentrieren oder einfach zu enthalten */
     align-items: center; /* Vertikal zentrieren */
     justify-content: center; /* Horizontal zentrieren */
@@ -634,7 +634,7 @@ body, html {
     padding: 40px; /* Innenabstand für den "Viertelkreis"-Bereich */
     /* Rundet NUR die obere rechte Ecke ab. */
     /* Die Reihenfolge ist: Top-Left, Top-Right, Bottom-Right, Bottom-Left */
-    border-radius: 0 90px 0 0; 
+    border-radius: 0 120px 0 0; 
     
     z-index: 50;      /* Sicherstellen, dass es über anderen Elementen liegt */
     /* Die 20px Abstände des Würfels zur Ecke sind jetzt im Padding des Containers enthalten. */
