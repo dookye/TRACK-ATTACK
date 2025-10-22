@@ -650,14 +650,14 @@ body, html {
     display: block; /* Auf 'block' zurücksetzen, da das Icon nun absolut ist */
     
     /* Hintergrund und Größe des PNGs beibehalten */
-    background-image: url('img/digi-dice-bg.png'); /* Pfad zu Ihrer PNG-Datei */
+    background-image: url('assets/digi-dice-bg.png'); /* Pfad zu Ihrer PNG-Datei */
     background-repeat: no-repeat;
     background-size: contain; 
     background-position: bottom left; 
     
     /* Setzen Sie die Größe des Containers auf die Abmessungen Ihres PNGs/gewünschten Bereichs. */
-    width: 200px;  /* Beispielgröße, bitte an Ihr PNG anpassen! */
-    height: 120px; /* Beispielgröße, bitte an Ihr PNG anpassen! */
+    width: 180px;  /* Beispielgröße, bitte an Ihr PNG anpassen! */
+    height: 180px; /* Beispielgröße, bitte an Ihr PNG anpassen! */
     
     z-index: 50; 
     
