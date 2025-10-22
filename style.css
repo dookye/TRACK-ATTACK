@@ -622,22 +622,22 @@ body, html {
 
 /* Container für den digitalen Würfel */
 #digital-dice-area {
-    position: absolute; /* Absolute Positionierung im dice-container */
-    bottom: 0px;        /* 0px Abstand vom unteren Rand */
-    left: 0px;          /* 0px Abstand vom linken Rand */
-    display: flex;    /* Um das einzelne Bild zu zentrieren oder einfach zu enthalten */
-    align-items: center; /* Vertikal zentrieren */
-    justify-content: center; /* Horizontal zentrieren */
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
     
-    /* *** NEU: Optische Abgrenzung als Viertelkreis *** */
-    background-color: var(--black); /* Schwarzer Hintergrund */
-    padding: 40px; /* Innenabstand für den "Viertelkreis"-Bereich */
-    /* Rundet NUR die obere rechte Ecke ab. */
-    /* Die Reihenfolge ist: Top-Left, Top-Right, Bottom-Right, Bottom-Left */
-    border-radius: 0 120px 0 0; 
+    /* GEÄNDERT: Vertikale Anordnung, um Text und Icon zu stapeln */
+    flex-direction: column; 
+    justify-content: flex-end; /* Inhalt an den unteren Rand drücken */
+    align-items: flex-start; /* Inhalt links ausrichten */
     
-    z-index: 50;      /* Sicherstellen, dass es über anderen Elementen liegt */
-    /* Die 20px Abstände des Würfels zur Ecke sind jetzt im Padding des Containers enthalten. */
+    background-color: var(--black);
+    padding: 30px 60px 30px 30px; /* Mehr Padding rechts und oben für Text und Rundung */
+    border-radius: 0 150px 0 0; /* Rundung noch größer */
+    
+    z-index: 50;
+    /* Übergänge für den optischen Effekt */
+    transition: all 0.2s ease-in-out;
 }
 
 /* Styling für das einzige Bild-Element (egal ob Startbild, Animation oder Ergebnis) */
@@ -656,6 +656,20 @@ body, html {
 .digital-dice-icon:hover {
     transform: scale(1.05); /* Beim Hover leicht vergrößern */
     opacity: 0.9;
+}
+
+/* *** NEU: Styling für den Text "digitaler Würfel" *** */
+#digital-dice-label {
+    color: var(--white);
+    font-size: 0.9em;
+    font-weight: bold;
+    margin-bottom: 5px; /* Abstand zum Icon */
+    
+    /* Um den Text leicht der Rundung anzupassen (oder leicht drehen) */
+    transform: rotate(-8deg); /* Leichte Drehung, um der Rundung zu folgen */
+    transform-origin: bottom left; /* Drehung von der Ecke aus */
+    white-space: nowrap; /* Verhindert Umbruch */
+    padding-left: 5px; /* Etwas Abstand vom linken Rand */
 }
 
 /* Optional: Animation für den Button während des Würfelns (wenn es der digi-ani.gif ist) */
