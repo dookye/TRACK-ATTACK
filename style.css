@@ -625,42 +625,31 @@ body, html {
     position: absolute; 
     bottom: 0px;        
     left: 0px;          
-    display: flex;    
-    justify-content: center; /* Zentriert den Inhalt (das Icon) */
-    align-items: center; 
+    display: block; /* Auf 'block' zurücksetzen, da das Icon nun absolut ist */
     
-    /* *** GEÄNDERT: Nutzung des PNG als Hintergrund *** */
-    background-image: url('assets/digi-dice-bg.png'); /* Pfad zu Ihrer PNG-Datei */
+    /* Hintergrund und Größe des PNGs beibehalten */
+    background-image: url('img/digi-dice-bg.png'); /* Pfad zu Ihrer PNG-Datei */
     background-repeat: no-repeat;
-    background-size: contain; /* Stellt sicher, dass das Bild in den Container passt */
-    background-position: bottom left; /* Positioniert das Bild in der Ecke */
+    background-size: contain; 
+    background-position: bottom left; 
     
     /* Setzen Sie die Größe des Containers auf die Abmessungen Ihres PNGs/gewünschten Bereichs. */
-    /* Dies muss groß genug sein, um den Text und das Icon zu enthalten. */
-    width: 200px;  /* Beispiel: Breite, die den Text erfasst */
-    height: 120px; /* Beispiel: Höhe, die den Text und das Icon erfasst */
-    
-    /* Wir benötigen keinen Border-Radius, da das Bild die Form vorgibt */
-    /* Wir benötigen keinen Background-Color mehr, da das Bild schwarz ist */
+    width: 200px;  /* Beispielgröße, bitte an Ihr PNG anpassen! */
+    height: 120px; /* Beispielgröße, bitte an Ihr PNG anpassen! */
     
     z-index: 50; 
     
-    /* Erhöhen Sie das Z-Index, um sicherzustellen, dass der Container über anderen Elementen liegt */
+    /* *** KRITISCH: Deaktiviert Klicks auf dem gesamten Hintergrund-Container *** */
+    pointer-events: none; 
 }
 
 /* Styling für das Würfel-Icon */
 .digital-dice-icon {
-    /* Wichtig: Das Icon muss relativ zum Container positioniert werden, 
-       damit es über dem Hintergrundbild liegt und im Container-Flow bleibt. */
-    position: relative; 
-    /* Passen Sie hier margin/padding an, um das Icon an die gewünschte Stelle 
-       innerhalb des 200x120px Bereichs zu verschieben. */
-    margin: 0;
-    padding-top: 20px; /* Beispiel: Etwas Abstand zum oberen Rand für den Text */
-    padding-right: 100px; /* Beispiel: Verschiebt das Icon aus der Mitte */
-
-    /* Statt Margin/Padding können wir auch die Flexbox nutzen, 
-       aber die manuelle Positionierung ist oft präziser beim Hintergrundbild-Ansatz. */
+    /* *** KRITISCH: Positionierung mittels 'absolute' und expliziten Werten *** */
+    position: absolute; 
+    /* Diese Werte müssen manuell angepasst werden, damit das Icon auf dem PNG an der richtigen Stelle liegt. */
+    bottom: 20px; /* Beispiel: 20px von unten */
+    left: 20px;  /* Beispiel: 20px von links */
 
     width: 50px;         
     height: 50px;
@@ -668,7 +657,10 @@ body, html {
     border-radius: 10px; 
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease, opacity 0.2s ease; 
-    z-index: 51; /* MUSS über dem Hintergrund-Container liegen */
+    z-index: 51; 
+    
+    /* *** KRITISCH: Aktiviert Klicks NUR auf diesem Element und seinen Kindern *** */
+    pointer-events: auto; 
 }
 
 .digital-dice-icon:hover {
