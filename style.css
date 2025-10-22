@@ -626,25 +626,31 @@ body, html {
     bottom: 0px;
     left: 0px;
     
-    /* GEÄNDERT: Vertikale Anordnung, um Text und Icon zu stapeln */
-    flex-direction: column; 
-    justify-content: flex-end; /* Inhalt an den unteren Rand drücken */
-    align-items: flex-start; /* Inhalt links ausrichten */
+    display: flex; /* Bleibt Flexbox, aber die Elemente darin positionieren wir anders */
+    justify-content: flex-start; /* Elemente links ausrichten */
+    align-items: flex-end; /* Elemente unten ausrichten */
     
     background-color: var(--black);
-    padding: 30px 60px 30px 30px; /* Mehr Padding rechts und oben für Text und Rundung */
-    border-radius: 0 150px 0 0; /* Rundung noch größer */
+    padding: 30px 60px 30px 30px; /* Padding beibehalten oder anpassen */
+    border-radius: 0 150px 0 0; 
     
     z-index: 50;
-    /* Übergänge für den optischen Effekt */
     transition: all 0.2s ease-in-out;
+
+    /* Relative Positionierung für absolute Kinder (SVG und Icon) */
+    position: relative; /* Wichtig, damit das absolute SVG und Icon sich daran orientieren */
+    /* Setzen Sie hier eine feste Größe für den Bereich, damit das SVG nicht überläuft */
+    width: 200px; /* Beispielgröße - passen Sie dies an, damit es gut aussieht */
+    height: 200px; /* Beispielgröße */
+    overflow: hidden; /* Verhindert, dass das SVG über den Viertelkreis hinausragt */
 }
 
 /* Styling für das einzige Bild-Element (egal ob Startbild, Animation oder Ergebnis) */
 .digital-dice-icon {
-    /* ENTFERNT: position: absolute; - Lässt das Icon dem Flex-Layout folgen */
-    /* ENTFERNT: bottom: 20px; - Steuerung über Container-Padding */
-    /* ENTFERNT: left: 20px; - Steuerung über Container-Padding */
+    /* Setze das Icon absolut innerhalb des #digital-dice-area */
+    position: absolute; 
+    bottom: 20px; /* Abstand vom unteren Rand des #digital-dice-area */
+    left: 20px; /* Abstand vom linken Rand des #digital-dice-area */
     
     width: 50px;
     height: 50px;
@@ -652,25 +658,12 @@ body, html {
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease, opacity 0.2s ease;
+    z-index: 51; /* Sicherstellen, dass das Icon über dem SVG-Text liegt */
 }
 
 .digital-dice-icon:hover {
     transform: scale(1.05); /* Beim Hover leicht vergrößern */
     opacity: 0.9;
-}
-
-/* *** NEU: Styling für den Text "digitaler Würfel" *** */
-#digital-dice-label {
-    color: var(--white);
-    font-size: 0.9em;
-    font-weight: bold;
-    margin-bottom: 5px; /* Abstand zum Icon */
-    
-    /* Um den Text leicht der Rundung anzupassen (oder leicht drehen) */
-    transform: rotate(-8deg); /* Leichte Drehung, um der Rundung zu folgen */
-    transform-origin: bottom left; /* Drehung von der Ecke aus */
-    white-space: nowrap; /* Verhindert Umbruch */
-    padding-left: 5px; /* Etwas Abstand vom linken Rand */
 }
 
 /* Optional: Animation für den Button während des Würfelns (wenn es der digi-ani.gif ist) */
