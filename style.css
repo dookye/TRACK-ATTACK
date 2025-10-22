@@ -631,7 +631,7 @@ body, html {
     
     /* *** NEU: Optische Abgrenzung als Viertelkreis *** */
     background-color: var(--black); /* Schwarzer Hintergrund */
-    padding: 20px; /* Innenabstand für den "Viertelkreis"-Bereich */
+    padding: 40px; /* Innenabstand für den "Viertelkreis"-Bereich */
     /* Rundet NUR die obere rechte Ecke ab. */
     /* Die Reihenfolge ist: Top-Left, Top-Right, Bottom-Right, Bottom-Left */
     border-radius: 0 90px 0 0; 
