@@ -634,7 +634,7 @@ body, html {
     padding: 20px; /* Innenabstand für den "Viertelkreis"-Bereich */
     /* Rundet NUR die obere rechte Ecke ab. */
     /* Die Reihenfolge ist: Top-Left, Top-Right, Bottom-Right, Bottom-Left */
-    border-radius: 0 50px 0 0; 
+    border-radius: 0 90px 0 0; 
     
     z-index: 50;      /* Sicherstellen, dass es über anderen Elementen liegt */
     /* Die 20px Abstände des Würfels zur Ecke sind jetzt im Padding des Containers enthalten. */
