@@ -623,8 +623,8 @@ body, html {
 /* Container für den digitalen Würfel */
 #digital-dice-area {
     position: absolute; /* Absolute Positionierung im dice-container */
-    bottom: -20;        /* 0px Abstand vom unteren Rand */
-    left: -20;          /* 0px Abstand vom linken Rand */
+    bottom: 0px;        /* 0px Abstand vom unteren Rand */
+    left: 0px;          /* 0px Abstand vom linken Rand */
     display: flex;    /* Um das einzelne Bild zu zentrieren oder einfach zu enthalten */
     align-items: center; /* Vertikal zentrieren */
     justify-content: center; /* Horizontal zentrieren */
@@ -642,6 +642,9 @@ body, html {
 
 /* Styling für das einzige Bild-Element (egal ob Startbild, Animation oder Ergebnis) */
 .digital-dice-icon {
+    position: absolute; /* Absolute Positionierung im dice-container */
+    bottom: 20px;        /* 0px Abstand vom unteren Rand */
+    left: 20px;          /* 0px Abstand vom linken Rand */
     width: 50px;        /* Etwas größere und einheitliche Größe für alle Zustände */
     height: 50px;
     cursor: pointer;    /* Zeigt an, dass das Element klickbar ist (solange es kein GIF ist) */
