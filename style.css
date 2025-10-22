@@ -642,15 +642,16 @@ body, html {
 
 /* Styling für das einzige Bild-Element (egal ob Startbild, Animation oder Ergebnis) */
 .digital-dice-icon {
-    position: absolute; /* Absolute Positionierung im dice-container */
-    bottom: 20px;        /* 0px Abstand vom unteren Rand */
-    left: 20px;          /* 0px Abstand vom linken Rand */
-    width: 50px;        /* Etwas größere und einheitliche Größe für alle Zustände */
+    /* ENTFERNT: position: absolute; - Lässt das Icon dem Flex-Layout folgen */
+    /* ENTFERNT: bottom: 20px; - Steuerung über Container-Padding */
+    /* ENTFERNT: left: 20px; - Steuerung über Container-Padding */
+    
+    width: 50px;
     height: 50px;
-    cursor: pointer;    /* Zeigt an, dass das Element klickbar ist (solange es kein GIF ist) */
-    border-radius: 10px; /* Leicht abgerundete Ecken */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Leichter Schatten */
-    transition: transform 0.2s ease, opacity 0.2s ease; /* Sanfte Übergänge */
+    cursor: pointer;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .digital-dice-icon:hover {
