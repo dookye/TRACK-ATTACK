@@ -656,8 +656,8 @@ body, html {
     background-position: bottom left; 
     
     /* Setzen Sie die Größe des Containers auf die Abmessungen Ihres PNGs/gewünschten Bereichs. */
-    width: 180px;  /* Beispielgröße, bitte an Ihr PNG anpassen! */
-    height: 180px; /* Beispielgröße, bitte an Ihr PNG anpassen! */
+    width: 150px;  /* Beispielgröße, bitte an Ihr PNG anpassen! */
+    height: 150px; /* Beispielgröße, bitte an Ihr PNG anpassen! */
     
     z-index: 50; 
     
