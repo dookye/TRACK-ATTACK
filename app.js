@@ -502,7 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             appContainer.style.backgroundColor = 'var(--player1-color)';
             logoButton.classList.add('hidden');
-            // showDiceScreen(); // Füge hier deine Funktion zum Starten des Würfel-Screens ein
+            showDiceScreen();
         }, 800);
     }
 
