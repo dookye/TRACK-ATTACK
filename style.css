@@ -225,7 +225,8 @@ body, html {
 
 .logo-pulsing {
     /* Verwendet die existierenden Keyframes 'bounce' */
-    animation: bounce 2s infinite alternate;
+    animation: bounce 4s infinite alternate;
+}
 
 #logo-button.inactive {
     filter: blur(5px);
