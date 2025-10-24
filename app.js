@@ -177,8 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Wenn kein spezieller Zustand gespeichert ist, starte neu mit dem Logo
             logoButton.classList.remove('hidden');
             logoButton.classList.add('initial-fly-in');
-            logoButton.addEventListener('click', startGame, { once: true });
 			logoButton.classList.add('logo-pulsing');
+            logoButton.addEventListener('click', startGame, { once: true });
 
             // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
             startGenreSelectionContainer.classList.remove('hidden');
