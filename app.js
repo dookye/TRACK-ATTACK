@@ -178,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             logoButton.classList.remove('hidden');
             logoButton.classList.add('initial-fly-in');
             logoButton.addEventListener('click', startGame, { once: true });
+			logoButton.classList.add('logo-pulsing');
 
             // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
             startGenreSelectionContainer.classList.remove('hidden');
@@ -435,6 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mache den Button sofort unklickbar, um Doppel-Klicks zu vermeiden
         logoButton.removeEventListener('click', startGame);
         logoButton.classList.add('inactive'); // Visuelles Feedback
+		logoButton.classList.remove('logo-pulsing');
         
         // Player nur initialisieren, wenn wir noch keine deviceId haben.
         if (!deviceId) {
@@ -457,6 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Gib dem Benutzer die Möglichkeit, es erneut zu versuchen
                 logoButton.addEventListener('click', startGame, { once: true });
                 logoButton.classList.remove('inactive');
+				logoButton.classList.add('logo-pulsing');
                 return; // Breche die Funktion ab, wenn es fehlschlägt.
             }
         }
@@ -469,6 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             appContainer.style.backgroundColor = 'var(--player1-color)';
             logoButton.classList.add('hidden');
+			logoButton.classList.remove('logo-pulsing');
             showDiceScreen();
         }, 800);
     }
@@ -796,6 +800,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
 
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+		logoButton.classList.add('logo-pulsing');
         logoButton.removeEventListener('click', playTrackSnippet);
         logoButton.addEventListener('click', playTrackSnippet);
 
@@ -814,6 +819,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 
         triggerBounce(logoButton);
         logoButton.classList.add('inactive');
+		logoButton.classList.remove('logo-pulsing');
         gameState.attemptsMade++;
 
         const trackDurationMs = gameState.currentTrack.duration_ms;
@@ -846,6 +852,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
                     gameState.isSongPlaying = false;
                     if (gameState.attemptsMade < gameState.maxAttempts) {
                         logoButton.classList.remove('inactive');
+						logoButton.classList.add('logo-pulsing');
                     }
                 }, gameState.trackDuration);
             }
@@ -854,6 +861,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
             console.error("Fehler beim Abspielen des Tracks:", error);
             alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass Spotify auf keinem anderen Gerät aktiv ist.");
             logoButton.classList.remove('inactive');
+			logoButton.classList.add('logo-pulsing');
         }
 
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
@@ -882,6 +890,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         countdownDisplay.innerText = ''; // Inhalt leeren
 
         logoButton.classList.add('inactive', 'hidden');
+		logoButton.classList.remove('logo-pulsing');
         revealButton.classList.add('hidden');
         speedRoundTextDisplay.classList.add('hidden'); // Der Speed-Round Text sollte auch weg
 
@@ -1118,6 +1127,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         // Verstecke alle relevanten UI-Elemente
         revealContainer.classList.add('hidden');
         logoButton.classList.add('hidden');
+		logoButton.classList.remove('logo-pulsing');
         genreContainer.classList.add('hidden');
         diceContainer.classList.add('hidden');
         revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
@@ -1245,6 +1255,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         // Zurück zum Start (ohne Einflug-Animation)
         gameScreen.classList.remove('hidden');
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+		logoButton.classList.add('logo-pulsing');
         logoButton.removeEventListener('click', startGame); // Sicherstellen, dass kein alter Listener hängt
         logoButton.addEventListener('click', startGame, { once: true }); // NEU: Listener hier neu setzen, da er ja einmalig ist
 
