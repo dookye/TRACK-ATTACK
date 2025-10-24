@@ -185,7 +185,7 @@ body, html {
     position: absolute;
     top: 50%;
     left: 50%;
-    /*transform: translate(-50%, -50%); entfernt, da sonst pulsing fx überschreibt. ist dafür in den keyframes vorhanden */
+    transform: translate(-50%, -50%);
     z-index: 110;
     /* NEU: Stellt sicher, dass Schatten außerhalb des Bildes sichtbar ist */
     box-sizing: border-box;
@@ -201,13 +201,13 @@ body, html {
 @keyframes pulse-logo {
     from {
         /* Anfang: Leichter Schatten und keine Vergrößerung */
-        /* box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); ZUM TEST AUSGEKLAMERT */
-        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+        transform: scale(1); /* Nur Skalierung animieren */
     }
     to {
         /* Ende: Stark pulsierender, ausstrahlender Schatten und leichte Vergrößerung */
-        /* box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); /* Weiße Aura, die transparent wird */ ZUM TEST AUSGEKLAMERT */
-        transform: translate(-50%, -50%) scale(1.05); /* Logo wird leicht größer */
+        box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); /* Weiße Aura, die transparent wird */
+        transform: scale(1.05); /* Nur Skalierung animieren */
     }
 }
 
