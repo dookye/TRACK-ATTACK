@@ -468,6 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
         logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
+		triggerBounce(logoButton);
         
         // Player nur initialisieren, wenn wir noch keine deviceId haben.
         if (!deviceId) {
@@ -493,8 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; // Breche die Funktion ab, wenn es fehlschlägt.
             }
         }
-
-        triggerBounce(logoButton);
         
         lastGameScreenVisible = 'logo-button';
         startGenreSelectionContainer.classList.add('hidden');
