@@ -12,12 +12,14 @@ const API_ENDPOINTS = {
 
 
 // ----------------------------------------------------------------------
-// NEUE GLOBALE VARIABLEN FÜR ANIMATIONS-STEUERUNG
+// NEUE GLOBALE VARIABLE FÜR ANIMATIONS-STEUERUNG
 // ----------------------------------------------------------------------
+// WICHTIG: Muss außerhalb des DOMContentLoaded-Listeners stehen!
 let isInitialFlyInDone = false; 
 
 // ----------------------------------------------------------------------
 // NEUE FUNKTION: Wird aufgerufen, sobald die Fly-in Animation abgeschlossen ist
+// Füge diese Funktion irgendwo in den oberen Bereich deiner app.js ein.
 // ----------------------------------------------------------------------
 function handleFlyInEnd() {
     const logoButton = document.getElementById('logo-button');
@@ -31,11 +33,11 @@ function handleFlyInEnd() {
     logoButton.classList.remove('inactive');
     logoButton.classList.add('logo-pulsing');
 
-    // 3. Den Event Listener entfernen, da er seine Aufgabe erfüllt hat
+    // 3. Den Event Listener für das Animationsende entfernen
     logoButton.removeEventListener('animationend', handleFlyInEnd);
     
-    // 4. Den Click-Listener (startGame) erst jetzt, NACH der Animation, wieder hinzufügen.
-    // Das ist wichtig, falls der Spieler zu schnell klickt.
+    // 4. Den Klick-Listener HINZUFÜGEN, damit der Button klickbar wird!
+    // {once: true} entfernt den Listener automatisch nach dem ersten Klick.
     logoButton.addEventListener('click', startGame, { once: true });
 }
 
@@ -174,16 +176,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1.4: Querformat-Prüfung (Wird beibehalten, aber nur für Screen-Kontrolle)
     function checkOrientation() {
-        // HIER KEINE LOGIK MEHR, ABER DIE FUNKTION MUSS BLEIBEN, WEIL SIE
-        // IM setTimeout() NACH DEM LOGIN AUFGERUFEN WIRD
-        
         // Führe die Start-Logik nur aus, wenn der Token da ist und der GameScreen noch versteckt ist
         if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
              startGameAfterOrientation();
         }
     }
     
-    // NEU: Funktion, die nach korrekter Orientierung das Spiel startet
+    // NEU KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
         gameScreen.classList.remove('hidden');
 
@@ -196,7 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // HIER WIRD DIE KORRIGIERTE ANIMATIONS-LOGIK EINGEFÜGT!
         if (!isInitialFlyInDone) {
             // Beim ersten Start: Fly-in Animation auslösen
             logoButton.classList.remove('hidden');
@@ -210,21 +208,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } else {
             // Wenn die Animation bereits gelaufen ist (z.B. nach Orientierungswechsel):
+            
+            // Standard: Nur Pulsing starten (ready for next round/click)
+            logoButton.classList.remove('hidden');
+            logoButton.classList.remove('inactive');
+            logoButton.classList.add('logo-pulsing');
+            
+            // Füge den Listener hinzu, falls er durch startGame entfernt wurde
+            logoButton.removeEventListener('click', startGame); // Entfernen von Duplikaten
+            logoButton.addEventListener('click', startGame, { once: true });
+
+            // NEU: Stelle den letzten Zustand wieder her, oder starte neu
             if (lastGameScreenVisible === 'dice-container') {
                 // showDiceScreen(); // Hier muss Ihre Funktion zum Anzeigen des Dice-Screens stehen
             } else if (lastGameScreenVisible === 'genre-container') {
                 // showGenreScreen(); // Hier muss Ihre Funktion zum Anzeigen des Genre-Screens stehen
             } else if (lastGameScreenVisible === 'reveal-container') {
                 // showResolution(); // Hier muss Ihre Funktion zum Anzeigen der Auflösung stehen
-            } else {
-                // Standard: Nur Pulsing starten (ready for next round/click)
-                logoButton.classList.remove('hidden');
-                logoButton.classList.remove('inactive');
-                logoButton.classList.add('logo-pulsing');
-                // Click-Listener wieder hinzufügen (da er in startGame entfernt wird)
-                logoButton.removeEventListener('click', startGame); // Entfernen von Duplikaten
-                logoButton.addEventListener('click', startGame, { once: true });
             }
+            // Ansonsten bleibt es auf dem Logo-Button/Genre-Vorauswahl
         }
 
         // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
@@ -353,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 1.3: Spotify Web Player SDK laden und initialisieren (MODIFIZIERT)
     function initializePlayer() {
-        // ... (Die Funktion initializePlayer bleibt unverändert)
+        // Wir returnen eine Promise, die auflöst, wenn der Player bereit ist.
         return new Promise((resolve, reject) => {
             // Nur das SDK laden, wenn es noch nicht da ist
             if (!window.Spotify) {
@@ -474,12 +476,11 @@ document.addEventListener('DOMContentLoaded', () => {
         element.classList.add('bounce');
     }
 
-// AKTUALISIERT: startGame-Funktion (KORRIGIERT FÜR ANIMATIONS-LOGIK)
+// KORRIGIERT: startGame-Funktion (VEREINFACHT FÜR {once: true})
     async function startGame() {
-        // Die initial-fly-in Klasse muss HIER NICHT entfernt werden, da handleFlyInEnd das bereits getan hat.
-        
-        // Mache den Button sofort unklickbar
-        logoButton.removeEventListener('click', startGame);
+        // Wir verlassen uns auf {once: true} im handleFlyInEnd/startGameAfterOrientation.
+        // Falls der Klick aber fehlschlägt (z.B. Player-Fehler), fügen wir den Listener wieder hinzu.
+
         logoButton.classList.add('inactive'); // Visuelles Feedback
         logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
         
@@ -500,8 +501,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
                 alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
                 
-                // Gib dem Benutzer die Möglichkeit, es erneut zu versuchen
-                logoButton.addEventListener('click', startGame, { once: true });
+                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird
+                logoButton.addEventListener('click', startGame, { once: true }); 
                 logoButton.classList.remove('inactive');
                 logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
                 return; // Breche die Funktion ab, wenn es fehlschlägt.
@@ -516,8 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             appContainer.style.backgroundColor = 'var(--player1-color)';
             logoButton.classList.add('hidden');
-            // logoButton.classList.remove('logo-pulsing'); // Redundant, da bereits oben entfernt
-            // showDiceScreen(); // Diese Funktion fehlt im Code-Ausschnitt, muss aber hier aufgerufen werden.
+            // showDiceScreen(); // Füge hier deine Funktion zum Starten des Würfel-Screens ein
         }, 800);
     }
 
