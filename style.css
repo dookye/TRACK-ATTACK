@@ -225,7 +225,19 @@ body, html {
 
 .logo-pulsing {
     /* Verwendet die existierenden Keyframes 'bounce' */
-    animation: bounce 4s infinite alternate;
+    animation: pulsing-bounce 2s infinite ease-in-out;
+}
+
+@keyframes pulsing-bounce {
+    /* 0% bis 10% (Die ersten 10% der 2 Sekunden) */
+    0% { transform: translate(-50%, -50%) scale(1); }
+    5% { transform: translate(-50%, -50%) scale(1.1); }
+    10% { transform: translate(-50%, -50%) scale(1); }
+
+    /* 11% bis 100% (Die restlichen 90% der 2 Sekunden) */
+    /* Das Logo bleibt in Ruhe (scale 1) */
+    11% { transform: translate(-50%, -50%) scale(1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
 }
 
 #logo-button.inactive {
