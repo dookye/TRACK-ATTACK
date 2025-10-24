@@ -185,7 +185,7 @@ body, html {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    /*transform: translate(-50%, -50%); entfernt, da sonst pulsing fx überschreibt. ist dafür in den keyframes vorhanden */
     z-index: 110;
     /* NEU: Stellt sicher, dass Schatten außerhalb des Bildes sichtbar ist */
     box-sizing: border-box;
