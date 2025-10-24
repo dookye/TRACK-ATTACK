@@ -201,12 +201,12 @@ body, html {
 @keyframes pulse-logo {
     from {
         /* Anfang: Leichter Schatten und keine Vergrößerung */
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); 
+        /* box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); ZUM TEST AUSGEKLAMERT */
         transform: translate(-50%, -50%) scale(1);
     }
     to {
         /* Ende: Stark pulsierender, ausstrahlender Schatten und leichte Vergrößerung */
-        box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); /* Weiße Aura, die transparent wird */
+        /* box-shadow: 0 0 0 15px rgba(255, 255, 255, 0); /* Weiße Aura, die transparent wird */ ZUM TEST AUSGEKLAMERT */
         transform: translate(-50%, -50%) scale(1.05); /* Logo wird leicht größer */
     }
 }
