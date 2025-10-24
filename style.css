@@ -225,13 +225,13 @@ body, html {
 
 .logo-pulsing {
     /* Verwendet die existierenden Keyframes 'bounce' */
-    animation: pulsing-bounce 2s infinite ease-in-out;
+    animation: pulsing-bounce 5s infinite ease-in-out;
 }
 
 @keyframes pulsing-bounce {
     /* 0% bis 10% (Die ersten 10% der 2 Sekunden) */
     0% { transform: translate(-50%, -50%) scale(1); }
-    5% { transform: translate(-50%, -50%) scale(1.1); }
+    5% { transform: translate(-50%, -50%) scale(1.05); }
     10% { transform: translate(-50%, -50%) scale(1); }
 
     /* 11% bis 100% (Die restlichen 90% der 2 Sekunden) */
