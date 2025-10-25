@@ -404,6 +404,20 @@ body, html {
     color: #999; /* Noch gräulicher */
 }
 
+/* Styling für das kontextuelle Branding im Reveal-Container */
+.spotify-content-badge {
+    display: block; /* Stellt sicher, dass es eine eigene Zeile hat oder flexibel ist */
+    margin-top: 5px;
+}
+
+.spotify-content-badge img {
+    /* Mindestgröße des Icons für Metadaten */
+    width: 25px; 
+    height: 25px;
+    min-width: 21px; 
+    min-height: 21px;
+}
+
 #feedback-buttons button {
     padding: 15px 30px;
     font-size: 1.2em;
@@ -783,4 +797,44 @@ body, html {
     font-family: 'Poppins', sans-serif;
     font-size: 14px;
     z-index: 1000;
+}
+
+#game-footer {
+    position: absolute; /* Abhängig vom Layout, aber für fixe Position unten */
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between; /* Verteilt Timer (links) und Branding (rechts) */
+    align-items: center;
+    padding: 0 10px;
+    color: #ccc; /* Helle, dezente Farbe für den Text */
+    font-size: 0.8em;
+}
+
+#token-timer-display {
+    /* Positioniert den Timer links */
+    order: 1; 
+}
+
+#powered-by-spotify {
+    /* Positioniert das Branding rechts */
+    order: 2; 
+}
+
+/* Styling für das dauerhafte Branding unten rechts */
+#powered-by-spotify {
+    display: flex;
+    align-items: center;
+    text-decoration: none; /* Entfernt Unterstreichung vom Link */
+    color: inherit; /* Verwendet die Farbe vom #game-footer */
+}
+
+#powered-by-spotify .branding-icon {
+    /* Mindestgröße des Spotify Icons (21px ist das Minimum) */
+    width: 25px; 
+    height: 25px;
+    min-width: 21px; 
+    min-height: 21px;
+    margin-right: 5px;
 }
