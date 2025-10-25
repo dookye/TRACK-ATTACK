@@ -807,17 +807,18 @@ body, html {
     position: absolute;
     bottom: 10px;
     right: 10px;
-    left: auto; 
     
-    /* Aktiviert Flexbox und platziert die Elemente nebeneinander */
+    /* Wichtig: Füge eine Hintergrundfarbe hinzu, um visuelle Überlappungen besser zu erkennen */
+    /* background: rgba(0, 0, 0, 0.5); */ 
+
+    /* Flexbox für die Elemente nebeneinander */
     display: flex;
-    flex-direction: row; 
     align-items: center;
-    gap: 15px; /* Abstand zwischen dem Branding-Element und dem Timer */
+    gap: 15px; /* Abstand zwischen Branding und Timer */
     
     color: #ccc; 
     font-size: 0.8em;
-    z-index: 999;
+    z-index: 1000; /* Stellt sicher, dass der Footer über dem Spiel-Inhalt liegt */
 }
 
 /* -------------------- BRANDING STYLING -------------------- */
@@ -825,9 +826,8 @@ body, html {
     display: flex;
     align-items: center;
     text-decoration: none; 
-    color: inherit;
-    order: 1;
-    z-index: 1000;
+    color: inherit; 
+    /* NEIN: Keine weitere Positionierung nötig, Flexbox regelt es */
 }
 
 #powered-by-spotify .branding-icon {
