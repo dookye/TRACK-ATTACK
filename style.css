@@ -796,8 +796,9 @@ body, html {
     border-radius: 5px;
     font-family: 'Poppins', sans-serif;
     font-size: 14px;
-    z-index: 1000;
     white-space: nowrap; /* Verhindert, dass der Text umbricht */
+    order: 2;
+    z-index: 1000;
 }
 
 /* -------------------- FOOTER POSITIONIERUNG -------------------- */
@@ -816,6 +817,7 @@ body, html {
     
     color: #ccc; 
     font-size: 0.8em;
+    z-index: 999;
 }
 
 /* -------------------- BRANDING STYLING -------------------- */
@@ -823,7 +825,9 @@ body, html {
     display: flex;
     align-items: center;
     text-decoration: none; 
-    color: inherit; 
+    color: inherit;
+    order: 1;
+    z-index: 1000;
 }
 
 #powered-by-spotify .branding-icon {
@@ -832,5 +836,6 @@ body, html {
     height: 25px;
     min-width: 21px; 
     min-height: 21px;
-    margin-right: 5px; 
+    margin-right: 5px;
+    z-index: 1000;
 }
