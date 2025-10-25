@@ -797,54 +797,40 @@ body, html {
     font-family: 'Poppins', sans-serif;
     font-size: 14px;
     z-index: 1000;
+    white-space: nowrap; /* Verhindert, dass der Text umbricht */
 }
 
+/* -------------------- FOOTER POSITIONIERUNG -------------------- */
 #game-footer {
-    /* Positioniert den gesamten Footer-Block unten rechts */
+    /* Positioniert den gesamten Block fest in der rechten unteren Ecke */
     position: absolute;
     bottom: 10px;
     right: 10px;
-    left: auto; /* Stellt sicher, dass es nicht über die ganze Breite geht */
+    left: auto; 
     
-    /* Aktiviert Flexbox und platziert Elemente in einer Reihe */
+    /* Aktiviert Flexbox und platziert die Elemente nebeneinander */
     display: flex;
-    flex-direction: row; /* Elemente nebeneinander */
+    flex-direction: row; 
     align-items: center;
-    gap: 15px; /* Fügt einen Abstand zwischen Branding und Timer hinzu */
+    gap: 15px; /* Abstand zwischen dem Branding-Element und dem Timer */
     
     color: #ccc; 
     font-size: 0.8em;
 }
 
-/* ---------------------------------------------------- */
-/* Styling des Powered by Spotify Elements */
+/* -------------------- BRANDING STYLING -------------------- */
 #powered-by-spotify {
     display: flex;
     align-items: center;
-    text-decoration: none;
-    color: inherit;
-    /* Optional: Fügt einen leichten Abstand zwischen dem Branding und dem Timer hinzu,
-       wenn Sie das 'gap' im #game-footer nicht verwenden möchten */
-    /* margin-right: 15px; */ 
+    text-decoration: none; 
+    color: inherit; 
 }
 
 #powered-by-spotify .branding-icon {
-    /* Mindestgröße des Spotify Icons (21px ist das Minimum) */
+    /* Mindestgröße des Icons */
     width: 25px; 
     height: 25px;
     min-width: 21px; 
     min-height: 21px;
-    margin-right: 5px; /* Abstand zwischen Icon und Text */
-}
-
-.branding-text {
-    /* Stellt sicher, dass der Text lesbar ist */
-    white-space: nowrap; 
-}
-
-/* ---------------------------------------------------- */
-/* Styling des Token-Timers */
-#token-timer-display {
-    white-space: nowrap; /* Verhindert Zeilenumbruch */
-    /* Keine zusätzliche Platzierung nötig, da Flexbox es automatisch rechts neben dem Branding platziert */
+    margin-right: 5px; 
 }
