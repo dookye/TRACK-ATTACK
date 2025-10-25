@@ -800,34 +800,32 @@ body, html {
 }
 
 #game-footer {
-    position: absolute; /* Abhängig vom Layout, aber für fixe Position unten */
+    /* Positioniert den gesamten Footer-Block unten rechts */
+    position: absolute;
     bottom: 10px;
-    left: 10px;
     right: 10px;
+    left: auto; /* Stellt sicher, dass es nicht über die ganze Breite geht */
+    
+    /* Aktiviert Flexbox und platziert Elemente in einer Reihe */
     display: flex;
-    justify-content: space-between; /* Verteilt Timer (links) und Branding (rechts) */
+    flex-direction: row; /* Elemente nebeneinander */
     align-items: center;
-    padding: 0 10px;
-    color: #ccc; /* Helle, dezente Farbe für den Text */
+    gap: 15px; /* Fügt einen Abstand zwischen Branding und Timer hinzu */
+    
+    color: #ccc; 
     font-size: 0.8em;
 }
 
-#token-timer-display {
-    /* Positioniert den Timer links */
-    order: 1; 
-}
-
-#powered-by-spotify {
-    /* Positioniert das Branding rechts */
-    order: 2; 
-}
-
-/* Styling für das dauerhafte Branding unten rechts */
+/* ---------------------------------------------------- */
+/* Styling des Powered by Spotify Elements */
 #powered-by-spotify {
     display: flex;
     align-items: center;
-    text-decoration: none; /* Entfernt Unterstreichung vom Link */
-    color: inherit; /* Verwendet die Farbe vom #game-footer */
+    text-decoration: none;
+    color: inherit;
+    /* Optional: Fügt einen leichten Abstand zwischen dem Branding und dem Timer hinzu,
+       wenn Sie das 'gap' im #game-footer nicht verwenden möchten */
+    /* margin-right: 15px; */ 
 }
 
 #powered-by-spotify .branding-icon {
@@ -836,5 +834,17 @@ body, html {
     height: 25px;
     min-width: 21px; 
     min-height: 21px;
-    margin-right: 5px;
+    margin-right: 5px; /* Abstand zwischen Icon und Text */
+}
+
+.branding-text {
+    /* Stellt sicher, dass der Text lesbar ist */
+    white-space: nowrap; 
+}
+
+/* ---------------------------------------------------- */
+/* Styling des Token-Timers */
+#token-timer-display {
+    white-space: nowrap; /* Verhindert Zeilenumbruch */
+    /* Keine zusätzliche Platzierung nötig, da Flexbox es automatisch rechts neben dem Branding platziert */
 }
