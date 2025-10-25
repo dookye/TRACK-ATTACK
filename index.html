@@ -94,7 +94,19 @@
             <div id="player2-score-display">0</div>
         </div>
 
-        <div id="token-timer" class="hidden"></div>
+        <!-- <div id="token-timer" class="hidden"></div> -->
+
+        <div id="game-footer">
+        
+        <a href="https://api.spotify.com/v1/playlists/$1" target="_blank" id="powered-by-spotify" class="footer-item">
+            <img src="assets/spotify-icon-black.png" alt="Spotify Icon" class="branding-icon">
+            <span class="branding-text">Powered by Spotify</span>
+        </a>
+
+        <div id="token-timer-display" class="footer-item">
+            Token läuft ab in: <span id="token-timer-countdown">59:59</span>
+        </div>
+    </div>
         
     </div>
     
