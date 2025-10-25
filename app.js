@@ -61,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const correctButton = document.getElementById('correct-button');
     const wrongButton = document.getElementById('wrong-button');
 	const tokenTimer = document.getElementById('token-timer');
-    // const spotifyBranding = document.getElementById('powered-by-spotify');
 	const gameFooter = document.getElementById('game-footer');
 
 
