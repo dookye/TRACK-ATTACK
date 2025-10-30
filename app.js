@@ -96,12 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Konfiguration für jeden Würfelwert
     const diceConfig = {
-        1: { attempts: 1, duration: 7000 },
-        2: { attempts: 2, duration: 7000 },
-        3: { attempts: 3, duration: 7000 },
-        4: { attempts: 4, duration: 7000 },
-        5: { attempts: 5, duration: 7000 },
-        7: { attempts: 7, duration: 2000 }
+        1: { attempts: 1, duration: 7300 },
+        2: { attempts: 2, duration: 7300 },
+        3: { attempts: 3, duration: 7300 },
+        4: { attempts: 4, duration: 7300 },
+        5: { attempts: 5, duration: 7300 },
+        7: { attempts: 7, duration: 2300 }
     };
 
     // --- Spielstatus-Variablen ---
@@ -853,6 +853,7 @@ function playTrackSnippet() {
 
     triggerBounce(logoButton);
     logoButton.classList.add('inactive');
+	logoButton.classList.remove('logo-pulsing');
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
@@ -888,6 +889,7 @@ function playTrackSnippet() {
 
                     if (gameState.attemptsMade < gameState.maxAttempts) {
                         logoButton.classList.remove('inactive');
+						logoButton.classList.add('logo-pulsing');
                     }
 
                     // Logge die tatsächliche Stopp-Position für das Debugging
@@ -918,6 +920,7 @@ function playTrackSnippet() {
             console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
             alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
             logoButton.classList.remove('inactive');
+			logoButton.classList.add('logo-pulsing');
             // Bereinige den Listener, wenn der Fetch fehlschlägt
             if (playbackStateListener) {
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
@@ -928,6 +931,7 @@ function playTrackSnippet() {
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
         alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
         logoButton.classList.remove('inactive');
+		logoButton.classList.add('logo-pulsing');
         if (playbackStateListener) {
             spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
             playbackStateListener = null;
