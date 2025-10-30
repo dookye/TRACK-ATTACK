@@ -854,38 +854,7 @@ let spotifyPlayTimeout = null;
 // 2. HILFSFUNKTIONEN
 // =======================================================================
 
-function startInaccurateTimeoutStop(desiredDuration, startStatePosition) {
-    console.warn(`[FALLBACK] Starte ungenauen setTimeout-Stopp (${desiredDuration}ms).`);
-    
-    gameState.spotifyPlayTimeout = setTimeout(() => {
-        spotifyPlayer.pause();
-        gameState.isSongPlaying = false;
-
-        spotifyPlayer.getCurrentState().then(finalState => {
-            const finalPosition = finalState ? finalState.position : 'N/A';
-            const actualDuration = finalPosition - startStatePosition; 
-            console.log(`[STOP-FALLBACK] Wiedergabe gestoppt bei Position: ${finalPosition}ms. Tatsächliche Dauer: ${actualDuration}ms.`);
-        });
-        
-        // ** Button-Zustand wiederherstellen **
-        if (gameState.attemptsMade < gameState.maxAttempts) {
-             logoButton.classList.remove('inactive');
-             logoButton.classList.add('logo-pulsing');
-        }
-        
-        // Aufräumen der Timer/Listener
-        if (playbackStateListener) {
-             spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-             playbackStateListener = null;
-        }
-        if (stopPollingInterval) {
-            clearInterval(stopPollingInterval);
-            stopPollingInterval = null;
-        }
-    }, desiredDuration);
-}
-
-
+// Hilfsfunktion zur Bereinigung und zum Stoppen aller Timer (Zentrale Stelle zum Freigeben)
 function stopAndCleanup() {
     spotifyPlayer.pause();
     gameState.isSongPlaying = false;
@@ -912,14 +881,36 @@ function stopAndCleanup() {
 
     actualStartTimeMs = 0; 
     
-    // ** Button-Zustand wiederherstellen (WICHTIG!) **
+    // ** WICHTIG: Button-Zustand wiederherstellen **
+    // Der Button wird immer für den nächsten Versuch freigegeben, 
+    // es sei denn, die maximalen Versuche sind erreicht.
     if (gameState.attemptsMade < gameState.maxAttempts) {
         logoButton.classList.remove('inactive');
         logoButton.classList.add('logo-pulsing');
-    }
+    } 
+    // Wenn attemptsMade == maxAttempts, bleibt der Button inactive (korrektes Endverhalten)
 }
 
+// Hilfsfunktion für den ungenauen, aber garantierten Stopp (FALLBACK-Logik)
+function startInaccurateTimeoutStop(desiredDuration, startStatePosition) {
+    console.warn(`[FALLBACK] Starte ungenauen setTimeout-Stopp (${desiredDuration}ms).`);
+    
+    gameState.spotifyPlayTimeout = setTimeout(() => {
+        spotifyPlayer.pause();
+        gameState.isSongPlaying = false;
 
+        spotifyPlayer.getCurrentState().then(finalState => {
+            const finalPosition = finalState ? finalState.position : 'N/A';
+            const actualDuration = finalPosition - startStatePosition; 
+            console.log(`[STOP-FALLBACK] Wiedergabe gestoppt bei Position: ${finalPosition}ms. Tatsächliche Dauer: ${actualDuration}ms.`);
+        });
+        
+        // ** Button-Zustand wiederherstellen (nutzt die zentrale Logik) **
+        stopAndCleanup(); 
+    }, desiredDuration);
+}
+
+// Hilfsfunktion zum Starten des präzisen Intervall-Pollings
 function startStopPolling(desiredDuration) {
     if (stopPollingInterval) {
         clearInterval(stopPollingInterval);
@@ -963,11 +954,15 @@ function playTrackSnippet() {
     if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
         return;
     }
+
+    // Löscht alle alten Timer und Listener und stellt den Button wieder her,
+    // FALLS die Funktion durch eine manuelle Aktion unterbrochen wurde.
+    stopAndCleanup(); 
     
-    // ** WICHTIGER FIX: Button-Steuerung sofort ausführen **
+    // ** WICHTIGER FIX: Button-Steuerung (Bei JEDEM Klick) **
     triggerBounce(logoButton);
-    logoButton.classList.add('inactive'); // Setzt auf inactive
-	logoButton.classList.remove('logo-pulsing'); // Entfernt das Pulsieren sofort
+    logoButton.classList.add('inactive'); // Button deaktivieren
+	logoButton.classList.remove('logo-pulsing'); // Pulsieren entfernen
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
@@ -976,9 +971,8 @@ function playTrackSnippet() {
     const maxStart = trackDurationMs - desiredDuration - 500;
     if (maxStart <= 0) {
         console.error("Track zu kurz für die gewünschte Dauer.");
-        // Wenn Fehler, Button sofort wieder aktivieren
-        logoButton.classList.remove('inactive');
-		logoButton.classList.add('logo-pulsing');
+        // Wenn Fehler, Button sofort wieder aktivieren (nutzt stopAndCleanup)
+        stopAndCleanup(); 
         return;
     }
     
@@ -986,18 +980,15 @@ function playTrackSnippet() {
 
     console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
 
-    // Löscht alle alten Timer und Listener
-    stopAndCleanup(); 
     actualStartTimeMs = 0; 
-    
-    // ... (Listener Setup und Fetch Logik folgen, unverändert) ...
 
     // ########### Richte neuen Status-Änderungs-Listener ein ###########
     playbackStateListener = (state) => {
         if (!state || !state.track_window || state.track_window.current_track.uri !== gameState.currentTrack.uri) {
              return;
         }
-        // ... (Logik zur Startbestätigung und Polling-Start/SpeedRound) ...
+
+        // --- PHASE 1: START-Bestätigung ---
         if (actualStartTimeMs === 0 && !state.paused && state.position > 0) {
             
             if (startConfirmationTimeout) {
@@ -1009,12 +1000,18 @@ function playTrackSnippet() {
             console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
             
             if (gameState.isSpeedRound) {
+                
+                // Speed Round: Countdown wird gestartet, Button bleibt inactive/ohne pulsing
                 startVisualSpeedRoundCountdown(); 
+                
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
+
             } else {
+                // Normalmodus: Polling wird gestartet, Button bleibt inactive/ohne pulsing
                 actualStartTimeMs = state.position; 
                 startStopPolling(desiredDuration); 
+                
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
             }
