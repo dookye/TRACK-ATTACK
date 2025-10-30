@@ -842,17 +842,11 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 
 // Globale Variable, um den Verweis auf den Status-Änderungs-Listener zu speichern
 let playbackStateListener = null;
-
-// Globale Variable, um die tatsächliche Startposition für die Polling-Methode zu speichern
 let actualStartTimeMs = 0;
-
-// Globale Variable, um den Polling-Timer zu speichern
 let stopPollingInterval = null;
-
-// Globale Variable, um den Timeout für die Startbestätigung zu speichern (NEU)
 let startConfirmationTimeout = null;
 
-// Hilfsfunktion zur Bereinigung (bleibt wie zuvor)
+// Hilfsfunktion zur Bereinigung (aktualisiert, um Timeout-Handles zu löschen)
 function stopAndCleanup() {
     spotifyPlayer.pause();
     gameState.isSongPlaying = false;
@@ -867,10 +861,16 @@ function stopAndCleanup() {
          playbackStateListener = null;
     }
     
-    // **WICHTIG:** Löscht den Start-Timeout, falls er noch aktiv ist (B)
+    // ZUSÄTZLICH: Löscht den Start-Timeout, falls er noch aktiv ist
     if (startConfirmationTimeout) {
         clearTimeout(startConfirmationTimeout);
         startConfirmationTimeout = null;
+    }
+
+    // Löscht den ungenauen Timeout, falls er läuft (falls der Benutzer vorzeitig rät oder stoppt)
+    if (gameState.spotifyPlayTimeout) {
+        clearTimeout(gameState.spotifyPlayTimeout);
+        gameState.spotifyPlayTimeout = null;
     }
 
     actualStartTimeMs = 0; 
@@ -894,7 +894,13 @@ function startStopPolling(desiredDuration) {
         spotifyPlayer.getCurrentState().then(state => {
             if (!state) {
                 console.error("[POLL ERROR] Kein aktueller Player-Status verfügbar.");
-                stopAndCleanup();
+                // Bei Fehler nutzen wir jetzt den ungenauen Fallback, falls wir noch nicht im Fallback sind!
+                if (!gameState.spotifyPlayTimeout) {
+                    // Startet den ungenauen Stopp und bereinigt
+                    startInaccurateTimeoutStop(desiredDuration, actualStartTimeMs); 
+                } else {
+                    stopAndCleanup(); // Ansonsten einfach aufräumen
+                }
                 return;
             }
             
@@ -909,37 +915,47 @@ function startStopPolling(desiredDuration) {
     }, 200); 
 }
 
+	// NEU: Hilfsfunktion für den ungenauen, aber garantierten Stopp
+function startInaccurateTimeoutStop(desiredDuration, startStatePosition) {
+    console.warn(`[FALLBACK] Starte ungenauen setTimeout-Stopp (${desiredDuration}ms).`);
+    
+    gameState.spotifyPlayTimeout = setTimeout(() => {
+        spotifyPlayer.pause();
+        gameState.isSongPlaying = false;
 
+        if (gameState.attemptsMade < gameState.maxAttempts) {
+            logoButton.classList.remove('inactive');
+            logoButton.classList.add('logo-pulsing');
+        }
+
+        // Logge die tatsächliche Stopp-Position für das Debugging
+        spotifyPlayer.getCurrentState().then(finalState => {
+            const finalPosition = finalState ? finalState.position : 'N/A';
+            const actualDuration = finalPosition - startStatePosition; // Nutzt die Position des Player-Starts (state.position) als Basis
+            console.log(`[STOP-FALLBACK] Wiedergabe gestoppt bei Position: ${finalPosition}ms. Tatsächliche Dauer: ${actualDuration}ms.`);
+        });
+        
+        // Bereinige den Listener, falls er noch aktiv ist
+        if (playbackStateListener) {
+             spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+             playbackStateListener = null;
+        }
+
+        // Bereinige das Polling und den Start-Timeout (falls nötig, obwohl der Timeout schon abgelaufen sein sollte)
+        if (stopPollingInterval) {
+            clearInterval(stopPollingInterval);
+            stopPollingInterval = null;
+        }
+    }, desiredDuration);
+}
+
+// Hier ist die Hauptfunktion, mit dem Fallback in Block (C)
 function playTrackSnippet() {
     // ... (Anfängliche Checks und UI-Updates) ...
-    if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
-        return;
-    }
-    if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
-        return;
-    }
+    // ... (Logik zur Ermittlung von desiredDuration und randomStartPosition) ...
 
-    triggerBounce(logoButton);
-    logoButton.classList.add('inactive');
-	logoButton.classList.remove('logo-pulsing');
-    gameState.attemptsMade++;
-
-    const trackDurationMs = gameState.currentTrack.duration_ms;
-    const desiredDuration = gameState.trackDuration; 
-    
-    const maxStart = trackDurationMs - desiredDuration - 500;
-    if (maxStart <= 0) {
-        console.error("Track zu kurz für die gewünschte Dauer.");
-        logoButton.classList.remove('inactive');
-		logoButton.classList.add('logo-pulsing');
-        return;
-    }
-    const randomStartPosition = Math.floor(Math.random() * maxStart);
-
-    console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
-
-    // Entferne alle alten Timer
-    stopAndCleanup(); // Nutzt die bereinigte StopAndCleanup-Funktion
+    // Löscht alle alten Timer und Listener
+    stopAndCleanup(); 
     actualStartTimeMs = 0; 
 
     // ########### Richte neuen Status-Änderungs-Listener ein (NUR FÜR START-BESTÄTIGUNG) ###########
@@ -948,13 +964,14 @@ function playTrackSnippet() {
              return;
         }
 
-        // --- PHASE 1: START-Bestätigung und Initialisierung ---
+        // --- PHASE 1: START-Bestätigung ---
         if (actualStartTimeMs === 0 && !state.paused && state.position > 0) {
             
             // (A) Wenn die Wiedergabe bestätigt wird, LÖSCHE den Start-Timeout!
             if (startConfirmationTimeout) {
                 clearTimeout(startConfirmationTimeout);
                 startConfirmationTimeout = null;
+                console.log("[START-CONFIRM] Latenzfrei bestätigt. Fallback abgebrochen.");
             }
             
             console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
@@ -978,29 +995,41 @@ function playTrackSnippet() {
     spotifyPlayer.addListener('player_state_changed', playbackStateListener);
 
     // ########### Wiedergabe initiieren (Web API Call) ###########
-    fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-        method: 'PUT',
-        body: JSON.stringify({
-            uris: [gameState.currentTrack.uri],
-            position_ms: randomStartPosition
-        }),
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-    }).then(response => {
+    fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { /* ... */ })
+    .then(response => {
         if (!response.ok) {
-            // ... Fehlerbehandlung ...
-            stopAndCleanup(); // Nutzt die konsolidierte Bereinigung
+            // Bei initialem API-Fehler -> sofortige Bereinigung
+            stopAndCleanup(); 
         }
     }).catch(error => {
-        // ... Netzwerkfehlerbehandlung ...
-        stopAndCleanup(); // Nutzt die konsolidierte Bereinigung
+        // Bei Netzwerkfehler -> sofortige Bereinigung
+        stopAndCleanup(); 
     });
 
     // (C) SETZE DEN START-BESTÄTIGUNGS-FALLBACK (2 Sekunden)
     const MAX_START_LAG_MS = 2000;
+    const startPositionUsedInApi = randomStartPosition; // Speichere die Startposition der API
+    
     startConfirmationTimeout = setTimeout(() => {
-        console.warn(`[FALLBACK] Player-Start nicht innerhalb von ${MAX_START_LAG_MS}ms bestätigt. Wird abgebrochen.`);
-        // Wenn der Timeout abläuft, ist die Wiedergabe fehlgeschlagen oder hängt.
-        stopAndCleanup(); 
+        if (!startConfirmationTimeout) return; // Doppelte Ausführung verhindern
+
+        console.warn(`[FALLBACK-TRIGGER] Player-Start nicht innerhalb von ${MAX_START_LAG_MS}ms bestätigt.`);
+        
+        // ** FALLBACK-LOGIK: Starte den ungenauen Stopp-Timer **
+        
+        // 1. Bereinige den Polling-Mechanismus sofort (damit er nicht mehr aktiv wird)
+        if (playbackStateListener) {
+            spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+            playbackStateListener = null;
+        }
+        
+        // 2. Rufe die ungenaue setTimeout-Logik auf
+        // Wir übergeben die Position, die wir bei der API verwendet haben (randomStartPosition), da wir die tatsächliche Startposition nicht kennen.
+        startInaccurateTimeoutStop(desiredDuration, startPositionUsedInApi); 
+
+        // 3. Markiere den Timeout als ausgeführt (wird in startInaccurateTimeoutStop nicht automatisch bereinigt)
+        startConfirmationTimeout = null;
+        
     }, MAX_START_LAG_MS);
 
     // ... (UI-Updates) ...
