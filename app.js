@@ -1039,7 +1039,7 @@ function playTrackSnippet() {
     });
 
     // (C) SETZE DEN START-BESTÄTIGUNGS-FALLBACK (2 Sekunden)
-    const MAX_START_LAG_MS = 2000;
+    const MAX_START_LAG_MS = 750;
     
     startConfirmationTimeout = setTimeout(() => {
         if (!startConfirmationTimeout) return; 
