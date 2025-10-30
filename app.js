@@ -844,10 +844,80 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 let playbackStateListener = null;
 
 // Globale Variable, um die tatsächliche Startposition für die Polling-Methode zu speichern
-let actualStartTimeMs = 0; // Wichtig: Muss außerhalb der Funktion bleiben
+let actualStartTimeMs = 0;
+
+// Globale Variable, um den Polling-Timer zu speichern (NEU)
+let stopPollingInterval = null;
+
+function stopAndCleanup() {
+    // Stoppe den Player
+    spotifyPlayer.pause();
+    gameState.isSongPlaying = false;
+
+    // Bereinigung des Intervalls
+    if (stopPollingInterval) {
+        clearInterval(stopPollingInterval);
+        stopPollingInterval = null;
+    }
+    
+    // Bereinigung des State Listeners, falls er noch aktiv ist (Fehlerprävention)
+    if (playbackStateListener) {
+         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+         playbackStateListener = null;
+    }
+
+    // Polling-Startzeit zurücksetzen
+    actualStartTimeMs = 0; 
+    
+    // Button wieder aktivieren
+    if (gameState.attemptsMade < gameState.maxAttempts) {
+        logoButton.classList.remove('inactive');
+        logoButton.classList.add('logo-pulsing');
+    }
+}
+
+
+function startStopPolling(desiredDuration) {
+    // Sicherstellen, dass kein alter Polling-Timer läuft
+    if (stopPollingInterval) {
+        clearInterval(stopPollingInterval);
+    }
+    
+    const startTime = actualStartTimeMs;
+    const targetPosition = startTime + desiredDuration;
+    
+    // Starte Polling alle 200 ms
+    stopPollingInterval = setInterval(() => {
+        spotifyPlayer.getCurrentState().then(state => {
+            if (!state) {
+                // Wenn kein State verfügbar ist, stoppe Polling und bereinige
+                console.error("[POLL ERROR] Kein aktueller Player-Status verfügbar.");
+                stopAndCleanup();
+                return;
+            }
+            
+            // Logik: Prüfen, ob die Soll-Position erreicht wurde
+            if (state.position >= targetPosition) {
+                
+                console.log(`[STOP] Zielposition (${targetPosition}ms) erreicht. Tatsächliche Stopp-Position: ${state.position}ms.`);
+                
+                // *** AKTION: Song stoppen und alles bereinigen ***
+                stopAndCleanup();
+                
+            } else {
+                 // Debug: Zeigt, dass das Polling aktiv ist und prüft
+                 // console.log(`[POLL] Läuft. Aktuell: ${state.position}ms / Ziel: ${targetPosition}ms`);
+            }
+        }).catch(error => {
+            console.error("Fehler beim Abrufen des Player-Status während des Pollings:", error);
+            stopAndCleanup();
+        });
+    }, 200); // Poll alle 200ms
+}
+
 
 function playTrackSnippet() {
-    // ########### Versuche Checks ###########
+    // ... (Anfängliche Checks und UI-Updates bleiben unverändert) ...
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
         return;
     }
@@ -861,10 +931,8 @@ function playTrackSnippet() {
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
-    // HINWEIS: desiredDuration muss 7000 oder 2000 sein (ohne Puffer)
     const desiredDuration = gameState.trackDuration; 
     
-    // Zufällige Startposition bestimmen
     const maxStart = trackDurationMs - desiredDuration - 500;
     if (maxStart <= 0) {
         console.error("Track zu kurz für die gewünschte Dauer.");
@@ -876,16 +944,17 @@ function playTrackSnippet() {
 
     console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
 
-    // ########### Listener Setup ###########
-    // 1. Entferne zuerst einen eventuell bestehenden Listener
+    // Entferne zuerst einen eventuell bestehenden Listener/Polling-Timer
     if (playbackStateListener) {
         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
     }
-    
-    // 2. Setze die Polling-Startzeit zurück, BEVOR der neue Listener gesetzt wird
-    actualStartTimeMs = 0;
+    if (stopPollingInterval) {
+        clearInterval(stopPollingInterval);
+        stopPollingInterval = null;
+    }
+    actualStartTimeMs = 0; // Polling-Startzeit zurücksetzen
 
-    // ########### Richte neuen Status-Änderungs-Listener ein (Polling) ###########
+    // ########### Richte neuen Status-Änderungs-Listener ein (NUR FÜR START-BESTÄTIGUNG) ###########
     playbackStateListener = (state) => {
         // Prüfe auf gültigen State und richtigen Song
         if (!state || !state.track_window || state.track_window.current_track.uri !== gameState.currentTrack.uri) {
@@ -898,50 +967,22 @@ function playTrackSnippet() {
             
             console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
             
-            // Wenn Speed Round: Timer startet, Polling-Logik stoppt hier.
             if (gameState.isSpeedRound) {
                 
-                // STARTE VISUELLEN COUNTDOWN (Behebt Fehler 2)
+                // Speed Round: Timer startet, Listener wird entfernt.
                 startVisualSpeedRoundCountdown(); 
                 
-                // Bereinigung für Speed Round
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
 
             } else {
-                // Normalmodus: **WICHTIG!** Speichere die tatsächliche Startposition 
-                // Dies initiiert die Polling-Logik in Phase 2.
+                // Normalmodus: Starte Polling, Polling übernimmt den Stopp
                 actualStartTimeMs = state.position; 
-                // HIER kannst du einen visuellen Timer starten, der 7 Sek. läuft
-                // ... startVisuellerCountdown(desiredDuration);
-            }
-        }
-
-        // --- PHASE 2: LAUFENDER Polling-Check (NUR FÜR NORMALMODUS) ---
-        // Führt den Check nur aus, wenn die Startzeit gesetzt ist UND wir im Normalmodus sind.
-        if (actualStartTimeMs > 0 && !gameState.isSpeedRound) {
-            
-            const targetPosition = actualStartTimeMs + desiredDuration;
-            
-            // Prüfe, ob die aktuelle Position die Zielposition erreicht oder überschritten hat
-            if (state.position >= targetPosition) {
+                startStopPolling(desiredDuration); // NEU: Starte Intervall-Polling
                 
-                // *** STOPP-AKTION *** (Behebt Fehler 1)
-                spotifyPlayer.pause();
-                
-                // Bereinigung nach dem Stopp
+                // Listener entfernen, da seine Aufgabe erfüllt ist
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
-                actualStartTimeMs = 0; // Polling stoppen und für nächste Runde freigeben
-                gameState.isSongPlaying = false;
-
-                console.log(`[STOP] Zielposition (${targetPosition}ms) erreicht. Tatsächliche Stopp-Position: ${state.position}ms.`);
-
-                // Button wieder aktivieren
-                if (gameState.attemptsMade < gameState.maxAttempts) {
-                    logoButton.classList.remove('inactive');
-                    logoButton.classList.add('logo-pulsing');
-                }
             }
         }
     };
@@ -957,16 +998,19 @@ function playTrackSnippet() {
         headers: { 'Authorization': `Bearer ${accessToken}` }
     }).then(response => {
         if (!response.ok) {
-            // ... Fehlerbehandlung ...
+            console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+            alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
             logoButton.classList.remove('inactive');
 			logoButton.classList.add('logo-pulsing');
+            // Bereinige den Listener bei Fehler
             if (playbackStateListener) {
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
             }
         }
     }).catch(error => {
-        // ... Netzwerkfehlerbehandlung ...
+        console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
+        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
         logoButton.classList.remove('inactive');
 		logoButton.classList.add('logo-pulsing');
         if (playbackStateListener) {
