@@ -840,109 +840,90 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
     }
 
 
-// Globale Variable, um den Verweis auf den Status-Änderungs-Listener zu speichern
+// Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 let playbackStateListener = null;
-
-// Globale Variable, um die tatsächliche Startposition des Tracks zu speichern (für die Stopp-Berechnung)
-let actualStartTimeMs = 0;
 
 function playTrackSnippet() {
     // ########### Speed Round / Versuche Checks ###########
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
-        return; // Standardmodus: Versuche sind aufgebraucht
+        return;
     }
     if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
-        return; // Speed Round: Es gibt nur einen Versuch
+        return;
     }
 
     triggerBounce(logoButton);
     logoButton.classList.add('inactive');
-    logoButton.classList.remove('logo-pulsing');
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
-    const desiredDuration = gameState.trackDuration; 
+    const desiredDuration = gameState.trackDuration;
     
-    // Zufällige Startposition bestimmen (mit Sicherheitsabstand)
-    const safetyMargin = 500; 
-    const maxStart = trackDurationMs - desiredDuration - safetyMargin;
+    // Zufällige Startposition bestimmen
+    const maxStart = trackDurationMs - desiredDuration - 500;
     if (maxStart <= 0) {
         console.error("Track zu kurz für die gewünschte Dauer.");
         logoButton.classList.remove('inactive');
-        logoButton.classList.add('logo-pulsing');
         return;
     }
     const randomStartPosition = Math.floor(Math.random() * maxStart);
 
-    console.log(`[DEBUG] Gewünschte Dauer: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
+    console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
 
-    // ########### Listener Setup (Nur für Normalmodus Polling/Start-Bestätigung) ###########
+    // Entferne zuerst einen eventuell bestehenden Listener, um Duplikate zu vermeiden
     if (playbackStateListener) {
         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
     }
-    actualStartTimeMs = 0; 
-    
-    // Richte den Status-Änderungs-Listener ein
+
+    // Richte einen neuen Status-Änderungs-Listener ein
     playbackStateListener = (state) => {
-        if (!state || !state.track_window || state.paused) {
-            return;
-        }
-        
-        if (state.track_window.current_track.uri !== gameState.currentTrack.uri) {
-            return; 
-        }
-
-        // --- PHASE 1: START-Bestätigung ---
-        if (actualStartTimeMs === 0 && !state.paused && state.position > 0) {
-            
-            actualStartTimeMs = state.position;
-            console.log(`[START] Wiedergabe bestätigt. Position: ${actualStartTimeMs}ms.`);
-            
-            // Speed Round Logik: Wenn Speed Round, starte nur den visuellen Timer
-            if (gameState.isSpeedRound) {
-                 // **SPEED ROUND TIMER START**
-                 startVisualSpeedRoundCountdown(); 
-                 
-                 // Listener entfernen, da der Song durch den Rateversuch gestoppt wird
-                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                 playbackStateListener = null;
-                 actualStartTimeMs = 0; 
-
-            } else {
-                 // **NORMAL MODUS TIMER START**
-                 // Hier Deinen visuellen Countdown starten (z.B. startVisuellerCountdown(desiredDuration))
-                 // ... startVisuellerCountdown(desiredDuration);
-            }
-        }
-
-        // --- PHASE 2: Polling und Stopp-Logik (NUR FÜR NORMALMODUS) ---
-        if (actualStartTimeMs > 0 && !gameState.isSpeedRound) {
-            const targetPosition = actualStartTimeMs + desiredDuration;
-            
-            if (state.position >= targetPosition) {
+        // Prüfe, ob der State existiert und der richtige Song spielt
+        if (state && state.track_window.current_track.uri === gameState.currentTrack.uri) {
+            // Prüfe, ob die Wiedergabe tatsächlich begonnen hat und die Position größer als 0 ist
+            if (!state.paused && state.position > 0) {
                 
-                // *** STOPP-AKTION ***
-                spotifyPlayer.pause();
-                
-                // Bereinigung nach dem Stopp
+                // Entferne den Listener sofort, um zu verhindern, dass er erneut feuert
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
-                actualStartTimeMs = 0;
-                gameState.isSongPlaying = false;
 
-                console.log(`[STOP] Zielposition erreicht. Tatsächliche Abspieldauer: ${state.position - (actualStartTimeMs || 0)}ms.`);
+                console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
+                
+                // ########### NEUE SPEED ROUND LOGIK ###########
+                if (gameState.isSpeedRound) {
+                    // Starte den visuellen Timer sofort, nachdem Spotify das Abspielen bestätigt hat.
+                    startVisualSpeedRoundCountdown(); 
+                    
+                    // Wichtig: Im Speed Round Modus stoppt der Rate-Timer den Song, nicht der setTimeout.
+                    // Daher kein setTimeout hier.
+                } else {
+                    // ########### NORMAL MODUS LOGIK ###########
+                    // Jetzt, da wir eine Bestätigung haben, starte den (ungenauen) Stopp-Timer
+                    gameState.spotifyPlayTimeout = setTimeout(() => {
+                        spotifyPlayer.pause();
+                        gameState.isSongPlaying = false;
 
-                // Button wieder aktivieren
-                if (gameState.attemptsMade < gameState.maxAttempts) {
-                    logoButton.classList.remove('inactive');
-                    logoButton.classList.add('logo-pulsing');
+                        if (gameState.attemptsMade < gameState.maxAttempts) {
+                            logoButton.classList.remove('inactive');
+                        }
+
+                        // Logge die tatsächliche Stopp-Position für das Debugging
+                        spotifyPlayer.getCurrentState().then(finalState => {
+                            const finalPosition = finalState ? finalState.position : 'N/A';
+                            console.log(`[STOP] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
+                            if (finalState) {
+                                 // Hier verwenden wir state.position vom Start Event für die Dauerberechnung
+                                 const actualDuration = finalPosition - state.position; 
+                                 console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
+                            }
+                        });
+                    }, desiredDuration);
                 }
             }
         }
     };
     spotifyPlayer.addListener('player_state_changed', playbackStateListener);
 
-    // ########### Wiedergabe initiieren (Web API Call) ###########
+    // Verwende die Web-API, um die Wiedergabe zu initiieren
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -952,22 +933,25 @@ function playTrackSnippet() {
         headers: { 'Authorization': `Bearer ${accessToken}` }
     }).then(response => {
         if (!response.ok) {
-            throw new Error(`Spotify API Fehler: ${response.status}`);
+            console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+            alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
+            logoButton.classList.remove('inactive');
+            // Bereinige den Listener, wenn der Fetch fehlschlägt
+            if (playbackStateListener) {
+                spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+                playbackStateListener = null;
+            }
         }
     }).catch(error => {
-        console.error("Fehler beim Abspielen des Tracks:", error);
-        alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass Spotify auf keinem anderen Gerät aktiv ist.");
+        console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
+        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
         logoButton.classList.remove('inactive');
-        logoButton.classList.add('logo-pulsing');
-        
-        // Bei Fehler Listener bereinigen
         if (playbackStateListener) {
             spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
             playbackStateListener = null;
         }
     });
 
-    // ########### UI-Aktualisierung ###########
     if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
         revealButton.classList.remove('hidden');
         revealButton.classList.remove('no-interaction');
