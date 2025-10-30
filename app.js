@@ -839,8 +839,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-// Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
-let playbackStateListener = null;
 
 // Globale Variable, um den Verweis auf den Status-Änderungs-Listener zu speichern
 let playbackStateListener = null;
