@@ -854,6 +854,7 @@ function playTrackSnippet() {
 
     triggerBounce(logoButton);
     logoButton.classList.add('inactive');
+	logoButton.classList.remove('logo-pulsing');
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
@@ -864,6 +865,7 @@ function playTrackSnippet() {
     if (maxStart <= 0) {
         console.error("Track zu kurz für die gewünschte Dauer.");
         logoButton.classList.remove('inactive');
+		logoButton.classList.add('logo-pulsing');
         return;
     }
     const randomStartPosition = Math.floor(Math.random() * maxStart);
@@ -875,7 +877,7 @@ function playTrackSnippet() {
         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
     }
 
-    // Richte einen neuen Status-Änderungs-Listener ein
+    // ########### Richte neuen Status-Änderungs-Listener ein ###########
     playbackStateListener = (state) => {
         // Prüfe, ob der State existiert und der richtige Song spielt
         if (state && state.track_window.current_track.uri === gameState.currentTrack.uri) {
@@ -888,22 +890,20 @@ function playTrackSnippet() {
 
                 console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
                 
-                // ########### NEUE SPEED ROUND LOGIK ###########
+                // ** HIER STARTET DIE TIMER/SPEED ROUND LOGIK **
+                
                 if (gameState.isSpeedRound) {
-                    // Starte den visuellen Timer sofort, nachdem Spotify das Abspielen bestätigt hat.
-                    startVisualSpeedRoundCountdown(); 
-                    
-                    // Wichtig: Im Speed Round Modus stoppt der Rate-Timer den Song, nicht der setTimeout.
-                    // Daher kein setTimeout hier.
+                    // Speed Round: Starte den visuellen Timer, der die Zeit zum Raten vorgibt.
+                    startVisualSpeedRoundCountdown();
                 } else {
-                    // ########### NORMAL MODUS LOGIK ###########
-                    // Jetzt, da wir eine Bestätigung haben, starte den (ungenauen) Stopp-Timer
+                    // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
                     gameState.spotifyPlayTimeout = setTimeout(() => {
                         spotifyPlayer.pause();
                         gameState.isSongPlaying = false;
 
                         if (gameState.attemptsMade < gameState.maxAttempts) {
                             logoButton.classList.remove('inactive');
+                            logoButton.classList.add('logo-pulsing');
                         }
 
                         // Logge die tatsächliche Stopp-Position für das Debugging
@@ -923,7 +923,7 @@ function playTrackSnippet() {
     };
     spotifyPlayer.addListener('player_state_changed', playbackStateListener);
 
-    // Verwende die Web-API, um die Wiedergabe zu initiieren
+    // ########### Verwende die Web-API, um die Wiedergabe zu initiieren ###########
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -936,6 +936,7 @@ function playTrackSnippet() {
             console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
             alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
             logoButton.classList.remove('inactive');
+            logoButton.classList.add('logo-pulsing');
             // Bereinige den Listener, wenn der Fetch fehlschlägt
             if (playbackStateListener) {
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
@@ -946,6 +947,7 @@ function playTrackSnippet() {
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
         alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
         logoButton.classList.remove('inactive');
+		logoButton.classList.add('logo-pulsing');
         if (playbackStateListener) {
             spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
             playbackStateListener = null;
