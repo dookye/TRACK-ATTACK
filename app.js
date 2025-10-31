@@ -96,12 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Konfiguration für jeden Würfelwert
     const diceConfig = {
-        1: { attempts: 1, duration: 7000 },
-        2: { attempts: 2, duration: 7000 },
-        3: { attempts: 3, duration: 7000 },
-        4: { attempts: 4, duration: 7000 },
-        5: { attempts: 5, duration: 7000 },
-        7: { attempts: 7, duration: 2000 }
+        1: { attempts: 1, duration: 7300 },
+        2: { attempts: 2, duration: 7300 },
+        3: { attempts: 3, duration: 7300 },
+        4: { attempts: 4, duration: 7300 },
+        5: { attempts: 5, duration: 7300 },
+        7: { attempts: 7, duration: 2300 }
     };
 
     // --- Spielstatus-Variablen ---
@@ -825,7 +825,8 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 
     return randomTrack;
 }
-	
+
+
     async function prepareAndShowRateScreen(genre) {
         gameState.currentTrack = await getTrack(genre);
         console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
@@ -838,116 +839,12 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         // Speichere den Zustand: Raten-Bildschirm
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
-// -------------------------------------------------------------------------------------------------------------------------------------------------------------
-	
-// =======================================================================
-// 1. GLOBALE VARIABLEN
-// =======================================================================
+
+// Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 let playbackStateListener = null;
-let actualStartTimeMs = 0;
-let stopPollingInterval = null;
-let startConfirmationTimeout = null;
-let spotifyPlayTimeout = null; 
 
-
-// =======================================================================
-// 2. HILFSFUNKTIONEN
-// =======================================================================
-
-// Hilfsfunktion zur Bereinigung und zum Stoppen aller Timer (Zentrale Stelle zum Freigeben)
-function stopAndCleanup() {
-    spotifyPlayer.pause();
-    gameState.isSongPlaying = false;
-
-    if (stopPollingInterval) {
-        clearInterval(stopPollingInterval);
-        stopPollingInterval = null;
-    }
-    
-    if (playbackStateListener) {
-         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-         playbackStateListener = null;
-    }
-    
-    if (startConfirmationTimeout) {
-        clearTimeout(startConfirmationTimeout);
-        startConfirmationTimeout = null;
-    }
-
-    if (gameState.spotifyPlayTimeout) {
-        clearTimeout(gameState.spotifyPlayTimeout);
-        gameState.spotifyPlayTimeout = null;
-    }
-
-    actualStartTimeMs = 0; 
-    
-    // ** WICHTIG: Button-Zustand wiederherstellen **
-    // Der Button wird immer für den nächsten Versuch freigegeben, 
-    // es sei denn, die maximalen Versuche sind erreicht.
-    if (gameState.attemptsMade < gameState.maxAttempts) {
-        logoButton.classList.remove('inactive');
-        logoButton.classList.add('logo-pulsing');
-    } 
-    // Wenn attemptsMade == maxAttempts, bleibt der Button inactive (korrektes Endverhalten)
-}
-
-// Hilfsfunktion für den ungenauen, aber garantierten Stopp (FALLBACK-Logik)
-function startInaccurateTimeoutStop(desiredDuration, startStatePosition) {
-    console.warn(`[FALLBACK] Starte ungenauen setTimeout-Stopp (${desiredDuration}ms).`);
-    
-    gameState.spotifyPlayTimeout = setTimeout(() => {
-        spotifyPlayer.pause();
-        gameState.isSongPlaying = false;
-
-        spotifyPlayer.getCurrentState().then(finalState => {
-            const finalPosition = finalState ? finalState.position : 'N/A';
-            const actualDuration = finalPosition - startStatePosition; 
-            console.log(`[STOP-FALLBACK] Wiedergabe gestoppt bei Position: ${finalPosition}ms. Tatsächliche Dauer: ${actualDuration}ms.`);
-        });
-        
-        // ** Button-Zustand wiederherstellen (nutzt die zentrale Logik) **
-        stopAndCleanup(); 
-    }, desiredDuration);
-}
-
-// Hilfsfunktion zum Starten des präzisen Intervall-Pollings
-function startStopPolling(desiredDuration) {
-    if (stopPollingInterval) {
-        clearInterval(stopPollingInterval);
-    }
-    
-    const startTime = actualStartTimeMs;
-    const targetPosition = startTime + desiredDuration;
-    
-    stopPollingInterval = setInterval(() => {
-        spotifyPlayer.getCurrentState().then(state => {
-            if (!state) {
-                console.error("[POLL ERROR] Kein aktueller Player-Status verfügbar.");
-                if (!gameState.spotifyPlayTimeout) {
-                    startInaccurateTimeoutStop(desiredDuration, actualStartTimeMs); 
-                } else {
-                    stopAndCleanup(); 
-                }
-                return;
-            }
-            
-            if (state.position >= targetPosition) {
-                console.log(`[STOP] Zielposition (${targetPosition}ms) erreicht. Tatsächliche Stopp-Position: ${state.position}ms.`);
-                stopAndCleanup();
-            } 
-        }).catch(error => {
-            console.error("Fehler beim Abrufen des Player-Status während des Pollings:", error);
-            stopAndCleanup();
-        });
-    }, 200); 
-}
-
-
-// =======================================================================
-// 3. HAUPTLOGIK: playTrackSnippet()
-// =======================================================================
 function playTrackSnippet() {
-    // ... (Anfängliche Checks) ...
+    // ########### Speed Round / Versuche Checks ###########
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
         return;
     }
@@ -955,71 +852,78 @@ function playTrackSnippet() {
         return;
     }
 
-    // Löscht alle alten Timer und Listener und stellt den Button wieder her,
-    // FALLS die Funktion durch eine manuelle Aktion unterbrochen wurde.
-    stopAndCleanup(); 
-    
-    // ** WICHTIGER FIX: Button-Steuerung (Bei JEDEM Klick) **
     triggerBounce(logoButton);
-    logoButton.classList.add('inactive'); // Button deaktivieren
-	logoButton.classList.remove('logo-pulsing'); // Pulsieren entfernen
+    logoButton.classList.add('inactive');
+	logoButton.classList.remove('logo-pulsing');
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
-    const desiredDuration = gameState.trackDuration; 
+    const desiredDuration = gameState.trackDuration;
     
+    // Zufällige Startposition bestimmen
     const maxStart = trackDurationMs - desiredDuration - 500;
     if (maxStart <= 0) {
         console.error("Track zu kurz für die gewünschte Dauer.");
-        // Wenn Fehler, Button sofort wieder aktivieren (nutzt stopAndCleanup)
-        stopAndCleanup(); 
+        logoButton.classList.remove('inactive');
+		logoButton.classList.add('logo-pulsing');
         return;
     }
-    
-    let randomStartPosition = Math.floor(Math.random() * maxStart); 
+    const randomStartPosition = Math.floor(Math.random() * maxStart);
 
     console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
 
-    actualStartTimeMs = 0; 
+    // Entferne zuerst einen eventuell bestehenden Listener, um Duplikate zu vermeiden
+    if (playbackStateListener) {
+        spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+    }
 
     // ########### Richte neuen Status-Änderungs-Listener ein ###########
     playbackStateListener = (state) => {
-        if (!state || !state.track_window || state.track_window.current_track.uri !== gameState.currentTrack.uri) {
-             return;
-        }
-
-        // --- PHASE 1: START-Bestätigung ---
-        if (actualStartTimeMs === 0 && !state.paused && state.position > 0) {
-            
-            if (startConfirmationTimeout) {
-                clearTimeout(startConfirmationTimeout);
-                startConfirmationTimeout = null;
-                console.log("[START-CONFIRM] Latenzfrei bestätigt. Fallback abgebrochen.");
-            }
-            
-            console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
-            
-            if (gameState.isSpeedRound) {
+        // Prüfe, ob der State existiert und der richtige Song spielt
+        if (state && state.track_window.current_track.uri === gameState.currentTrack.uri) {
+            // Prüfe, ob die Wiedergabe tatsächlich begonnen hat und die Position größer als 0 ist
+            if (!state.paused && state.position > 0) {
                 
-                // Speed Round: Countdown wird gestartet, Button bleibt inactive/ohne pulsing
-                startVisualSpeedRoundCountdown(); 
-                
+                // Entferne den Listener sofort, um zu verhindern, dass er erneut feuert
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
 
-            } else {
-                // Normalmodus: Polling wird gestartet, Button bleibt inactive/ohne pulsing
-                actualStartTimeMs = state.position; 
-                startStopPolling(desiredDuration); 
+                console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
                 
-                spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                playbackStateListener = null;
+                // ** HIER STARTET DIE TIMER/SPEED ROUND LOGIK **
+                
+                if (gameState.isSpeedRound) {
+                    // Speed Round: Starte den visuellen Timer, der die Zeit zum Raten vorgibt.
+                    startVisualSpeedRoundCountdown();
+                } else {
+                    // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
+                    gameState.spotifyPlayTimeout = setTimeout(() => {
+                        spotifyPlayer.pause();
+                        gameState.isSongPlaying = false;
+
+                        if (gameState.attemptsMade < gameState.maxAttempts) {
+                            logoButton.classList.remove('inactive');
+                            logoButton.classList.add('logo-pulsing');
+                        }
+
+                        // Logge die tatsächliche Stopp-Position für das Debugging
+                        spotifyPlayer.getCurrentState().then(finalState => {
+                            const finalPosition = finalState ? finalState.position : 'N/A';
+                            console.log(`[STOP] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
+                            if (finalState) {
+                                 // Hier verwenden wir state.position vom Start Event für die Dauerberechnung
+                                 const actualDuration = finalPosition - state.position; 
+                                 console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
+                            }
+                        });
+                    }, desiredDuration);
+                }
             }
         }
     };
     spotifyPlayer.addListener('player_state_changed', playbackStateListener);
 
-    // ########### Wiedergabe initiieren (Web API Call) ###########
+    // ########### Verwende die Web-API, um die Wiedergabe zu initiieren ###########
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -1027,44 +931,36 @@ function playTrackSnippet() {
             position_ms: randomStartPosition
         }),
         headers: { 'Authorization': `Bearer ${accessToken}` }
-    })
-    .then(response => {
+    }).then(response => {
         if (!response.ok) {
             console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
-            stopAndCleanup(); 
+            alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
+            logoButton.classList.remove('inactive');
+            logoButton.classList.add('logo-pulsing');
+            // Bereinige den Listener, wenn der Fetch fehlschlägt
+            if (playbackStateListener) {
+                spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+                playbackStateListener = null;
+            }
         }
     }).catch(error => {
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
-        stopAndCleanup(); 
-    });
-
-    // (C) SETZE DEN START-BESTÄTIGUNGS-FALLBACK (2 Sekunden)
-    const MAX_START_LAG_MS = 750;
-    
-    startConfirmationTimeout = setTimeout(() => {
-        if (!startConfirmationTimeout) return; 
-
-        console.warn(`[FALLBACK-TRIGGER] Player-Start nicht innerhalb von ${MAX_START_LAG_MS}ms bestätigt. Starte ungenauen Stopp.`);
-        
+        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+        logoButton.classList.remove('inactive');
+		logoButton.classList.add('logo-pulsing');
         if (playbackStateListener) {
             spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
             playbackStateListener = null;
         }
-        
-        startInaccurateTimeoutStop(desiredDuration, randomStartPosition); 
+    });
 
-        startConfirmationTimeout = null;
-        
-    }, MAX_START_LAG_MS);
-
-    // ... (UI-Updates) ...
     if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
         revealButton.classList.remove('hidden');
         revealButton.classList.remove('no-interaction');
     }
 }
-	
-// --------------------------------------------------------------------------------------------------------------------------------------------------------
+ 
+
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
         clearTimeout(gameState.speedRoundTimeout);
@@ -1478,13 +1374,13 @@ function playTrackSnippet() {
 
     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
     function startVisualSpeedRoundCountdown() {
-        let timeLeft = 10; // Startwert des Countdowns
+        let timeLeft = 7; // Startwert des Countdowns
         countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
 
         // Timer für die automatische Auflösung nach 10 Sekunden
         gameState.speedRoundTimeout = setTimeout(() => {
             showResolution(); // Auflösung nach 10 Sekunden
-        }, 10000);
+        }, 7000);
 
         // Sofort die erste Zahl anzeigen und animieren
         countdownDisplay.innerText = timeLeft;
