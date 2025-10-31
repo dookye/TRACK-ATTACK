@@ -579,15 +579,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- NEU: Funktion für den digitalen Würfelwurf ---
     function rollDigitalDice() {
-        // Mache das Bild während der Animation nicht klickbar
-        digitalDiceMainImage.classList.add('no-interaction');
-        digitalDiceMainImage.classList.add('rolling'); // Füge CSS-Klasse für Animationseffekte hinzu
-        digitalDiceMainImage.style.cursor = 'default'; // Cursor auf Standard setzen während Animation
-
-        // Setze die Quelle des Bildes auf das ANIMIERTE GIF
-        digitalDiceMainImage.src = digitalDiceAnimationGif;
-
-        // NEU: Sound abspielen
+		
+		// NEU: Sound abspielen
         if (digitalDiceSound) { // Sicherstellen, dass das Audio-Element gefunden wurde
             digitalDiceSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück, falls er schonmal gespielt wurde
             // --- HIER DIE LAUTSTÄRKE ANPASSEN ---
@@ -599,6 +592,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Hier könntest du eine alternative Aktion planen oder den Benutzer informieren
             });
         }
+		
+        // Mache das Bild während der Animation nicht klickbar
+        digitalDiceMainImage.classList.add('no-interaction');
+        digitalDiceMainImage.classList.add('rolling'); // Füge CSS-Klasse für Animationseffekte hinzu
+        digitalDiceMainImage.style.cursor = 'default'; // Cursor auf Standard setzen während Animation
+
+        // Setze die Quelle des Bildes auf das ANIMIERTE GIF
+        digitalDiceMainImage.src = digitalDiceAnimationGif;
+
+
 
         // Die Animation läuft einmal durch (ca. 1.5 Sekunden)
         setTimeout(() => {
