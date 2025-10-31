@@ -60,8 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const trackYear = document.getElementById('track-year');
     const correctButton = document.getElementById('correct-button');
     const wrongButton = document.getElementById('wrong-button');
-	const tokenTimer = document.getElementById('token-timer');
-	const gameFooter = document.getElementById('game-footer');
+    const tokenTimer = document.getElementById('token-timer');
 
 
     // NEU: Konstante für das EINE digitale Würfelbild
@@ -112,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         player1Score: 0,
         player2Score: 0,
         currentPlayer: 1,
-        totalRounds: 4, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        totalRounds: 10, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
@@ -237,9 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startTokenTimer() {
-
-		gameFooter.classList.remove('hidden');
-		
         const totalDuration = 60 * 60; // 60 Minuten in Sekunden
         let timeLeft = totalDuration;
 
