@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         player1Score: 0,
         player2Score: 0,
         currentPlayer: 1,
-        totalRounds: 6, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        totalRounds: 20, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
@@ -144,14 +144,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
  // 1.4: Querformat-Prüfung
     function checkOrientation() {
-
+        if (window.innerHeight > window.innerWidth) {
+            rotateDeviceOverlay.classList.remove('hidden');
+        } else {
+            rotateDeviceOverlay.classList.add('hidden');
             // Wenn die Ausrichtung korrekt ist, starte das Spiel (falls noch nicht gestartet)
             if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
                 startGameAfterOrientation();
             }
+        }
     }
-    
-          
 
     // NEU: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
@@ -281,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         getAccessToken(code).then(token => {
             accessToken = token; // Hier wird der Access Token gesetzt!
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
+            initializePlayer(); // Spotify-Player initialisieren
             startTokenTimer(); // start des timer für Access Token 60min zur visualisierung (Token läuft nach 60 min ab) im Quotenerweiterungs modus kann dieser automatisch mit backend-server erneuert werden.
 
             // HIER WIRD DER TIMEOUT EINGEFÜGT!
@@ -307,69 +310,30 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
     }
 
-// 1.3: Spotify Web Player SDK laden und initialisieren (MODIFIZIERT)
+    // 1.3: Spotify Web Player SDK laden und initialisieren
     function initializePlayer() {
-        // Wir returnen eine Promise, die auflöst, wenn der Player bereit ist.
-        return new Promise((resolve, reject) => {
-            // Nur das SDK laden, wenn es noch nicht da ist
-            if (!window.Spotify) {
-                const script = document.createElement('script');
-                script.src = "https://sdk.scdn.co/spotify-player.js";
-                script.async = true;
-                document.body.appendChild(script);
-            }
+        const script = document.createElement('script');
+        script.src = "https://sdk.scdn.co/spotify-player.js";
+        script.async = true;
+        document.body.appendChild(script);
 
-            window.onSpotifyWebPlaybackSDKReady = () => {
-                // Nur einen neuen Player erstellen, wenn noch keiner existiert
-                if (spotifyPlayer) {
-                    // Wenn der Player schon existiert und verbunden ist, sofort auflösen
-                    if (deviceId) {
-                        resolve(deviceId);
-                    }
-                    return;
-                }
-                
-                spotifyPlayer = new Spotify.Player({
-                    name: 'TRACK ATTACK',
-                    getOAuthToken: cb => { cb(accessToken); }
-                });
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            spotifyPlayer = new Spotify.Player({
+                name: 'TRACK ATTACK',
+                getOAuthToken: cb => { cb(accessToken); }
+            });
 
-                // Fehler-Listener
-                spotifyPlayer.addListener('initialization_error', ({ message }) => { 
-                    console.error('Initialization Error:', message);
-                    reject('Fehler bei der Initialisierung des Players.');
-                });
-                spotifyPlayer.addListener('authentication_error', ({ message }) => {
-                    console.error('Authentication Error:', message);
-                    reject('Fehler bei der Authentifizierung des Players.');
-                });
-                spotifyPlayer.addListener('account_error', ({ message }) => {
-                    console.error('Account Error:', message);
-                    reject('Account-Fehler: Spotify Premium wird benötigt.');
-                });
-                 spotifyPlayer.addListener('playback_error', ({ message }) => {
-                    console.error('Playback Error:', message);
-                    // Dies ist kein reject, da es oft temporär ist
-                });
+            spotifyPlayer.addListener('ready', ({ device_id }) => {
+                console.log('Ready with Device ID', device_id);
+                deviceId = device_id;
+            });
 
-                // Erfolgs-Listener
-                spotifyPlayer.addListener('ready', ({ device_id }) => {
-                    console.log('Ready with Device ID', device_id);
-                    deviceId = device_id;
-                    resolve(device_id); // Promise mit der deviceId auflösen
-                });
+            spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+                console.log('Device ID has gone offline', device_id);
+            });
 
-                spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-                    console.log('Device ID has gone offline', device_id);
-                });
-
-                spotifyPlayer.connect().then(success => {
-                    if (!success) {
-                        reject('Der Spotify Player konnte nicht verbunden werden.');
-                    }
-                });
-            };
-        });
+            spotifyPlayer.connect();
+        };
     }
 
     // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
@@ -430,47 +394,22 @@ document.addEventListener('DOMContentLoaded', () => {
         element.classList.add('bounce');
     }
 
-// AKTUALISIERT: startGame-Funktion (MODIFIZIERT FÜR APPLE-GERÄTE V2)
-    async function startGame() {
-        // Mache den Button sofort unklickbar, um Doppel-Klicks zu vermeiden
-        logoButton.removeEventListener('click', startGame);
-        logoButton.classList.add('inactive'); // Visuelles Feedback
-        
-        // Player nur initialisieren, wenn wir noch keine deviceId haben.
-        if (!deviceId) {
-            try {
-                console.log("Initialisiere Spotify Player durch Benutzerklick...");
-                await initializePlayer();
-                console.log("Player erfolgreich initialisiert und verbunden.");
-
-                // --- WICHTIG: DER iOS-FIX ---
-                // "Wecke" den Player auf, indem wir versuchen, die Wiedergabe fortzusetzen.
-                // Dies sichert den Audio-Kontext, auch wenn gerade nichts spielt.
-                console.log("Versuche, den Player aufzuwecken (resume)...");
-                await spotifyPlayer.resume();
-                console.log("Player erfolgreich aufgeweckt.");
-                // -----------------------------
-
-            } catch (error) {
-                console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
-                alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
-                // Gib dem Benutzer die Möglichkeit, es erneut zu versuchen
-                logoButton.addEventListener('click', startGame, { once: true });
-                logoButton.classList.remove('inactive');
-                return; // Breche die Funktion ab, wenn es fehlschlägt.
-            }
-        }
-
+    // AKTUALISIERT: startGame-Funktion
+    function startGame() {
         triggerBounce(logoButton);
-        
+        logoButton.classList.add('inactive');
+
+        // Speichere den Zustand, dass das Spiel gestartet wurde (Logo-Phase)
         lastGameScreenVisible = 'logo-button';
+
+        // NEU: Genre-Vorauswahl ausblenden, sobald das Spiel richtig startet
         startGenreSelectionContainer.classList.add('hidden');
 
         setTimeout(() => {
             appContainer.style.backgroundColor = 'var(--player1-color)';
             logoButton.classList.add('hidden');
             showDiceScreen();
-        }, 800);
+        }, 800); // Warten, bis Bounce-Effekt und Blur sichtbar sind
     }
 
     //=======================================================================
@@ -803,64 +742,67 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-// MODIFIZIERT FÜR ROBUSTHEIT
-    async function playTrackSnippet() {
+    function playTrackSnippet() {
         if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+            // Im normalen Modus: Keine weiteren Versuche
             return;
         }
         if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
+            // In der Speed-Round: Nur ein Versuch erlaubt (erster Klick)
             return;
         }
 
         triggerBounce(logoButton);
-        logoButton.classList.add('inactive');
+        logoButton.classList.add('inactive'); // Button nach dem Klick inaktiv machen
         gameState.attemptsMade++;
 
         const trackDurationMs = gameState.currentTrack.duration_ms;
         const randomStartPosition = Math.floor(Math.random() * (trackDurationMs - gameState.trackDuration));
 
-        try {
-            // NEU: Stelle sicher, dass unser Player als aktives Wiedergabegerät gilt
-            await spotifyPlayer.activateElement();
-
-            const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-                method: 'PUT',
-                body: JSON.stringify({
-                    uris: [gameState.currentTrack.uri],
-                    position_ms: randomStartPosition
-                }),
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-
-            if (!response.ok) {
-                throw new Error(`Spotify API Fehler: ${response.status}`);
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
+            method: 'PUT',
+            body: JSON.stringify({
+                uris: [gameState.currentTrack.uri],
+                position_ms: randomStartPosition
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        }).then(response => {
+            if (!response.ok) { // Fehlerbehandlung für Play-Request
+                console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+                alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
+                logoButton.classList.remove('inactive'); // Button wieder aktiv machen
+                return;
             }
-
-            gameState.isSongPlaying = true;
+            gameState.isSongPlaying = true; // Song spielt
 
             if (gameState.isSpeedRound) {
-                startVisualSpeedRoundCountdown();
+                startVisualSpeedRoundCountdown(); // Startet den 10s Countdown
+                // Der Song wird nur einmal gespielt. Nach 10s wird aufgelöst.
+                // spotifyPlayer.pause() wird im countdown-timer gemacht oder durch showResolution
             } else {
+                // Normaler Modus: Song pausiert nach trackDuration
                 gameState.spotifyPlayTimeout = setTimeout(() => {
                     spotifyPlayer.pause();
                     gameState.isSongPlaying = false;
                     if (gameState.attemptsMade < gameState.maxAttempts) {
-                        logoButton.classList.remove('inactive');
+                        logoButton.classList.remove('inactive'); // Wieder aktiv, wenn noch Versuche da sind
                     }
                 }, gameState.trackDuration);
             }
-
-        } catch (error) {
-            console.error("Fehler beim Abspielen des Tracks:", error);
-            alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass Spotify auf keinem anderen Gerät aktiv ist.");
+        }).catch(error => { // Fehlerbehandlung für den Fetch-Request selbst
+            console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
+            alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
             logoButton.classList.remove('inactive');
-        }
+        });
 
+        // "AUFLÖSEN"-Button nach 1. Versuch anzeigen (gilt auch für Speed-Round, aber wird dann durch Timer überschrieben)
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
             revealButton.classList.remove('hidden');
+
+            // --------------------------------------- wenn verzögerung nicht klappt, nächste zeile wieder löschen --------------------------------------
             revealButton.classList.remove('no-interaction');
         }
-    }    
+    }
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
