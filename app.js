@@ -10,34 +10,6 @@ const API_ENDPOINTS = {
     SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
 };
 
-
-// ----------------------------------------------------------------------
-// GLOBALE VARIABLE FÜR ANIMATIONS-STEUERUNG
-// ----------------------------------------------------------------------
-let isInitialFlyInDone = false; 
-
-// ----------------------------------------------------------------------
-// FUNKTION: Wird aufgerufen, sobald die Fly-in Animation abgeschlossen ist
-// ----------------------------------------------------------------------
-function handleFlyInEnd() {
-    const logoButton = document.getElementById('logo-button');
-    if (isInitialFlyInDone) return; 
-
-    // 1. Die Fly-in Klasse entfernen, damit sie nie wieder startet
-    logoButton.classList.remove('initial-fly-in');
-    isInitialFlyInDone = true;
-
-    // 2. Button aktivieren und Pulsing starten
-    logoButton.classList.remove('inactive'); 
-    logoButton.classList.add('logo-pulsing');
-
-    // 3. Den Event Listener für das Animationsende entfernen
-    logoButton.removeEventListener('animationend', handleFlyInEnd);
-    
-    // WICHTIG: Der Klick-Listener wird zentral in startGameAfterOrientation verwaltet!
-}
-
-
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- DOM-Elemente ---
@@ -111,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         player1Score: 0,
         player2Score: 0,
         currentPlayer: 1,
-        totalRounds: 10, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        totalRounds: 6, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
@@ -170,97 +142,81 @@ document.addEventListener('DOMContentLoaded', () => {
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
 
-    // 1.4: Querformat-Prüfung
+ // 1.4: Querformat-Prüfung
     function checkOrientation() {
-        // Führe die Start-Logik nur aus, wenn der Token da ist und der GameScreen noch versteckt ist
-        if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
-             startGameAfterOrientation();
-        }
+
+            // Wenn die Ausrichtung korrekt ist, starte das Spiel (falls noch nicht gestartet)
+            if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
+                startGameAfterOrientation();
+            }
     }
     
-    // KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
+          
+
+    // NEU: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
         gameScreen.classList.remove('hidden');
 
         // NEU: Sound für das einfliegende Logo abspielen
         if (logoFlyInSound) {
             logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
-            logoFlyInSound.volume = 0.3; 
+            logoFlyInSound.volume = 0.3; // Optional: Passe die Lautstärke an (z.B. 50%)
             logoFlyInSound.play().catch(error => {
                 console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
             });
         }
-        
-        // WICHTIG: Den Click-Listener hinzufügen, BEVOR die Fly-in Logik startet!
-        // Der Listener wird beim Klick dank {once: true} wieder entfernt.
-        logoButton.removeEventListener('click', startGame); // Entferne Duplikate
-        logoButton.addEventListener('click', startGame, { once: true });
 
-
-        if (!isInitialFlyInDone) {
-            // Beim ersten Start: Fly-in Animation auslösen
-            logoButton.classList.remove('hidden');
-            logoButton.classList.add('inactive'); // Inaktiv halten, bis Fly-in vorbei ist
-            
-            // Listener hinzufügen, der auf das Ende der Fly-in-Animation wartet
-            logoButton.removeEventListener('animationend', handleFlyInEnd); // Entferne Duplikate
-            logoButton.addEventListener('animationend', handleFlyInEnd);
-            
-            // Startet die Fly-in Animation
-            logoButton.classList.add('initial-fly-in');
-
+        // NEU: Stelle den letzten Zustand wieder her, oder starte neu
+        if (lastGameScreenVisible === 'dice-container') {
+            showDiceScreen();
+        } else if (lastGameScreenVisible === 'genre-container') {
+            showGenreScreen();
+        } else if (lastGameScreenVisible === 'reveal-container') {
+            showResolution();
         } else {
-            // Wenn die Animation bereits gelaufen ist:
-            
-            // Standard: Nur Pulsing starten (ready for next round/click)
+            // Wenn kein spezieller Zustand gespeichert ist, starte neu mit dem Logo
             logoButton.classList.remove('hidden');
-            logoButton.classList.remove('inactive');
-            logoButton.classList.add('logo-pulsing');
-            
-            // NEU: Stelle den letzten Zustand wieder her, oder starte neu
-            if (lastGameScreenVisible === 'dice-container') {
-                // showDiceScreen(); 
-            } else if (lastGameScreenVisible === 'genre-container') {
-                // showGenreScreen(); 
-            } else if (lastGameScreenVisible === 'reveal-container') {
-                // showResolution(); 
-            }
-        }
+            logoButton.classList.add('initial-fly-in');
+            logoButton.addEventListener('click', startGame, { once: true });
 
-        // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
-        startGenreSelectionContainer.classList.remove('hidden');
-        // Genres nur beim ersten Start oder nach einem Reset neu rendern
-        if (allGenresScrollbox.children.length === 0) { // Vermeidet redundantes Rendern
-            renderPreselectionGenres();
+            // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
+            startGenreSelectionContainer.classList.remove('hidden');
+            // Genres nur beim ersten Start oder nach einem Reset neu rendern
+            if (allGenresScrollbox.children.length === 0) { // Vermeidet redundantes Rendern
+                renderPreselectionGenres();
+            }
         }
     }
 
     function startTokenTimer() {
-        const totalDuration = 60 * 60; // 60 Minuten in Sekunden
-        let timeLeft = totalDuration;
+    const totalDuration = 60 * 60; // 60 Minuten in Sekunden
+    let timeLeft = totalDuration;
 
-        tokenTimer.classList.remove('hidden');
+    tokenTimer.classList.remove('hidden');
 
-        // Countdown-Anzeige initialisieren
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            tokenTimer.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        updateTimerDisplay(); // Initialen Wert setzen
-
-        const timerInterval = setInterval(() => {
-            timeLeft--;
-            updateTimerDisplay();
-
-            // Timer stoppen, wenn 0 erreicht ist
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                tokenTimer.innerText = 'Token abgelaufen!';
-            }
-        }, 1000); // Jede Sekunde aktualisieren
+    // Countdown-Anzeige initialisieren
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        tokenTimer.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
+
+    updateTimerDisplay(); // Initialen Wert setzen
+
+    const timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+
+        // Timer stoppen, wenn 0 erreicht ist
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            tokenTimer.innerText = 'Token abgelaufen!';
+            // Hier könntest du eine Funktion aufrufen, die das Spiel neu startet oder den Benutzer zum erneuten Login auffordert
+            // z.B. alert("Sitzung abgelaufen. Bitte neu anmelden.");
+            // window.location.reload(); // Seite neu laden für erneuten Login
+        }
+    }, 1000); // Jede Sekunde aktualisieren
+}
 
     // 1.2: PKCE-Flow Helferfunktionen
     async function generateCodeChallenge(codeVerifier) {
@@ -325,13 +281,14 @@ document.addEventListener('DOMContentLoaded', () => {
         getAccessToken(code).then(token => {
             accessToken = token; // Hier wird der Access Token gesetzt!
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
-            startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
+            startTokenTimer(); // start des timer für Access Token 60min zur visualisierung (Token läuft nach 60 min ab) im Quotenerweiterungs modus kann dieser automatisch mit backend-server erneuert werden.
 
-            // HIER WIRD DER TIMEOUT EINGEFÜGT! 
+            // HIER WIRD DER TIMEOUT EINGEFÜGT!
+            // Er gibt iOS eine kurze Pause, um die UI-Änderungen zu verarbeiten.
             setTimeout(() => {
                 // Diese beiden Zeilen werden erst nach der Verzögerung ausgeführt
                 window.addEventListener('resize', checkOrientation);
-                checkOrientation(); // Initial die Orientierung prüfen -> ruft startGameAfterOrientation auf
+                checkOrientation(); // Initial die Orientierung prüfen
             }, 500); // 500 Millisekunden (0.5 Sekunden) Verzögerung
 
         }).catch(error => {
@@ -352,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 1.3: Spotify Web Player SDK laden und initialisieren (MODIFIZIERT)
     function initializePlayer() {
-        // ... (Die Funktion initializePlayer bleibt unverändert)
+        // Wir returnen eine Promise, die auflöst, wenn der Player bereit ist.
         return new Promise((resolve, reject) => {
             // Nur das SDK laden, wenn es noch nicht da ist
             if (!window.Spotify) {
@@ -419,20 +376,28 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPreselectionGenres() {
         // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
         allGenresScrollbox.innerHTML = '';
-        const allAvailableGenres = Object.keys(playlists); 
+
+        // ---- Optional: Einen Titel hinzufügen
+        // const title = document.createElement('h3');
+        // title.innerText = 'Genre-Auswahl:';
+        // allGenresScrollbox.appendChild(title);
+
+        const allAvailableGenres = Object.keys(playlists); // Alle Genre-Namen aus dem playlists-Objekt
 
         allAvailableGenres.forEach(genreName => {
             const button = document.createElement('button');
             button.classList.add('preselect-genre-button');
-            button.dataset.genre = genreName; 
+            button.dataset.genre = genreName; // Speichert den Genre-Namen als Datenattribut
+            // Optional: Genre-Namen besser lesbar machen (z.B. "hiphop" -> "Hip Hop")
             button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
 
-            // Überprüfen, ob das Genre bereits ausgewählt ist
+            // Überprüfen, ob das Genre bereits ausgewählt ist (relevant bei Reset oder Navigation)
             if (gameState.selectedPlayableGenres.includes(genreName)) {
                 button.classList.add('selected');
             }
 
             button.addEventListener('click', () => {
+                // Genre zum gameState hinzufügen/entfernen
                 toggleGenreSelection(genreName, button);
             });
             allGenresScrollbox.appendChild(button);
@@ -444,9 +409,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const index = gameState.selectedPlayableGenres.indexOf(genreName);
 
         if (index > -1) {
+            // Genre ist bereits ausgewählt, also entfernen
             gameState.selectedPlayableGenres.splice(index, 1);
             buttonElement.classList.remove('selected');
         } else {
+            // Genre ist nicht ausgewählt, also hinzufügen
             gameState.selectedPlayableGenres.push(genreName);
             buttonElement.classList.add('selected');
         }
@@ -463,12 +430,11 @@ document.addEventListener('DOMContentLoaded', () => {
         element.classList.add('bounce');
     }
 
-// KORRIGIERT: startGame-Funktion (VERWENDET {once: true} VON startGameAfterOrientation)
+// AKTUALISIERT: startGame-Funktion (MODIFIZIERT FÜR APPLE-GERÄTE V2)
     async function startGame() {
-
-        logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
-        logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
-		triggerBounce(logoButton);
+        // Mache den Button sofort unklickbar, um Doppel-Klicks zu vermeiden
+        logoButton.removeEventListener('click', startGame);
+        logoButton.classList.add('inactive'); // Visuelles Feedback
         
         // Player nur initialisieren, wenn wir noch keine deviceId haben.
         if (!deviceId) {
@@ -478,22 +444,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("Player erfolgreich initialisiert und verbunden.");
 
                 // --- WICHTIG: DER iOS-FIX ---
+                // "Wecke" den Player auf, indem wir versuchen, die Wiedergabe fortzusetzen.
+                // Dies sichert den Audio-Kontext, auch wenn gerade nichts spielt.
                 console.log("Versuche, den Player aufzuwecken (resume)...");
                 await spotifyPlayer.resume();
                 console.log("Player erfolgreich aufgeweckt.");
+                // -----------------------------
 
             } catch (error) {
                 console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
                 alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
-                
-                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird,
-                // ABER {once: true} ihn bereits entfernt hat.
-                logoButton.addEventListener('click', startGame, { once: true }); 
+                // Gib dem Benutzer die Möglichkeit, es erneut zu versuchen
+                logoButton.addEventListener('click', startGame, { once: true });
                 logoButton.classList.remove('inactive');
-                logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
                 return; // Breche die Funktion ab, wenn es fehlschlägt.
             }
         }
+
+        triggerBounce(logoButton);
         
         lastGameScreenVisible = 'logo-button';
         startGenreSelectionContainer.classList.add('hidden');
@@ -828,7 +796,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
 
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-		logoButton.classList.add('logo-pulsing');
         logoButton.removeEventListener('click', playTrackSnippet);
         logoButton.addEventListener('click', playTrackSnippet);
 
@@ -847,7 +814,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 
         triggerBounce(logoButton);
         logoButton.classList.add('inactive');
-		logoButton.classList.remove('logo-pulsing');
         gameState.attemptsMade++;
 
         const trackDurationMs = gameState.currentTrack.duration_ms;
@@ -880,7 +846,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
                     gameState.isSongPlaying = false;
                     if (gameState.attemptsMade < gameState.maxAttempts) {
                         logoButton.classList.remove('inactive');
-						logoButton.classList.add('logo-pulsing');
                     }
                 }, gameState.trackDuration);
             }
@@ -889,7 +854,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
             console.error("Fehler beim Abspielen des Tracks:", error);
             alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass Spotify auf keinem anderen Gerät aktiv ist.");
             logoButton.classList.remove('inactive');
-			logoButton.classList.add('logo-pulsing');
         }
 
         if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
@@ -918,7 +882,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         countdownDisplay.innerText = ''; // Inhalt leeren
 
         logoButton.classList.add('inactive', 'hidden');
-		logoButton.classList.remove('logo-pulsing');
         revealButton.classList.add('hidden');
         speedRoundTextDisplay.classList.add('hidden'); // Der Speed-Round Text sollte auch weg
 
@@ -1155,7 +1118,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         // Verstecke alle relevanten UI-Elemente
         revealContainer.classList.add('hidden');
         logoButton.classList.add('hidden');
-		logoButton.classList.remove('logo-pulsing');
         genreContainer.classList.add('hidden');
         diceContainer.classList.add('hidden');
         revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
@@ -1283,7 +1245,6 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         // Zurück zum Start (ohne Einflug-Animation)
         gameScreen.classList.remove('hidden');
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-		logoButton.classList.add('logo-pulsing');
         logoButton.removeEventListener('click', startGame); // Sicherstellen, dass kein alter Listener hängt
         logoButton.addEventListener('click', startGame, { once: true }); // NEU: Listener hier neu setzen, da er ja einmalig ist
 
@@ -1311,13 +1272,13 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 
     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
     function startVisualSpeedRoundCountdown() {
-        let timeLeft = 10; // Startwert des Countdowns
+        let timeLeft = 7; // Startwert des Countdowns
         countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
 
         // Timer für die automatische Auflösung nach 10 Sekunden
         gameState.speedRoundTimeout = setTimeout(() => {
             showResolution(); // Auflösung nach 10 Sekunden
-        }, 10000);
+        }, 7000);
 
         // Sofort die erste Zahl anzeigen und animieren
         countdownDisplay.innerText = timeLeft;
