@@ -1374,13 +1374,13 @@ function playTrackSnippet() {
 
     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
     function startVisualSpeedRoundCountdown() {
-        let timeLeft = 7; // Startwert des Countdowns
+        let timeLeft = 10; // Startwert des Countdowns
         countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
 
         // Timer für die automatische Auflösung nach 10 Sekunden
         gameState.speedRoundTimeout = setTimeout(() => {
             showResolution(); // Auflösung nach 10 Sekunden
-        }, 7000);
+        }, 10000);
 
         // Sofort die erste Zahl anzeigen und animieren
         countdownDisplay.innerText = timeLeft;
