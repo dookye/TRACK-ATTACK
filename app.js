@@ -14,21 +14,21 @@ const API_ENDPOINTS = {
 // ----------------------------------------------------------------------
 // GLOBALE VARIABLE FÜR ANIMATIONS-STEUERUNG
 // ----------------------------------------------------------------------
-let isInitialFlyInDone = false;
+let isInitialFlyInDone = false; 
 
 // ----------------------------------------------------------------------
 // FUNKTION: Wird aufgerufen, sobald die Fly-in Animation abgeschlossen ist
 // ----------------------------------------------------------------------
 function handleFlyInEnd() {
     const logoButton = document.getElementById('logo-button');
-    if (isInitialFlyInDone) return;
+    if (isInitialFlyInDone) return; 
 
     // 1. Die Fly-in Klasse entfernen, damit sie nie wieder startet
     logoButton.classList.remove('initial-fly-in');
     isInitialFlyInDone = true;
 
     // 2. Button aktivieren und Pulsing starten
-    logoButton.classList.remove('inactive');
+    logoButton.classList.remove('inactive'); 
     logoButton.classList.add('logo-pulsing');
 
     // 3. Den Event Listener für das Animationsende entfernen
@@ -105,8 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Spielstatus-Variablen ---
-    let spotifyPlayer = null; // WICHTIG: Startet als null
-    let deviceId = null; // WICHTIG: Startet als null
+    let spotifyPlayer;
+    let deviceId;
     let accessToken;
     let gameState = {
         player1Score: 0,
@@ -171,23 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
 
-    // NEU: HILFSFUNKTION zum reinen Laden des Spotify SDK Skripts
-    function loadSpotifySdkScript() {
-        if (!window.Spotify) { // Prüfe, ob das SDK-Objekt bereits existiert
-            const script = document.createElement('script');
-            script.src = 'https://sdk.scdn.co/spotify-player.js';
-            script.async = true;
-            document.head.appendChild(script);
-
-            // WICHTIG: Der Callback dient hier NUR als Log, die Player-Erstellung
-            // erfolgt später beim ersten Klick in playTrackSnippet().
-            window.onSpotifyWebPlaybackSDKReady = () => {
-                console.log("Spotify Web Playback SDK geladen.");
-            };
-        }
-    }
-
-
     // 1.4: Querformat-Prüfung
     function checkOrientation() {
         // Führe die Start-Logik nur aus, wenn der Token da ist und der GameScreen noch versteckt ist
@@ -203,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // NEU: Sound für das einfliegende Logo abspielen
         if (logoFlyInSound) {
             logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
-            logoFlyInSound.volume = 0.3;
+            logoFlyInSound.volume = 0.3; 
             logoFlyInSound.play().catch(error => {
                 console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
             });
@@ -237,11 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // NEU: Stelle den letzten Zustand wieder her, oder starte neu
             if (lastGameScreenVisible === 'dice-container') {
-                // showDiceScreen();
+                // showDiceScreen(); 
             } else if (lastGameScreenVisible === 'genre-container') {
-                // showGenreScreen();
+                // showGenreScreen(); 
             } else if (lastGameScreenVisible === 'reveal-container') {
-                // showResolution();
+                // showResolution(); 
             }
         }
 
@@ -347,11 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
             accessToken = token; // Hier wird der Access Token gesetzt!
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
             startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
-            
-            // WICHTIG: Lade das SDK, bevor das Spiel startet
-            loadSpotifySdkScript(); 
 
-            // HIER WIRD DER TIMEOUT EINGEFÜGT!
+            // HIER WIRD DER TIMEOUT EINGEFÜGT! 
             setTimeout(() => {
                 // Diese beiden Zeilen werden erst nach der Verzögerung ausgeführt
                 window.addEventListener('resize', checkOrientation);
@@ -374,8 +354,70 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
     }
 
+// 1.3: Spotify Web Player SDK laden und initialisieren (MODIFIZIERT)
+    function initializePlayer() {
+        // ... (Die Funktion initializePlayer bleibt unverändert)
+        return new Promise((resolve, reject) => {
+            // Nur das SDK laden, wenn es noch nicht da ist
+            if (!window.Spotify) {
+                const script = document.createElement('script');
+                script.src = "https://sdk.scdn.co/spotify-player.js";
+                script.async = true;
+                document.body.appendChild(script);
+            }
 
-    // --- HIER WÜRDE DER REST DEINES CODES FOLGEN (z.B. startGame(), showDiceScreen() usw.) ---
+            window.onSpotifyWebPlaybackSDKReady = () => {
+                // Nur einen neuen Player erstellen, wenn noch keiner existiert
+                if (spotifyPlayer) {
+                    // Wenn der Player schon existiert und verbunden ist, sofort auflösen
+                    if (deviceId) {
+                        resolve(deviceId);
+                    }
+                    return;
+                }
+                
+                spotifyPlayer = new Spotify.Player({
+                    name: 'TRACK ATTACK',
+                    getOAuthToken: cb => { cb(accessToken); }
+                });
+
+                // Fehler-Listener
+                spotifyPlayer.addListener('initialization_error', ({ message }) => { 
+                    console.error('Initialization Error:', message);
+                    reject('Fehler bei der Initialisierung des Players.');
+                });
+                spotifyPlayer.addListener('authentication_error', ({ message }) => {
+                    console.error('Authentication Error:', message);
+                    reject('Fehler bei der Authentifizierung des Players.');
+                });
+                spotifyPlayer.addListener('account_error', ({ message }) => {
+                    console.error('Account Error:', message);
+                    reject('Account-Fehler: Spotify Premium wird benötigt.');
+                });
+                 spotifyPlayer.addListener('playback_error', ({ message }) => {
+                    console.error('Playback Error:', message);
+                    // Dies ist kein reject, da es oft temporär ist
+                });
+
+                // Erfolgs-Listener
+                spotifyPlayer.addListener('ready', ({ device_id }) => {
+                    console.log('Ready with Device ID', device_id);
+                    deviceId = device_id;
+                    resolve(device_id); // Promise mit der deviceId auflösen
+                });
+
+                spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+                    console.log('Device ID has gone offline', device_id);
+                });
+
+                spotifyPlayer.connect().then(success => {
+                    if (!success) {
+                        reject('Der Spotify Player konnte nicht verbunden werden.');
+                    }
+                });
+            };
+        });
+    }
 
     // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
     function renderPreselectionGenres() {
@@ -425,27 +467,47 @@ document.addEventListener('DOMContentLoaded', () => {
         element.classList.add('bounce');
     }
 
-// AKTUALISIERT: startGame-Funktion (ohne Player-Initialisierung/Aufwecken)
-// Die Player-Logik wird jetzt in playTrackSnippet() beim ZWEITEN Klick ausgeführt.
-function startGame() { 
-    // logoButton.removeEventListener('click', startGame); // Entfernung des Listeners wird bereits durch {once: true} oder startGameAfterOrientation gehandhabt.
+// KORRIGIERT: startGame-Funktion (VERWENDET {once: true} VON startGameAfterOrientation)
+    async function startGame() {
 
-    logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
-    logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
-    triggerBounce(logoButton); // Animation beibehalten
-    
-    // UI-Vorbereitung
-    lastGameScreenVisible = 'logo-button';
-    startGenreSelectionContainer.classList.add('hidden'); // Genre-Auswahl ausblenden
+        logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
+        logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
+		triggerBounce(logoButton);
+        
+        // Player nur initialisieren, wenn wir noch keine deviceId haben.
+        if (!deviceId) {
+            try {
+                console.log("Initialisiere Spotify Player durch Benutzerklick...");
+                await initializePlayer();
+                console.log("Player erfolgreich initialisiert und verbunden.");
 
-    // Übergang zur Würfelphase
-    setTimeout(() => {
-        // Spielerfarbe setzen
-        appContainer.style.backgroundColor = gameState.currentPlayer === 1 ? 'var(--player1-color)' : 'var(--player2-color)';
-        logoButton.classList.add('hidden');
-        showDiceScreen(); // Nächste Phase starten
-    }, 800);
-}
+                // --- WICHTIG: DER iOS-FIX ---
+                console.log("Versuche, den Player aufzuwecken (resume)...");
+                await spotifyPlayer.resume();
+                console.log("Player erfolgreich aufgeweckt.");
+
+            } catch (error) {
+                console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
+                alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
+                
+                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird,
+                // ABER {once: true} ihn bereits entfernt hat.
+                logoButton.addEventListener('click', startGame, { once: true }); 
+                logoButton.classList.remove('inactive');
+                logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
+                return; // Breche die Funktion ab, wenn es fehlschlägt.
+            }
+        }
+        
+        lastGameScreenVisible = 'logo-button';
+        startGenreSelectionContainer.classList.add('hidden');
+
+        setTimeout(() => {
+            appContainer.style.backgroundColor = 'var(--player1-color)';
+            logoButton.classList.add('hidden');
+            showDiceScreen();
+        }, 800);
+    }
 
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
@@ -781,78 +843,7 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 let playbackStateListener = null;
 
-// AKTUALISIERTE FUNKTION (ersetze die bestehende in deinem Code)
-async function playTrackSnippet() {
-    // ########### 1. Player Initialisierung (NUR BEIM ERSTEN MAL) ###########
-    if (spotifyPlayer === null) {
-        // Starte das Laden und Verbinden nur beim ersten Klick
-        logoButton.classList.add('inactive'); // Button deaktivieren, während wir verbinden
-
-        try {
-            await new Promise((resolve, reject) => {
-                // Das SDK sollte bereits durch initializePlayer() in startGame() geladen sein
-                
-                // 1. Player erstellen
-                spotifyPlayer = new Spotify.Player({
-                    name: 'MusiQuiz Web Player',
-                    getOAuthToken: cb => { cb(accessToken); },
-                    volume: 1.0 // Startlautstärke (wird für Auflösung auf 0 gesetzt)
-                });
-
-                // 2. Fehler-Listener einrichten
-                spotifyPlayer.addListener('initialization_error', ({ message }) => { console.error('Initialisierungsfehler:', message); reject(message); });
-                spotifyPlayer.addListener('authentication_error', ({ message }) => { console.error('Authentifizierungsfehler:', message); reject(message); });
-                spotifyPlayer.addListener('account_error', ({ message }) => { console.error('Account Fehler:', message); reject(message); });
-                spotifyPlayer.addListener('playback_error', ({ message }) => { console.error('Wiedergabefehler:', message); reject(message); });
-
-                // 3. Gerät verbinden und Device ID speichern
-                spotifyPlayer.addListener('ready', ({ device_id }) => {
-                    deviceId = device_id;
-                    console.log('Web Playback SDK bereit! Device ID:', deviceId);
-                    // Den Player kurz aktivieren, indem wir einen leeren Song starten.
-                    // Das ist ein Hack, um iOS/Safari zur Zusammenarbeit zu zwingen.
-                    fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-                        method: 'PUT',
-                        body: JSON.stringify({ uris: [gameState.currentTrack.uri] }),
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    }).then(() => {
-                        // Nach dem Aktivierungsversuch pausieren und die Verbindung als erfolgreich markieren
-                        spotifyPlayer.pause();
-                        resolve(); 
-                    });
-                });
-                
-                // 4. Verbinden
-                spotifyPlayer.connect();
-
-            }); // Ende Player-Initialisierungs-Promise
-
-        } catch (error) {
-            console.error("Konnte Player beim ersten Klick nicht initialisieren:", error);
-            alert("Fehler bei der Player-Verbindung. Bitte versuchen Sie es erneut oder überprüfen Sie Ihre Spotify-Sitzung.");
-            logoButton.classList.remove('inactive');
-            logoButton.classList.add('logo-pulsing');
-            spotifyPlayer = null; // Setze zurück, damit der nächste Klick es erneut versucht
-            return;
-        }
-        
-        // Nach erfolgreicher Initialisierung das erste Mal aufrufen
-        // Da wir das Player-Objekt jetzt haben, rufen wir uns selbst (playTrackSnippet) noch einmal auf.
-        // WICHTIG: removeListener vom alten playTrackSnippet, sonst wird es doppelt ausgeführt!
-        logoButton.removeEventListener('click', playTrackSnippet);
-        logoButton.addEventListener('click', playTrackSnippet);
-        
-        // Die Funktion stoppt hier und wird durch den erneuten Klick ausgeführt.
-        // Alternativ: Setze logoButton.classList.remove('inactive'); hier, damit der Benutzer erneut klicken kann.
-        // Wir machen es jetzt so, dass der Benutzer sofort weiter klickt.
-        logoButton.classList.remove('inactive');
-        logoButton.classList.add('logo-pulsing');
-        return; // **Hier stoppen und auf den zweiten Klick warten**
-    }
-
-
-    // ########### 2. Normaler Abspielvorgang (NUR WENN spotifyPlayer NICHT null ist) ###########
-    
+function playTrackSnippet() {
     // ########### Speed Round / Versuche Checks ###########
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
         return;
@@ -863,21 +854,18 @@ async function playTrackSnippet() {
 
     triggerBounce(logoButton);
     logoButton.classList.add('inactive');
-    logoButton.classList.remove('logo-pulsing');
+	logoButton.classList.remove('logo-pulsing');
     gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
     const desiredDuration = gameState.trackDuration;
-    
-    // ... (Der Rest des Codes von playTrackSnippet aus Teil 2 bleibt unverändert) ...
-    // ... (z.B. Zufällige Startposition bestimmen, Listener einrichten, fetch-Aufruf) ...
     
     // Zufällige Startposition bestimmen
     const maxStart = trackDurationMs - desiredDuration - 500;
     if (maxStart <= 0) {
         console.error("Track zu kurz für die gewünschte Dauer.");
         logoButton.classList.remove('inactive');
-        logoButton.classList.add('logo-pulsing');
+		logoButton.classList.add('logo-pulsing');
         return;
     }
     const randomStartPosition = Math.floor(Math.random() * maxStart);
@@ -923,9 +911,9 @@ async function playTrackSnippet() {
                             const finalPosition = finalState ? finalState.position : 'N/A';
                             console.log(`[STOP] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
                             if (finalState) {
-                                // Hier verwenden wir state.position vom Start Event für die Dauerberechnung
-                                const actualDuration = finalPosition - state.position; 
-                                console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
+                                 // Hier verwenden wir state.position vom Start Event für die Dauerberechnung
+                                 const actualDuration = finalPosition - state.position; 
+                                 console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
                             }
                         });
                     }, desiredDuration);
@@ -959,7 +947,7 @@ async function playTrackSnippet() {
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
         alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
         logoButton.classList.remove('inactive');
-        logoButton.classList.add('logo-pulsing');
+		logoButton.classList.add('logo-pulsing');
         if (playbackStateListener) {
             spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
             playbackStateListener = null;
