@@ -167,6 +167,29 @@ document.addEventListener('DOMContentLoaded', () => {
         'deutscher pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
     };
 
+	let audioInitialized = false;
+
+document.addEventListener('click', function initializeAudio() {
+    if (audioInitialized) return;
+
+    // Entsperre alle Audio-Elemente (WICHTIG für Safari/iOS)
+    if (digitalDiceSound) {
+        digitalDiceSound.play().then(() => {
+            digitalDiceSound.pause();
+            digitalDiceSound.currentTime = 0;
+            audioInitialized = true;
+            console.log("Audio entsperrt: digitalDiceSound");
+        }).catch(e => {
+            console.warn("Entsperren von Audio fehlgeschlagen (digitalDiceSound):", e);
+        });
+    }
+
+    // Entferne den Listener, nachdem Audio erfolgreich entsperrt wurde.
+    if (audioInitialized) {
+        document.removeEventListener('click', initializeAudio);
+    }
+}, { once: true });
+
     //=======================================================================
     // Phase 1: Setup, Authentifizierung & Initialisierung
     //=======================================================================
