@@ -620,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listener für den digitalen Würfel-Button ---
-    digitalDiceMainImage.addEventListener('click', rollDigitalDice);
+    // digitalDiceMainImage.addEventListener('click', rollDigitalDice);
 
     // NEU: Event-Listener für das Überspringen der Würfel-Animation
     diceAnimation.addEventListener('click', () => {
