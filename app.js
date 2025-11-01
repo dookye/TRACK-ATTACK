@@ -843,6 +843,11 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 let playbackStateListener = null;
 
+// HINWEIS: Es wird davon ausgegangen, dass API_ENDPOINTS in Ihrem Code
+// bereits definiert ist und den folgenden Endpunkt enthält, der nun verwendet wird:
+// API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER = 'https://api.spotify.com/v1/me/player';
+
+
 async function playTrackSnippet() {
     // ########### Speed Round / Versuche Checks ###########
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
@@ -871,30 +876,52 @@ async function playTrackSnippet() {
     const randomStartPosition = Math.floor(Math.random() * maxStart);
 
     // ====================================================================
-    // 🎯 iOS / SAFARI PLAYER AKTIVIERUNG & Initialisierung
+    // 🎯 iOS / PWA AUDIO-KONTEXT UND FOKUS-ERZWINGUNG
     // ====================================================================
     try {
-        // 1. Initialisierung nur, wenn die deviceId noch nicht existiert (erster Klick)
+        // 1. Initialisierung nur, wenn die deviceId noch nicht existiert
         if (!deviceId) {
-            console.log("[iOS/PWA Fix] Initialisiere Spotify Player, da deviceId fehlt...");
+            console.log("[PWA Fix] Initialisiere Spotify Player...");
             await initializePlayer(); 
         }
         
-        // 2. Player MUSS BEI JEDEM KLICK im Klick-Kontext aktiviert werden.
-        // activateElement() ist aggressiver als resume() und versucht, den Fokus zu erzwingen.
+        // 2. Audio-Kontext im Klick-Kontext entsperren und Fokus erzwingen.
         if (spotifyPlayer) {
-            console.log("[iOS/PWA Fix] Player-Element aktivieren (fokusieren)...");
-            // Achtung: activateElement() ist oft zuverlässiger als resume()
-            await spotifyPlayer.activateElement(); 
-            console.log("Player erfolgreich aktiviert/Audio-Kontext entsperrt.");
+            console.log("[PWA Fix] Player-Element aktivieren (fokusieren und entsperren)...");
+            // Dieses Mal verwenden wir resume() anstelle von activateElement() als primäre Geste,
+            // da es direkt den Audio-Kontext betrifft. activateElement() wird optional später ausgeführt.
+            await spotifyPlayer.resume(); 
+            console.log("Audio-Kontext entsperrt.");
+        }
+
+        // 3. EXPLIZITE ÜBERTRAGUNG DES PLAYBACKS ÜBER DIE WEB API (PWA Silver Bullet!)
+        // Dies stellt sicher, dass Spotify unser Web Playback SDK Gerät als aktives Gerät betrachtet.
+        if (deviceId) {
+            console.log(`[PWA Fix] Erzwinge Playback-Übertragung zu Device ID: ${deviceId}`);
+            const transferResponse = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    device_ids: [deviceId], // MUSS ein Array sein
+                    play: false // Nicht sofort abspielen, nur Fokus übertragen
+                }),
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+
+            if (!transferResponse.ok) {
+                console.warn("[PWA Fix] Warnung: Playback-Übertragung fehlgeschlagen (aber wir machen weiter):", 
+                             transferResponse.status, transferResponse.statusText);
+            } else {
+                console.log("[PWA Fix] Playback erfolgreich auf dieses Gerät übertragen.");
+            }
         }
         
     } catch (error) {
+        // Dieser Catch fängt Fehler beim Initialisieren/Entsperren ab
         console.error("[Kritischer Fehler] Player-Aktivierung oder Initialisierung fehlgeschlagen:", error);
-        alert("Fehler bei der Player-Verbindung. Bitte stelle sicher, dass du Spotify Premium hast.");
+        alert("Fehler bei der Player-Verbindung. Hast du Spotify Premium?");
         logoButton.classList.remove('inactive');
 		logoButton.classList.add('logo-pulsing');
-        return; // Stoppt die Funktion, wenn die Aktivierung fehlschlägt
+        return; 
     }
     // ====================================================================
 
@@ -912,7 +939,7 @@ async function playTrackSnippet() {
             // Prüfe, ob die Wiedergabe tatsächlich begonnen hat und die Position größer als 0 ist
             if (!state.paused && state.position > 0) {
                 
-                // Entferne den Listener sofort, um zu verhindern, dass er erneut feuert
+                // Entferne den Listener sofort, um Duplikate zu vermeiden
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
 
@@ -952,7 +979,7 @@ async function playTrackSnippet() {
     spotifyPlayer.addListener('player_state_changed', playbackStateListener);
 
     // ########### Verwende die Web-API, um die Wiedergabe zu initiieren ###########
-    // HINWEIS: deviceId ist jetzt garantiert vorhanden.
+    // HINWEIS: deviceId ist jetzt garantiert vorhanden (oder ein Fehler wurde im try/catch abgefangen).
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -962,12 +989,11 @@ async function playTrackSnippet() {
         headers: { 'Authorization': `Bearer ${accessToken}` }
     }).then(response => {
         if (!response.ok) {
-            // 💡 WICHTIG: Wenn der Fetch fehlschlägt (z.B. 404 No Active Device)
-            // versuchen wir, den Player erneut zu aktivieren und den Benutzer zu informieren.
             console.error("Fehler beim Abspielen des Tracks (Web API):", response.status, response.statusText);
             
             // Führe eine erneute Aktivierung durch (könnte helfen, den Fokus zurückzubekommen)
             if (spotifyPlayer) {
+                // Versuche, den Fokus erneut zu erzwingen
                 spotifyPlayer.activateElement().catch(e => console.warn("Re-Aktivierung nach Fehler fehlgeschlagen:", e));
             }
             
@@ -980,7 +1006,7 @@ async function playTrackSnippet() {
                 playbackStateListener = null;
             }
         } else {
-            // Bei Erfolg ist keine weitere Aktion nötig, da activateElement() am Anfang alles erledigt hat.
+            // Bei Erfolg ist keine weitere Aktion nötig.
         }
     }).catch(error => {
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
