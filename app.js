@@ -165,7 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'serien unserer kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
         'deutscher hip hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
         'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
-        'deutscher pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
+        'deutscher pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o'],
+		'halloween': ['37i9dQZF1DX8S9gwdi7dev']
     };
 
     //=======================================================================
