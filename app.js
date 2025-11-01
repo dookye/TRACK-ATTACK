@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         player1Score: 0,
         player2Score: 0,
         currentPlayer: 1,
-        totalRounds: 4, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        totalRounds: 10, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
