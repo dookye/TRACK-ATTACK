@@ -7,7 +7,8 @@ const API_ENDPOINTS = {
     SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
     SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
     SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
+    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+	SPOTIFY_PLAYER_TRANSFER: 'https://api.spotify.com/v1/me/player'
 };
 
 
@@ -105,9 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Spielstatus-Variablen ---
-    let spotifyPlayer;
-    let deviceId;
-    let accessToken;
+    let accessToken = null;
+    let deviceId = null;
+    let spotifyPlayer = null;
     let gameState = {
         player1Score: 0,
         player2Score: 0,
@@ -876,49 +877,70 @@ async function playTrackSnippet() {
     const randomStartPosition = Math.floor(Math.random() * maxStart);
 
     // ====================================================================
-    // 🎯 iOS / PWA AUDIO-KONTEXT UND FOKUS-ERZWINGUNG
+    // 🎯 iOS / PWA AUDIO-KONTEXT UND FOKUS-ERZWINGUNG (MAXIMALE AGGRESSIVITÄT)
     // ====================================================================
     try {
-        // 1. Initialisierung nur, wenn die deviceId noch nicht existiert
-        if (!deviceId) {
-            console.log("[PWA Fix] Initialisiere Spotify Player...");
-            await initializePlayer(); 
-        }
-        
-        // 2. Audio-Kontext im Klick-Kontext entsperren und Fokus erzwingen.
+        // ZUERST: Unmittelbarer Versuch, den Audio-Kontext zu entsperren.
         if (spotifyPlayer) {
-            console.log("[PWA Fix] Player-Element aktivieren (fokusieren und entsperren)...");
-            // Dieses Mal verwenden wir resume() anstelle von activateElement() als primäre Geste,
-            // da es direkt den Audio-Kontext betrifft. activateElement() wird optional später ausgeführt.
-            await spotifyPlayer.resume(); 
+            console.log("[PWA Fix] Player-Element aktivieren (aggressiver Versuch 1).");
+            await spotifyPlayer.activateElement(); 
             console.log("Audio-Kontext entsperrt.");
+        } else {
+             console.log("[PWA Fix] Player-Objekt nicht gefunden. Muss initialisiert werden.");
         }
 
-        // 3. EXPLIZITE ÜBERTRAGUNG DES PLAYBACKS ÜBER DIE WEB API (PWA Silver Bullet!)
-        // Dies stellt sicher, dass Spotify unser Web Playback SDK Gerät als aktives Gerät betrachtet.
-        if (deviceId) {
-            console.log(`[PWA Fix] Erzwinge Playback-Übertragung zu Device ID: ${deviceId}`);
-            const transferResponse = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
-                method: 'PUT',
-                body: JSON.stringify({
-                    device_ids: [deviceId], // MUSS ein Array sein
-                    play: false // Nicht sofort abspielen, nur Fokus übertragen
-                }),
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
+        // ZWEITENS: Initialisierung, falls deviceId fehlt. 
+        if (!deviceId) {
+            console.log("[PWA Fix] Initialisiere Spotify Player und warte auf deviceId...");
+            await initializePlayer(); // Hier wird deviceId gesetzt!
+        }
 
-            if (!transferResponse.ok) {
-                console.warn("[PWA Fix] Warnung: Playback-Übertragung fehlgeschlagen (aber wir machen weiter):", 
-                             transferResponse.status, transferResponse.statusText);
-            } else {
-                console.log("[PWA Fix] Playback erfolgreich auf dieses Gerät übertragen.");
+        // DRITTENS: ERNEUTER DEVICE ID CHECK UND VALIDIERUNG.
+        if (!deviceId) {
+            // Wenn deviceId immer noch fehlt, ist die Initialisierung fehlgeschlagen.
+            throw new Error("Device ID konnte nicht abgerufen werden. Player Initialisierung fehlgeschlagen.");
+        }
+
+        // VIERTENS: Erneuter Versuch, den Fokus zu erzwingen (optional, aber gut nach Init).
+        if (spotifyPlayer) {
+            console.log("[PWA Fix] Player-Element erneut aktivieren (Versuch 2 nach Init).");
+            await spotifyPlayer.activateElement(); 
+        }
+
+        // FÜNFTENS: EXPLIZITE ÜBERTRAGUNG DES PLAYBACKS ÜBER DIE WEB API (PWA Silver Bullet!)
+        console.log(`[PWA Fix] Erzwinge Playback-Übertragung zu Device ID: ${deviceId}`);
+        const transferResponse = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
+            method: 'PUT',
+            body: JSON.stringify({
+                device_ids: [deviceId], 
+                play: false 
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!transferResponse.ok) {
+            console.warn("[PWA Fix] Warnung: Playback-Übertragung fehlgeschlagen (Status: " + transferResponse.status + ")");
+            
+            // 404 = Device not found ODER 405 = Problem mit dem Request, das wir nicht ignorieren dürfen
+            if (transferResponse.status === 404 || transferResponse.status === 405) {
+                // Bei 405 (Method Not Allowed) ist meistens das Format der URL falsch!
+                throw new Error(`Device connection failed (Status ${transferResponse.status}).`);
             }
+        } else {
+            console.log("[PWA Fix] Playback erfolgreich auf dieses Gerät übertragen.");
         }
         
     } catch (error) {
-        // Dieser Catch fängt Fehler beim Initialisieren/Entsperren ab
-        console.error("[Kritischer Fehler] Player-Aktivierung oder Initialisierung fehlgeschlagen:", error);
-        alert("Fehler bei der Player-Verbindung. Hast du Spotify Premium?");
+        // Dieser Catch fängt Fehler beim Initialisieren/Entsperren/Transfer ab
+        console.error("[Kritischer Fehler] Player-Aktivierung, Initialisierung oder Übertragung fehlgeschlagen:", error);
+        
+        if (error.message.includes("Device connection failed")) {
+             // 💡 Benutzerinformation bei PWA-Tod / kritischem API-Fehler
+             alert("Kritischer Player-Fehler. (Status 404/405). Stelle sicher, dass deine API-Endpunkte korrekt sind.");
+        } else {
+            alert("Fehler beim Abspielen (Player-Verbindung). Hast du Spotify Premium und sind deine API-Endpunkte korrekt?");
+        }
+        
         logoButton.classList.remove('inactive');
 		logoButton.classList.add('logo-pulsing');
         return; 
@@ -944,8 +966,6 @@ async function playTrackSnippet() {
                 playbackStateListener = null;
 
                 console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
-                
-                // ** HIER STARTET DIE TIMER/SPEED ROUND LOGIK **
                 
                 if (gameState.isSpeedRound) {
                     // Speed Round: Starte den visuellen Timer, der die Zeit zum Raten vorgibt.
@@ -976,10 +996,13 @@ async function playTrackSnippet() {
             }
         }
     };
-    spotifyPlayer.addListener('player_state_changed', playbackStateListener);
+    // Prüft, ob der Player existiert, bevor der Listener hinzugefügt wird
+    if (spotifyPlayer) {
+        spotifyPlayer.addListener('player_state_changed', playbackStateListener);
+    }
 
     // ########### Verwende die Web-API, um die Wiedergabe zu initiieren ###########
-    // HINWEIS: deviceId ist jetzt garantiert vorhanden (oder ein Fehler wurde im try/catch abgefangen).
+    // HIER WIRD DIE KORREKTE API URL BENÖTIGT!
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -1024,7 +1047,7 @@ async function playTrackSnippet() {
         revealButton.classList.remove('no-interaction');
     }
 }
- 
+
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
