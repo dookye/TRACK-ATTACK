@@ -166,9 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'deutscher hip hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
         'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
         'deutscher pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o'],
-		'halloween': ['37i9dQZF1DX8S9gwdi7dev'],
-		'halloween2': ['2bWtVAl9VX45x9gAUPiVOF'],
-		'mixtape 5': ['37i9dQZF1E35ZEBUF8HGwr']
+		'halloween': ['2bWtVAl9VX45x9gAUPiVOF']
     };
 
     //=======================================================================
