@@ -884,6 +884,7 @@ async function playTrackSnippet() {
         
         // 2. Player AUFWEKEN (resume) MUSS BEI JEDEM KLICK ausgeführt werden,
         // um Audio auf iOS/Safari immer wieder neu zu entsperren, falls der Kontext verloren ging.
+        // DIES IST DER KRITISCHE iOS-FIX!
         if (spotifyPlayer) {
             console.log("Versuche, den Player aufzuwecken (resume)...");
             // Dieses resume() ist kritisch für Safari und nutzt die aktuelle Klick-Geste.
@@ -975,20 +976,8 @@ async function playTrackSnippet() {
                 playbackStateListener = null;
             }
         } else {
-            // 💡 ZUSÄTZLICHER iOS/SAFARI FALLBACK: Player erneut 'aufwecken'
-            // Das initiale resume() im try/catch (Schritt 2) ist für die Entsperrung zuständig.
-            // Dieses hier ist der Backup-Befehl nach dem erfolgreichen Start.
-            setTimeout(() => {
-                if (spotifyPlayer) {
-                    spotifyPlayer.resume().then(() => {
-                        console.log("[iOS Fallback] Zusätzliches resume() nach 300ms ausgeführt.");
-                    }).catch(err => {
-                        // Der Fehler, dass keine Liste geladen wurde, ist hier OK, da er nur bedeutet, dass resume() keinen
-                        // Play-Befehl auslösen muss, da der Web-API-Befehl bereits gewirkt hat.
-                        console.warn("[iOS Fallback] Zusätzliches resume() fehlgeschlagen (erwartet auf Desktop):", err);
-                    });
-                }
-            }, 300);
+            // DER ZUSÄTZLICHE setTimeout FALLBACK WURDE HIER ENTFERNT.
+            // Wir verlassen uns nur noch auf das resume() am Anfang, das direkt im Klick-Kontext läuft.
         }
     }).catch(error => {
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
@@ -1006,6 +995,7 @@ async function playTrackSnippet() {
         revealButton.classList.remove('no-interaction');
     }
 }
+
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
