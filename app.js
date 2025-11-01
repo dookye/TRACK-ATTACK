@@ -844,12 +844,67 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
+// =============================================================================================================================================================
+// FUNTION FÜR PLAYBUTTON IOS-play-FIX und TIMERLOGIC
+	
 // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 let playbackStateListener = null;
+// Hilfsvariable für den Fallback-Timer (1,5 Sekunden, um das Start-Event abzuwarten)
+const FALLBACK_DELAY_MS = 1500; 
 
-// HINWEIS: Es wird davon ausgegangen, dass API_ENDPOINTS in Ihrem Code
-// bereits definiert ist und den folgenden Endpunkt enthält, der nun verwendet wird:
-// API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER = 'https://api.spotify.com/v1/me/player';
+
+/**
+ * Hilfsfunktion zum Pausieren des Songs und zur Bereinigung.
+ * Diese Funktion wird entweder vom Spotify Event Listener (korrekter Start) 
+ * oder vom Fallback-Timer (fehlendes Start-Event) aufgerufen.
+ * @param {number | null} startPosition - Die Position, an der die Wiedergabe begonnen hat (fürs Logging). 
+ *                                       Null, wenn der Fallback-Timer ihn setzt.
+ */
+function scheduleTrackPause(startPosition) {
+    const desiredDuration = gameState.trackDuration;
+
+    // Nur Timer setzen, wenn er noch nicht gesetzt ist (wichtig für den Fallback)
+    if (gameState.spotifyPlayTimeout) {
+        return; 
+    }
+
+    if (gameState.isSpeedRound) {
+        // Speed Round: Starte den visuellen Timer, der die Zeit zum Raten vorgibt.
+        // HINWEIS: Hier wird KEIN Pause-Timeout benötigt, da der Runden-Timer entscheidet.
+        startVisualSpeedRoundCountdown();
+        return;
+    }
+
+    // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
+    gameState.spotifyPlayTimeout = setTimeout(() => {
+        
+        // Wenn der Timer abläuft, wird der Song gestoppt.
+        spotifyPlayer.pause();
+        gameState.isSongPlaying = false;
+
+        if (gameState.attemptsMade < gameState.maxAttempts) {
+            logoButton.classList.remove('inactive');
+            logoButton.classList.add('logo-pulsing');
+        }
+        
+        // Logge die tatsächliche Stopp-Position für das Debugging
+        spotifyPlayer.getCurrentState().then(finalState => {
+            const finalPosition = finalState ? finalState.position : 'N/A';
+            const logType = startPosition === null ? 'FALLBACK STOP' : 'EVENT STOP';
+            
+            console.log(`[${logType}] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
+            
+            if (finalState && startPosition !== null) {
+                // Nur wenn wir die Startposition kennen, können wir die tatsächliche Dauer berechnen
+                const actualDuration = finalPosition - startPosition; 
+                console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
+            }
+        });
+        
+    }, desiredDuration);
+
+    console.log(`[TIMER] Pause-Timeout (Dauer: ${desiredDuration}ms) erfolgreich gesetzt.`);
+}
 
 
 async function playTrackSnippet() {
@@ -878,84 +933,95 @@ async function playTrackSnippet() {
         return;
     }
     const randomStartPosition = Math.floor(Math.random() * maxStart);
-
-    // ====================================================================
-    // 🎯 iOS / PWA AUDIO-KONTEXT UND FOKUS-ERZWINGUNG (MAXIMALE AGGRESSIVITÄT)
-    // ====================================================================
-    try {
-        // ZUERST: Unmittelbarer Versuch, den Audio-Kontext zu entsperren.
-        if (spotifyPlayer) {
-            console.log("[PWA Fix] Player-Element aktivieren (aggressiver Versuch 1).");
-            await spotifyPlayer.activateElement(); 
-            console.log("Audio-Kontext entsperrt.");
-        } else {
-             console.log("[PWA Fix] Player-Objekt nicht gefunden. Muss initialisiert werden.");
-        }
-
-        // ZWEITENS: Initialisierung, falls deviceId fehlt. 
-        if (!deviceId) {
-            console.log("[PWA Fix] Initialisiere Spotify Player und warte auf deviceId...");
-            await initializePlayer(); // Hier wird deviceId gesetzt!
-        }
-
-        // DRITTENS: ERNEUTER DEVICE ID CHECK UND VALIDIERUNG.
-        if (!deviceId) {
-            // Wenn deviceId immer noch fehlt, ist die Initialisierung fehlgeschlagen.
-            throw new Error("Device ID konnte nicht abgerufen werden. Player Initialisierung fehlgeschlagen.");
-        }
-
-        // VIERTENS: Erneuter Versuch, den Fokus zu erzwingen (optional, aber gut nach Init).
-        if (spotifyPlayer) {
-            console.log("[PWA Fix] Player-Element erneut aktivieren (Versuch 2 nach Init).");
-            await spotifyPlayer.activateElement(); 
-        }
-
-        // FÜNFTENS: EXPLIZITE ÜBERTRAGUNG DES PLAYBACKS ÜBER DIE WEB API (PWA Silver Bullet!)
-        console.log(`[PWA Fix] Erzwinge Playback-Übertragung zu Device ID: ${deviceId}`);
-        const transferResponse = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
-            method: 'PUT',
-            body: JSON.stringify({
-                device_ids: [deviceId], 
-                play: false 
-            }),
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-
-        if (!transferResponse.ok) {
-            console.warn("[PWA Fix] Warnung: Playback-Übertragung fehlgeschlagen (Status: " + transferResponse.status + ")");
-            
-            // 404 = Device not found ODER 405 = Problem mit dem Request, das wir nicht ignorieren dürfen
-            if (transferResponse.status === 404 || transferResponse.status === 405) {
-                // Bei 405 (Method Not Allowed) ist meistens das Format der URL falsch!
-                throw new Error(`Device connection failed (Status ${transferResponse.status}).`);
-            }
-        } else {
-            console.log("[PWA Fix] Playback erfolgreich auf dieses Gerät übertragen.");
-        }
-        
-    } catch (error) {
-        // Dieser Catch fängt Fehler beim Initialisieren/Entsperren/Transfer ab
-        console.error("[Kritischer Fehler] Player-Aktivierung, Initialisierung oder Übertragung fehlgeschlagen:", error);
-        
-        if (error.message.includes("Device connection failed")) {
-             // 💡 Benutzerinformation bei PWA-Tod / kritischem API-Fehler
-             alert("Kritischer Player-Fehler. (Status 404/405). Stelle sicher, dass deine API-Endpunkte korrekt sind.");
-        } else {
-            alert("Fehler beim Abspielen (Player-Verbindung). Hast du Spotify Premium und sind deine API-Endpunkte korrekt?");
-        }
-        
-        logoButton.classList.remove('inactive');
-		logoButton.classList.add('logo-pulsing');
-        return; 
+    
+    // Löscht den alten Timeout, falls er aus irgendeinem Grund noch existiert
+    if (gameState.spotifyPlayTimeout) {
+        clearTimeout(gameState.spotifyPlayTimeout);
+        gameState.spotifyPlayTimeout = null;
     }
-    // ====================================================================
+
+
+    // ====================================================================
+    // 🎯 iOS / PWA AUDIO-KONTEXT UND FOKUS-ERZWINGUNG (MAXIMALE AGGRESSIVITÄT)
+    // ====================================================================
+    try {
+        // ZUERST: Unmittelbarer Versuch, den Audio-Kontext zu entsperren.
+        if (spotifyPlayer) {
+            console.log("[PWA Fix] Player-Element aktivieren (aggressiver Versuch 1).");
+            await spotifyPlayer.activateElement(); 
+            console.log("Audio-Kontext entsperrt.");
+        } else {
+             console.log("[PWA Fix] Player-Objekt nicht gefunden. Muss initialisiert werden.");
+        }
+
+        // ZWEITENS: Initialisierung, falls deviceId fehlt. 
+        if (!deviceId) {
+            console.log("[PWA Fix] Initialisiere Spotify Player und warte auf deviceId...");
+            await initializePlayer(); // Hier wird deviceId gesetzt!
+        }
+
+        // DRITTENS: ERNEUTER DEVICE ID CHECK UND VALIDIERUNG.
+        if (!deviceId) {
+            // Wenn deviceId immer noch fehlt, ist die Initialisierung fehlgeschlagen.
+            throw new Error("Device ID konnte nicht abgerufen werden. Player Initialisierung fehlgeschlagen.");
+        }
+
+        // VIERTENS: Erneuter Versuch, den Fokus zu erzwingen (optional, aber gut nach Init).
+        if (spotifyPlayer) {
+            console.log("[PWA Fix] Player-Element erneut aktivieren (Versuch 2 nach Init).");
+            await spotifyPlayer.activateElement(); 
+        }
+
+        // FÜNFTENS: EXPLIZITE ÜBERTRAGUNG DES PLAYBACKS ÜBER DIE WEB API (PWA Silver Bullet!)
+        console.log(`[PWA Fix] Erzwinge Playback-Übertragung zu Device ID: ${deviceId}`);
+        const transferResponse = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
+            method: 'PUT',
+            body: JSON.stringify({
+                device_ids: [deviceId], 
+                play: false 
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!transferResponse.ok) {
+            console.warn("[PWA Fix] Warnung: Playback-Übertragung fehlgeschlagen (Status: " + transferResponse.status + ")");
+            
+            // 404 = Device not found ODER 405 = Problem mit dem Request, das wir nicht ignorieren dürfen
+            if (transferResponse.status === 404 || transferResponse.status === 405) {
+                // Bei 405 (Method Not Allowed) ist meistens das Format der URL falsch!
+                throw new Error(`Device connection failed (Status ${transferResponse.status}).`);
+            }
+        } else {
+            console.log("[PWA Fix] Playback erfolgreich auf dieses Gerät übertragen.");
+        }
+        
+    } catch (error) {
+        // Dieser Catch fängt Fehler beim Initialisieren/Entsperren/Transfer ab
+        console.error("[Kritischer Fehler] Player-Aktivierung, Initialisierung oder Übertragung fehlgeschlagen:", error);
+        
+        if (error.message.includes("Device connection failed")) {
+             // 💡 Benutzerinformation bei PWA-Tod / kritischem API-Fehler
+             alert("Kritischer Player-Fehler. (Status 404/405). Stelle sicher, dass deine API-Endpunkte korrekt sind.");
+        } else {
+            alert("Fehler beim Abspielen (Player-Verbindung). Hast du Spotify Premium und sind deine API-Endpunkte korrekt?");
+        }
+        
+        logoButton.classList.remove('inactive');
+		logoButton.classList.add('logo-pulsing');
+        return; 
+    }
+    // ====================================================================
 
     console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
 
     // Entferne zuerst einen eventuell bestehenden Listener, um Duplikate zu vermeiden
     if (playbackStateListener) {
         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+        playbackStateListener = null; // Wichtig: Listener-Variable zurücksetzen
     }
+
+    // Setze den Timer-Status auf "nicht gestartet"
+    gameState.spotifyPlayTimeout = null;
 
     // ########### Richte neuen Status-Änderungs-Listener ein ###########
     playbackStateListener = (state) => {
@@ -968,44 +1034,20 @@ async function playTrackSnippet() {
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
 
-                console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
-                
-                if (gameState.isSpeedRound) {
-                    // Speed Round: Starte den visuellen Timer, der die Zeit zum Raten vorgibt.
-                    startVisualSpeedRoundCountdown();
-                } else {
-                    // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
-                    gameState.spotifyPlayTimeout = setTimeout(() => {
-                        spotifyPlayer.pause();
-                        gameState.isSongPlaying = false;
+                // Wichtig: Setze den Stopp-Timer hier, da wir die genaue Startposition haben
+                scheduleTrackPause(state.position);
 
-                        if (gameState.attemptsMade < gameState.maxAttempts) {
-                            logoButton.classList.remove('inactive');
-                            logoButton.classList.add('logo-pulsing');
-                        }
-
-                        // Logge die tatsächliche Stopp-Position für das Debugging
-                        spotifyPlayer.getCurrentState().then(finalState => {
-                            const finalPosition = finalState ? finalState.position : 'N/A';
-                            console.log(`[STOP] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
-                            if (finalState) {
-                                 // Hier verwenden wir state.position vom Start Event für die Dauerberechnung
-                                 const actualDuration = finalPosition - state.position; 
-                                 console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
-                            }
-                        });
-                    }, desiredDuration);
-                }
+                console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen. (Bestätigt durch Event)`);
             }
         }
     };
-    // Prüft, ob der Player existiert, bevor der Listener hinzugefügt wird
-    if (spotifyPlayer) {
-        spotifyPlayer.addListener('player_state_changed', playbackStateListener);
-    }
+    // Prüft, ob der Player existiert, bevor der Listener hinzugefügt wird
+    if (spotifyPlayer) {
+        spotifyPlayer.addListener('player_state_changed', playbackStateListener);
+    }
 
     // ########### Verwende die Web-API, um die Wiedergabe zu initiieren ###########
-    // HIER WIRD DIE KORREKTE API URL BENÖTIGT!
+    // HIER WIRD DIE KORREKTE API URL BENÖTIGT!
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -1016,13 +1058,13 @@ async function playTrackSnippet() {
     }).then(response => {
         if (!response.ok) {
             console.error("Fehler beim Abspielen des Tracks (Web API):", response.status, response.statusText);
-            
-            // Führe eine erneute Aktivierung durch (könnte helfen, den Fokus zurückzubekommen)
-            if (spotifyPlayer) {
-                // Versuche, den Fokus erneut zu erzwingen
-                spotifyPlayer.activateElement().catch(e => console.warn("Re-Aktivierung nach Fehler fehlgeschlagen:", e));
-            }
-            
+            
+            // Führe eine erneute Aktivierung durch (könnte helfen, den Fokus zurückzubekommen)
+            if (spotifyPlayer) {
+                // Versuche, den Fokus erneut zu erzwingen
+                spotifyPlayer.activateElement().catch(e => console.warn("Re-Aktivierung nach Fehler fehlgeschlagen:", e));
+            }
+            
             alert("Konnte den Song nicht abspielen. Möglicherweise ist Spotify auf keinem aktiven Gerät.");
             logoButton.classList.remove('inactive');
             logoButton.classList.add('logo-pulsing');
@@ -1032,8 +1074,18 @@ async function playTrackSnippet() {
                 playbackStateListener = null;
             }
         } else {
-            // Bei Erfolg ist keine weitere Aktion nötig.
-        }
+            // ########### FALLBACK HIER STARTEN ###########
+            // Wenn der API-Aufruf erfolgreich war, aber das Event später fehlt, 
+            // wird dieser Fallback-Timer den Pausen-Timeout setzen.
+            setTimeout(() => {
+                // Prüfe, ob der Timer durch den Spotify Event Listener bereits gesetzt wurde
+                if (!gameState.spotifyPlayTimeout) {
+                    console.warn(`[FALLBACK] Playback Event nach ${FALLBACK_DELAY_MS}ms nicht eingetroffen. Setze Pause-Timeout manuell.`);
+                    // Da wir die genaue Startposition nicht kennen, verwenden wir null fürs Logging.
+                    scheduleTrackPause(null); 
+                }
+            }, FALLBACK_DELAY_MS);
+        }
     }).catch(error => {
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
         alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
@@ -1051,6 +1103,8 @@ async function playTrackSnippet() {
     }
 }
 
+// FUNTION FÜR PLAYBUTTON IOS-play-FIX und TIMERLOGIC ----------- ENDE
+// ============================================================================================================================
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
