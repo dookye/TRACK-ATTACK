@@ -873,30 +873,31 @@ async function playTrackSnippet() {
     // ====================================================================
     // 🎯 iOS / SAFARI PLAYER AKTIVIERUNG (muss im Klick-Kontext laufen)
     // ====================================================================
-    // Player nur initialisieren, wenn wir noch keine deviceId haben.
+    try {
+        // 1. Initialisierung nur, wenn die deviceId noch nicht existiert (erster Klick)
         if (!deviceId) {
-            try {
-                console.log("Initialisiere Spotify Player durch Benutzerklick...");
-                await initializePlayer();
-                console.log("Player erfolgreich initialisiert und verbunden.");
-
-                // --- WICHTIG: DER iOS-FIX ---
-                console.log("Versuche, den Player aufzuwecken (resume)...");
-                await spotifyPlayer.resume();
-                console.log("Player erfolgreich aufgeweckt.");
-
-            } catch (error) {
-                console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
-                alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
-                
-                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird,
-                // ABER {once: true} ihn bereits entfernt hat.
-                logoButton.addEventListener('click', startGame, { once: true }); 
-                logoButton.classList.remove('inactive');
-                logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
-                return; // Breche die Funktion ab, wenn es fehlschlägt.
-            }
+            console.log("Initialisiere Spotify Player durch Benutzerklick...");
+            // Warten auf die Initialisierung (erzeugt spotifyPlayer und deviceId)
+            await initializePlayer(); 
+            console.log("Player erfolgreich initialisiert und verbunden.");
         }
+        
+        // 2. Player AUFWEKEN (resume) MUSS BEI JEDEM KLICK ausgeführt werden,
+        // um Audio auf iOS/Safari immer wieder neu zu entsperren, falls der Kontext verloren ging.
+        if (spotifyPlayer) {
+            console.log("Versuche, den Player aufzuwecken (resume)...");
+            // Dieses resume() ist kritisch für Safari und nutzt die aktuelle Klick-Geste.
+            await spotifyPlayer.resume(); 
+            console.log("Player erfolgreich aufgeweckt.");
+        }
+        
+    } catch (error) {
+        console.error("Player-Aktivierung (iOS-Fix) fehlgeschlagen:", error);
+        alert("Fehler bei der Player-Verbindung. Bitte versuchen Sie, Spotify neu zu verbinden.");
+        logoButton.classList.remove('inactive');
+		logoButton.classList.add('logo-pulsing');
+        return; // Stoppt die Funktion, wenn die Aktivierung fehlschlägt
+    }
     // ====================================================================
 
     console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
@@ -975,8 +976,8 @@ async function playTrackSnippet() {
             }
         } else {
             // 💡 ZUSÄTZLICHER iOS/SAFARI FALLBACK: Player erneut 'aufwecken'
-            // Wir fügen eine kleine Verzögerung hinzu, um den "Playback Error: no list was loaded" zu vermeiden,
-            // der auftritt, wenn das resume() zu schnell nach dem fetch ausgeführt wird.
+            // Das initiale resume() im try/catch (Schritt 2) ist für die Entsperrung zuständig.
+            // Dieses hier ist der Backup-Befehl nach dem erfolgreichen Start.
             setTimeout(() => {
                 if (spotifyPlayer) {
                     spotifyPlayer.resume().then(() => {
