@@ -502,7 +502,7 @@ body, html {
 #player1-score-display, #player2-score-display {
     width: 100%; /* Nehmen die volle Breite ein */
     height: 50%; /* Teilen die Höhe des Score-Screens */
-    font-size: 30vmin;
+    font-size: 2vmin;
     font-weight: bold;
     color: white;
     text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
