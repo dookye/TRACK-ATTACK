@@ -597,14 +597,14 @@ body, html {
 }
 
 .points-pop-in {
-  animation: points-fade-in-zoom 0.7s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
+  animation: points-fade-in-zoom 1s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
 }
 
 /* *** NEU: Standard-Animation für Portrait (Flug nach OBEN) *** */
 @keyframes flyToCornerPlayer1 {
     0% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(2);
+        transform: translate(-50%, -50%) scale(1);
         top: 50%;
         left: 50%; /* Startposition: Mitte des Bildschirms */
     }
@@ -620,7 +620,7 @@ body, html {
 @keyframes flyToCornerPlayer2 {
     0% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(2);
+        transform: translate(-50%, -50%) scale(1);
         top: 50%;
         left: 50%; /* Startposition: Mitte des Bildschirms */
     }
