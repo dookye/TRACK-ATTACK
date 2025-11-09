@@ -767,80 +767,73 @@ document.addEventListener('DOMContentLoaded', () => {
     //=======================================================================
 
 // AKTUALISIERT: getTrack-Funktion
-async function getTrack(selectedGenreName) {
-    // Max. Anzahl von Versuchen, eine gültige Playlist/Track im AKTUELLEN GENRE zu finden
-    const MAX_RETRIES = 5; 
-    let retries = 0;
-    
-    // Set, um zu verfolgen, welche Playlists aus diesem Genre bereits versucht wurden
-    const failedPlaylists = new Set(); 
+async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Klarheit geändert
+    // 'selectedGenreName' ist das spezifische Genre, das der Spieler im Spiel geklickt hat.
+    // Wir müssen hier KEINE weitere zufällige Auswahl treffen.
+    // Wir nutzen einfach direkt den Namen des geklickten Genres.
 
-    while (retries < MAX_RETRIES) {
-        retries++;
-        
-        // **WICHTIG:** Beschränkt die Suche auf die Playlists des ausgewählten Genres
-        const playlistPool = playlists[selectedGenreName];
+    const playlistPool = playlists[selectedGenreName]; // <-- KORREKTUR: Nutze DIREKT den übergebenen Genre-Namen!
 
-        if (!playlistPool || playlistPool.length === 0) {
-            console.error(`Keine Playlists für Genre "${selectedGenreName}" definiert oder Pool ist leer.`);
-            alert(`Fehler: Für das Genre "${selectedGenreName}" sind keine Playlists verfügbar. Bitte wähle ein anderes Genre.`);
-            showGenreScreen();
-            return null;
-        }
-
-        // 1. Zufällige Playlist-ID AUS DEM GENRE-POOL auswählen
-        let availablePlaylists = playlistPool.filter(id => !failedPlaylists.has(id));
-
-        if (availablePlaylists.length === 0) {
-            console.error(`Alle verfügbaren Playlists für Genre "${selectedGenreName}" wurden versucht, sind aber alle ungültig.`);
-            alert(`Konnte nach ${retries - 1} Versuchen keinen gültigen Track für "${selectedGenreName}" finden.`);
-            showGenreScreen();
-            return null;
-        }
-
-        const randomPlaylistId = availablePlaylists[Math.floor(Math.random() * availablePlaylists.length)];
-        failedPlaylists.add(randomPlaylistId); // Als versucht markieren
-        
-        console.log(`DEBUG: Versuch ${retries}/${MAX_RETRIES} INNERHALB von Genre "${selectedGenreName}". Playlist-ID: "${randomPlaylistId}"`);
-
-        // 2. Tracks der Playlist abrufen
-        const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-
-        if (!response.ok) {
-            console.warn(`WARN: Fehler beim Abrufen der Playlist-Tracks (Status ${response.status}). Versuche nächste Playlist im selben Genre.`);
-            continue; // Gehe zur nächsten Iteration
-        }
-
-        const data = await response.json();
-
-        // 3. Filtern nach gültigen, existierenden UND abspielbaren Tracks
-        const validAndPlayableTracks = data.items
-            .filter(item => item.track) // Muss ein Track-Objekt sein
-            .filter(item => item.track.is_playable !== false) // WICHTIG: Prüft auf Geo-Blocking/Löschung
-
-        if (validAndPlayableTracks.length === 0) {
-            console.warn(`WARN: Die Playlist ${randomPlaylistId} enthält keine gültigen/abspielbaren Tracks. Versuche nächste Playlist im selben Genre.`);
-            continue; // Gehe zur nächsten Iteration
-        }
-
-        // 4. Erfolgreiche Auswahl
-        const randomTrack = validAndPlayableTracks[Math.floor(Math.random() * validAndPlayableTracks.length)].track;
-
-        console.log(`DEBUG: Erfolg in Versuch ${retries}! Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
-        return randomTrack;
+    if (!playlistPool || playlistPool.length === 0) {
+        console.error(`Keine Playlists für Genre "${selectedGenreName}" definiert oder Pool ist leer.`);
+        alert(`Fehler: Für das Genre "${selectedGenreName}" sind keine Playlists verfügbar. Bitte wähle ein anderes Genre.`);
+        showGenreScreen(); // Gehe zurück zum Genre-Auswahlbildschirm
+        return null;
     }
 
-    // Wenn die Schleife nach MAX_RETRIES immer noch keinen Track gefunden hat
-    console.error(`Konnte nach ${MAX_RETRIES} Versuchen keinen gültigen Track für "${selectedGenreName}" finden.`);
-    alert(`Fehler: Konnte nach ${MAX_RETRIES} Versuchen keinen spielbaren Song in diesem Genre finden. Bitte wähle ein anderes Genre.`);
-    showGenreScreen();
-    return null;
+    const randomPlaylistId = playlistPool[Math.floor(Math.random() * playlistPool.length)];
+    console.log(`DEBUG: Ausgewähltes Genre (vom Spieler geklickt): "${selectedGenreName}", Playlist-ID (zufällig aus diesem Genre): "${randomPlaylistId}"`);
+
+
+    const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYLIST_TRACKS(randomPlaylistId), {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+
+    if (!response.ok) {
+        console.error("Fehler beim Abrufen der Playlist-Tracks:", response.status, response.statusText, `Playlist ID: ${randomPlaylistId}`);
+        alert(`Fehler beim Laden der Songs für das ausgewählte Genre. (Code: ${response.status}). Bitte versuchen Sie ein anderes Genre.`);
+        showGenreScreen();
+        return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.items || data.items.length === 0) {
+        console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren Tracks.`);
+        alert(`Die ausgewählte Playlist hat keine Songs. Bitte wählen Sie ein anderes Genre.`);
+        showGenreScreen();
+        return null;
+    }
+
+    const playableTracks = data.items.filter(item => item.track);
+
+    if (playableTracks.length === 0) {
+        console.warn(`Die Playlist ${randomPlaylistId} enthält keine abspielbaren oder gültigen Tracks nach Filterung.`);
+        alert(`Keine gültigen Songs in der Playlist gefunden. Bitte versuchen Sie ein anderes Genre.`);
+        showGenreScreen();
+        return null;
+    }
+
+    const randomTrack = playableTracks[Math.floor(Math.random() * playableTracks.length)].track;
+
+    if (randomTrack) {
+        console.log(`DEBUG: Ausgewählter Song: "${randomTrack.name}" von "${randomTrack.artists.map(a => a.name).join(', ')}" (ID: ${randomTrack.id})`);
+    } else {
+        console.error("DEBUG: Zufällig ausgewählter Track ist unerwarteterweise null oder ungültig nach Filterung.");
+        alert("Ein unerwarteter Fehler beim Auswählen des Songs ist aufgetreten. Bitte versuchen Sie es erneut.");
+        showGenreScreen();
+        return null;
+    }
+
+    return randomTrack;
 }
 
 
     async function prepareAndShowRateScreen(genre) {
+		// Speichere das ausgewählte Genre im globalen State.
+        // Das brauchen wir, um bei einem Fehler einen neuen Track aus DEMSELBEN Genre zu laden.
+        gameState.currentGenre = genre; 
+        // -----------
         gameState.currentTrack = await getTrack(genre);
         console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
 
@@ -915,7 +908,44 @@ function scheduleTrackPause(startPosition) {
     console.log(`[TIMER] Pause-Timeout (Dauer: ${desiredDuration}ms) erfolgreich gesetzt.`);
 }
 
-   	// -------------------------- ANFANG PLAY TRACK SNIPPET ----------------------------------
+	/**
+ * Wird aufgerufen, wenn ein Track nicht abgespielt werden kann (z.B. 403/404).
+ * Lädt automatisch einen neuen Track aus dem aktuellen Genre.
+ * @param {function | null} listenerToRemove - Der 'player_state_changed'-Listener, der bereinigt werden muss.
+ */
+async function handleTrackPlaybackError(listenerToRemove) {
+    // 1. Wichtig: Listener aufräumen, falls er existiert
+    if (listenerToRemove && spotifyPlayer) {
+        spotifyPlayer.removeListener('player_state_changed', listenerToRemove);
+        // Setze die globale Variable zurück, da der Listener entfernt wurde
+        playbackStateListener = null; 
+    }
+
+    console.log(`Versuche, einen neuen Track für das Genre '${gameState.currentGenre}' zu laden.`);
+    
+    // 2. User informieren (Ein "Toast" / non-blocking Popup wäre besser, aber Alert geht auch)
+    alert("Dieser Song ist nicht verfügbar (z.B. Ländersperre). Es wird automatisch ein neuer Song geladen. Bitte drücke 'Play' erneut, wenn das Logo pulsiert.");
+
+    // 3. Neuen Track holen (nutzt das gespeicherte Genre)
+    const newTrack = await getTrack(gameState.currentGenre);
+
+    if (newTrack) {
+        // 4. Neuen Track im State speichern
+        gameState.currentTrack = newTrack;
+        console.log(`Neuer Track erfolgreich geladen: "${newTrack.name}"`);
+
+        // 5. UI zurücksetzen, damit der User erneut klicken kann.
+        // Der Versuch wurde dank der Code-Änderung oben NICHT gezählt.
+        logoButton.classList.remove('inactive');
+        logoButton.classList.add('logo-pulsing');
+        
+    } else {
+        // 6. Fallback, falls getTrack() fehlschlägt
+        console.error("Konnte keinen neuen Track laden. getTrack() ist fehlgeschlagen.");
+        // In diesem Fall sollte getTrack() bereits zum Genre-Screen navigiert sein.
+    }
+}
+
 async function playTrackSnippet() {
     // ########### Speed Round / Versuche Checks ###########
     if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
@@ -927,8 +957,9 @@ async function playTrackSnippet() {
 
     triggerBounce(logoButton);
     logoButton.classList.add('inactive');
-	logoButton.classList.remove('logo-pulsing');
-    gameState.attemptsMade++;
+    logoButton.classList.remove('logo-pulsing');
+    
+    // gameState.attemptsMade++; // <-- [VERSCHOBEN] Zähler kommt jetzt weiter nach unten!
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
     const desiredDuration = gameState.trackDuration;
@@ -936,13 +967,9 @@ async function playTrackSnippet() {
     // Zufällige Startposition bestimmen
     const maxStart = trackDurationMs - desiredDuration - 500;
     if (maxStart <= 0) {
-        console.error("Track zu kurz für die gewünschte Dauer. Muss neuen Track laden.");
-        alert("Der ausgewählte Track ist zu kurz. Lade einen neuen Track.");
-        
-        // Füge hier die Logik zum Neuladen des Tracks ein (z.B. eine Funktion, die die Runde neu startet)
+        console.error("Track zu kurz für die gewünschte Dauer.");
         logoButton.classList.remove('inactive');
         logoButton.classList.add('logo-pulsing');
-        // Idealerweise: loadNewTrackAndPlay();
         return;
     }
     const randomStartPosition = Math.floor(Math.random() * maxStart);
@@ -956,18 +983,19 @@ async function playTrackSnippet() {
 
     // ====================================================================
     // 🎯 iOS / PWA AUDIO-KONTEXT UND FOKUS-ERZWINGUNG (MAXIMALE AGGRESSIVITÄT)
+    // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
     // ====================================================================
     try {
         // ZUERST: Unmittelbarer Versuch, den Audio-Kontext zu entsperren.
         if (spotifyPlayer) {
             console.log("[PWA Fix] Player-Element aktivieren (aggressiver Versuch 1).");
-            await spotifyPlayer.activateElement();	
+            await spotifyPlayer.activateElement(); 
             console.log("Audio-Kontext entsperrt.");
         } else {
-            console.log("[PWA Fix] Player-Objekt nicht gefunden. Muss initialisiert werden.");
+             console.log("[PWA Fix] Player-Objekt nicht gefunden. Muss initialisiert werden.");
         }
 
-        // ZWEITENS: Initialisierung, falls deviceId fehlt.	
+        // ZWEITENS: Initialisierung, falls deviceId fehlt. 
         if (!deviceId) {
             console.log("[PWA Fix] Initialisiere Spotify Player und warte auf deviceId...");
             await initializePlayer(); // Hier wird deviceId gesetzt!
@@ -982,7 +1010,7 @@ async function playTrackSnippet() {
         // VIERTENS: Erneuter Versuch, den Fokus zu erzwingen (optional, aber gut nach Init).
         if (spotifyPlayer) {
             console.log("[PWA Fix] Player-Element erneut aktivieren (Versuch 2 nach Init).");
-            await spotifyPlayer.activateElement();	
+            await spotifyPlayer.activateElement(); 
         }
 
         // FÜNFTENS: EXPLIZITE ÜBERTRAGUNG DES PLAYBACKS ÜBER DIE WEB API (PWA Silver Bullet!)
@@ -990,8 +1018,8 @@ async function playTrackSnippet() {
         const transferResponse = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
             method: 'PUT',
             body: JSON.stringify({
-                device_ids: [deviceId],	
-                play: false	
+                device_ids: [deviceId], 
+                play: false 
             }),
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
@@ -1013,14 +1041,15 @@ async function playTrackSnippet() {
         console.error("[Kritischer Fehler] Player-Aktivierung, Initialisierung oder Übertragung fehlgeschlagen:", error);
         
         if (error.message.includes("Device connection failed")) {
-            alert("Kritischer Player-Fehler. (Status 404/405). Stelle sicher, dass deine API-Endpunkte korrekt sind.");
+             // 💡 Benutzerinformation bei PWA-Tod / kritischem API-Fehler
+             alert("Kritischer Player-Fehler. (Status 404/405). Stelle sicher, dass deine API-Endpunkte korrekt sind.");
         } else {
-            alert("Fehler beim Abspielen (Player-Verbindung). Hast du Spotify Premium und sind deine API-Endpunkte korrekt?");
+             alert("Fehler beim Abspielen (Player-Verbindung). Hast du Spotify Premium und sind deine API-Endpunkte korrekt?");
         }
         
         logoButton.classList.remove('inactive');
-		logoButton.classList.add('logo-pulsing');
-        return;	
+        logoButton.classList.add('logo-pulsing');
+        return; 
     }
     // ====================================================================
 
@@ -1036,6 +1065,7 @@ async function playTrackSnippet() {
     gameState.spotifyPlayTimeout = null;
 
     // ########### Richte neuen Status-Änderungs-Listener ein ###########
+    // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
     playbackStateListener = (state) => {
         // Prüfe, ob der State existiert und der richtige Song spielt
         if (state && state.track_window.current_track.uri === gameState.currentTrack.uri) {
@@ -1066,27 +1096,32 @@ async function playTrackSnippet() {
             position_ms: randomStartPosition
         }),
         headers: { 'Authorization': `Bearer ${accessToken}` }
-    }).then(response => {
+    }).then(async response => { // <-- [NEU] 'async' hinzugefügt, damit wir 'await' verwenden können
         if (!response.ok) {
             console.error("Fehler beim Abspielen des Tracks (Web API):", response.status, response.statusText);
             
-            // 🚨 FALLBACK TIER 2 HIER: Wenn die API den Play-Befehl ablehnt
-            if (response.status === 403 || response.status === 404) {
-                 // 403 Forbidden oder 404 Not Found bedeutet oft: Track ist nicht abspielbar (Geo-Block, defekt)
-                console.error("KRITISCHER TRACK-FEHLER (403/404): Track URI wird vom Server abgelehnt. Neuen Track laden.");
-                alert("Der Song konnte nicht abgespielt werden (Geo-Block oder defekter Track). Lade neuen Song.");
-                // Hier müsste die Logik zum Laden eines neuen Tracks und Start der Runde folgen
-                // (z.B. callGameSetupFunctionWithCurrentGenre();)
+            // --- [NEU] START: Fehlerbehandlung für 403/404 ---
+            const status = response.status;
+            // 403 (Forbidden) = Oft Ländersperre
+            // 404 (Not Found) = Track existiert nicht ODER Device ist weg
+            if (status === 403 || status === 404) {
+                console.warn(`Track nicht abspielbar (Status ${status}). Versuche, einen neuen Track zu laden...`);
                 
-            } else {
-                 alert("Konnte den Song nicht abspielen. Möglicherweise ist Spotify auf keinem aktiven Gerät.");
+                // Rufe die neue Hilfsfunktion auf (siehe meine vorige Antwort)
+                await handleTrackPlaybackError(playbackStateListener);
+                
+                // WICHTIG: Hier abbrechen, damit der alte Alert-Code nicht ausgeführt wird
+                return; 
             }
+            // --- [NEU] ENDE: Fehlerbehandlung für 403/404 ---
+
             
-            // Führe eine erneute Aktivierung durch (könnte helfen, den Fokus zurückzubekommen)
+            // (Dein alter Fallback-Code für andere Fehler)
             if (spotifyPlayer) {
                 spotifyPlayer.activateElement().catch(e => console.warn("Re-Aktivierung nach Fehler fehlgeschlagen:", e));
             }
             
+            alert("Konnte den Song nicht abspielen. Möglicherweise ist Spotify auf keinem aktiven Gerät.");
             logoButton.classList.remove('inactive');
             logoButton.classList.add('logo-pulsing');
             // Bereinige den Listener, wenn der Fetch fehlschlägt
@@ -1095,9 +1130,22 @@ async function playTrackSnippet() {
                 playbackStateListener = null;
             }
         } else {
+            // ERFOLG! Der API-Aufruf war 'ok'.
+
+            // --- [NEU] START: Zähler und Button-Logik hierher verschoben ---
+            // Erst HIER den Versuch zählen, da der Song-Start erfolgreich getriggert wurde.
+            gameState.attemptsMade++;
+
+            // Zeige den Reveal-Button nach dem ersten erfolgreichen Abspielversuch
+            if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
+                revealButton.classList.remove('hidden');
+                revealButton.classList.remove('no-interaction');
+            }
+            // --- [NEU] ENDE: Zähler und Button-Logik ---
+
+
             // ########### FALLBACK HIER STARTEN ###########
-            // Wenn der API-Aufruf erfolgreich war, aber das Event später fehlt, 
-            // wird dieser Fallback-Timer den Pausen-Timeout setzen.
+            // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
             setTimeout(() => {
                 // Prüfe, ob der Timer durch den Spotify Event Listener bereits gesetzt wurde
                 if (!gameState.spotifyPlayTimeout) {
@@ -1108,6 +1156,7 @@ async function playTrackSnippet() {
             }, FALLBACK_DELAY_MS);
         }
     }).catch(error => {
+        // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
         alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
         logoButton.classList.remove('inactive');
@@ -1118,12 +1167,17 @@ async function playTrackSnippet() {
         }
     });
 
+    // [VERSCHOBEN] Dieser Block wurde nach oben in den 'else'-Teil des 'fetch' verschoben.
+    /*
     if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
         revealButton.classList.remove('hidden');
         revealButton.classList.remove('no-interaction');
     }
+    */
 }
-	// -------------------------- ENDE PLAY TRACK SNIPPET ----------------------------------
+
+// FUNTION FÜR PLAYBUTTON IOS-play-FIX und TIMERLOGIC ----------- ENDE
+// ============================================================================================================================
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
