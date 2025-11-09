@@ -581,57 +581,94 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
 }
 
+/* *** Punkteanimation mit fly to corner portrai und querformat *** */
+/* ----------------------------------------------------- */
+/* NEU: BASISKLASSE FÜR RESPONSIVE GRÖSSE (NICHT animiert) */
+/* Diese Klasse muss IMMER auf dem Punkte-Element sein. */
+/* ----------------------------------------------------- */
+.points-base-size {
+    /* Standard-Größe für HOCHFORMAT (Portrait): 4vw. 
+       Wird relativ groß, da die Breite hier kleiner ist. */
+    font-size: 4vw; 
+    font-weight: bold;
+    color: #fde047; 
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* WICHTIG: Stellt sicher, dass das Element in der Mitte zentriert wird */
+    transform: translate(-50%, -50%); 
+    pointer-events: none; 
+    z-index: 1000;
+}
+
+/* Anpassung der Grundgröße für QUERFORMAT (Landscape) */
+@media (orientation: landscape) {
+    .points-base-size {
+        /* Im Querformat ist der Bildschirm sehr breit. Wir reduzieren die Basis-Schriftgröße 
+           auf 2.5vh (Viewport Height), damit die Punkte nicht überdimensional groß werden. */
+        font-size: 2.5vh;
+    }
+}
+
+
+/* ----------------------------------------------------- */
+/* PHASE 1: Fade-In & Zoom (Nutzt die performante scale()) */
+/* ----------------------------------------------------- */
 @keyframes points-fade-in-zoom {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5); /* Start kleiner und transparent ... scale(0.5)*/
-  }
-  20% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.5); /* Endet normal groß und sichtbar ... scale(1.2) */
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.3); /* Endet normal groß und sichtbar ... scale(1)*/
-  }
+    /* Die scale()-Werte beziehen sich auf die responsive font-size aus .points-base-size */
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.5);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.3);
+    }
 }
 
 .points-pop-in {
-  animation: points-fade-in-zoom 1s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
+    animation: points-fade-in-zoom 0.5s ease-out forwards;
 }
 
-/* *** NEU: Standard-Animation für Portrait (Flug nach OBEN) *** */
+/* ----------------------------------------------------- */
+/* PHASE 2: Flug-Animationen (PORTRAIT) */
+/* ----------------------------------------------------- */
+/* Standard-Keyframes für Hochformat (nach oben/unten) */
 @keyframes flyToCornerPlayer1 {
     0% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1.3);
         top: 50%;
-        left: 50%; /* Startposition: Mitte des Bildschirms */
+        left: 50%; 
     }
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.2);
         top: 1%; /* Fliegt nach oben */
-        left: 50%; /* Bleibt horizontal zentriert */
+        left: 50%; 
     }
 }
 
-/* *** NEU: Standard-Animation für Portrait (Flug nach UNTEN) *** */
 @keyframes flyToCornerPlayer2 {
     0% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1.3);
         top: 50%;
-        left: 50%; /* Startposition: Mitte des Bildschirms */
+        left: 50%; 
     }
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.2);
         top: 99%; /* Fliegt nach unten */
-        left: 50%; /* Bleibt horizontal zentriert */
+        left: 50%; 
     }
 }
 
+/* Zuweisung der Klassen für Phase 2 */
 .fly-to-corner-player1 {
     animation: flyToCornerPlayer1 0.4s ease-in forwards;
 }
@@ -640,6 +677,44 @@ body, html {
     animation: flyToCornerPlayer2 0.4s ease-in forwards;
 }
 
+
+/* ----------------------------------------------------- */
+/* PHASE 2: Flug-Animationen (QUERFORMAT - Überschreibung) */
+/* ----------------------------------------------------- */
+@media (orientation: landscape) {
+    /* Keyframes für Querformat (nach links/rechts) */
+    @keyframes flyToCornerPlayer1 {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.3);
+            top: 50%;
+            left: 50%; 
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.2);
+            top: 50%; /* Bleibt vertikal zentriert */
+            left: 1%; /* Fliegt nach links */
+        }
+    }
+
+    @keyframes flyToCornerPlayer2 {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.3);
+            top: 50%;
+            left: 50%; 
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.2);
+            top: 50%; /* Bleibt vertikal zentriert */
+            left: 99%; /* Fliegt nach rechts */
+        }
+    }
+    /* Die Klassen `.fly-to-corner-player1` und `.fly-to-corner-player2` 
+       rufen nun automatisch die seitliche Flug-Animation auf. */
+}
 /* ------------------------------------------------------------------ */
 /* QUERFORMAT (LANDSCAPE) FÜR DESKTOP UND GEDREHTE GERÄTE */
 /* ------------------------------------------------------------------ */
@@ -674,41 +749,6 @@ body, html {
     }
     
     /* ... (Optionale Schriftgröße Anpassungen) ... */
-
-    /* *** NEU: Animationen für Querformat (Flug nach LINKS) *** */
-    @keyframes flyToCornerPlayer1 {
-        0% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.3);
-            top: 50%;
-            left: 50%; /* Startposition: Mitte des Bildschirms */
-        }
-        100% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.2);
-            top: 50%; /* Bleibt vertikal zentriert */
-            left: 1%; /* Fliegt nach links */
-        }
-    }
-
-    /* *** NEU: Animationen für Querformat (Flug nach RECHTS) *** */
-    @keyframes flyToCornerPlayer2 {
-        0% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.3);
-            top: 50%;
-            left: 50%; /* Startposition: Mitte des Bildschirms */
-        }
-        100% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.2);
-            top: 50%; /* Bleibt vertikal zentriert */
-            left: 99%; /* Fliegt nach rechts */
-        }
-    }
-    /* Die Klassen `.fly-to-corner-player1` und `.fly-to-corner-player2` rufen nun automatisch
-       die in diesem Scope definierten (überschriebenen) Keyframes auf. */
-}
 
 /* Container für den digitalen Würfel */
 #digital-dice-area {
