@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         player1Score: 0,
         player2Score: 0,
         currentPlayer: 1,
-        totalRounds: 10, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        totalRounds: 4, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
@@ -1297,95 +1297,62 @@ async function playTrackSnippet() {
         }); // <--- HIER endet der .then()-Block für fadeAudioOut
     }
 
-// Funktion zur Anzeige der animierten Punkte
-function displayPointsAnimation(points, player) {
-    // Wenn das Element für die Punkte-Animation dasselbe ist wie für den Countdown,
-    // bezeichnen wir es hier intern als 'pointsAnimationDisplay' für Klarheit.
-    const pointsAnimationDisplay = countdownDisplay; 
+    // NEU: Funktion zur Anzeige der animierten Punkte
+    function displayPointsAnimation(points, player) {
+        return new Promise(resolve => {
+            // 1. Alle vorherigen Animationsklassen entfernen und Element für den Start vorbereiten
+            countdownDisplay.classList.remove('hidden', 'countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2', 'points-pop-in'); // 'points-pop-in' auch entfernen
+            countdownDisplay.innerText = `+${points}`;
 
-    return new Promise(resolve => {
-        
-        // --- 1. VORBEREITUNG UND PHASE 1 (Pop-in) STARTEN ---
-        
-        pointsAnimationDisplay.classList.remove(
-            'hidden', 
-            'countdown-animated', 
-            'fly-to-corner-player1', 
-            'fly-to-corner-player2', 
-            'points-pop-in'
-        ); 
-        pointsAnimationDisplay.innerText = `+${points}`;
+            // 2. Start-Stile für die Punkteanzeige setzen (für die 'pop-in' Animation)
+            countdownDisplay.style.opacity = '0'; // Startet transparent
+            countdownDisplay.style.transform = 'translate(-50%, -50%) scale(0.8)'; // Startet kleiner
+            countdownDisplay.style.top = '50%'; // Vertikale Mitte
 
-        // WICHTIG: Inline-Styles entfernen, die von CSS-Keyframes gesteuert werden (Opazität, Transform, Top/Left)
-        pointsAnimationDisplay.style.opacity = ''; 
-        pointsAnimationDisplay.style.transform = ''; 
-        pointsAnimationDisplay.style.top = '';
-        pointsAnimationDisplay.style.left = '';
-        pointsAnimationDisplay.style.fontSize = ''; // **NEU: Reset der Font Size**
-
-        // Basisklasse HINZUFÜGEN: Definiert die responsive Schriftgröße (4vw/2.5vh)
-        pointsAnimationDisplay.classList.add('points-base-size'); 
-        
-        // Farbe setzen
-        if (player === 1) {
-            pointsAnimationDisplay.style.color = 'var(--punktefarbe-player1)';
-        } else {
-            pointsAnimationDisplay.style.color = 'var(--punktefarbe-player2)';
-        }
-
-        // Reflow erzwingen
-        void pointsAnimationDisplay.offsetWidth;
-
-        // Phase 1: Pop-in starten
-        pointsAnimationDisplay.classList.add('points-pop-in'); 
-
-        // Listener für das Ende der ERSTEN Animation (Pop-in)
-        const animationEndHandler = (e) => {
-            if (e.animationName === 'points-fade-in-zoom') {
-                
-                // Listener für Phase 1 entfernen
-                pointsAnimationDisplay.removeEventListener('animationend', animationEndHandler);
-
-                // --- PHASE 2 (Fliegen) STARTEN ---
-                
-                // Klasse für Phase 1 entfernen
-                pointsAnimationDisplay.classList.remove('points-pop-in'); 
-
-                // Klasse für Phase 2 (Flug) hinzufügen
-                const flyClass = (player === 1) ? 'fly-to-corner-player1' : 'fly-to-corner-player2';
-                pointsAnimationDisplay.classList.add(flyClass);
-
-                // Listener für das Ende der ZWEITEN Animation (Fliegen)
-                pointsAnimationDisplay.addEventListener('animationend', function finalCleanupHandler(e) {
-                    if (e.animationName.startsWith('flyToCorner')) {
-                        
-                        // Listener entfernen
-                        pointsAnimationDisplay.removeEventListener('animationend', finalCleanupHandler);
-                        
-                        // --- AUFRÄUMEN UND ABSCHLIESSEN ---
-                        
-                        // 1. **KRITISCH:** Alle Animations- und Basisklassen entfernen
-                        pointsAnimationDisplay.classList.remove(flyClass, 'points-base-size');
-                        
-                        // 2. Element verstecken und Text leeren
-                        pointsAnimationDisplay.classList.add('hidden');
-                        pointsAnimationDisplay.innerText = ''; 
-                        
-                        // 3. Inline-Styles auf Standard zurücksetzen
-                        pointsAnimationDisplay.style.color = 'var(--white)'; 
-                        pointsAnimationDisplay.style.fontSize = ''; // **WICHTIG: Setzt Schriftgröße zurück**
-
-                        // Promise auflösen
-                        resolve(); 
-                    }
-                });
+            if (player === 1) {
+                countdownDisplay.style.color = 'var(--punktefarbe-player1)';
+                countdownDisplay.style.left = '50%'; // 25% für Linke Hälfte für Spieler 1
+            } else {
+                countdownDisplay.style.color = 'var(--punktefarbe-player2)';
+                countdownDisplay.style.left = '50%'; // 75% für Rechte Hälfte für Spieler 2
             }
-        };
 
-        // Listener anfügen
-        pointsAnimationDisplay.addEventListener('animationend', animationEndHandler);
-    });
-}
+            // Reflow erzwingen, damit die Start-Stile angewendet werden, bevor die Animation beginnt
+            void countdownDisplay.offsetWidth;
+
+            // 3. Phase 1: Punkte sanft einblenden (Pop-in)
+            countdownDisplay.classList.add('points-pop-in'); // Neue Klasse für den sanften Pop-in-Effekt
+
+            const popInDuration = 300; // Dauer des Einblendens (0.3 Sekunden, passt zur CSS)
+            const flyAnimationDuration = 500; // Dauer der "Wegfliegen"-Animation (0.5 Sekunden, passt zur CSS)
+
+            // 4. Phase 2: Nach dem Einblenden die "Wegfliegen"-Animation starten
+            setTimeout(() => {
+                countdownDisplay.classList.remove('points-pop-in'); // Pop-in-Klasse entfernen
+                if (player === 1) {
+                    countdownDisplay.classList.add('fly-to-corner-player1');
+                } else {
+                    countdownDisplay.classList.add('fly-to-corner-player2');
+                }
+            }, popInDuration); // Startet nach dem Einblenden
+
+            // 5. Nach der gesamten Animationsdauer das Element verstecken und Promise auflösen
+            setTimeout(() => {
+                countdownDisplay.classList.add('hidden');
+                // Animationsklassen entfernen, damit sie beim nächsten Mal sauber starten
+                countdownDisplay.classList.remove('fly-to-corner-player1', 'fly-to-corner-player2');
+                countdownDisplay.innerText = ''; // Text leeren
+
+                // Stile auf den Standardwert zurücksetzen, falls countdownDisplay auch für den Countdown genutzt wird
+                countdownDisplay.style.color = 'var(--white)';
+                countdownDisplay.style.left = '50%';
+                countdownDisplay.style.top = '50%';
+                countdownDisplay.style.opacity = '1'; // Opacity zurücksetzen
+                countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)'; // Transform zurücksetzen
+                resolve(); // Promise auflösen, damit der nächste Schritt in handleFeedback ausgeführt werden kann
+            }, popInDuration + flyAnimationDuration); // Gesamtdauer: Einblenden + Fliegen
+        });
+    }
     document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
     document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
 
