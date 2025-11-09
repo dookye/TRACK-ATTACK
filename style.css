@@ -363,59 +363,124 @@ body, html {
     cursor: pointer;
 }
 
+/*
+ * #reveal-container Styles
+ * Begrenzt die maximale Breite des Containers selbst auf 98% der Viewport-Breite.
+ */
 #reveal-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 30px;
+    
+    /* NEU: Wichtigste Anpassung: Begrenzt die Gesamtbreite */
+    max-width: 98vw;
+    /* Stellt sicher, dass padding nicht zur Breite hinzukommt und Überlauf erzeugt */
+    box-sizing: border-box;
+    /* Optional: Ein wenig horizontaler Puffer */
+    padding: 0 5px;
 }
 
+/*
+ * #track-info Styles
+ * Zeigt Album-Cover und Text nebeneinander.
+ * Bei sehr kleinen Bildschirmen sollte dieser Block ggf. vertikal umbrechen (wird nicht direkt hier gelöst, aber vorbereitet).
+ */
 #track-info {
     display: flex;
+    /* Erlaubt Elementen, bei Platzmangel in die nächste Zeile zu springen */
+    flex-wrap: wrap; 
     align-items: center;
     gap: 20px;
     background: rgba(0,0,0,0.5);
     padding: 20px;
     border-radius: 10px;
+    
+    /* Wichtig: Nutzt die volle erlaubte Breite des #reveal-container */
+    width: 100%;
 }
+
+/*
+ * Container für Titel, Künstler, Jahr
+ * Stellt sicher, dass dieser Block die restliche verfügbare Breite im #track-info nutzt
+ * und dass der Text darin nicht überläuft.
+ */
+#text-info-block {
+    /* Lässt diesen Block den verfügbaren Platz im #track-info einnehmen */
+    flex-grow: 1; 
+    /* NEU: Minimale Breite verhindern, dass das Cover keinen Platz hat */
+    min-width: 0; 
+}
+
+
 #album-cover {
+    /* NEU: Definiert eine feste minimale Größe, damit das Cover nicht zu klein wird */
+    flex-shrink: 0;
     width: 150px;
     height: 150px;
 }
+
+
+/*
+ * Text-Elemente (Titel, Künstler, Jahr)
+ * WICHTIG: Stellt sicher, dass lange Texte innerhalb der zugewiesenen Breite umbrechen.
+ */
+#track-title, 
+#track-artist, 
+#track-album,
+#track-year {
+    /* NEU: Erzwingt Umbrüche auch bei sehr langen Wörtern/URIs */
+    word-break: break-word;
+    /* Stellt sicher, dass der Text die volle Breite des übergeordneten Textblocks nutzt */
+    width: 100%; 
+    margin: 0; /* Setze margin hier zurück, um Platz zu sparen */
+}
+
 #track-title {
     font-size: 2em;
     font-weight: bold;
-    margin: 0;
 }
 #track-artist {
     font-size: 1.2em;
-    margin: 0;
 }
 
 /* Styling für Album und Jahr */
 #track-album {
-    font-size: 1em; /* Etwas kleiner als Titel und Interpret */
-    margin-top: 5px; /* Abstand zum Interpreten */
-    color: #bbb; /* Leicht gräuliche Farbe */
+    font-size: 1em; 
+    margin-top: 5px; 
+    color: #bbb; 
 }
 
 #track-year {
-    font-size: 0.9em; /* Noch kleiner */
-    color: #999; /* Noch gräulicher */
+    font-size: 0.9em; 
+    color: #999; 
 }
 
 /* Styling für das kontextuelle Branding im Reveal-Container */
 .spotify-content-badge {
-    display: block; /* Stellt sicher, dass es eine eigene Zeile hat oder flexibel ist */
+    display: block; 
     margin-top: 5px;
 }
 
 .spotify-content-badge img {
     /* Mindestgröße des Icons für Metadaten */
-    width: 25px; 
+    width: 25px; 
     height: 25px;
-    min-width: 21px; 
+    min-width: 21px; 
     min-height: 21px;
+}
+
+/* Optional: Fügen Sie eine Media Query hinzu, um das Cover und den Text 
+   auf sehr kleinen Bildschirmen untereinander anzuordnen */
+@media (max-width: 600px) {
+    #track-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    #text-info-block {
+        text-align: center;
+        width: 100%;
+    }
 }
 
 #feedback-buttons button {
