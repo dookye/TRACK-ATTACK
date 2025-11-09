@@ -1323,7 +1323,7 @@ async function playTrackSnippet() {
             // 3. Phase 1: Punkte sanft einblenden (Pop-in)
             countdownDisplay.classList.add('points-pop-in'); // Neue Klasse für den sanften Pop-in-Effekt
 
-            const popInDuration = 300; // Dauer des Einblendens (0.3 Sekunden, passt zur CSS)
+            const popInDuration = 600; // Dauer des Einblendens (0.3 Sekunden, passt zur CSS)
             const flyAnimationDuration = 500; // Dauer der "Wegfliegen"-Animation (0.5 Sekunden, passt zur CSS)
 
             // 4. Phase 2: Nach dem Einblenden die "Wegfliegen"-Animation starten
