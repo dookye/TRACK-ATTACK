@@ -622,11 +622,11 @@ body, html {
     }
     20% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1.5);
+        transform: translate(-50%, -50%) scale(1.2);
     }
     100% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1.3);
+        transform: translate(-50%, -50%) scale(1);
     }
 }
 
@@ -641,7 +641,7 @@ body, html {
 @keyframes flyToCornerPlayer1 {
     0% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1.3);
+        transform: translate(-50%, -50%) scale(1);
         top: 50%;
         left: 50%; 
     }
@@ -656,7 +656,7 @@ body, html {
 @keyframes flyToCornerPlayer2 {
     0% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1.3);
+        transform: translate(-50%, -50%) scale(1);
         top: 50%;
         left: 50%; 
     }
@@ -686,7 +686,7 @@ body, html {
     @keyframes flyToCornerPlayer1 {
         0% {
             opacity: 1;
-            transform: translate(-50%, -50%) scale(1.3);
+            transform: translate(-50%, -50%) scale(1);
             top: 50%;
             left: 50%; 
         }
@@ -701,7 +701,7 @@ body, html {
     @keyframes flyToCornerPlayer2 {
         0% {
             opacity: 1;
-            transform: translate(-50%, -50%) scale(1.3);
+            transform: translate(-50%, -50%) scale(1);
             top: 50%;
             left: 50%; 
         }
@@ -884,28 +884,28 @@ body, html {
 }
 
 /* -------------------- FOOTER POSITIONIERUNG -------------------- */
-
 #game-footer {
     /* Absolut positioniert unten rechts */
     position: absolute;
     bottom: 10px;
     right: 10px;
-    left: auto; 
-    
+    left: auto;
+
     /* WICHTIG: Flexbox für die Anordnung nebeneinander */
     display: flex;
     flex-direction: row; /* Elemente in einer Reihe */
     align-items: center;
     gap: 15px; /* Abstand zwischen Branding und Timer */
-    
+
     /* WICHTIG: Verhindert, dass die Elemente bei Platzmangel umbrechen und überlappen */
-    white-space: nowrap; 
-    
+    white-space: nowrap;
+
     z-index: 1000; /* Sehr hoher Z-Index, um andere UI-Elemente zu überlagern */
-    
-    color: #ccc; 
-    font-size: 0.8em;
-    /* Optional zum Debuggen: background: rgba(255, 0, 0, 0.3); */
+
+    color: #ccc;
+    /* FIX: HIER STOPPEN WIR DIE SCHRIFTGRÖSSEN-VERERBUNG */
+    /* Anstatt 'em' (relativ), verwenden wir eine feste 'px'-Größe. */
+    font-size: 14px; 
 }
 
 /* -------------------- STYLING FÜR DEN TIMER (KEINE POSITIONIERUNG!) -------------------- */
@@ -915,24 +915,25 @@ body, html {
     padding: 5px 10px;
     border-radius: 5px;
     font-family: 'Poppins', sans-serif;
-    font-size: 14px;
-    white-space: nowrap; 
+    /* Font-Size ist bereits fix, das ist gut */
+    font-size: 14px; 
+    white-space: nowrap;
 }
 
 /* -------------------- BRANDING STYLING -------------------- */
 #powered-by-spotify {
     display: flex;
     align-items: center;
-    text-decoration: none; 
-    color: inherit; 
-    /* NEIN: Keine weitere Positionierung nötig, Flexbox regelt es */
+    text-decoration: none;
+    color: inherit;
 }
 
 #powered-by-spotify .branding-icon {
     /* Mindestgröße des Icons */
-    width: 25px; 
+    /* HIER SICHERSTELLEN, DASS NUR ABSOLUTE EINHEITEN VERWENDET WERDEN */
+    width: 25px;
     height: 25px;
-    min-width: 21px; 
+    min-width: 21px;
     min-height: 21px;
-    margin-right: 5px; 
+    margin-right: 5px;
 }
