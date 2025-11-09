@@ -597,7 +597,7 @@ body, html {
 }
 
 .points-pop-in {
-  animation: points-fade-in-zoom 2s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
+  animation: points-fade-in-zoom 0.5s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
 }
 
 /* *** NEU: Standard-Animation für Portrait (Flug nach OBEN) *** */
