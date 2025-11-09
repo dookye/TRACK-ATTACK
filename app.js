@@ -1297,81 +1297,85 @@ async function playTrackSnippet() {
         }); // <--- HIER endet der .then()-Block für fadeAudioOut
     }
 
-// NEU: Funktion zur Anzeige der animierten Punkte
+// Funktion zur Anzeige der animierten Punkte
 function displayPointsAnimation(points, player) {
+    // Wenn das Element für die Punkte-Animation dasselbe ist wie für den Countdown,
+    // bezeichnen wir es hier intern als 'pointsAnimationDisplay' für Klarheit.
+    const pointsAnimationDisplay = countdownDisplay; 
+
     return new Promise(resolve => {
         
-        // --- VORBEREITUNG DES ELEMENTS (Countdown-Display wird als Punkte-Element zweckentfremdet) ---
-
-        // 1. Alle vorherigen Animationsklassen entfernen und Text setzen
-        countdownDisplay.classList.remove(
+        // --- 1. VORBEREITUNG UND PHASE 1 (Pop-in) STARTEN ---
+        
+        pointsAnimationDisplay.classList.remove(
             'hidden', 
             'countdown-animated', 
             'fly-to-corner-player1', 
             'fly-to-corner-player2', 
             'points-pop-in'
         ); 
-        countdownDisplay.innerText = `+${points}`;
+        pointsAnimationDisplay.innerText = `+${points}`;
 
-        // WICHTIG: Inline-Stile, die die CSS-Animationen überschreiben, entfernen.
-        // Die Positionierung, Skalierung und Opazität übernimmt jetzt die CSS-Klasse und die Keyframes.
-        countdownDisplay.style.opacity = ''; 
-        countdownDisplay.style.transform = ''; 
-        countdownDisplay.style.top = '';
-        countdownDisplay.style.left = '';
-        
-        // 2. Basisklasse HINZUFÜGEN: Diese sorgt für die responsive Schriftgröße und die Grundzentrierung.
-        countdownDisplay.classList.add('points-base-size'); 
+        // WICHTIG: Inline-Styles entfernen, die von CSS-Keyframes gesteuert werden (Opazität, Transform, Top/Left)
+        pointsAnimationDisplay.style.opacity = ''; 
+        pointsAnimationDisplay.style.transform = ''; 
+        pointsAnimationDisplay.style.top = '';
+        pointsAnimationDisplay.style.left = '';
+        pointsAnimationDisplay.style.fontSize = ''; // **NEU: Reset der Font Size**
+
+        // Basisklasse HINZUFÜGEN: Definiert die responsive Schriftgröße (4vw/2.5vh)
+        pointsAnimationDisplay.classList.add('points-base-size'); 
         
         // Farbe setzen
         if (player === 1) {
-            countdownDisplay.style.color = 'var(--punktefarbe-player1)';
+            pointsAnimationDisplay.style.color = 'var(--punktefarbe-player1)';
         } else {
-            countdownDisplay.style.color = 'var(--punktefarbe-player2)';
+            pointsAnimationDisplay.style.color = 'var(--punktefarbe-player2)';
         }
 
-        // Reflow erzwingen (optional, aber gute Praxis bei Klassenzuweisung)
-        void countdownDisplay.offsetWidth;
+        // Reflow erzwingen
+        void pointsAnimationDisplay.offsetWidth;
 
-        // --- PHASE 1: POP-IN STARTEN ---
-        countdownDisplay.classList.add('points-pop-in'); 
+        // Phase 1: Pop-in starten
+        pointsAnimationDisplay.classList.add('points-pop-in'); 
 
-        // Listener für das Ende der ersten Animation (Phase 1)
+        // Listener für das Ende der ERSTEN Animation (Pop-in)
         const animationEndHandler = (e) => {
-            // Sicherstellen, dass wir nur auf das Ende des Pop-In Keyframes reagieren
             if (e.animationName === 'points-fade-in-zoom') {
                 
-                // --- PHASE 2: FLIEGEN STARTEN ---
+                // Listener für Phase 1 entfernen
+                pointsAnimationDisplay.removeEventListener('animationend', animationEndHandler);
+
+                // --- PHASE 2 (Fliegen) STARTEN ---
                 
-                // 1. Listener für Phase 1 entfernen
-                countdownDisplay.removeEventListener('animationend', animationEndHandler);
+                // Klasse für Phase 1 entfernen
+                pointsAnimationDisplay.classList.remove('points-pop-in'); 
 
-                // 2. Klasse für Phase 1 entfernen
-                countdownDisplay.classList.remove('points-pop-in'); 
-
-                // 3. Klasse für Phase 2 (Flug) hinzufügen
+                // Klasse für Phase 2 (Flug) hinzufügen
                 const flyClass = (player === 1) ? 'fly-to-corner-player1' : 'fly-to-corner-player2';
-                countdownDisplay.classList.add(flyClass);
+                pointsAnimationDisplay.classList.add(flyClass);
 
-                // Listener für das Ende der zweiten Animation (Phase 2)
-                countdownDisplay.addEventListener('animationend', function finalCleanupHandler(e) {
-                    // Sicherstellen, dass wir nur auf das Ende des Flug-Keyframes reagieren
+                // Listener für das Ende der ZWEITEN Animation (Fliegen)
+                pointsAnimationDisplay.addEventListener('animationend', function finalCleanupHandler(e) {
                     if (e.animationName.startsWith('flyToCorner')) {
+                        
+                        // Listener entfernen
+                        pointsAnimationDisplay.removeEventListener('animationend', finalCleanupHandler);
                         
                         // --- AUFRÄUMEN UND ABSCHLIESSEN ---
                         
-                        // 1. Listener entfernen
-                        countdownDisplay.removeEventListener('animationend', finalCleanupHandler);
+                        // 1. **KRITISCH:** Alle Animations- und Basisklassen entfernen
+                        pointsAnimationDisplay.classList.remove(flyClass, 'points-base-size');
                         
-                        // 2. Alle Animations- und Basisklassen entfernen
-                        countdownDisplay.classList.remove(flyClass, 'points-base-size');
+                        // 2. Element verstecken und Text leeren
+                        pointsAnimationDisplay.classList.add('hidden');
+                        pointsAnimationDisplay.innerText = ''; 
                         
-                        // 3. Element für normalen Countdown-Zweck zurücksetzen
-                        countdownDisplay.classList.add('hidden');
-                        countdownDisplay.innerText = ''; 
-                        countdownDisplay.style.color = 'var(--white)'; 
+                        // 3. Inline-Styles auf Standard zurücksetzen
+                        pointsAnimationDisplay.style.color = 'var(--white)'; 
+                        pointsAnimationDisplay.style.fontSize = ''; // **WICHTIG: Setzt Schriftgröße zurück**
 
-                        // Promise auflösen, um den Spielfluss fortzusetzen
+                        // Promise auflösen
                         resolve(); 
                     }
                 });
@@ -1379,7 +1383,7 @@ function displayPointsAnimation(points, player) {
         };
 
         // Listener anfügen
-        countdownDisplay.addEventListener('animationend', animationEndHandler);
+        pointsAnimationDisplay.addEventListener('animationend', animationEndHandler);
     });
 }
     document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
