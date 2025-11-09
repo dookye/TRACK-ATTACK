@@ -581,94 +581,57 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
 }
 
-/* *** Punkteanimation mit fly to corner portrai und querformat *** */
-/* ----------------------------------------------------- */
-/* NEU: BASISKLASSE FÜR RESPONSIVE GRÖSSE (NICHT animiert) */
-/* Diese Klasse muss IMMER auf dem Punkte-Element sein. */
-/* ----------------------------------------------------- */
-.points-base-size {
-    /* Standard-Größe für HOCHFORMAT (Portrait): 4vw. 
-       Wird relativ groß, da die Breite hier kleiner ist. */
-    font-size: 4vw; 
-    font-weight: bold;
-    color: #fde047; 
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    /* WICHTIG: Stellt sicher, dass das Element in der Mitte zentriert wird */
-    transform: translate(-50%, -50%); 
-    pointer-events: none; 
-    z-index: 1000;
-}
-
-/* Anpassung der Grundgröße für QUERFORMAT (Landscape) */
-@media (orientation: landscape) {
-    .points-base-size {
-        /* Im Querformat ist der Bildschirm sehr breit. Wir reduzieren die Basis-Schriftgröße 
-           auf 2.5vh (Viewport Height), damit die Punkte nicht überdimensional groß werden. */
-        font-size: 2.5vh;
-    }
-}
-
-
-/* ----------------------------------------------------- */
-/* PHASE 1: Fade-In & Zoom (Nutzt die performante scale()) */
-/* ----------------------------------------------------- */
 @keyframes points-fade-in-zoom {
-    /* Die scale()-Werte beziehen sich auf die responsive font-size aus .points-base-size */
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5);
-    }
-    20% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.2);
-    }
-    100% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5); /* Start kleiner und transparent */
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2); /* Endet normal groß und sichtbar */
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); /* Endet normal groß und sichtbar */
+  }
 }
 
 .points-pop-in {
-    animation: points-fade-in-zoom 0.5s ease-out forwards;
+  animation: points-fade-in-zoom 1s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
 }
 
-/* ----------------------------------------------------- */
-/* PHASE 2: Flug-Animationen (PORTRAIT) */
-/* ----------------------------------------------------- */
-/* Standard-Keyframes für Hochformat (nach oben/unten) */
+/* *** NEU: Standard-Animation für Portrait (Flug nach OBEN) *** */
 @keyframes flyToCornerPlayer1 {
     0% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
         top: 50%;
-        left: 50%; 
+        left: 50%; /* Startposition: Mitte des Bildschirms */
     }
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.2);
         top: 1%; /* Fliegt nach oben */
-        left: 50%; 
+        left: 50%; /* Bleibt horizontal zentriert */
     }
 }
 
+/* *** NEU: Standard-Animation für Portrait (Flug nach UNTEN) *** */
 @keyframes flyToCornerPlayer2 {
     0% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
         top: 50%;
-        left: 50%; 
+        left: 50%; /* Startposition: Mitte des Bildschirms */
     }
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.2);
         top: 99%; /* Fliegt nach unten */
-        left: 50%; 
+        left: 50%; /* Bleibt horizontal zentriert */
     }
 }
 
-/* Zuweisung der Klassen für Phase 2 */
 .fly-to-corner-player1 {
     animation: flyToCornerPlayer1 0.4s ease-in forwards;
 }
@@ -677,44 +640,6 @@ body, html {
     animation: flyToCornerPlayer2 0.4s ease-in forwards;
 }
 
-
-/* ----------------------------------------------------- */
-/* PHASE 2: Flug-Animationen (QUERFORMAT - Überschreibung) */
-/* ----------------------------------------------------- */
-@media (orientation: landscape) {
-    /* Keyframes für Querformat (nach links/rechts) */
-    @keyframes flyToCornerPlayer1 {
-        0% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-            top: 50%;
-            left: 50%; 
-        }
-        100% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.2);
-            top: 50%; /* Bleibt vertikal zentriert */
-            left: 1%; /* Fliegt nach links */
-        }
-    }
-
-    @keyframes flyToCornerPlayer2 {
-        0% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-            top: 50%;
-            left: 50%; 
-        }
-        100% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.2);
-            top: 50%; /* Bleibt vertikal zentriert */
-            left: 99%; /* Fliegt nach rechts */
-        }
-    }
-    /* Die Klassen `.fly-to-corner-player1` und `.fly-to-corner-player2` 
-       rufen nun automatisch die seitliche Flug-Animation auf. */
-}
 /* ------------------------------------------------------------------ */
 /* QUERFORMAT (LANDSCAPE) FÜR DESKTOP UND GEDREHTE GERÄTE */
 /* ------------------------------------------------------------------ */
@@ -749,6 +674,41 @@ body, html {
     }
     
     /* ... (Optionale Schriftgröße Anpassungen) ... */
+
+    /* *** NEU: Animationen für Querformat (Flug nach LINKS) *** */
+    @keyframes flyToCornerPlayer1 {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            top: 50%;
+            left: 50%; /* Startposition: Mitte des Bildschirms */
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.2);
+            top: 50%; /* Bleibt vertikal zentriert */
+            left: 1%; /* Fliegt nach links */
+        }
+    }
+
+    /* *** NEU: Animationen für Querformat (Flug nach RECHTS) *** */
+    @keyframes flyToCornerPlayer2 {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            top: 50%;
+            left: 50%; /* Startposition: Mitte des Bildschirms */
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.2);
+            top: 50%; /* Bleibt vertikal zentriert */
+            left: 99%; /* Fliegt nach rechts */
+        }
+    }
+    /* Die Klassen `.fly-to-corner-player1` und `.fly-to-corner-player2` rufen nun automatisch
+       die in diesem Scope definierten (überschriebenen) Keyframes auf. */
+}
 
 /* Container für den digitalen Würfel */
 #digital-dice-area {
@@ -884,28 +844,28 @@ body, html {
 }
 
 /* -------------------- FOOTER POSITIONIERUNG -------------------- */
+
 #game-footer {
     /* Absolut positioniert unten rechts */
     position: absolute;
     bottom: 10px;
     right: 10px;
-    left: auto;
-
+    left: auto; 
+    
     /* WICHTIG: Flexbox für die Anordnung nebeneinander */
     display: flex;
     flex-direction: row; /* Elemente in einer Reihe */
     align-items: center;
     gap: 15px; /* Abstand zwischen Branding und Timer */
-
+    
     /* WICHTIG: Verhindert, dass die Elemente bei Platzmangel umbrechen und überlappen */
-    white-space: nowrap;
-
+    white-space: nowrap; 
+    
     z-index: 1000; /* Sehr hoher Z-Index, um andere UI-Elemente zu überlagern */
-
-    color: #ccc;
-    /* FIX: HIER STOPPEN WIR DIE SCHRIFTGRÖSSEN-VERERBUNG */
-    /* Anstatt 'em' (relativ), verwenden wir eine feste 'px'-Größe. */
-    font-size: 14px; 
+    
+    color: #ccc; 
+    font-size: 0.8em;
+    /* Optional zum Debuggen: background: rgba(255, 0, 0, 0.3); */
 }
 
 /* -------------------- STYLING FÜR DEN TIMER (KEINE POSITIONIERUNG!) -------------------- */
@@ -915,25 +875,24 @@ body, html {
     padding: 5px 10px;
     border-radius: 5px;
     font-family: 'Poppins', sans-serif;
-    /* Font-Size ist bereits fix, das ist gut */
-    font-size: 14px; 
-    white-space: nowrap;
+    font-size: 14px;
+    white-space: nowrap; 
 }
 
 /* -------------------- BRANDING STYLING -------------------- */
 #powered-by-spotify {
     display: flex;
     align-items: center;
-    text-decoration: none;
-    color: inherit;
+    text-decoration: none; 
+    color: inherit; 
+    /* NEIN: Keine weitere Positionierung nötig, Flexbox regelt es */
 }
 
 #powered-by-spotify .branding-icon {
     /* Mindestgröße des Icons */
-    /* HIER SICHERSTELLEN, DASS NUR ABSOLUTE EINHEITEN VERWENDET WERDEN */
-    width: 25px;
+    width: 25px; 
     height: 25px;
-    min-width: 21px;
+    min-width: 21px; 
     min-height: 21px;
-    margin-right: 5px;
+    margin-right: 5px; 
 }
