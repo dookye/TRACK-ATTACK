@@ -364,8 +364,7 @@ body, html {
 }
 
 /*
- * #reveal-container Styles
- * Begrenzt die maximale Breite des Containers selbst auf 98% der Viewport-Breite.
+ * Basis-Styles (für Querformat und Desktop)
  */
 #reveal-container {
     display: flex;
@@ -373,78 +372,59 @@ body, html {
     align-items: center;
     gap: 30px;
     
-    /* NEU: Wichtigste Anpassung: Begrenzt die Gesamtbreite */
+    /* FIX 1: Verhindert horizontalen Überlauf des Haupt-Containers */
     max-width: 98vw;
-    /* Stellt sicher, dass padding nicht zur Breite hinzukommt und Überlauf erzeugt */
     box-sizing: border-box;
-    /* Optional: Ein wenig horizontaler Puffer */
-    padding: 0 5px;
+    padding: 0 5px; 
 }
 
 /*
- * #track-info Styles
- * Zeigt Album-Cover und Text nebeneinander.
- * Bei sehr kleinen Bildschirmen sollte dieser Block ggf. vertikal umbrechen (wird nicht direkt hier gelöst, aber vorbereitet).
+ * #track-info (Standard: Cover links, Text rechts)
  */
 #track-info {
     display: flex;
-    /* Erlaubt Elementen, bei Platzmangel in die nächste Zeile zu springen */
-    flex-wrap: wrap; 
+    width: 100%; 
     align-items: center;
     gap: 20px;
     background: rgba(0,0,0,0.5);
     padding: 20px;
     border-radius: 10px;
     
-    /* Wichtig: Nutzt die volle erlaubte Breite des #reveal-container */
-    width: 100%;
+    /* Erlaubt dem Cover und dem Text, umzubrechen, falls nötig */
+    flex-wrap: wrap; 
 }
 
-/*
- * Container für Titel, Künstler, Jahr
- * Stellt sicher, dass dieser Block die restliche verfügbare Breite im #track-info nutzt
- * und dass der Text darin nicht überläuft.
- */
-#text-info-block {
-    /* Lässt diesen Block den verfügbaren Platz im #track-info einnehmen */
+/* Der namenlose <div>, der den Text umschließt. */
+#track-info > div {
     flex-grow: 1; 
-    /* NEU: Minimale Breite verhindern, dass das Cover keinen Platz hat */
-    min-width: 0; 
+    min-width: 0; /* Wichtig für Textumbruch in Flex-Containern */
 }
-
 
 #album-cover {
-    /* NEU: Definiert eine feste minimale Größe, damit das Cover nicht zu klein wird */
-    flex-shrink: 0;
+    flex-shrink: 0; 
     width: 150px;
     height: 150px;
 }
 
-
-/*
- * Text-Elemente (Titel, Künstler, Jahr)
- * WICHTIG: Stellt sicher, dass lange Texte innerhalb der zugewiesenen Breite umbrechen.
- */
+/* Textumbruch-Fix für lange Titel */
 #track-title, 
 #track-artist, 
-#track-album,
+#track-album, 
 #track-year {
-    /* NEU: Erzwingt Umbrüche auch bei sehr langen Wörtern/URIs */
     word-break: break-word;
-    /* Stellt sicher, dass der Text die volle Breite des übergeordneten Textblocks nutzt */
-    width: 100%; 
-    margin: 0; /* Setze margin hier zurück, um Platz zu sparen */
+    text-align: left;
+    margin: 0;
 }
 
 #track-title {
     font-size: 2em;
     font-weight: bold;
 }
+
 #track-artist {
     font-size: 1.2em;
 }
 
-/* Styling für Album und Jahr */
 #track-album {
     font-size: 1em; 
     margin-top: 5px; 
@@ -456,30 +436,42 @@ body, html {
     color: #999; 
 }
 
-/* Styling für das kontextuelle Branding im Reveal-Container */
 .spotify-content-badge {
     display: block; 
     margin-top: 5px;
 }
 
 .spotify-content-badge img {
-    /* Mindestgröße des Icons für Metadaten */
-    width: 25px; 
+    width: 25px; 
     height: 25px;
-    min-width: 21px; 
+    min-width: 21px; 
     min-height: 21px;
 }
 
-/* Optional: Fügen Sie eine Media Query hinzu, um das Cover und den Text 
-   auf sehr kleinen Bildschirmen untereinander anzuordnen */
+/*
+ * RESPONSIVE ANPASSUNG: Hochformat (max. 600px Breite)
+ * Hier wird das Cover ÜBER dem Text platziert und alles zentriert.
+ */
 @media (max-width: 600px) {
     #track-info {
+        /* Ändert die Anordnung zu vertikal */
         flex-direction: column;
+        /* Zentriert das Cover (und den gesamten Textblock) */
+        align-items: center;
+    }
+    
+    /* Der Textblock nimmt die volle Breite ein und zentriert seinen Inhalt */
+    #track-info > div {
+        width: 100%;
         text-align: center;
     }
-    #text-info-block {
+
+    /* Stellt sicher, dass die einzelnen Textzeilen auch zentriert werden */
+    #track-title, 
+    #track-artist, 
+    #track-album, 
+    #track-year {
         text-align: center;
-        width: 100%;
     }
 }
 
