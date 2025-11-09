@@ -500,18 +500,42 @@ body, html {
 }
 
 #player1-score-display, #player2-score-display {
-    width: 100%; /* Nehmen die volle Breite ein */
-    height: 50%; /* Teilen die Höhe des Score-Screens */
-    font-size: 15vw;
+    width: 100%; 
+    height: 50%; 
+    
+    /* NEU: Verwenden Sie vmin (Viewport Minimum) als Standard, um 
+       Überlauf in beiden Modi zu verhindern. 12vmin sollte passen, 
+       da es sich immer auf die kleinere Bildschirmseite bezieht. */
+    font-size: 12vmin;
+    
     font-weight: bold;
     color: white;
     text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
     opacity: 1;
     transition: opacity 1s ease-in-out;
-    /* Zusätzliche Zentrierung für den Text innerhalb der Hälften */
+    
+    /* Zentrierung */
     display: flex; 
     justify-content: center;
     align-items: center;
+}
+
+/* ----------------------------------------------------
+ * Media Query für den Landscape-Modus (Querformat)
+ * ---------------------------------------------------- */
+@media (orientation: landscape) {
+    #player1-score-display, #player2-score-display {
+        /* Im Landscape-Modus ist die Viewport-Höhe (vh) die limitierende 
+           Dimension. Wir können einen größeren Prozentsatz der Höhe nehmen, 
+           um die Punkte prominent darzustellen, ohne zu überlaufen. */
+        font-size: 40vh; 
+        
+        /* Da die Punkte nur 50% der Höhe einnehmen (height: 50%),
+           ist 40vh sehr groß, aber passt noch gut hinein. 
+           Falls das zu groß ist, reduzieren Sie diesen Wert (z.B. auf 35vh).
+           Im Portrait-Modus wird weiterhin der 12vmin-Wert verwendet.
+        */
+    }
 }
 
 /* Speed-Round (Phase 6) */
