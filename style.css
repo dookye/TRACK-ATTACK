@@ -557,7 +557,7 @@ body, html {
 
 @media screen and (max-width: 768px) {
     #countdown-display {
-        font-size: 18vw; /* Sehr groß und responsiv */
+        font-size: 50vw; /* Sehr groß und responsiv ...18vw */
     }
 }
 
