@@ -856,56 +856,70 @@ const FALLBACK_DELAY_MS = 1500;
 
 
 /**
- * Hilfsfunktion zum Pausieren des Songs und zur Bereinigung.
- * Diese Funktion wird entweder vom Spotify Event Listener (korrekter Start) 
- * oder vom Fallback-Timer (fehlendes Start-Event) aufgerufen.
- * @param {number | null} startPosition - Die Position, an der die Wiedergabe begonnen hat (fürs Logging). 
- *                                       Null, wenn der Fallback-Timer ihn setzt.
- */
+ * Hilfsfunktion zum Pausieren des Songs und zur Bereinigung.
+ * Diese Funktion wird entweder vom Spotify Event Listener (korrekter Start) 
+ * oder vom Fallback-Timer (fehlendes Start-Event) aufgerufen.
+ * @param {number | null} startPosition - Die Position, an der die Wiedergabe begonnen hat (fürs Logging). 
+ *                                       Null, wenn der Fallback-Timer ihn setzt.
+*/
 function scheduleTrackPause(startPosition) {
-    const desiredDuration = gameState.trackDuration;
 
-    // Nur Timer setzen, wenn er noch nicht gesetzt ist (wichtig für den Fallback)
-    if (gameState.spotifyPlayTimeout) {
-        return; 
+    // --- [NEU] FALLBACK-DAUER-LOGIK ---
+    // Prüfen, ob dies der Fallback-Timer-Aufruf ist (erkennbar an startPosition === null)
+    const isFallback = (startPosition === null);
+
+    // Setze die Dauer: 6000ms im Fallback, ansonsten die normale Dauer aus dem gameState
+    const desiredDuration = isFallback ? 6000 : gameState.trackDuration;
+
+    if (isFallback) {
+        // Dieses Log siehst du jetzt, wenn der Fallback (nach 1500ms) den 6-Sekunden-Timer setzt
+        console.log(`[FALLBACK-TIMER] Setze angepasste Abspieldauer: ${desiredDuration}ms.`);
     }
+    // --- [ENDE NEU] ---
 
-    if (gameState.isSpeedRound) {
-        // Speed Round: Starte den visuellen Timer, der die Zeit zum Raten vorgibt.
-        // HINWEIS: Hier wird KEIN Pause-Timeout benötigt, da der Runden-Timer entscheidet.
-        startVisualSpeedRoundCountdown();
-        return;
-    }
 
-    // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
-    gameState.spotifyPlayTimeout = setTimeout(() => {
-        
-        // Wenn der Timer abläuft, wird der Song gestoppt.
-        spotifyPlayer.pause();
-        gameState.isSongPlaying = false;
+    // Nur Timer setzen, wenn er noch nicht gesetzt ist (wichtig für den Fallback)
+    if (gameState.spotifyPlayTimeout) {
+        return; 
+    }
 
-        if (gameState.attemptsMade < gameState.maxAttempts) {
-            logoButton.classList.remove('inactive');
-            logoButton.classList.add('logo-pulsing');
-        }
-        
-        // Logge die tatsächliche Stopp-Position für das Debugging
-        spotifyPlayer.getCurrentState().then(finalState => {
-            const finalPosition = finalState ? finalState.position : 'N/A';
-            const logType = startPosition === null ? 'FALLBACK STOP' : 'EVENT STOP';
-            
-            console.log(`[${logType}] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
-            
-            if (finalState && startPosition !== null) {
-                // Nur wenn wir die Startposition kennen, können wir die tatsächliche Dauer berechnen
-                const actualDuration = finalPosition - startPosition; 
-                console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
-            }
-        });
-        
-    }, desiredDuration);
+    if (gameState.isSpeedRound) {
+        // Speed Round: Starte den visuellen Timer, der die Zeit zum Raten vorgibt.
+        // HINWEIS: Hier wird KEIN Pause-Timeout benötigt, da der Runden-Timer entscheidet.
+        startVisualSpeedRoundCountdown();
+        return;
+    }
 
-    console.log(`[TIMER] Pause-Timeout (Dauer: ${desiredDuration}ms) erfolgreich gesetzt.`);
+    // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
+    // HINWEIS: Die Variable 'desiredDuration' wird jetzt von der Logik oben gesteuert
+    gameState.spotifyPlayTimeout = setTimeout(() => {
+        
+        // Wenn der Timer abläuft, wird der Song gestoppt.
+        spotifyPlayer.pause();
+        gameState.isSongPlaying = false;
+
+        if (gameState.attemptsMade < gameState.maxAttempts) {
+            logoButton.classList.remove('inactive');
+            logoButton.classList.add('logo-pulsing');
+        }
+        
+        // Logge die tatsächliche Stopp-Position für das Debugging
+        spotifyPlayer.getCurrentState().then(finalState => {
+            const finalPosition = finalState ? finalState.position : 'N/A';
+            const logType = startPosition === null ? 'FALLBACK STOP' : 'EVENT STOP';
+            
+            console.log(`[${logType}] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
+            
+            if (finalState && startPosition !== null) {
+                // Nur wenn wir die Startposition kennen, können wir die tatsächliche Dauer berechnen
+                const actualDuration = finalPosition - startPosition; 
+                console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
+            }
+        });
+        
+    }, desiredDuration); // <--- Hier wird die korrekte Dauer (normal oder 6000ms) verwendet
+
+    console.log(`[TIMER] Pause-Timeout (Dauer: ${desiredDuration}ms) erfolgreich gesetzt.`);
 }
 
 	/**
