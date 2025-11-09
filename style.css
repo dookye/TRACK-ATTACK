@@ -490,7 +490,6 @@ body, html {
 /* Punkte-Bildschirm (Phase 5) */
 #score-screen {
     /* *** GEÄNDERT: Standard ist jetzt Hochformat (unten/oben) *** */
-    font-size: 30vmin;
     flex-direction: column; /* Elemente übereinander (Blau oben, Pink unten) */
     background: linear-gradient(0deg, /* Gradient von unten (Pink) nach oben (Blau) */
         var(--player2-color) 0%, 
