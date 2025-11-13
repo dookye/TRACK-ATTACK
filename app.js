@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Spielstatus-Variablen ---
     let accessToken = null;
+	let playbackStateListener = null;
     let deviceId = null;
     let spotifyPlayer = null;
     let gameState = {
@@ -146,9 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
     let lastGameScreenVisible = '';
-
-	let playbackStateListener = null; // MUSS global sein, um in playTrackSnippet referenziert zu werden
-    let deviceId = null; // MUSS auch global sein
 
     const playlists = {
         'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
