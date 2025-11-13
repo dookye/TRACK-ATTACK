@@ -1445,58 +1445,72 @@ async function playTrackSnippet() {
     document.getElementById('correct-button').addEventListener('click', () => handleFeedback(true));
     document.getElementById('wrong-button').addEventListener('click', () => handleFeedback(false));
 
-    // RESET ROUND ---------------------------------------------------------------------------------------------------------------
-    function resetRoundUI() {
-        // Verstecke alle relevanten UI-Elemente
-        revealContainer.classList.add('hidden');
-        logoButton.classList.add('hidden');
+// RESET ROUND ---------------------------------------------------------------------------------------------------------------
+    function resetRoundUI() {
+        // Verstecke alle relevanten UI-Elemente
+        revealContainer.classList.add('hidden');
+        logoButton.classList.add('hidden');
 		logoButton.classList.remove('logo-pulsing');
-        genreContainer.classList.add('hidden');
-        diceContainer.classList.add('hidden');
-        revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
-        speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
+        genreContainer.classList.add('hidden');
+        diceContainer.classList.add('hidden');
+        revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
+        speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
 
-        // Setze die Interaktivität der Antwort-Buttons zurück
-        correctButton.classList.remove('no-interaction');
-        wrongButton.classList.remove('no-interaction');
+        // Setze die Interaktivität der Antwort-Buttons zurück
+        correctButton.classList.remove('no-interaction');
+        wrongButton.classList.remove('no-interaction');
 
-        // Entfernen Sie den Listener vom Logo-Button, um mehrfaches Hinzufügen zu vermeiden,
-        // wenn der Logo-Button wieder verwendet wird.
-        logoButton.removeEventListener('click', playTrackSnippet);
+        // Entfernen Sie den Listener vom Logo-Button...
+        logoButton.removeEventListener('click', playTrackSnippet);
 
-        // Digitalen Würfel-Bereich IMMER verstecken, wenn eine Runde vorbei ist
-        digitalDiceArea.classList.add('hidden');
+        // Digitalen Würfel-Bereich IMMER verstecken...
+        digitalDiceArea.classList.add('hidden');
 
-        // Setze das digitale Würfelbild auf seinen initialen Zustand zurück
-        digitalDiceMainImage.src = digitalDiceStartImage;
-        digitalDiceMainImage.classList.remove('no-interaction', 'rolling');
-        digitalDiceMainImage.style.cursor = 'pointer'; // Sicherstellen, dass es klickbar ist
+        // Setze das digitale Würfelbild auf seinen initialen Zustand zurück...
+        digitalDiceMainImage.src = digitalDiceStartImage;
+        digitalDiceMainImage.classList.remove('no-interaction', 'rolling');
+        digitalDiceMainImage.style.cursor = 'pointer'; 
 
-        // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
-        clearTimeout(gameState.speedRoundTimeout);
-        clearInterval(gameState.countdownInterval);
-        clearTimeout(gameState.spotifyPlayTimeout);
-        clearInterval(gameState.fadeInterval);
-        clearTimeout(gameState.diceAnimationTimeout); // NEU: Würfel-Animations-Timeout auch hier stoppen
+        // Sicherstellen, dass alle Timer und Intervalle der vorherigen Runde gestoppt sind
+        clearTimeout(gameState.speedRoundTimeout);
+        clearInterval(gameState.countdownInterval);
+        clearTimeout(gameState.spotifyPlayTimeout);
+        clearInterval(gameState.fadeInterval);
+        clearTimeout(gameState.diceAnimationTimeout); 
 
-        // Spotify Player pausieren, falls noch aktiv
-        if (gameState.isSongPlaying && spotifyPlayer) {
-            spotifyPlayer.pause();
-            gameState.isSongPlaying = false;
-        }
+        // --- [START DER KORREKTUR] ---
+        // Setzt das Countdown/Punkte-Display-Element VOLLSTÄNDIG zurück
+        // (Kopiert aus displayPointsAnimation)
+        // Dies verhindert, dass inline-Stile (transform, opacity) in die nächste Runde "bluten".
+        if (countdownDisplay) { // Nur ausführen, wenn das Element existiert
+            countdownDisplay.classList.add('hidden');
+            countdownDisplay.classList.remove('countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2', 'points-pop-in');
+            countdownDisplay.innerText = '';
+            countdownDisplay.style.color = 'var(--white)';
+            countdownDisplay.style.left = '50%';
+            countdownDisplay.style.top = '50%';
+            countdownDisplay.style.opacity = '1';
+            countdownDisplay.style.transform = 'translate(-50%, -50%) scale(1)';
+  	    }
+        // --- [ENDE DER KORREKTUR] ---
 
-        // Lautstärke auf 100% zurücksetzen, BEVOR der nächste Song startet
-        if (spotifyPlayer) { // Prüfen, ob der Player initialisiert ist
-            spotifyPlayer.setVolume(1.0) // 1.0 entspricht 100%
-                .then(() => {
-                    console.log("Lautstärke für Rateteil auf 100% zurückgesetzt.");
-                })
-                .catch(error => {
-                    console.error("Fehler beim Zurücksetzen der Lautstärke:", error);
-                });
-        }
-    }
+        // Spotify Player pausieren, falls noch aktiv
+        if (gameState.isSongPlaying && spotifyPlayer) {
+            spotifyPlayer.pause();
+            gameState.isSongPlaying = false;
+        }
 
+        // Lautstärke auf 100% zurücksetzen...
+        if (spotifyPlayer) { 
+            spotifyPlayer.setVolume(1.0) 
+                .then(() => {
+                    console.log("Lautstärke für Rateteil auf 100% zurückgesetzt.");
+                })
+                .catch(error => {
+                    console.error("Fehler beim Zurücksetzen der Lautstärke:", error);
+                });
+        }
+    }
     //=======================================================================
     // Phase 5: Spielende & Reset
     //=======================================================================
@@ -1604,40 +1618,56 @@ async function playTrackSnippet() {
         });
     }
 
-    // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
-    function startVisualSpeedRoundCountdown() {
-        let timeLeft = 10; // Startwert des Countdowns
-        countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
+// NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
+    function startVisualSpeedRoundCountdown() {
+        // --- [START DER KORREKTUR] ---
+        // 1. IMMER ZUERST alte Timer stoppen!
+        // Dies verhindert "doppelte" Timer, falls die Funktion mehrfach getriggert wird.
+        if (gameState.speedRoundTimeout) {
+            clearTimeout(gameState.speedRoundTimeout);
+        }
+        if (gameState.countdownInterval) {
+            clearInterval(gameState.countdownInterval);
+        }
+        // --- [ENDE DER KORREKTUR] ---
 
-        // Timer für die automatische Auflösung nach 10 Sekunden
-        gameState.speedRoundTimeout = setTimeout(() => {
-            showResolution(); // Auflösung nach 10 Sekunden
-        }, 10000);
 
-        // Sofort die erste Zahl anzeigen und animieren
-        countdownDisplay.innerText = timeLeft;
-        countdownDisplay.classList.remove('countdown-animated');
-        void countdownDisplay.offsetWidth; // Reflow
-        countdownDisplay.classList.add('countdown-animated');
+        let timeLeft = 10; // Startwert des Countdowns
+        countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
 
-        // Interval für den visuellen Countdown jede Sekunde
-        gameState.countdownInterval = setInterval(() => {
-            timeLeft--; // Zahl verringern
+        // Timer für die automatische Auflösung nach 10 Sekunden
+        gameState.speedRoundTimeout = setTimeout(() => {
+            // Interval hier auch stoppen, nur zur Sicherheit
+            clearInterval(gameState.countdownInterval); 
+            gameState.countdownInterval = null;
+            showResolution(); // Auflösung nach 10 Sekunden
+        }, 10000);
 
-            if (timeLeft >= 0) { // Solange die Zahl 0 oder größer ist
-                countdownDisplay.innerText = timeLeft; // Zahl aktualisieren
-                countdownDisplay.classList.remove('countdown-animated'); // Animation entfernen
-                void countdownDisplay.offsetWidth; // Reflow erzwingen
-                countdownDisplay.classList.add('countdown-animated'); // Animation hinzufügen
-            }
+        // Sofort die erste Zahl anzeigen und animieren
+        countdownDisplay.innerText = timeLeft;
+        countdownDisplay.classList.remove('countdown-animated');
+        void countdownDisplay.offsetWidth; // Reflow
+        countdownDisplay.classList.add('countdown-animated');
 
-            if (timeLeft < 0) { // Wenn Countdown abgelaufen ist (nach 0)
-                clearInterval(gameState.countdownInterval); // Interval stoppen
-                countdownDisplay.classList.add('hidden'); // Countdown ausblenden
-                countdownDisplay.innerText = ''; // Inhalt leeren
-                // showResolution wird bereits durch speedRoundTimeout ausgelöst
-            }
-        }, 1000); // Jede Sekunde aktualisieren
-    }
+        // Interval für den visuellen Countdown jede Sekunde
+        gameState.countdownInterval = setInterval(() => {
+            timeLeft--; // Zahl verringern
+
+            if (timeLeft >= 0) { // Solange die Zahl 0 oder größer ist
+                countdownDisplay.innerText = timeLeft; // Zahl aktualisieren
+                countdownDisplay.classList.remove('countdown-animated'); // Animation entfernen
+                void countdownDisplay.offsetWidth; // Reflow erzwingen
+                countdownDisplay.classList.add('countdown-animated'); // Animation hinzufügen
+            }
+
+            if (timeLeft < 0) { // Wenn Countdown abgelaufen ist (nach 0)
+                clearInterval(gameState.countdownInterval); // Interval stoppen
+                gameState.countdownInterval = null; // Wichtig: Referenz löschen
+                countdownDisplay.classList.add('hidden'); // Countdown ausblenden
+                countdownDisplay.innerText = ''; // Inhalt leeren
+                // showResolution wird bereits durch speedRoundTimeout ausgelöst
+            }
+        }, 1000); // Jede Sekunde aktualisieren
+    }
 
 }); // Ende DOMContentLoaded
