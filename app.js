@@ -1017,7 +1017,6 @@ async function playTrackSnippet() {
 
     // ====================================================================
     // 🎯 iOS / PWA AUDIO-KONTEXT UND FOKUS-ERZWINGUNG (MAXIMALE AGGRESSIVITÄT)
-    // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
     // ====================================================================
     try {
         // ZUERST: Unmittelbarer Versuch, den Audio-Kontext zu entsperren.
@@ -1099,7 +1098,6 @@ async function playTrackSnippet() {
     gameState.spotifyPlayTimeout = null;
 
     // ########### Richte neuen Status-Änderungs-Listener ein ###########
-    // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
     playbackStateListener = (state) => {
         // Prüfe, ob der State existiert und der richtige Song spielt
         if (state && state.track_window.current_track.uri === gameState.currentTrack.uri) {
@@ -1130,24 +1128,21 @@ async function playTrackSnippet() {
             position_ms: randomStartPosition
         }),
         headers: { 'Authorization': `Bearer ${accessToken}` }
-    }).then(async response => { // <-- [NEU] 'async' hinzugefügt, damit wir 'await' verwenden können
+    }).then(async response => { // 'async' ist wichtig für den Aufruf von handleTrackPlaybackError
         if (!response.ok) {
             console.error("Fehler beim Abspielen des Tracks (Web API):", response.status, response.statusText);
             
-            // --- [NEU] START: Fehlerbehandlung für 403/404 ---
+            // --- Fehlerbehandlung für 403/404 ---
             const status = response.status;
-            // 403 (Forbidden) = Oft Ländersperre
-            // 404 (Not Found) = Track existiert nicht ODER Device ist weg
             if (status === 403 || status === 404) {
                 console.warn(`Track nicht abspielbar (Status ${status}). Versuche, einen neuen Track zu laden...`);
                 
-                // Rufe die neue Hilfsfunktion auf (siehe meine vorige Antwort)
+                // Rufe die Hilfsfunktion auf, die den Listener bereinigt und den nächsten Track lädt
                 await handleTrackPlaybackError(playbackStateListener);
                 
-                // WICHTIG: Hier abbrechen, damit der alte Alert-Code nicht ausgeführt wird
                 return; 
             }
-            // --- [NEU] ENDE: Fehlerbehandlung für 403/404 ---
+            // --- Ende Fehlerbehandlung für 403/404 ---
 
             
             // (Dein alter Fallback-Code für andere Fehler)
@@ -1166,7 +1161,7 @@ async function playTrackSnippet() {
         } else {
             // ERFOLG! Der API-Aufruf war 'ok'.
 
-            // --- [NEU] START: Zähler und Button-Logik hierher verschoben ---
+            // --- START: Zähler und Button-Logik hierher verschoben ---
             // Erst HIER den Versuch zählen, da der Song-Start erfolgreich getriggert wurde.
             gameState.attemptsMade++;
 
@@ -1175,16 +1170,29 @@ async function playTrackSnippet() {
                 revealButton.classList.remove('hidden');
                 revealButton.classList.remove('no-interaction');
             }
-            // --- [NEU] ENDE: Zähler und Button-Logik ---
+            // --- ENDE: Zähler und Button-Logik ---
 
 
             // ########### FALLBACK HIER STARTEN ###########
-            // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
             setTimeout(() => {
                 // Prüfe, ob der Timer durch den Spotify Event Listener bereits gesetzt wurde
                 if (!gameState.spotifyPlayTimeout) {
                     console.warn(`[FALLBACK] Playback Event nach ${FALLBACK_DELAY_MS}ms nicht eingetroffen. Setze Pause-Timeout manuell.`);
-                    // Da wir die genaue Startposition nicht kennen, verwenden wir null fürs Logging.
+                    
+                    // --- [NEU] ZUSÄTZLICHE PWA-KORREKTUR IM FALLBACK-FALL (AGRESSIVER WECKRUF) ---
+                    // Führe eine erneute, aggressive Aktivierung durch, 
+                    // da der Player offensichtlich "eingeschlafen" ist.
+                    // Ziel: Reduziere Fallback-Eintritte in der NÄCHSTEN Runde.
+                    setTimeout(async () => {
+                        console.log("[FALLBACK-PWA] Aggressiver Retry-Versuch für nächsten Song.");
+                        // Führe die Aggressiv-Funktionen erneut aus
+                        // Wir verwenden hier await nicht, da wir den Haupt-Flow nicht blockieren wollen
+                        await spotifyPlayer.activateElement().catch(() => {});
+                        await transferPlaybackToThisDevice('Aggressiv-Retry nach Fallback').catch(() => {});
+                    }, 500); // 500ms nach dem Fallback-Eintritt
+                    // --- [ENDE NEU] ---
+
+                    // Setze den Stopp-Timer für den aktuellen Song.
                     scheduleTrackPause(null); 
                 }
             }, FALLBACK_DELAY_MS);
@@ -1200,14 +1208,6 @@ async function playTrackSnippet() {
             playbackStateListener = null;
         }
     });
-
-    // [VERSCHOBEN] Dieser Block wurde nach oben in den 'else'-Teil des 'fetch' verschoben.
-    /*
-    if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
-        revealButton.classList.remove('hidden');
-        revealButton.classList.remove('no-interaction');
-    }
-    */
 }
 
 // FUNTION FÜR PLAYBUTTON IOS-play-FIX und TIMERLOGIC ----------- ENDE
