@@ -849,68 +849,91 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 // =============================================================================================================================================================
 // FUNTION FÜR PLAYBUTTON IOS-play-FIX und TIMERLOGIC
 	
-// Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
-let playbackStateListener = null;
 // Hilfsvariable für den Fallback-Timer (1,5 Sekunden, um das Start-Event abzuwarten)
 const FALLBACK_DELAY_MS = 1500; 
 
+// Die 10-Sekunden-Dauer für die Speed Round (10000ms)
+const SPEED_ROUND_DURATION_MS = 10000;
+// Die korrigierte Fallback-Dauer für die Speed Round (10000ms - 1500ms Fallback-Zeit)
+const SPEED_ROUND_FALLBACK_DURATION_MS = SPEED_ROUND_DURATION_MS - FALLBACK_DELAY_MS;
+
 
 /**
- * Hilfsfunktion zum Pausieren des Songs und zur Bereinigung.
- * Diese Funktion wird entweder vom Spotify Event Listener (korrekter Start) 
- * oder vom Fallback-Timer (fehlendes Start-Event) aufgerufen.
- * @param {number | null} startPosition - Die Position, an der die Wiedergabe begonnen hat (fürs Logging). 
- *                                       Null, wenn der Fallback-Timer ihn setzt.
-*/
+ * Hilfsfunktion zum Pausieren des Songs und zur Bereinigung.
+ * @param {number | null} startPosition - Die Position, an der die Wiedergabe begonnen hat. 
+ * Null, wenn der Fallback-Timer ihn setzt.
+ */
 function scheduleTrackPause(startPosition) {
 
+    const isFallback = (startPosition === null);
+    let desiredDuration; // Wird entweder für Snippet oder Raten-Dauer verwendet
+
     // --- [NEU] GUARD-LOGIK (FIX FÜR DOUBLE-PLOPP) ---
-    // Prüft, ob ein Timer (egal ob Song-Stopp oder Raten-Countdown) bereits läuft.
-    // Wenn ja, ist dieser Aufruf ein Duplikat (z.B. Fallback vs. Event) und wird ignoriert.
+    // Verhindert doppelte Aufrufe (Fallback vs. Event).
     if (gameState.isSpeedRound) {
-        // In der Speed Round ist der 'countdownInterval' der "Boss".
+        // In der Speed Round schützt der 'countdownInterval' den Raten-Timer.
         if (gameState.countdownInterval) {
             console.log("[TIMER-GUARD] scheduleTrackPause (Speed Round) ignoriert, Countdown läuft bereits.");
             return;
         }
     } else {
-        // In der Normal-Runde ist der 'spotifyPlayTimeout' der "Boss".
+        // In der Normal-Runde (inkl. Würfel 7) schützt der 'spotifyPlayTimeout' den Snippet-Timer.
         if (gameState.spotifyPlayTimeout) {
-            console.log("[TIMER-GUARD] scheduleTrackPause (Normal Round) ignoriert, Song-Timer läuft bereits.");
+            console.log("[TIMER-GUARD] scheduleTrackPause (Normal Round/Würfel 7) ignoriert, Song-Timer läuft bereits.");
             return;
         }
     }
-    // --- [ENDE NEU] ---
+    // --- [ENDE GUARD-LOGIK] ---
 
-    const isFallback = (startPosition === null);
-    let desiredDuration;
 
-    // --- [KORRIGIERT: DAUER-LOGIK] ---
+    // --- [NEU] DAUER- UND LOGIK-TRENNUNG ---
     if (gameState.isSpeedRound) {
-        // In der Speed Round IMMER die kurze Dauer nehmen (z.B. 2350ms), 
-        // unabhängig davon, ob es ein Fallback ist oder nicht.
-        desiredDuration = gameState.trackDuration;
+        // =======================================================
+        // A) ECHTE SPEED ROUND (10 Sekunden Raten)
+        // =======================================================
         
+        // 1. Raten-Dauer bestimmen: Bei Fallback wird die 1500ms Fallback-Zeit abgezogen.
+        const countdownDuration = isFallback 
+            ? SPEED_ROUND_FALLBACK_DURATION_MS // 10s - 1.5s = 8.5s (ca. 9s) 
+            : SPEED_ROUND_DURATION_MS; // 10s
+        
+        // 2. Visuellen 10-Sekunden-Countdown starten
+        startVisualSpeedRoundCountdown(countdownDuration);
+
+        // 3. Song-Stopp-Dauer definieren: Der Song soll nur 10s spielen, nicht ewig.
+        // Wir setzen desiredDuration auf 10s.
+        desiredDuration = 10000; 
+
         if (isFallback) {
-            console.log(`[FALLBACK-TIMER] Setze Speed-Round-Snippet-Dauer: ${desiredDuration}ms.`);
+             console.log(`[SPEED ROUND FALLBACK] Raten-Countdown startet mit: ${countdownDuration}ms.`);
+        } else {
+             console.log(`[SPEED ROUND EVENT] Raten-Countdown startet mit: ${countdownDuration}ms.`);
         }
-        
-        // Starte den visuellen 10s-Raten-Timer
-        startVisualSpeedRoundCountdown();
 
     } else {
-        // In der Normal-Runde die 6-Sek-Fallback-Logik anwenden
-        // Wenn Fallback, dann 6000ms, ansonsten die durch den Würfel bestimmte Dauer (gameState.trackDuration)
-        desiredDuration = isFallback ? 6000 : gameState.trackDuration;
+        // =======================================================
+        // B) NORMALE RUNDE (inkl. Würfel 7)
+        // =======================================================
         
-        if (isFallback) {
-            console.log(`[FALLBACK-TIMER] Setze Normal-Round-Dauer: ${desiredDuration}ms.`);
+        if (gameState.trackDuration === 2350) {
+            // Würfel 7: Immer 2350ms (2.35s), auch bei Fallback.
+            desiredDuration = 2350;
+             if (isFallback) {
+                console.log(`[WÜRFEL 7 FALLBACK] Setze Snippet-Dauer: ${desiredDuration}ms.`);
+            }
+
+        } else {
+            // Würfel 1-5: 7.35s oder 6s bei Fallback.
+            desiredDuration = isFallback ? 6000 : gameState.trackDuration;
+             if (isFallback) {
+                console.log(`[NORMAL ROUND FALLBACK] Setze Snippet-Dauer: ${desiredDuration}ms.`);
+            }
         }
     }
     // --- [ENDE NEU] ---
 
     // Normalmodus ODER Speed Round: Starte den Timer, der den Song stoppt.
-    // (Der alte 'if (gameState.isSpeedRound)' Block wurde entfernt)
+    // In der Speed Round ist dies der 10s-Timer, in Würfel 7 der 2.35s-Timer.
     gameState.spotifyPlayTimeout = setTimeout(() => {
         
         spotifyPlayer.pause();
@@ -937,11 +960,10 @@ function scheduleTrackPause(startPosition) {
             }
         });
         
-    }, desiredDuration); // <--- Hier wird die korrekte Dauer (normal oder speed) verwendet
+    }, desiredDuration); 
 
     console.log(`[TIMER] Pause-Timeout (Dauer: ${desiredDuration}ms) erfolgreich gesetzt.`);
 }
-
 	/**
  * Wird aufgerufen, wenn ein Track nicht abgespielt werden kann (z.B. 403/404).
  * Lädt automatisch einen neuen Track aus dem aktuellen Genre.
@@ -1172,25 +1194,31 @@ async function playTrackSnippet() {
             }
             // --- ENDE: Zähler und Button-Logik ---
 
-
-            // ########### FALLBACK HIER STARTEN ###########
+// ########### FALLBACK HIER STARTEN ###########
             setTimeout(() => {
                 // Prüfe, ob der Timer durch den Spotify Event Listener bereits gesetzt wurde
                 if (!gameState.spotifyPlayTimeout) {
                     console.warn(`[FALLBACK] Playback Event nach ${FALLBACK_DELAY_MS}ms nicht eingetroffen. Setze Pause-Timeout manuell.`);
                     
-                    // --- [NEU] ZUSÄTZLICHE PWA-KORREKTUR IM FALLBACK-FALL (AGRESSIVER WECKRUF) ---
-                    // Führe eine erneute, aggressive Aktivierung durch, 
-                    // da der Player offensichtlich "eingeschlafen" ist.
-                    // Ziel: Reduziere Fallback-Eintritte in der NÄCHSTEN Runde.
+                    // --- [KORRIGIERT] ZUSÄTZLICHE PWA-KORREKTUR IM FALLBACK-FALL (AGRESSIVER WECKRUF) ---
+                    // Aggressiver Retry-Versuch, da der Player "eingeschlafen" ist.
+                    // Reduziert Fallback-Eintritte in der NÄCHSTEN Runde.
                     setTimeout(async () => {
                         console.log("[FALLBACK-PWA] Aggressiver Retry-Versuch für nächsten Song.");
-                        // Führe die Aggressiv-Funktionen erneut aus
-                        // Wir verwenden hier await nicht, da wir den Haupt-Flow nicht blockieren wollen
                         await spotifyPlayer.activateElement().catch(() => {});
-                        await transferPlaybackToThisDevice('Aggressiv-Retry nach Fallback').catch(() => {});
+                        
+                        // Direkter Web API Call, um 'transferPlaybackToThisDevice is not defined' zu umgehen
+                        await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                                device_ids: [deviceId], 
+                                play: false 
+                            }),
+                            headers: { 'Authorization': `Bearer ${accessToken}` }
+                        }).catch(e => console.warn("[FALLBACK-PWA] Transfer-Retry fehlgeschlagen:", e));
+                        
                     }, 500); // 500ms nach dem Fallback-Eintritt
-                    // --- [ENDE NEU] ---
+                    // --- [ENDE KORRIGIERT] ---
 
                     // Setze den Stopp-Timer für den aktuellen Song.
                     scheduleTrackPause(null); 
@@ -1638,56 +1666,51 @@ async function playTrackSnippet() {
         });
     }
 
-// NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
-    function startVisualSpeedRoundCountdown() {
-        // --- [START DER KORREKTUR] ---
-        // 1. IMMER ZUERST alte Timer stoppen!
-        // Dies verhindert "doppelte" Timer, falls die Funktion mehrfach getriggert wird.
-        if (gameState.speedRoundTimeout) {
-            clearTimeout(gameState.speedRoundTimeout);
-        }
-        if (gameState.countdownInterval) {
-            clearInterval(gameState.countdownInterval);
-        }
-        // --- [ENDE DER KORREKTUR] ---
+/**
+ * Startet den visuellen Countdown für die Speed Round.
+ * @param {number} durationMs - Die Dauer, die heruntergezählt werden soll (z.B. 10000 oder 8500).
+ */
+function startVisualSpeedRoundCountdown(durationMs) {
+    
+    // Timer und Intervalle IMMER löschen, bevor neue gesetzt werden (Sicherheit)
+    if (gameState.speedRoundTimeout) { 
+        clearTimeout(gameState.speedRoundTimeout); 
+        gameState.speedRoundTimeout = null; 
+    }
+    if (gameState.countdownInterval) { 
+        clearInterval(gameState.countdownInterval); 
+        gameState.countdownInterval = null; 
+    }
 
+    const countdownDisplay = document.getElementById('speedRoundCountdown');
+    const startValue = Math.ceil(durationMs / 1000); // 10 oder 9
 
-        let timeLeft = 10; // Startwert des Countdowns
-        countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
+    countdownDisplay.textContent = startValue;
+    countdownDisplay.classList.add('countdown-animated');
+    countdownDisplay.classList.remove('hidden');
 
-        // Timer für die automatische Auflösung nach 10 Sekunden
-        gameState.speedRoundTimeout = setTimeout(() => {
-            // Interval hier auch stoppen, nur zur Sicherheit
-            clearInterval(gameState.countdownInterval); 
-            gameState.countdownInterval = null;
-            showResolution(); // Auflösung nach 10 Sekunden
-        }, 10000);
+    let currentValue = startValue;
 
-        // Sofort die erste Zahl anzeigen und animieren
-        countdownDisplay.innerText = timeLeft;
-        countdownDisplay.classList.remove('countdown-animated');
-        void countdownDisplay.offsetWidth; // Reflow
-        countdownDisplay.classList.add('countdown-animated');
+    // Setze den Timer, der am Ende die Auflösung startet
+    gameState.speedRoundTimeout = setTimeout(() => {
+        showResolution();
+        countdownDisplay.classList.add('hidden');
+        countdownDisplay.classList.remove('countdown-animated');
+    }, durationMs);
 
-        // Interval für den visuellen Countdown jede Sekunde
-        gameState.countdownInterval = setInterval(() => {
-            timeLeft--; // Zahl verringern
-
-            if (timeLeft >= 0) { // Solange die Zahl 0 oder größer ist
-                countdownDisplay.innerText = timeLeft; // Zahl aktualisieren
-                countdownDisplay.classList.remove('countdown-animated'); // Animation entfernen
-                void countdownDisplay.offsetWidth; // Reflow erzwingen
-                countdownDisplay.classList.add('countdown-animated'); // Animation hinzufügen
-            }
-
-            if (timeLeft < 0) { // Wenn Countdown abgelaufen ist (nach 0)
-                clearInterval(gameState.countdownInterval); // Interval stoppen
-                gameState.countdownInterval = null; // Wichtig: Referenz löschen
-                countdownDisplay.classList.add('hidden'); // Countdown ausblenden
-                countdownDisplay.innerText = ''; // Inhalt leeren
-                // showResolution wird bereits durch speedRoundTimeout ausgelöst
-            }
-        }, 1000); // Jede Sekunde aktualisieren
-    }
+    // Starte den visuellen Countdown-Intervall
+    gameState.countdownInterval = setInterval(() => {
+        currentValue--;
+        if (currentValue >= 0) {
+            countdownDisplay.textContent = currentValue;
+        } else {
+            // Dies sollte niemals passieren, da der Timeout oben zuerst auslösen sollte
+            clearInterval(gameState.countdownInterval); 
+            gameState.countdownInterval = null;
+        }
+    }, 1000); // Zählt jede Sekunde herunter
+    
+    console.log(`[COUNTDOWN] Visueller Countdown gestartet. Startwert: ${startValue}s. Dauer: ${durationMs}ms.`);
+}
 
 }); // Ende DOMContentLoaded
