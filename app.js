@@ -883,26 +883,26 @@ function scheduleTrackPause(startPosition) {
     // --- [ENDE NEU] ---
 
     const isFallback = (startPosition === null);
-    let desiredDuration; // 'let' statt 'const'
+    let desiredDuration;
 
-    // --- [NEU] DAUER-LOGIK (FIX FÜR DICE 7) ---
+    // --- [KORRIGIERT: DAUER-LOGIK] ---
     if (gameState.isSpeedRound) {
-        // In der Speed Round IMMER die kurze Dauer nehmen (z.B. 2350ms)
+        // In der Speed Round IMMER die kurze Dauer nehmen (z.B. 2350ms), 
+        // unabhängig davon, ob es ein Fallback ist oder nicht.
         desiredDuration = gameState.trackDuration;
+        
         if (isFallback) {
             console.log(`[FALLBACK-TIMER] Setze Speed-Round-Snippet-Dauer: ${desiredDuration}ms.`);
         }
         
         // Starte den visuellen 10s-Raten-Timer
-        // (wird durch den Guard oben vor Duplikaten geschützt)
         startVisualSpeedRoundCountdown();
-
-        // WICHTIG: KEIN 'return' MEHR HIER!
-        // Der Code MUSS weiterlaufen, um den Snippet-Timer (setTimeout) zu setzen.
 
     } else {
         // In der Normal-Runde die 6-Sek-Fallback-Logik anwenden
+        // Wenn Fallback, dann 6000ms, ansonsten die durch den Würfel bestimmte Dauer (gameState.trackDuration)
         desiredDuration = isFallback ? 6000 : gameState.trackDuration;
+        
         if (isFallback) {
             console.log(`[FALLBACK-TIMER] Setze Normal-Round-Dauer: ${desiredDuration}ms.`);
         }
