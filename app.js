@@ -1103,6 +1103,13 @@ async function playTrackSnippet() {
         clearTimeout(gameState.spotifyPlayTimeout); // Auch den Song-Pause-Timer stoppen
         clearInterval(gameState.fadeInterval); // WICHTIG: Fade-In-Intervall stoppen
 
+		// NEUE ZEILE: Fallback-Timer löschen, falls er noch läuft!
+    if (gameState.fallbackTimeout) {
+        clearTimeout(gameState.fallbackTimeout);
+        gameState.fallbackTimeout = null;
+        console.log("DEBUG: Fallback-Timeout in showResolution() gelöscht.");
+    }
+
 
         // Spotify Player pausieren, falls noch aktiv
         if (gameState.isSongPlaying && spotifyPlayer) {
