@@ -864,62 +864,82 @@ const FALLBACK_DELAY_MS = 1500;
 */
 function scheduleTrackPause(startPosition) {
 
-    // --- [NEU] FALLBACK-DAUER-LOGIK ---
-    // Prüfen, ob dies der Fallback-Timer-Aufruf ist (erkennbar an startPosition === null)
-    const isFallback = (startPosition === null);
-
-    // Setze die Dauer: 6000ms im Fallback, ansonsten die normale Dauer aus dem gameState
-    const desiredDuration = isFallback ? 6000 : gameState.trackDuration;
-
-    if (isFallback) {
-        // Dieses Log siehst du jetzt, wenn der Fallback (nach 1500ms) den 6-Sekunden-Timer setzt
-        console.log(`[FALLBACK-TIMER] Setze angepasste Abspieldauer: ${desiredDuration}ms.`);
+    // --- [NEU] GUARD-LOGIK (FIX FÜR DOUBLE-PLOPP) ---
+    // Prüft, ob ein Timer (egal ob Song-Stopp oder Raten-Countdown) bereits läuft.
+    // Wenn ja, ist dieser Aufruf ein Duplikat (z.B. Fallback vs. Event) und wird ignoriert.
+    if (gameState.isSpeedRound) {
+        // In der Speed Round ist der 'countdownInterval' der "Boss".
+        if (gameState.countdownInterval) {
+            console.log("[TIMER-GUARD] scheduleTrackPause (Speed Round) ignoriert, Countdown läuft bereits.");
+            return;
+        }
+    } else {
+        // In der Normal-Runde ist der 'spotifyPlayTimeout' der "Boss".
+        if (gameState.spotifyPlayTimeout) {
+            console.log("[TIMER-GUARD] scheduleTrackPause (Normal Round) ignoriert, Song-Timer läuft bereits.");
+            return;
+        }
     }
     // --- [ENDE NEU] ---
 
+    const isFallback = (startPosition === null);
+    let desiredDuration; // 'let' statt 'const'
 
-    // Nur Timer setzen, wenn er noch nicht gesetzt ist (wichtig für den Fallback)
-    if (gameState.spotifyPlayTimeout) {
-        return; 
-    }
+    // --- [NEU] DAUER-LOGIK (FIX FÜR DICE 7) ---
+    if (gameState.isSpeedRound) {
+        // In der Speed Round IMMER die kurze Dauer nehmen (z.B. 2350ms)
+        desiredDuration = gameState.trackDuration;
+        if (isFallback) {
+            console.log(`[FALLBACK-TIMER] Setze Speed-Round-Snippet-Dauer: ${desiredDuration}ms.`);
+        }
+        
+        // Starte den visuellen 10s-Raten-Timer
+        // (wird durch den Guard oben vor Duplikaten geschützt)
+        startVisualSpeedRoundCountdown();
 
-    if (gameState.isSpeedRound) {
-        // Speed Round: Starte den visuellen Timer, der die Zeit zum Raten vorgibt.
-        // HINWEIS: Hier wird KEIN Pause-Timeout benötigt, da der Runden-Timer entscheidet.
-        startVisualSpeedRoundCountdown();
-        return;
-    }
+        // WICHTIG: KEIN 'return' MEHR HIER!
+        // Der Code MUSS weiterlaufen, um den Snippet-Timer (setTimeout) zu setzen.
 
-    // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
-    // HINWEIS: Die Variable 'desiredDuration' wird jetzt von der Logik oben gesteuert
-    gameState.spotifyPlayTimeout = setTimeout(() => {
-        
-        // Wenn der Timer abläuft, wird der Song gestoppt.
-        spotifyPlayer.pause();
-        gameState.isSongPlaying = false;
+    } else {
+        // In der Normal-Runde die 6-Sek-Fallback-Logik anwenden
+        desiredDuration = isFallback ? 6000 : gameState.trackDuration;
+        if (isFallback) {
+            console.log(`[FALLBACK-TIMER] Setze Normal-Round-Dauer: ${desiredDuration}ms.`);
+        }
+    }
+    // --- [ENDE NEU] ---
 
-        if (gameState.attemptsMade < gameState.maxAttempts) {
-            logoButton.classList.remove('inactive');
-            logoButton.classList.add('logo-pulsing');
-        }
-        
-        // Logge die tatsächliche Stopp-Position für das Debugging
-        spotifyPlayer.getCurrentState().then(finalState => {
-            const finalPosition = finalState ? finalState.position : 'N/A';
-            const logType = startPosition === null ? 'FALLBACK STOP' : 'EVENT STOP';
-            
-            console.log(`[${logType}] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
-            
-            if (finalState && startPosition !== null) {
-                // Nur wenn wir die Startposition kennen, können wir die tatsächliche Dauer berechnen
-                const actualDuration = finalPosition - startPosition; 
-                console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
-            }
-        });
-        
-    }, desiredDuration); // <--- Hier wird die korrekte Dauer (normal oder 6000ms) verwendet
+    // Normalmodus ODER Speed Round: Starte den Timer, der den Song stoppt.
+    // (Der alte 'if (gameState.isSpeedRound)' Block wurde entfernt)
+    gameState.spotifyPlayTimeout = setTimeout(() => {
+        
+        spotifyPlayer.pause();
+        gameState.isSongPlaying = false;
+        gameState.spotifyPlayTimeout = null; // Wichtig: Timer-Referenz löschen!
 
-    console.log(`[TIMER] Pause-Timeout (Dauer: ${desiredDuration}ms) erfolgreich gesetzt.`);
+        // Nur im Normal-Modus den Button wieder pulsieren lassen
+        if (gameState.attemptsMade < gameState.maxAttempts && !gameState.isSpeedRound) {
+            logoButton.classList.remove('inactive');
+            logoButton.classList.add('logo-pulsing');
+        }
+        
+        // Logge die tatsächliche Stopp-Position für das Debugging
+        spotifyPlayer.getCurrentState().then(finalState => {
+            const finalPosition = finalState ? finalState.position : 'N/A';
+            const logType = startPosition === null ? 'FALLBACK STOP' : 'EVENT STOP';
+            
+            console.log(`[${logType}] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
+            
+            if (finalState && startPosition !== null) {
+                // Nur wenn wir die Startposition kennen, können wir die tatsächliche Dauer berechnen
+                const actualDuration = finalPosition - startPosition; 
+                console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
+            }
+        });
+        
+    }, desiredDuration); // <--- Hier wird die korrekte Dauer (normal oder speed) verwendet
+
+    console.log(`[TIMER] Pause-Timeout (Dauer: ${desiredDuration}ms) erfolgreich gesetzt.`);
 }
 
 	/**
