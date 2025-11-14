@@ -858,7 +858,7 @@ async function playTrackSnippet() {
     triggerBounce(logoButton);
     logoButton.classList.add('inactive');
 	logoButton.classList.remove('logo-pulsing');
-    gameState.attemptsMade++;
+    // gameState.attemptsMade++;
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
     const desiredDuration = gameState.trackDuration;
