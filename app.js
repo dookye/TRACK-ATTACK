@@ -1188,7 +1188,7 @@ async function playTrackSnippet() {
 
             clearInterval(gameState.fadeInterval); // Sicherstellen, dass kein Fade-In mehr läuft
 
-            const fadeDuration = 3000; // Fade-Out Dauer in Millisekunden (z.B. 3 Sekunden)
+            const fadeDuration = 1500; // Fade-Out Dauer in Millisekunden (z.B. 1,5 Sekunden)
             const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
             const currentVolumePercent = gameState.currentSongVolume; // Letzte Lautstärke vom Fade-In
 
