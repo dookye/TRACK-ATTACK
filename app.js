@@ -1,6 +1,4 @@
-// Wichtiger Hinweis: Dieser Code muss von einem Webserver bereitgestellt werden (z.B. über "Live Server" in VS Code).
-// Ein direktes Öffnen der HTML-Datei im Browser funktioniert wegen der Sicherheitsrichtlinien (CORS) bei API-Anfragen nicht.
-
+// TRACK ATTACK
 
 // --- API Endpunkte --- NEU HINZUGEFÜGT
 const API_ENDPOINTS = {
