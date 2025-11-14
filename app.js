@@ -115,6 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
         totalRounds: 20, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
+		// speedroundpoints
+		speedroundpints: 0,
         attemptsMade: 0,
         maxAttempts: 0,
         trackDuration: 0,
@@ -754,9 +756,9 @@ document.addEventListener('DOMContentLoaded', () => {
             (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
             gameState.isSpeedRound = true;
 			// ⭐️ NEUE LOGIK: ÜBERSCHREIBT DIE MAXIMALE PUNKTZAHL
-            gameState.maxPoints = 10; 
+            gameState.speedroundpoints = 15; 
             // ⭐️ ZUSÄTZLICH: MAXIMALE VERSUCHE auf 1 setzen, falls die Logik es benötigt
-            gameState.maxAttempts = 1;
+            // gameState.maxAttempts = 1;
             // Zeige die "Speed-Round" Animation, bevor der Track geladen wird
             await showSpeedRoundAnimation();
         }
