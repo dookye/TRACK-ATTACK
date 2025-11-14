@@ -1077,7 +1077,7 @@ async function playTrackSnippet() {
             playbackStateListener = null;
         }
     });
- 
+}
 
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
