@@ -1526,4 +1526,4 @@ async function playTrackSnippet() {
         }, 1000); // Jede Sekunde aktualisieren
     }
 
-}}); // Ende DOMContentLoaded
+}); // Ende DOMContentLoaded
