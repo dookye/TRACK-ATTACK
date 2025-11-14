@@ -753,6 +753,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
             (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
             gameState.isSpeedRound = true;
+			// ⭐️ NEUE LOGIK: ÜBERSCHREIBT DIE MAXIMALE PUNKTZAHL
+            gameState.maxPoints = 10; 
+            // ⭐️ ZUSÄTZLICH: MAXIMALE VERSUCHE auf 1 setzen, falls die Logik es benötigt
+            gameState.maxAttempts = 1;
             // Zeige die "Speed-Round" Animation, bevor der Track geladen wird
             await showSpeedRoundAnimation();
         }
