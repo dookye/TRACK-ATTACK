@@ -1,11 +1,14 @@
-// TRACK ATTACK
+// Wichtiger Hinweis: Dieser Code muss von einem Webserver bereitgestellt werden (z.B. über "Live Server" in VS Code).
+// Ein direktes Öffnen der HTML-Datei im Browser funktioniert wegen der Sicherheitsrichtlinien (CORS) bei API-Anfragen nicht.
+
 
 // --- API Endpunkte --- NEU HINZUGEFÜGT
 const API_ENDPOINTS = {
     SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
     SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
     SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
+    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+	SPOTIFY_PLAYER_TRANSFER: 'https://api.spotify.com/v1/me/player'
 };
 
 
@@ -103,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Spielstatus-Variablen ---
-	let accessToken = null;
+    let accessToken = null;
     let deviceId = null;
     let spotifyPlayer = null;
     let gameState = {
@@ -868,6 +871,12 @@ async function playTrackSnippet() {
     }
     const randomStartPosition = Math.floor(Math.random() * maxStart);
 
+    // Löscht den alten Timeout, falls er aus irgendeinem Grund noch existiert
+    if (gameState.spotifyPlayTimeout) {
+        clearTimeout(gameState.spotifyPlayTimeout);
+        gameState.spotifyPlayTimeout = null;
+    }
+
     // ====================================================================
     // 🎯 iOS / SAFARI PLAYER AKTIVIERUNG (muss im Klick-Kontext laufen)
     // ====================================================================
@@ -902,7 +911,11 @@ async function playTrackSnippet() {
     // Entferne zuerst einen eventuell bestehenden Listener, um Duplikate zu vermeiden
     if (playbackStateListener) {
         spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+        playbackStateListener = null; // Wichtig: Listener-Variable zurücksetzen
     }
+
+    // Setze den Timer-Status auf "nicht gestartet"
+    gameState.spotifyPlayTimeout = null;
 
     // ########### Richte neuen Status-Änderungs-Listener ein ###########
     playbackStateListener = (state) => {
