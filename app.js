@@ -877,34 +877,76 @@ async function playTrackSnippet() {
         gameState.spotifyPlayTimeout = null;
     }
 
-    // ====================================================================
-    // 🎯 iOS / SAFARI PLAYER AKTIVIERUNG (muss im Klick-Kontext laufen)
-    // ====================================================================
-    try {
-        // 1. Initialisieren, falls noch keine Device ID vorhanden
-        if (!deviceId) {
-            console.log("Initialisiere Spotify Player durch Benutzerklick...");
-            // Warten auf die Initialisierung (erzeugt spotifyPlayer und deviceId)
-            await initializePlayer(); 
-            console.log("Player erfolgreich initialisiert und verbunden.");
-        }
-        
-        // 2. Player aufwecken (resume), um Audio auf iOS zu entsperren
-        if (spotifyPlayer) {
-            console.log("Versuche, den Player aufzuwecken (resume)...");
-            // Dieses resume() ist kritisch für Safari
-            await spotifyPlayer.resume(); 
-            console.log("Player erfolgreich aufgeweckt.");
-        }
-        
-    } catch (error) {
-        console.error("Player-Aktivierung (iOS-Fix) fehlgeschlagen:", error);
-        alert("Fehler bei der Player-Verbindung. Bitte versuchen Sie, Spotify neu zu verbinden.");
-        logoButton.classList.remove('inactive');
+    // ====================================================================
+    // 🎯 iOS / PWA AUDIO-KONTEXT UND FOKUS-ERZWINGUNG (MAXIMALE AGGRESSIVITÄT)
+    // ====================================================================
+    try {
+        // ZUERST: Unmittelbarer Versuch, den Audio-Kontext zu entsperren.
+        if (spotifyPlayer) {
+            console.log("[PWA Fix] Player-Element aktivieren (aggressiver Versuch 1).");
+            await spotifyPlayer.activateElement(); 
+            console.log("Audio-Kontext entsperrt.");
+        } else {
+             console.log("[PWA Fix] Player-Objekt nicht gefunden. Muss initialisiert werden.");
+        }
+
+        // ZWEITENS: Initialisierung, falls deviceId fehlt. 
+        if (!deviceId) {
+            console.log("[PWA Fix] Initialisiere Spotify Player und warte auf deviceId...");
+            await initializePlayer(); // Hier wird deviceId gesetzt!
+        }
+
+        // DRITTENS: ERNEUTER DEVICE ID CHECK UND VALIDIERUNG.
+        if (!deviceId) {
+            // Wenn deviceId immer noch fehlt, ist die Initialisierung fehlgeschlagen.
+            throw new Error("Device ID konnte nicht abgerufen werden. Player Initialisierung fehlgeschlagen.");
+        }
+
+        // VIERTENS: Erneuter Versuch, den Fokus zu erzwingen (optional, aber gut nach Init).
+        if (spotifyPlayer) {
+            console.log("[PWA Fix] Player-Element erneut aktivieren (Versuch 2 nach Init).");
+            await spotifyPlayer.activateElement(); 
+        }
+
+        // FÜNFTENS: EXPLIZITE ÜBERTRAGUNG DES PLAYBACKS ÜBER DIE WEB API (PWA Silver Bullet!)
+        console.log(`[PWA Fix] Erzwinge Playback-Übertragung zu Device ID: ${deviceId}`);
+        const transferResponse = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
+            method: 'PUT',
+            body: JSON.stringify({
+                device_ids: [deviceId], 
+                play: false 
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!transferResponse.ok) {
+            console.warn("[PWA Fix] Warnung: Playback-Übertragung fehlgeschlagen (Status: " + transferResponse.status + ")");
+            
+            // 404 = Device not found ODER 405 = Problem mit dem Request, das wir nicht ignorieren dürfen
+            if (transferResponse.status === 404 || transferResponse.status === 405) {
+                // Bei 405 (Method Not Allowed) ist meistens das Format der URL falsch!
+                throw new Error(`Device connection failed (Status ${transferResponse.status}).`);
+            }
+        } else {
+            console.log("[PWA Fix] Playback erfolgreich auf dieses Gerät übertragen.");
+        }
+        
+    } catch (error) {
+        // Dieser Catch fängt Fehler beim Initialisieren/Entsperren/Transfer ab
+        console.error("[Kritischer Fehler] Player-Aktivierung, Initialisierung oder Übertragung fehlgeschlagen:", error);
+        
+        if (error.message.includes("Device connection failed")) {
+             // 💡 Benutzerinformation bei PWA-Tod / kritischem API-Fehler
+             alert("Kritischer Player-Fehler. (Status 404/405). Stelle sicher, dass deine API-Endpunkte korrekt sind.");
+        } else {
+            alert("Fehler beim Abspielen (Player-Verbindung). Hast du Spotify Premium und sind deine API-Endpunkte korrekt?");
+        }
+        
+        logoButton.classList.remove('inactive');
 		logoButton.classList.add('logo-pulsing');
-        return; // Stoppt die Funktion, wenn die Aktivierung fehlschlägt
-    }
-    // ====================================================================
+        return; 
+    }
+    // ====================================================================
 
     console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
 
@@ -961,7 +1003,10 @@ async function playTrackSnippet() {
             }
         }
     };
-    spotifyPlayer.addListener('player_state_changed', playbackStateListener);
+    // Prüft, ob der Player existiert, bevor der Listener hinzugefügt wird
+    if (spotifyPlayer) {
+        spotifyPlayer.addListener('player_state_changed', playbackStateListener);
+    }
 
     // ########### Verwende die Web-API, um die Wiedergabe zu initiieren ###########
     // HINWEIS: Hier MUSS die deviceId definiert sein, sonst schlägt der fetch fehl.
@@ -976,6 +1021,12 @@ async function playTrackSnippet() {
     }).then(response => {
         if (!response.ok) {
             console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+
+            // Führe eine erneute Aktivierung durch (könnte helfen, den Fokus zurückzubekommen)
+            if (spotifyPlayer) {
+                // Versuche, den Fokus erneut zu erzwingen
+                spotifyPlayer.activateElement().catch(e => console.warn("Re-Aktivierung nach Fehler fehlgeschlagen:", e));
+            }
             alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
             logoButton.classList.remove('inactive');
             logoButton.classList.add('logo-pulsing');
