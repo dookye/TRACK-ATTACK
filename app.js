@@ -1,5 +1,4 @@
-// Wichtiger Hinweis: Dieser Code muss von einem Webserver bereitgestellt werden (z.B. über "Live Server" in VS Code).
-// Ein direktes Öffnen der HTML-Datei im Browser funktioniert wegen der Sicherheitsrichtlinien (CORS) bei API-Anfragen nicht.
+// TRACK ATTACK
 
 
 // --- API Endpunkte --- NEU HINZUGEFÜGT
@@ -829,6 +828,9 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
 
 
     async function prepareAndShowRateScreen(genre) {
+		// Speichere das ausgewählte Genre im globalen State.
+        // Das brauchen wir, um bei einem Fehler einen neuen Track aus DEMSELBEN Genre zu laden.
+        gameState.currentGenre = genre;
         gameState.currentTrack = await getTrack(genre);
         console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
 
@@ -1003,55 +1005,78 @@ async function playTrackSnippet() {
             }
         }
     };
-    // Prüft, ob der Player existiert, bevor der Listener hinzugefügt wird
-    if (spotifyPlayer) {
-        spotifyPlayer.addListener('player_state_changed', playbackStateListener);
-    }
 
-    // ########### Verwende die Web-API, um die Wiedergabe zu initiieren ###########
-    // HINWEIS: Hier MUSS die deviceId definiert sein, sonst schlägt der fetch fehl.
-    // Die iOS-Aktivierungslogik garantiert nun, dass sie vorhanden ist.
-    fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-        method: 'PUT',
-        body: JSON.stringify({
-            uris: [gameState.currentTrack.uri],
-            position_ms: randomStartPosition
-        }),
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-    }).then(response => {
-        if (!response.ok) {
-            console.error("Fehler beim Abspielen des Tracks:", response.status, response.statusText);
+    // Prüft, ob der Player existiert, bevor der Listener hinzugefügt wird
+    if (spotifyPlayer) {
+        spotifyPlayer.addListener('player_state_changed', playbackStateListener);
+    }
 
-            // Führe eine erneute Aktivierung durch (könnte helfen, den Fokus zurückzubekommen)
-            if (spotifyPlayer) {
-                // Versuche, den Fokus erneut zu erzwingen
-                spotifyPlayer.activateElement().catch(e => console.warn("Re-Aktivierung nach Fehler fehlgeschlagen:", e));
-            }
-            alert("Konnte den Song nicht abspielen. Stellen Sie sicher, dass ein Gerät ausgewählt ist.");
-            logoButton.classList.remove('inactive');
-            logoButton.classList.add('logo-pulsing');
-            // Bereinige den Listener, wenn der Fetch fehlschlägt
-            if (playbackStateListener) {
-                spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                playbackStateListener = null;
-            }
-        }
-    }).catch(error => {
-        console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
-        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
-        logoButton.classList.remove('inactive');
-		logoButton.classList.add('logo-pulsing');
-        if (playbackStateListener) {
-            spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-            playbackStateListener = null;
-        }
-    });
+    // ########### Verwende die Web-API, um die Wiedergabe zu initiieren ###########
+    fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+        method: 'PUT',
+        body: JSON.stringify({
+            uris: [gameState.currentTrack.uri],
+            position_ms: randomStartPosition
+        }),
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+    }).then(async response => { // <-- [NEU] 'async' hinzugefügt, damit wir 'await' verwenden können
+        if (!response.ok) {
+            console.error("Fehler beim Abspielen des Tracks (Web API):", response.status, response.statusText);
+            
+            // --- [NEU] START: Fehlerbehandlung für 403/404 ---
+            const status = response.status;
+            // 403 (Forbidden) = Oft Ländersperre
+            // 404 (Not Found) = Track existiert nicht ODER Device ist weg
+            if (status === 403 || status === 404) {
+                console.warn(`Track nicht abspielbar (Status ${status}). Versuche, einen neuen Track zu laden...`);
+                
+                // Rufe die neue Hilfsfunktion auf (siehe meine vorige Antwort)
+                await handleTrackPlaybackError(playbackStateListener);
+                
+                // WICHTIG: Hier abbrechen, damit der alte Alert-Code nicht ausgeführt wird
+                return; 
+            }
+            // --- [NEU] ENDE: Fehlerbehandlung für 403/404 ---
 
-    if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
-        revealButton.classList.remove('hidden');
-        revealButton.classList.remove('no-interaction');
-    }
-}
+            
+            // (Dein alter Fallback-Code für andere Fehler)
+            if (spotifyPlayer) {
+                spotifyPlayer.activateElement().catch(e => console.warn("Re-Aktivierung nach Fehler fehlgeschlagen:", e));
+            }
+            
+            alert("Konnte den Song nicht abspielen. Möglicherweise ist Spotify auf keinem aktiven Gerät.");
+            logoButton.classList.remove('inactive');
+            logoButton.classList.add('logo-pulsing');
+            // Bereinige den Listener, wenn der Fetch fehlschlägt
+            if (playbackStateListener) {
+                spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+                playbackStateListener = null;
+            }
+        } else {
+            // ERFOLG! Der API-Aufruf war 'ok'.
+
+            // --- [NEU] START: Zähler und Button-Logik hierher verschoben ---
+            // Erst HIER den Versuch zählen, da der Song-Start erfolgreich getriggert wurde.
+            gameState.attemptsMade++;
+
+            // Zeige den Reveal-Button nach dem ersten erfolgreichen Abspielversuch
+            if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
+                revealButton.classList.remove('hidden');
+                revealButton.classList.remove('no-interaction');
+            }
+            // --- [NEU] ENDE: Zähler und Button-Logik ---
+		}
+	}).catch(error => {
+        // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
+        console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
+        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+        logoButton.classList.remove('inactive');
+        logoButton.classList.add('logo-pulsing');
+        if (playbackStateListener) {
+            spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+            playbackStateListener = null;
+        }
+    });
  
 
     function showResolution() {
@@ -1102,7 +1127,7 @@ async function playTrackSnippet() {
 
         const startPositionMs = 30 * 1000; // 30 Sekunden in Millisekunden
         const targetVolume = 80; // Ziel-Lautstärke in %
-        const fadeDuration = 2000; // Fade-In Dauer in Millisekunden (z.B. 2 Sekunden)
+        const fadeDuration = 3000; // Fade-In Dauer in Millisekunden (z.B. 3 Sekunden)
         const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
         const intervalTime = fadeDuration / (targetVolume / fadeStep); // Intervallzeit für jeden Schritt
 
