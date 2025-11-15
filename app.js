@@ -755,8 +755,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
             (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
             gameState.isSpeedRound = true;
-            // ⭐️ FIX: maxScore auf 10 überschreiben
-            gameState.maxScore = 10;
+            // ⭐️ FIX: maxScore auf 15 überschreiben
+            gameState.maxScore = 15;  // hier maxscore - PUNKTE FÜR DIE SPEEDROUND
             // ⭐️ ZUSÄTZLICH: MAXIMALE VERSUCHE auf 1 setzen, falls die Logik es benötigt
             // gameState.maxAttempts = 1;
             // Zeige die "Speed-Round" Animation, bevor der Track geladen wird
@@ -1254,13 +1254,30 @@ async function playTrackSnippet() {
 
             let pointsAwarded = 0; // NEU: Variable für die vergebenen Punkte
 
+			// ⭐️ NEU: LOGIK FÜR FALSCHE ANTWORT IN DER SPEED ROUND  -  MINUS PUNKTE ⭐️
+            if (!isCorrect && gameState.isSpeedRound) {
+                // Bei Speed Round UND falscher Antwort: -15 Punkte
+                pointsAwarded = -15; 
+
+                // Punkte sofort zum aktuellen Spieler addieren (subtrahieren)
+                if (gameState.currentPlayer === 1) {
+                    gameState.player1Score += pointsAwarded;
+                } else {
+                    gameState.player2Score += pointsAwarded;
+                }
+            
+            // Wichtig: Wenn falsch und KEINE Speed Round, bleiben pointsAwarded 0.
+            // Der Code geht dann zur Animation, die "+0" anzeigt.
+            }
+            // ⭐️ ENDE DER NEUEN FALSCHE ANTWORT LOGIK IN DER SPEED ROUND  -  MISNUS PUNKTE⭐️
+
             if (isCorrect) {
                 // 5.1: Punkte berechnen und speichern
                 // - alte zeile-> pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1)); // Punkte berechnen
 				
-				// ⭐️ START DER NEUEN SPEED ROUND PUNKTEBERECHNUNG ⭐️
+				// ⭐️ START DER NEUEN SPEED ROUND PUNKTEBERECHNUNG  --  PUNKTE ÄNDERN IN DER async function handleGenreSelection ZEILE 746⭐️
                 if (gameState.isSpeedRound) {
-                    // Speed Round: Punkte sind der feste Wert (10), keine Abzüge.
+                    // Speed Round: Punkte sind der feste Wert (15), keine Abzüge.
                     pointsAwarded = gameState.maxScore; 
                 } else {
                     // Normalrunde: Punkte sind Würfelwert (maxScore/diceValue) abzüglich Abzüge.
