@@ -115,8 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
         totalRounds: 20, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
-		// speedroundpoints
-		speedroundpints: 0,
         attemptsMade: 0,
         maxAttempts: 0,
         trackDuration: 0,
@@ -647,6 +645,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Die Werte werden jetzt direkt aus dem Konfigurationsobjekt ausgelesen
                 gameState.trackDuration = config.duration;
                 gameState.maxAttempts = config.attempts;
+				// ⭐️ NEU: Dedizierte Variable für die maximalen Punkte einführen
+                gameState.maxScore = config.attempts;
                 gameState.attemptsMade = 0;
 
                 diceContainer.classList.add('hidden');
@@ -755,8 +755,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if ((gameState.currentPlayer === 1 && playerRound === gameState.player1SpeedRound) ||
             (gameState.currentPlayer === 2 && playerRound === gameState.player2SpeedRound)) {
             gameState.isSpeedRound = true;
-			// ⭐️ NEUE LOGIK: ÜBERSCHREIBT DIE MAXIMALE PUNKTZAHL
-            gameState.speedroundpoints = 15; 
+            // ⭐️ FIX: maxScore auf 10 überschreiben
+            gameState.maxScore = 10;
             // ⭐️ ZUSÄTZLICH: MAXIMALE VERSUCHE auf 1 setzen, falls die Logik es benötigt
             // gameState.maxAttempts = 1;
             // Zeige die "Speed-Round" Animation, bevor der Track geladen wird
@@ -1256,8 +1256,20 @@ async function playTrackSnippet() {
 
             if (isCorrect) {
                 // 5.1: Punkte berechnen und speichern
-                pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1)); // Punkte berechnen
-                if (gameState.currentPlayer === 1) {
+                // - alte zeile-> pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1)); // Punkte berechnen
+				
+				// ⭐️ START DER NEUEN SPEED ROUND PUNKTEBERECHNUNG ⭐️
+                if (gameState.isSpeedRound) {
+                    // Speed Round: Punkte sind der feste Wert (10), keine Abzüge.
+                    pointsAwarded = gameState.maxScore; 
+                } else {
+                    // Normalrunde: Punkte sind Würfelwert (maxScore/diceValue) abzüglich Abzüge.
+                    // Wir verwenden hier die neue Variable maxScore (die dem diceValue entspricht).
+                    pointsAwarded = Math.max(1, gameState.maxScore - (gameState.attemptsMade - 1)); 
+                }
+                // ⭐️ ENDE DER NEUEN PUNKTEBERECHNUNG ⭐️
+                
+				if (gameState.currentPlayer === 1) {
                     gameState.player1Score += pointsAwarded;
                 } else {
                     gameState.player2Score += pointsAwarded;
