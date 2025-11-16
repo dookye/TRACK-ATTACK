@@ -889,3 +889,46 @@ body, html {
     min-height: 21px;
     margin-right: 5px; 
 }
+
+/* ======================= */
+/* = TOAST-NOTIFICATION (Fehlermedungen) = */
+/* ======================= */
+
+#toast-notification {
+    /* Positionierung: Unten zentriert */
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    /* Aussehen */
+    background-color: #ffc107; /* Ein warnendes Gelb/Gold */
+    color: #333;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    
+    /* Standardmäßig versteckt */
+    opacity: 0;
+    visibility: hidden;
+    
+    /* Animation */
+    transition: opacity 0.5s, visibility 0.5s, bottom 0.5s;
+    z-index: 10000;
+}
+
+/* Klasse, die per JS hinzugefügt wird, um den Toast anzuzeigen */
+#toast-notification.show {
+    opacity: 1;
+    visibility: visible;
+    bottom: 70px; /* Kommt leicht hoch "gefahren" */
+}
+
+/* Klasse 'hidden' nur zur Sicherheit, falls du sie nutzt */
+#toast-notification.hidden {
+    opacity: 0;
+    visibility: hidden;
+    bottom: 50px;
+}
