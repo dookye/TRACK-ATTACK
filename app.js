@@ -833,11 +833,11 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
     return randomTrack;
 }
 
-	// Globale Variable, um laufende Toast-Timer zu verwalten
+// Globale Variable, um laufende Toast-Timer zu verwalten
 let toastTimeout = null;
 
 /**
- * Zeigt eine non-blocking Toast-Nachricht am unteren Bildschirmrand an.
+ * Zeigt eine non-blocking Toast-Nachricht am oberen Bildschirmrand an.
  * @param {string} message Die anzuzeigende Nachricht.
  * @param {number} [duration=3000] Die Dauer in Millisekunden (optional).
  */
@@ -853,20 +853,38 @@ function showToast(message, duration = 3000) {
     // Setze die Nachricht
     messageElement.innerText = message;
 
-    // Laufenden Timer löschen, falls ein neuer Toast kommt, bevor der alte weg ist
+    // --- [START KORREKTUR FÜR ANIMATION] ---
+
+    // 1. Laufenden Timer löschen, falls ein neuer Toast kommt, bevor der alte weg ist
     if (toastTimeout) {
         clearTimeout(toastTimeout);
+        toastTimeout = null;
     }
 
-    // Toast sofort anzeigen
-    toastElement.classList.add('show');
-    toastElement.classList.remove('hidden'); // Falls du 'hidden' verwendest
+    // 2. Klasse entfernen, um die "Aus"-Position zu erzwingen
+    // (Selbst wenn sie nicht da ist, das setzt einen sauberen Startpunkt)
+    toastElement.classList.remove('show');
 
-    // Timer setzen, um den Toast nach 'duration' wieder auszublenden
-    toastTimeout = setTimeout(() => {
-        toastElement.classList.remove('show');
-        toastTimeout = null;
-    }, duration);
+    // 3. WICHTIG: Einen "Reflow" erzwingen.
+    // Dieser Befehl zwingt den Browser, die CSS-Änderungen (das .remove('show'))
+    // sofort zu verarbeiten, anstatt sie zu bündeln.
+    void toastElement.offsetWidth;
+
+    // 4. Starte die Einblend-Animation im "nächsten Frame"
+    // Ein minimaler Timeout (selbst 10ms) reicht aus, damit der Browser
+    // den "Aus"-Zustand (top: -100px) verarbeitet hat, bevor der "Ein"-Zustand
+    // (top: 30px) animiert wird.
+    setTimeout(() => {
+        toastElement.classList.add('show');
+
+        // 5. Timer setzen, um den Toast nach 'duration' wieder auszublenden
+        toastTimeout = setTimeout(() => {
+            toastElement.classList.remove('show');
+            toastTimeout = null;
+        }, duration);
+    }, 10); // 10ms Verzögerung für den sauberen Animationsstart
+    
+    // --- [ENDE KORREKTUR] ---
 }
 
 	/**
