@@ -849,42 +849,23 @@ function showToast(message, duration = 3000) {
         console.error("Toast-Elemente nicht im DOM gefunden!");
         return;
     }
-
-    // Setze die Nachricht
+    
     messageElement.innerText = message;
 
-    // --- [START KORREKTUR FÜR ANIMATION] ---
-
-    // 1. Laufenden Timer löschen, falls ein neuer Toast kommt, bevor der alte weg ist
+    // Laufenden Timer löschen
     if (toastTimeout) {
         clearTimeout(toastTimeout);
         toastTimeout = null;
     }
 
-    // 2. Klasse entfernen, um die "Aus"-Position zu erzwingen
-    // (Selbst wenn sie nicht da ist, das setzt einen sauberen Startpunkt)
-    toastElement.classList.remove('show');
+    // Direkt anzeigen (ohne 10ms Verzögerung oder Reflow-Trick)
+    toastElement.classList.add('show'); 
 
-    // 3. WICHTIG: Einen "Reflow" erzwingen.
-    // Dieser Befehl zwingt den Browser, die CSS-Änderungen (das .remove('show'))
-    // sofort zu verarbeiten, anstatt sie zu bündeln.
-    void toastElement.offsetWidth;
-
-    // 4. Starte die Einblend-Animation im "nächsten Frame"
-    // Ein minimaler Timeout (selbst 10ms) reicht aus, damit der Browser
-    // den "Aus"-Zustand (top: -100px) verarbeitet hat, bevor der "Ein"-Zustand
-    // (top: 30px) animiert wird.
-    setTimeout(() => {
-        toastElement.classList.add('show');
-
-        // 5. Timer setzen, um den Toast nach 'duration' wieder auszublenden
-        toastTimeout = setTimeout(() => {
-            toastElement.classList.remove('show');
-            toastTimeout = null;
-        }, duration);
-    }, 10); // 10ms Verzögerung für den sauberen Animationsstart
-    
-    // --- [ENDE KORREKTUR] ---
+    // Timer setzen, um den Toast nach 'duration' wieder auszublenden
+    toastTimeout = setTimeout(() => {
+        toastElement.classList.remove('show');
+        toastTimeout = null;
+    }, duration);
 }
 
 	/**
