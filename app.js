@@ -886,7 +886,7 @@ async function handleTrackPlaybackError(listenerToRemove) {
     
     // 2. User informieren (non-blocking Toast statt alert)
     // Der Code läuft jetzt SOFORT weiter, während der Toast angezeigt wird.
-    showToast("Oops, an error occurred, please try again.", 3000); // 3 Sekunden
+    showToast("Oops, an error occurred, please try again.", 3500); // 3,5 Sekunden
     // ------------------
 
     // 3. Neuen Track holen (nutzt das gespeicherte Genre)
