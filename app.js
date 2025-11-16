@@ -1312,7 +1312,12 @@ async function playTrackSnippet() {
         return new Promise(resolve => {
             // 1. Alle vorherigen Animationsklassen entfernen und Element für den Start vorbereiten
             countdownDisplay.classList.remove('hidden', 'countdown-animated', 'fly-to-corner-player1', 'fly-to-corner-player2', 'points-pop-in'); // 'points-pop-in' auch entfernen
-            countdownDisplay.innerText = `+${points}`;
+            // alt -> countdownDisplay.innerText = `+${points}`;
+
+			// ⭐️ KORRIGIERTE LOGIK HIER ⭐️
+            // Fügt das Pluszeichen nur hinzu, wenn die Punktzahl positiv ist
+            const sign = points > 0 ? '+' : ''; 
+            countdownDisplay.innerText = `${sign}${points}`;
 
             // 2. Start-Stile für die Punkteanzeige setzen (für die 'pop-in' Animation)
             countdownDisplay.style.opacity = '0'; // Startet transparent
