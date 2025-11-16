@@ -900,6 +900,7 @@ body, html {
     top: 10px;
     left: 50%;
     transform: translateX(-50%);
+    white-space: nowrap; /* Verhindert Zeilenumbrüche */
 
     /* Aussehen */
     color: white;
