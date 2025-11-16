@@ -1038,8 +1038,8 @@ async function playTrackSnippet() {
                 console.warn(`Track nicht abspielbar (Status ${status}). Versuche, einen neuen Track zu laden...`);
                 
                 // Rufe die neue Hilfsfunktion auf (siehe meine vorige Antwort)
-                await handleTrackPlaybackError(playbackStateListener);
-                
+                // await handleTrackPlaybackError(playbackStateListener);
+                await prepareAndShowRateScreen(genre)
                 // WICHTIG: Hier abbrechen, damit der alte Alert-Code nicht ausgeführt wird
                 return; 
             }
@@ -1076,7 +1076,7 @@ async function playTrackSnippet() {
 	}).catch(error => {
         // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
-        alert("Problem beim Verbinden mit Spotify. Bitte überprüfen Sie Ihre Internetverbindung.");
+        alert("an error has occurred, a new track is being loaded");
         logoButton.classList.remove('inactive');
         logoButton.classList.add('logo-pulsing');
         if (playbackStateListener) {
