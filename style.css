@@ -916,7 +916,7 @@ body, html {
     visibility: hidden;
     
     /* Animation */
-    transition: top 0.5s ease-out, opacity 0.5s ease-out;
+    transition: top 0.4s ease-out, opacity 0.4s ease-out;
     z-index: 10000;
 }
 
@@ -924,7 +924,7 @@ body, html {
 #toast-notification.show {
     opacity: 1;
     visibility: visible;
-    top: 40px; /* Kommt leicht runter "gefahren" */
+    top: 60px; /* Kommt leicht runter "gefahren" */
 }
 
 /* Klasse 'hidden' nur zur Sicherheit, falls du sie nutzt */
