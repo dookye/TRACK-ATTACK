@@ -897,13 +897,13 @@ body, html {
 #toast-notification {
     /* Positionierung: Unten zentriert */
     position: fixed;
-    bottom: 30px;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
 
     /* Aussehen */
     color: white;
-    font-size: 12px;
+    font-size: 15px;
     font-weight: bold;
     /* padding: 14px 20px;
     border-radius: 8px;
@@ -923,12 +923,12 @@ body, html {
 #toast-notification.show {
     opacity: 1;
     visibility: visible;
-    bottom: 50px; /* Kommt leicht hoch "gefahren" */
+    top: 40px; /* Kommt leicht runter "gefahren" */
 }
 
 /* Klasse 'hidden' nur zur Sicherheit, falls du sie nutzt */
 #toast-notification.hidden {
     opacity: 0;
     visibility: hidden;
-    bottom: 30px;
+    top: 10px;
 }
