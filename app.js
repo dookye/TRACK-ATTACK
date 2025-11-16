@@ -833,6 +833,42 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
     return randomTrack;
 }
 
+	// Globale Variable, um laufende Toast-Timer zu verwalten
+let toastTimeout = null;
+
+/**
+ * Zeigt eine non-blocking Toast-Nachricht am unteren Bildschirmrand an.
+ * @param {string} message Die anzuzeigende Nachricht.
+ * @param {number} [duration=3000] Die Dauer in Millisekunden (optional).
+ */
+function showToast(message, duration = 3000) {
+    const toastElement = document.getElementById('toast-notification');
+    const messageElement = document.getElementById('toast-message');
+
+    if (!toastElement || !messageElement) {
+        console.error("Toast-Elemente nicht im DOM gefunden!");
+        return;
+    }
+
+    // Setze die Nachricht
+    messageElement.innerText = message;
+
+    // Laufenden Timer löschen, falls ein neuer Toast kommt, bevor der alte weg ist
+    if (toastTimeout) {
+        clearTimeout(toastTimeout);
+    }
+
+    // Toast sofort anzeigen
+    toastElement.classList.add('show');
+    toastElement.classList.remove('hidden'); // Falls du 'hidden' verwendest
+
+    // Timer setzen, um den Toast nach 'duration' wieder auszublenden
+    toastTimeout = setTimeout(() => {
+        toastElement.classList.remove('show');
+        toastTimeout = null;
+    }, duration);
+}
+
 	/**
  * Wird aufgerufen, wenn ein Track nicht abgespielt werden kann (z.B. 403/404).
  * Lädt automatisch einen neuen Track aus dem aktuellen Genre.
@@ -848,8 +884,10 @@ async function handleTrackPlaybackError(listenerToRemove) {
 
     console.log(`Versuche, einen neuen Track für das Genre '${gameState.currentGenre}' zu laden.`);
     
-    // 2. User informieren (Ein "Toast" / non-blocking Popup wäre besser, aber Alert geht auch)
-    alert("Dieser Song ist nicht verfügbar (z.B. Ländersperre). Es wird automatisch ein neuer Song geladen. Bitte drücke 'Play' erneut, wenn das Logo pulsiert.");
+    // 2. User informieren (non-blocking Toast statt alert)
+    // Der Code läuft jetzt SOFORT weiter, während der Toast angezeigt wird.
+    showToast("Song nicht verfügbar. Lade automatisch einen neuen Song...", 4000); // 4 Sekunden
+    // ------------------
 
     // 3. Neuen Track holen (nutzt das gespeicherte Genre)
     const newTrack = await getTrack(gameState.currentGenre);
