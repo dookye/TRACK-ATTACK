@@ -833,12 +833,56 @@ async function getTrack(selectedGenreName) { // Habe den Parameter-Namen zur Kla
     return randomTrack;
 }
 
+	/**
+ * Wird aufgerufen, wenn ein Track nicht abgespielt werden kann (z.B. 403/404).
+ * Lädt automatisch einen neuen Track aus dem aktuellen Genre.
+ * @param {function | null} listenerToRemove - Der 'player_state_changed'-Listener, der bereinigt werden muss.
+ */
+async function handleTrackPlaybackError(listenerToRemove) {
+    // 1. Wichtig: Listener aufräumen, falls er existiert
+    if (listenerToRemove && spotifyPlayer) {
+        spotifyPlayer.removeListener('player_state_changed', listenerToRemove);
+        // Setze die globale Variable zurück, da der Listener entfernt wurde
+        playbackStateListener = null; 
+    }
+
+    console.log(`Versuche, einen neuen Track für das Genre '${gameState.currentGenre}' zu laden.`);
+    
+    // 2. User informieren (Ein "Toast" / non-blocking Popup wäre besser, aber Alert geht auch)
+    alert("Dieser Song ist nicht verfügbar (z.B. Ländersperre). Es wird automatisch ein neuer Song geladen. Bitte drücke 'Play' erneut, wenn das Logo pulsiert.");
+
+    // 3. Neuen Track holen (nutzt das gespeicherte Genre)
+    const newTrack = await getTrack(gameState.currentGenre);
+
+    if (newTrack) {
+        // 4. Neuen Track im State speichern
+        gameState.currentTrack = newTrack;
+        console.log(`Neuer Track erfolgreich geladen: "${newTrack.name}"`);
+
+        // 5. UI zurücksetzen, damit der User erneut klicken kann.
+        // Der Versuch wurde dank der Code-Änderung oben NICHT gezählt.
+        logoButton.classList.remove('inactive');
+        logoButton.classList.add('logo-pulsing');
+        
+    } else {
+        // 6. Fallback, falls getTrack() fehlschlägt
+        console.error("Konnte keinen neuen Track laden. getTrack() ist fehlgeschlagen.");
+        // In diesem Fall sollte getTrack() bereits zum Genre-Screen navigiert sein.
+    }
+}
+
 
     async function prepareAndShowRateScreen(genre) {
 		// Speichere das ausgewählte Genre im globalen State.
         // Das brauchen wir, um bei einem Fehler einen neuen Track aus DEMSELBEN Genre zu laden.
         gameState.currentGenre = genre;
         gameState.currentTrack = await getTrack(genre);
+		// WICHTIG: Prüfen, ob getTrack() erfolgreich war, bevor wir weitermachen
+        if (!gameState.currentTrack) {
+            console.warn("prepareAndShowRateScreen: getTrack hat 'null' zurückgegeben. Breche ab.");
+            // getTrack() sollte in diesem Fall bereits showGenreScreen() aufgerufen haben.
+            return; 
+        }
         console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
 
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
@@ -1038,8 +1082,7 @@ async function playTrackSnippet() {
                 console.warn(`Track nicht abspielbar (Status ${status}). Versuche, einen neuen Track zu laden...`);
                 
                 // Rufe die neue Hilfsfunktion auf (siehe meine vorige Antwort)
-                // await handleTrackPlaybackError(playbackStateListener);
-                await prepareAndShowRateScreen(playbackStateListener);
+                await handleTrackPlaybackError(playbackStateListener);
                 // WICHTIG: Hier abbrechen, damit der alte Alert-Code nicht ausgeführt wird
                 return; 
             }
