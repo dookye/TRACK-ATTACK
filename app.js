@@ -147,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastGameScreenVisible = '';
 
     const playlists = {
+		'test': ['4EA0uV0i0c7RJNxWZpwcmM'],
         'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         'die größten hits aller zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
         'deutsch songs von früher bis heute': ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
