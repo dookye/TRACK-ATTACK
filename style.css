@@ -916,7 +916,7 @@ body, html {
     visibility: hidden;
     
     /* Animation */
-    transition: opacity 0.5s, visibility 0.5s, top 0.5s;
+    transition: top 0.5s ease-out, opacity 0.5s ease-out;
     z-index: 10000;
 }
 
