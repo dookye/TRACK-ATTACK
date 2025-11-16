@@ -1039,7 +1039,7 @@ async function playTrackSnippet() {
                 
                 // Rufe die neue Hilfsfunktion auf (siehe meine vorige Antwort)
                 // await handleTrackPlaybackError(playbackStateListener);
-                await prepareAndShowRateScreen(genre)
+                await prepareAndShowRateScreen(playbackStateListener);
                 // WICHTIG: Hier abbrechen, damit der alte Alert-Code nicht ausgeführt wird
                 return; 
             }
