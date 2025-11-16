@@ -897,18 +897,18 @@ body, html {
 #toast-notification {
     /* Positionierung: Unten zentriert */
     position: fixed;
-    bottom: 50px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
 
     /* Aussehen */
-    background-color: #ffc107; /* Ein warnendes Gelb/Gold */
-    color: #333;
-    padding: 14px 20px;
-    border-radius: 8px;
+    color: white;
     font-size: 16px;
     font-weight: bold;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    /* padding: 14px 20px;
+    border-radius: 8px;
+    background-color: #ffc107; --> Ein warnendes Gelb/Gold
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); */
     
     /* Standardmäßig versteckt */
     opacity: 0;
@@ -923,12 +923,12 @@ body, html {
 #toast-notification.show {
     opacity: 1;
     visibility: visible;
-    bottom: 70px; /* Kommt leicht hoch "gefahren" */
+    bottom: 50px; /* Kommt leicht hoch "gefahren" */
 }
 
 /* Klasse 'hidden' nur zur Sicherheit, falls du sie nutzt */
 #toast-notification.hidden {
     opacity: 0;
     visibility: hidden;
-    bottom: 50px;
+    bottom: 30px;
 }
