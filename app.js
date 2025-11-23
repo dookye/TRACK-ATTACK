@@ -425,6 +425,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ANFANG ----------------
+	function checkConnectionSpeed() {
+    // Prüfen, ob die Network Information API verfügbar ist
+    if ('connection' in navigator) {
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        
+        // Die meisten modernen Browser (Chrome, Firefox, Edge) unterstützen effectiveType
+        const effectiveType = connection.effectiveType; // z.B. '4g', '3g', '2g', 'slow-2g'
+        const downlink = connection.downlink; // Geschätzte Bandbreite in Megabits pro Sekunde (Mbit/s)
+        
+        console.log(`[NETWORK] Verbindungstyp: ${effectiveType}, Downlink: ${downlink} Mbit/s`);
+        
+        // Annahme: Als 'schnelles 4G' gilt '4g' (oder höher) mit einem Downlink > 2 Mbit/s.
+        if (effectiveType === '3g' || effectiveType === '2g' || downlink < 2) {
+            
+            showToastMessage("⚠️ Langsame Verbindung erkannt. Die Abspielzeiten könnten ungenau sein, insbesondere bei kurzen Song-Snippets.", 8000); 
+            // 8000ms Anzeigedauer
+            
+            // OPTIONAL: Hier könnten Sie gameState.isSlowConnection = true setzen
+            // und z.B. die Dauer für Würfel 7 auf 4000ms erhöhen (als Kompromiss).
+            
+        } else {
+             console.log("[NETWORK] Verbindung ist schnell genug.");
+        }
+    } else {
+        console.warn("[NETWORK] Network Information API nicht verfügbar.");
+    }
+}
+	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ----------------
+
     // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
     function renderPreselectionGenres() {
         // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
