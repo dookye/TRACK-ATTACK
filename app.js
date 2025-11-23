@@ -440,32 +440,40 @@ function checkConnectionSpeed() {
         
         // --- Kritische Schwellenwerte ---
         const effectiveType = connection.effectiveType; 
-        const downlink = connection.downlink; // Bandbreite in Mbit/s
         
-        // SCHWELLENWERTE:
-        // 1. Alles unter 4G (3G, 2G) ist zu langsam.
-        // 2. 4G gilt als zu langsam, wenn die geschätzte Bandbreite (downlink) unter 5 Mbit/s liegt.
+        // Sicherstellen, dass downlink ein Wert ist (Standard: 10 Mbit/s, falls undefined/0)
+        // Viele Browser geben für schnelles WLAN/LAN 0 oder undefined zurück; wir setzen hier einen hohen Schwellwert.
+        const downlink = connection.downlink || 100; // Wenn undefined/0, setze auf 100 Mbit/s (gilt als schnell)
+        
         const SLOW_4G_THRESHOLD = 5; // Mbit/s
         
         console.log(`[NETWORK] Verbindungstyp: ${effectiveType}, Downlink: ${downlink} Mbit/s`);
         
-        // Prüfen, ob die Verbindung als langsam eingestuft wird:
         let isTooSlow = false;
 
+        // --- Logik für isTooSlow ---
+        
         if (effectiveType === '3g' || effectiveType === '2g' || effectiveType === 'slow-2g') {
-            isTooSlow = true; // Langsamer als 4G
+            // 1. Alles unter 4G (oder wenn der Typ explizit als langsam gemeldet wird)
+            isTooSlow = true; 
         } else if (effectiveType === '4g' && downlink < SLOW_4G_THRESHOLD) {
-            isTooSlow = true; // 4G, aber die geschätzte Bandbreite ist zu gering
+            // 2. 4G, aber die geschätzte Bandbreite ist zu gering (unter 5 Mbit/s)
+            isTooSlow = true; 
+        } else if (!effectiveType && downlink < SLOW_4G_THRESHOLD) {
+             // 3. Fallback: Wenn effectiveType nicht gemeldet wird (manchmal bei WLAN) und der Downlink verdächtig niedrig ist
+             isTooSlow = true;
         }
+        
+        // --- ENDE Logik ---
         
         if (isTooSlow) {
             
-            const message = "⚠️ Langsame Verbindung erkannt. Die Abspielzeiten könnten ungenau sein, insbesondere bei kurzen Song-Snippets. Für ein optimales Spielerlebnis ist eine stabilere Verbindung (schnelles 4G/WLAN) empfohlen.";
+            const message = "Langsame Verbindung erkannt. Die Abspielzeiten könnten ungenau sein, insbesondere bei kurzen Song-Snippets. Für ein optimales Spielerlebnis ist eine stabilere Verbindung (schnelles 4G/WLAN) empfohlen.";
             
-            // Ruft Ihre vorhandene showToast(message, duration) Funktion auf
-            showToast(message, 8000); // Zeigt die Warnung für 8 Sekunden
+            showToast(message, 8000); 
             
         } else {
+             // Der Fall, in dem downlink > 5 Mbit/s oder der Typ 4G/5G (was oft bei WLAN gemeldet wird) ist.
              console.log("[NETWORK] Verbindung ist schnell genug.");
         }
     } else {
