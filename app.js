@@ -468,9 +468,13 @@ function checkConnectionSpeed() {
         
         if (isTooSlow) {
             
-            const message = "Langsame Verbindung erkannt. Die Abspielzeiten könnten ungenau sein, insbesondere bei kurzen Song-Snippets. Für ein optimales Spielerlebnis ist eine stabilere Verbindung (schnelles 4G/WLAN) empfohlen.";
+            const message = "Slow Connection Detected!";
             
-            showToast(message, 8000); 
+            showToast(message, 2000);
+
+			const message = "Playback timing may be inaccurate";
+            
+            showToast(message, 2000);
             
         } else {
              // Der Fall, in dem downlink > 5 Mbit/s oder der Typ 4G/5G (was oft bei WLAN gemeldet wird) ist.
