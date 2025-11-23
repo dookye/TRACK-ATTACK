@@ -468,13 +468,9 @@ function checkConnectionSpeed() {
         
         if (isTooSlow) {
             
-            const message = "Slow Connection Detected!";
+            const message = "Slow Connection Detected! Playback timing may be inaccurate";
             
-            showToast(message, 2000);
-
-			const message = "Playback timing may be inaccurate";
-            
-            showToast(message, 2000);
+            showToast(message, 6000);
             
         } else {
              // Der Fall, in dem downlink > 5 Mbit/s oder der Typ 4G/5G (was oft bei WLAN gemeldet wird) ist.
