@@ -978,7 +978,8 @@ async function playTrackSnippet() {
 	logoButton.classList.remove('logo-pulsing');
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
-    const desiredDuration = gameState.trackDuration;
+    // const desiredDuration = gameState.trackDuration;
+	const desiredDuration = config.duration;
     
     // Zufällige Startposition bestimmen
     const maxStart = trackDurationMs - desiredDuration - 500;
