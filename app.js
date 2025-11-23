@@ -426,31 +426,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ANFANG ----------------
-	function checkConnectionSpeed() {
+/**
+ * Prüft die geschätzte effektive Verbindungsgeschwindigkeit des Benutzers
+ * und zeigt eine Toast-Nachricht an, falls die Verbindung zu langsam ist.
+ */
+function checkConnectionSpeed() {
     // Prüfen, ob die Network Information API verfügbar ist
     if ('connection' in navigator) {
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         
-        // Die meisten modernen Browser (Chrome, Firefox, Edge) unterstützen effectiveType
-        const effectiveType = connection.effectiveType; // z.B. '4g', '3g', '2g', 'slow-2g'
-        const downlink = connection.downlink; // Geschätzte Bandbreite in Megabits pro Sekunde (Mbit/s)
+        // --- Kritische Schwellenwerte ---
+        // '3g' oder niedriger ist fast immer zu langsam für kurze Snippets.
+        const effectiveType = connection.effectiveType; 
+        
+        // Geschätzte Bandbreite (Downlink) in Megabits pro Sekunde (Mbit/s).
+        // Wir setzen die Schwelle bei 2 Mbit/s.
+        const downlink = connection.downlink; 
         
         console.log(`[NETWORK] Verbindungstyp: ${effectiveType}, Downlink: ${downlink} Mbit/s`);
         
-        // Annahme: Als 'schnelles 4G' gilt '4g' (oder höher) mit einem Downlink > 2 Mbit/s.
-        if (effectiveType === '3g' || effectiveType === '2g' || downlink < 2) {
+        // Prüfen, ob die Verbindung als langsam eingestuft wird
+        // 'effectiveType' kann '4g', '3g', '2g', 'slow-2g' sein.
+        const isTooSlow = effectiveType === '3g' || effectiveType === '2g' || effectiveType === 'slow-2g' || downlink < 2;
+        
+        if (isTooSlow) {
             
-            showToastMessage("⚠️ Langsame Verbindung erkannt. Die Abspielzeiten könnten ungenau sein, insbesondere bei kurzen Song-Snippets.", 8000); 
-            // 8000ms Anzeigedauer
+            const message = "⚠️ Langsame Verbindung erkannt. Die Abspielzeiten könnten ungenau sein, insbesondere bei kurzen Song-Snippets. Für ein optimales Spielerlebnis ist eine stabilere Verbindung (schnelles 4G/WLAN) empfohlen.";
             
-            // OPTIONAL: Hier könnten Sie gameState.isSlowConnection = true setzen
-            // und z.B. die Dauer für Würfel 7 auf 4000ms erhöhen (als Kompromiss).
+            // Ruft Ihre vorhandene showToast(message, duration) Funktion auf
+            showToast(message, 8000); // Zeigt die Warnung für 8 Sekunden
             
         } else {
              console.log("[NETWORK] Verbindung ist schnell genug.");
         }
     } else {
-        console.warn("[NETWORK] Network Information API nicht verfügbar.");
+        console.warn("[NETWORK] Network Information API nicht verfügbar. Konnte die Verbindungsgeschwindigkeit nicht prüfen.");
     }
 }
 	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ----------------
