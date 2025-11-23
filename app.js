@@ -473,7 +473,7 @@ function checkConnectionSpeed() {
         // --- BLOCKIERUNGS-LOGIK ---
         if (isTooSlow) {
             
-            const message = "🚨 Slow Connection Detected! Playback timing may be inaccurate. For best experience, use fast 4G or Wi-Fi.";
+            const message = "faster network required to play (Wi-Fi/4G)";
             
             // 1. Toast dauerhaft anzeigen (1 Stunde)
             showToast(message, 3600000); 
