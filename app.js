@@ -452,7 +452,7 @@ function checkConnectionSpeed() {
         const effectiveType = connection.effectiveType; 
         
         // KORREKTUR: Wenn downlink undefined/0 ist (oft bei schnellem WLAN/LAN), setze auf 100 Mbit/s
-        const downlink = connection.downlink || 100; // Mbit/s
+        // const downlink = connection.downlink || 100; // Mbit/s
         
         const SLOW_4G_THRESHOLD = 5; // Mbit/s
         
