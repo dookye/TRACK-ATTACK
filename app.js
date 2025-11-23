@@ -96,12 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Konfiguration für jeden Würfelwert
     const diceConfig = {
-        1: { attempts: 1, duration: 7350 },
-        2: { attempts: 2, duration: 7350 },
-        3: { attempts: 3, duration: 7350 },
-        4: { attempts: 4, duration: 7350 },
-        5: { attempts: 5, duration: 7350 },
-        7: { attempts: 7, duration: 2350 }
+        1: { attempts: 1, duration: 7350, fallback: 8500 },
+        2: { attempts: 2, duration: 7350, fallback: 8500 },
+        3: { attempts: 3, duration: 7350, fallback: 8500 },
+        4: { attempts: 4, duration: 7350, fallback: 8500 },
+        5: { attempts: 5, duration: 7350, fallback: 8500 },
+        7: { attempts: 7, duration: 2350, fallback: 3500 }
     };
 
     // --- Spielstatus-Variablen ---
