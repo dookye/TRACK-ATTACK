@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginScreen = document.getElementById('login-screen');
     const gameScreen = document.getElementById('game-screen');
     const rotateDeviceOverlay = document.getElementById('rotate-device-overlay');
+    // logoButton ist im Scope definiert
     const logoButton = document.getElementById('logo-button');
     const diceContainer = document.getElementById('dice-container');
     const diceAnimation = document.getElementById('dice-animation');
@@ -138,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // NEU: Array für die ausgewählten Genres auf der Startseite
         selectedPlayableGenres: [],
+        isConnectionSlow: false, // 💡 NEU: Flagge für blockierten Spielstart
     };
 
     // NEU: Zufälligen Startspieler festlegen
@@ -187,6 +189,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
+        
+        // 🛑 NEU: Spielstart blockieren, wenn Verbindung zu langsam ist
+        if (gameState.isConnectionSlow) {
+            console.warn("Spielstart blockiert: Verbindung zu langsam.");
+            // Der Button wurde bereits in checkConnectionSpeed deaktiviert und die Meldung angezeigt.
+            return; 
+        }
+
         gameScreen.classList.remove('hidden');
 
         // NEU: Sound für das einfliegende Logo abspielen
@@ -431,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ANFANG ----------------
 /**
  * Prüft die geschätzte effektive Verbindungsgeschwindigkeit des Benutzers
- * und zeigt eine Toast-Nachricht an, falls die Verbindung zu langsam ist.
+ * und blockiert das Spiel, falls die Verbindung zu langsam ist.
  */
 function checkConnectionSpeed() {
     // Prüfen, ob die Network Information API verfügbar ist
@@ -441,9 +451,8 @@ function checkConnectionSpeed() {
         // --- Kritische Schwellenwerte ---
         const effectiveType = connection.effectiveType; 
         
-        // Sicherstellen, dass downlink ein Wert ist (Standard: 10 Mbit/s, falls undefined/0)
-        // Viele Browser geben für schnelles WLAN/LAN 0 oder undefined zurück; wir setzen hier einen hohen Schwellwert.
-        const downlink = connection.downlink || 100; // Wenn undefined/0, setze auf 100 Mbit/s (gilt als schnell)
+        // KORREKTUR: Wenn downlink undefined/0 ist (oft bei schnellem WLAN/LAN), setze auf 100 Mbit/s
+        const downlink = connection.downlink || 100; // Mbit/s
         
         const SLOW_4G_THRESHOLD = 5; // Mbit/s
         
@@ -454,30 +463,41 @@ function checkConnectionSpeed() {
         // --- Logik für isTooSlow ---
         
         if (effectiveType === '3g' || effectiveType === '2g' || effectiveType === 'slow-2g') {
-            // 1. Alles unter 4G (oder wenn der Typ explizit als langsam gemeldet wird)
             isTooSlow = true; 
         } else if (effectiveType === '4g' && downlink < SLOW_4G_THRESHOLD) {
-            // 2. 4G, aber die geschätzte Bandbreite ist zu gering (unter 5 Mbit/s)
             isTooSlow = true; 
         } else if (!effectiveType && downlink < SLOW_4G_THRESHOLD) {
-             // 3. Fallback: Wenn effectiveType nicht gemeldet wird (manchmal bei WLAN) und der Downlink verdächtig niedrig ist
              isTooSlow = true;
         }
         
-        // --- ENDE Logik ---
-        
+        // --- BLOCKIERUNGS-LOGIK ---
         if (isTooSlow) {
             
-            const message = "Slow Connection Detected! Playback timing may be inaccurate";
+            const message = "🚨 Slow Connection Detected! Playback timing may be inaccurate. For best experience, use fast 4G or Wi-Fi.";
             
-            showToast(message, 6000);
+            // 1. Toast dauerhaft anzeigen (1 Stunde)
+            showToast(message, 3600000); 
+
+            // 2. Spiel blockieren
+            gameState.isConnectionSlow = true; 
+            
+            // 3. Button deaktivieren und Pulsing entfernen
+            if (logoButton) {
+                logoButton.classList.remove('logo-pulsing');
+                logoButton.classList.add('inactive');
+                // Sicherstellen, dass der Klick-Listener entfernt wird, falls er schon da war
+                logoButton.removeEventListener('click', startGame); 
+            }
+            console.warn("Spiel blockiert: Die Verbindung ist zu langsam.");
             
         } else {
-             // Der Fall, in dem downlink > 5 Mbit/s oder der Typ 4G/5G (was oft bei WLAN gemeldet wird) ist.
+             gameState.isConnectionSlow = false;
              console.log("[NETWORK] Verbindung ist schnell genug.");
         }
     } else {
         console.warn("[NETWORK] Network Information API nicht verfügbar. Konnte die Verbindungsgeschwindigkeit nicht prüfen.");
+        // Im Zweifelsfall nicht blockieren, da keine Info verfügbar
+        gameState.isConnectionSlow = false;
     }
 }
 	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ----------------
