@@ -96,12 +96,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Konfiguration für jeden Würfelwert
     const diceConfig = {
-        1: { attempts: 1, duration: 7350, fallback: 8500 },
-        2: { attempts: 2, duration: 7350, fallback: 8500 },
-        3: { attempts: 3, duration: 7350, fallback: 8500 },
-        4: { attempts: 4, duration: 7350, fallback: 8500 },
-        5: { attempts: 5, duration: 7350, fallback: 8500 },
-        7: { attempts: 7, duration: 2350, fallback: 3500 }
+        1: { 
+        attempts: 1, 
+        duration: 7350,           // Spieldauer bei erfolgreicher Spotify-Meldung
+        latency_wait: 2500,       // Max. Wartezeit auf Spotify-Meldung, bevor fallbacktimer greift
+        fallback_stop_time: 5000  // Dauer des Stopp-Timers bei Fallback.
+    },
+        2: { attempts: 2, duration: 7350, latency_wait: 2500, fallback_stop_time: 5000 },
+        3: { attempts: 3, duration: 7350, latency_wait: 2500, fallback_stop_time: 5000 },
+        4: { attempts: 4, duration: 7350, latency_wait: 2500, fallback_stop_time: 5000 },
+        5: { attempts: 5, duration: 7350, latency_wait: 2500, fallback_stop_time: 5000 },
+        7: { attempts: 7, duration: 2350, latency_wait: 2500, fallback_stop_time: 750 }
     };
 
     // --- Spielstatus-Variablen ---
@@ -1080,24 +1085,31 @@ async function playTrackSnippet() {
         spotifyPlayer.addListener('player_state_changed', playbackStateListener);
     }
 
-    // ########### 4. Fallback-Timer starten ###########
-    if (!gameState.isSpeedRound && config && config.fallback) {
-        const fallbackDuration = config.fallback;
+// ########### 4. Fallback-Timer starten ###########
+    if (!gameState.isSpeedRound && config && config.latency_wait) {
         
+        const maxLatency = config.latency_wait; 
+        const customFallbackDuration = config.fallback_stop_time || desiredDuration; // Nutze den neuen Wert oder standardmäßig die volle Dauer
+        
+        // Stopp-Timer darf nicht negativ sein
+        const actualFallbackDuration = Math.max(0, customFallbackDuration); 
+
         fallbackPlayTimer = setTimeout(() => {
-            console.warn(`[FALLBACK] Spotify PLAY-Rückmeldung verpasst (nach ${fallbackDuration}ms). Starte Runden-Timer und zähle Versuch.`);
+            console.warn(`[FALLBACK] Spotify PLAY-Rückmeldung verpasst (nach ${maxLatency}ms). Aktiviere Custom Fallback-Timer (Dauer: ${actualFallbackDuration}ms).`);
             
             fallbackPlayTimer = null; 
             
-            // Listener entfernen, da er zu spät kam
+            // Listener entfernen, da der Fallback nun die Kontrolle übernimmt
             if (spotifyPlayer && playbackStateListener) {
                  spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                  playbackStateListener = null;
+                 console.log("[FALLBACK] Playback State Listener wurde entfernt.");
             }
             
-            // Runde über die zentrale Funktion starten (mit Flag für Fallback)
-            startRoundTimers(0, true); 
-        }, fallbackDuration);
+            // Runde über die zentrale Funktion starten. Wir nutzen actualFallbackDuration als stopDuration.
+            startRoundTimers(0, true, actualFallbackDuration); 
+            
+        }, maxLatency); // Warte nur die definierte maxLatency
     }
     // ########### ENDE: Fallback-Timer ###########
 
