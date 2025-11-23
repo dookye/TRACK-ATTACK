@@ -440,12 +440,23 @@ function checkConnectionSpeed() {
         
         // --- Kritische Schwellenwerte ---
         const effectiveType = connection.effectiveType; 
-        const downlink = connection.downlink; 
+        const downlink = connection.downlink; // Bandbreite in Mbit/s
+        
+        // SCHWELLENWERTE:
+        // 1. Alles unter 4G (3G, 2G) ist zu langsam.
+        // 2. 4G gilt als zu langsam, wenn die geschätzte Bandbreite (downlink) unter 5 Mbit/s liegt.
+        const SLOW_4G_THRESHOLD = 5; // Mbit/s
         
         console.log(`[NETWORK] Verbindungstyp: ${effectiveType}, Downlink: ${downlink} Mbit/s`);
         
-        // Prüfen, ob die Verbindung als langsam eingestuft wird
-        const isTooSlow = effectiveType === '3g' || effectiveType === '2g' || effectiveType === 'slow-2g' || downlink < 2;
+        // Prüfen, ob die Verbindung als langsam eingestuft wird:
+        let isTooSlow = false;
+
+        if (effectiveType === '3g' || effectiveType === '2g' || effectiveType === 'slow-2g') {
+            isTooSlow = true; // Langsamer als 4G
+        } else if (effectiveType === '4g' && downlink < SLOW_4G_THRESHOLD) {
+            isTooSlow = true; // 4G, aber die geschätzte Bandbreite ist zu gering
+        }
         
         if (isTooSlow) {
             
