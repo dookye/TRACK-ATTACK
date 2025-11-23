@@ -8,7 +8,7 @@ const API_ENDPOINTS = {
     SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
     SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
 	SPOTIFY_PLAYER_TRANSFER: 'https://api.spotify.com/v1/me/player',
-	SPOTIFY_PLAYER_STATE: 'https://api.spotify.com/v1/me/player'
+	SPOTIFY_PLAYER_STATE: 'https://api.spotify.com/v1'
 };
 
 
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 };
 
     // --- Spielstatus-Variablen ---
-    let playbackStateListener = null;  // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
+    let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 	let pollingIntervalTimer = null;
 	let fallbackPlayTimer = null;
     let accessToken = null;
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkOrientation() {
         // Führe die Start-Logik nur aus, wenn der Token da ist und der GameScreen noch versteckt ist
         if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
-             startGameAfterOrientation();
+            startGameAfterOrientation();
         }
     }
     
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // NEU: Sound für das einfliegende Logo abspielen
         if (logoFlyInSound) {
             logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
-            logoFlyInSound.volume = 0.3; 
+            logoFlyInSound.volume = 0.3;
             logoFlyInSound.play().catch(error => {
                 console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
             });
@@ -336,6 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
             accessToken = token; // Hier wird der Access Token gesetzt!
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
             startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
+            
+            // 💡 NEU: Starte den Verbindungs-Check!
+            checkConnectionSpeed(); 
 
             // HIER WIRD DER TIMEOUT EINGEFÜGT! 
             setTimeout(() => {
@@ -436,17 +439,12 @@ function checkConnectionSpeed() {
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         
         // --- Kritische Schwellenwerte ---
-        // '3g' oder niedriger ist fast immer zu langsam für kurze Snippets.
         const effectiveType = connection.effectiveType; 
-        
-        // Geschätzte Bandbreite (Downlink) in Megabits pro Sekunde (Mbit/s).
-        // Wir setzen die Schwelle bei 2 Mbit/s.
         const downlink = connection.downlink; 
         
         console.log(`[NETWORK] Verbindungstyp: ${effectiveType}, Downlink: ${downlink} Mbit/s`);
         
         // Prüfen, ob die Verbindung als langsam eingestuft wird
-        // 'effectiveType' kann '4g', '3g', '2g', 'slow-2g' sein.
         const isTooSlow = effectiveType === '3g' || effectiveType === '2g' || effectiveType === 'slow-2g' || downlink < 2;
         
         if (isTooSlow) {
