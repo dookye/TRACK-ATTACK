@@ -1138,14 +1138,6 @@ async function playTrackSnippet() {
                 spotifyPlayer.pause();
                 gameState.isSongPlaying = false;
 
-				// 💡 NEU: ZWEITER, VERZÖGERTER STOPP-VERSUCH für langsame Verbindungen
-                // Sendet nach 500ms einen weiteren Pause-Befehl, falls der erste zu früh kam.
-                setTimeout(() => {
-                    spotifyPlayer.pause();
-                    console.log("[STOPP-FALLBACK] Zweiter Pause-Befehl gesendet.");
-                }, 5000); 
-                // ENDE NEU
-
                 if (gameState.attemptsMade < gameState.maxAttempts) {
                     logoButton.classList.remove('inactive');
                     logoButton.classList.add('logo-pulsing');
