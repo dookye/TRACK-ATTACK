@@ -7,8 +7,7 @@ const API_ENDPOINTS = {
     SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
     SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
     SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
-	SPOTIFY_PLAYER_TRANSFER: 'https://api.spotify.com/v1/me/player',
-	SPOTIFY_PLAYER_STATE: 'https://api.spotify.com/v1/me/player'
+	SPOTIFY_PLAYER_TRANSFER: 'https://api.spotify.com/v1/me/player'
 };
 
 
@@ -97,19 +96,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Konfiguration für jeden Würfelwert
     const diceConfig = {
-    // 'poll_delay' ist die Wartezeit auf die Spotify Event-Meldung, bevor wir POLLEN.
-    1: { attempts: 1, duration: 7350, poll_delay: 1500 }, 
-    2: { attempts: 2, duration: 7350, poll_delay: 1500 }, 
-    3: { attempts: 3, duration: 7350, poll_delay: 1500 }, 
-    4: { attempts: 4, duration: 7350, poll_delay: 1500 }, 
-    5: { attempts: 5, duration: 7350, poll_delay: 1500 }, 
-    7: { attempts: 7, duration: 2350, poll_delay: 1500 } 
-};
+        1: { attempts: 1, duration: 7350 },
+        2: { attempts: 2, duration: 7350 },
+        3: { attempts: 3, duration: 7350 },
+        4: { attempts: 4, duration: 7350 },
+        5: { attempts: 5, duration: 7350 },
+        7: { attempts: 7, duration: 2350 }
+    };
 
     // --- Spielstatus-Variablen ---
-    let playbackStateListener = null;  // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
-	let pollingIntervalTimer = null;
-	let fallbackPlayTimer = null;
     let accessToken = null;
     let deviceId = null;
     let spotifyPlayer = null;
@@ -955,260 +950,175 @@ async function handleTrackPlaybackError(listenerToRemove) {
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-// ################################################################### paytrack snippet
+// Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
+let playbackStateListener = null;
 
 async function playTrackSnippet() {
-    // ########### 1. Vorbereitung und Checks ###########
-    const currentDiceValue = gameState.diceValue;
-    const config = diceConfig[currentDiceValue];
+    // ########### Speed Round / Versuche Checks ###########
+    if (gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) {
+        return;
+    }
+    if (gameState.isSpeedRound && gameState.attemptsMade > 0) {
+        return;
+    }
 
-    // Vorab-Checks
-    if (!config) {
-        console.error(`FEHLER: Konfiguration für Würfelwert ${currentDiceValue} fehlt.`);
-        logoButton.classList.remove('inactive');
-        logoButton.classList.add('logo-pulsing');
-        return;
-    }
-    if ((gameState.attemptsMade >= gameState.maxAttempts && !gameState.isSpeedRound) || (gameState.isSpeedRound && gameState.attemptsMade > 0)) {
-        return;
-    }
-
-    triggerBounce(logoButton);
-    logoButton.classList.add('inactive');
+    triggerBounce(logoButton);
+    logoButton.classList.add('inactive');
 	logoButton.classList.remove('logo-pulsing');
+    // gameState.attemptsMade++;
 
-    const trackDurationMs = gameState.currentTrack.duration_ms;
-    // const desiredDuration = gameState.trackDuration;
-	const desiredDuration = config.duration;
-    
-    // Zufällige Startposition bestimmen
-    const maxStart = trackDurationMs - desiredDuration - 500;
-    if (maxStart <= 0) {
-        console.error("Track zu kurz für die gewünschte Dauer.");
-        logoButton.classList.remove('inactive');
+    const trackDurationMs = gameState.currentTrack.duration_ms;
+    const desiredDuration = gameState.trackDuration;
+    
+    // Zufällige Startposition bestimmen
+    const maxStart = trackDurationMs - desiredDuration - 500;
+    if (maxStart <= 0) {
+        console.error("Track zu kurz für die gewünschte Dauer.");
+        logoButton.classList.remove('inactive');
 		logoButton.classList.add('logo-pulsing');
-        return;
-    }
-    const randomStartPosition = Math.floor(Math.random() * maxStart);
+        return;
+    }
+    const randomStartPosition = Math.floor(Math.random() * maxStart);
 
-    // Löscht alte Timeouts & Polling-Timer
+    // Löscht den alten Timeout, falls er aus irgendeinem Grund noch existiert
     if (gameState.spotifyPlayTimeout) {
         clearTimeout(gameState.spotifyPlayTimeout);
         gameState.spotifyPlayTimeout = null;
     }
-    if (fallbackPlayTimer) { 
-        clearTimeout(fallbackPlayTimer);
-        fallbackPlayTimer = null;
-    }
-    if (pollingIntervalTimer) { 
-        clearTimeout(pollingIntervalTimer);
-        pollingIntervalTimer = null;
-    }
 
-    // Listener bereinigen und vorbereiten
-    if (playbackStateListener) {
-        spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-        playbackStateListener = null; 
-    }
-    gameState.spotifyPlayTimeout = null;
-    
-    // ====================================================================
-    // 🎯 PWA/Fokus Logik (Bleibt unverändert)
-    // ====================================================================
-    try {
-        if (spotifyPlayer) {
-            await spotifyPlayer.activateElement(); 
-        } 
-        if (!deviceId) {
-            await initializePlayer(); 
-        }
-        if (!deviceId) {
-            throw new Error("Device ID konnte nicht abgerufen werden. Player Initialisierung fehlgeschlagen.");
-        }
-        if (spotifyPlayer) {
-            await spotifyPlayer.activateElement(); 
-        }
+    // ====================================================================
+    // 🎯 iOS / PWA AUDIO-KONTEXT UND FOKUS-ERZWINGUNG (MAXIMALE AGGRESSIVITÄT)
+    // ====================================================================
+    try {
+        // ZUERST: Unmittelbarer Versuch, den Audio-Kontext zu entsperren.
+        if (spotifyPlayer) {
+            console.log("[PWA Fix] Player-Element aktivieren (aggressiver Versuch 1).");
+            await spotifyPlayer.activateElement(); 
+            console.log("Audio-Kontext entsperrt.");
+        } else {
+             console.log("[PWA Fix] Player-Objekt nicht gefunden. Muss initialisiert werden.");
+        }
 
-        const transferResponse = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
-            method: 'PUT',
-            body: JSON.stringify({ device_ids: [deviceId], play: false }),
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
+        // ZWEITENS: Initialisierung, falls deviceId fehlt. 
+        if (!deviceId) {
+            console.log("[PWA Fix] Initialisiere Spotify Player und warte auf deviceId...");
+            await initializePlayer(); // Hier wird deviceId gesetzt!
+        }
 
-        if (!transferResponse.ok && transferResponse.status !== 204) {
-            if (transferResponse.status === 404 || transferResponse.status === 405) {
-                throw new Error(`Device connection failed (Status ${transferResponse.status}).`);
-            }
-        }
-    } catch (error) {
-        console.error("[Kritischer Fehler] Player-Aktivierung oder Übertragung fehlgeschlagen:", error);
-        
-        if (error.message.includes("Device connection failed")) {
-             alert("Kritischer Player-Fehler. (Status 404/405). Stelle sicher, dass deine API-Endpunkte korrekt sind.");
-        } else {
-            alert("Fehler beim Abspielen (Player-Verbindung). Hast du Spotify Premium und sind deine API-Endpunkte korrekt?");
-        }
-        
-        logoButton.classList.remove('inactive');
+        // DRITTENS: ERNEUTER DEVICE ID CHECK UND VALIDIERUNG.
+        if (!deviceId) {
+            // Wenn deviceId immer noch fehlt, ist die Initialisierung fehlgeschlagen.
+            throw new Error("Device ID konnte nicht abgerufen werden. Player Initialisierung fehlgeschlagen.");
+        }
+
+        // VIERTENS: Erneuter Versuch, den Fokus zu erzwingen (optional, aber gut nach Init).
+        if (spotifyPlayer) {
+            console.log("[PWA Fix] Player-Element erneut aktivieren (Versuch 2 nach Init).");
+            await spotifyPlayer.activateElement(); 
+        }
+
+        // FÜNFTENS: EXPLIZITE ÜBERTRAGUNG DES PLAYBACKS ÜBER DIE WEB API (PWA Silver Bullet!)
+        console.log(`[PWA Fix] Erzwinge Playback-Übertragung zu Device ID: ${deviceId}`);
+        const transferResponse = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_TRANSFER, {
+            method: 'PUT',
+            body: JSON.stringify({
+                device_ids: [deviceId], 
+                play: false 
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!transferResponse.ok) {
+            console.warn("[PWA Fix] Warnung: Playback-Übertragung fehlgeschlagen (Status: " + transferResponse.status + ")");
+            
+            // 404 = Device not found ODER 405 = Problem mit dem Request, das wir nicht ignorieren dürfen
+            if (transferResponse.status === 404 || transferResponse.status === 405) {
+                // Bei 405 (Method Not Allowed) ist meistens das Format der URL falsch!
+                throw new Error(`Device connection failed (Status ${transferResponse.status}).`);
+            }
+        } else {
+            console.log("[PWA Fix] Playback erfolgreich auf dieses Gerät übertragen.");
+        }
+        
+    } catch (error) {
+        // Dieser Catch fängt Fehler beim Initialisieren/Entsperren/Transfer ab
+        console.error("[Kritischer Fehler] Player-Aktivierung, Initialisierung oder Übertragung fehlgeschlagen:", error);
+        
+        if (error.message.includes("Device connection failed")) {
+             // 💡 Benutzerinformation bei PWA-Tod / kritischem API-Fehler
+             alert("Kritischer Player-Fehler. (Status 404/405). Stelle sicher, dass deine API-Endpunkte korrekt sind.");
+        } else {
+            alert("Fehler beim Abspielen (Player-Verbindung). Hast du Spotify Premium und sind deine API-Endpunkte korrekt?");
+        }
+        
+        logoButton.classList.remove('inactive');
 		logoButton.classList.add('logo-pulsing');
-        return; 
-    }
-    // ====================================================================
+        return; 
+    }
+    // ====================================================================
 
+    console.log(`[DEBUG] Gewünschte Wiedergabe: ${desiredDuration}ms. Start-Position: ${randomStartPosition}ms.`);
 
-    // ########### 2. Zentralisierte Runden-Start Logik ###########
-    /**
-     * Startet die zentrale Rundenlogik (Zähler, Button, Stopp-Timer).
-     * @param {number} statePosition - Die Startposition des Songs vom Spotify-Event.
-     * @param {boolean} isFallback - Wurde die Funktion vom Fallback-Timer/Polling aufgerufen?
-     * @param {number} [stopDuration] - Optional: Spezifische Dauer des Stopp-Timers.
-     */
-    const startRoundTimers = (statePosition, isFallback = false, stopDuration = desiredDuration) => { 
-        // Den Versuch ZENTRAL an dieser Stelle ZÄHLEN
-        gameState.attemptsMade++; 
-        
-        // Reveal-Button anzeigen (nur im Normalmodus beim ersten Versuch)
-        if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
-            revealButton.classList.remove('hidden');
-            revealButton.classList.remove('no-interaction');
-        }
+    // Entferne zuerst einen eventuell bestehenden Listener, um Duplikate zu vermeiden
+    if (playbackStateListener) {
+        spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+        playbackStateListener = null; // Wichtig: Listener-Variable zurücksetzen
+    }
 
-        if (gameState.isSpeedRound) {
-            startVisualSpeedRoundCountdown(); // Muss global definiert sein!
-        } else {
-            // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
-            gameState.spotifyPlayTimeout = setTimeout(() => {
-                spotifyPlayer.pause();
-                gameState.isSongPlaying = false;
+    // Setze den Timer-Status auf "nicht gestartet"
+    gameState.spotifyPlayTimeout = null;
 
-                if (gameState.attemptsMade < gameState.maxAttempts) {
-                    logoButton.classList.remove('inactive');
-                    logoButton.classList.add('logo-pulsing');
-                }
+    // ########### Richte neuen Status-Änderungs-Listener ein ###########
+    playbackStateListener = (state) => {
+        // Prüfe, ob der State existiert und der richtige Song spielt
+        if (state && state.track_window.current_track.uri === gameState.currentTrack.uri) {
+            // Prüfe, ob die Wiedergabe tatsächlich begonnen hat und die Position größer als 0 ist
+            if (!state.paused && state.position > 0) {
+                
+                // Entferne den Listener sofort, um zu verhindern, dass er erneut feuert
+                spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
+                playbackStateListener = null;
 
-                // Logging
-                if (!isFallback) {
-                    spotifyPlayer.getCurrentState().then(finalState => {
-                        const finalPosition = finalState ? finalState.position : 'N/A';
-                        console.log(`[STOP] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
-                        if (finalState) {
-                            const actualDuration = finalPosition - statePosition; 
-                            console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
-                        }
-                    });
-                } else {
-                     console.log("[STOP] Wiedergabe gestoppt nach Polling (Dauer: " + stopDuration + "ms).");
-                }
-            }, stopDuration);
-        }
-    };
+                console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
+                
+                // ** HIER STARTET DIE TIMER/SPEED ROUND LOGIK **
+                
+                if (gameState.isSpeedRound) {
+                    // Speed Round: Starte den visuellen Timer, der die Zeit zum Raten vorgibt.
+                    startVisualSpeedRoundCountdown();
+                } else {
+                    // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
+                    gameState.spotifyPlayTimeout = setTimeout(() => {
+                        spotifyPlayer.pause();
+                        gameState.isSongPlaying = false;
 
-    // ########### 3. Polling Fallback Funktion ###########
-    const startPollingFallback = async (isRetry = false) => {
-        if (pollingIntervalTimer) clearTimeout(pollingIntervalTimer);
-        pollingIntervalTimer = null;
-        
-        console.log(`[POLL] Starte ${isRetry ? 'erneute' : 'erste'} Abfrage des Player-Status...`);
+                        if (gameState.attemptsMade < gameState.maxAttempts) {
+                            logoButton.classList.remove('inactive');
+                            logoButton.classList.add('logo-pulsing');
+                        }
 
-        try {
-            const response = await fetch(API_ENDPOINTS.SPOTIFY_PLAYER_STATE, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            
-            if (response.status === 204) {
-                // Kein Inhalt, kein aktiver Player.
-                console.log("[POLL] 204 No Content: Player nicht aktiv. Wiederhole Polling.");
-                pollingIntervalTimer = setTimeout(() => startPollingFallback(true), config.poll_delay);
-                return;
-            }
+                        // Logge die tatsächliche Stopp-Position für das Debugging
+                        spotifyPlayer.getCurrentState().then(finalState => {
+                            const finalPosition = finalState ? finalState.position : 'N/A';
+                            console.log(`[STOP] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
+                            if (finalState) {
+                                 // Hier verwenden wir state.position vom Start Event für die Dauerberechnung
+                                 const actualDuration = finalPosition - state.position; 
+                                 console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
+                            }
+                        });
+                    }, desiredDuration);
+                }
+            }
+        }
+    };
 
-            if (!response.ok) {
-                throw new Error(`Spotify Player State API failed: ${response.status}`);
-            }
-            
-            const state = await response.json();
-
-            if (state && state.is_playing && state.item && state.item.uri === gameState.currentTrack.uri) {
-                // FALLBACK ERFOLG: Song spielt!
-                console.log("[POLL ERFOLG] Player spielt den korrekten Track. Übernehme Kontrolle.");
-
-                // 1. Player Listener entfernen (falls er später doch kommt)
-                if (playbackStateListener) {
-                    spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                    playbackStateListener = null;
-                }
-
-                const position = state.progress_ms; // Tatsächliche Abspielposition
-                const timeElapsed = position - randomStartPosition; // Vergangene Zeit seit dem befohlenen Startpunkt
-                
-                // Berechnung der Restzeit
-                let remainingTime = desiredDuration - timeElapsed;
-                remainingTime = Math.max(0, remainingTime); // Zeit kann nicht negativ sein
-
-                // 2. Start Round Timers mit der berechneten Restzeit
-                startRoundTimers(position, true, remainingTime); 
-                
-            } else {
-                // Song spielt noch nicht / falscher Track. Erneuter Versuch.
-                if (isRetry || !state) {
-                     console.log("[POLL] Songstatus unklar oder noch nicht gestartet. Wiederhole Polling.");
-                     pollingIntervalTimer = setTimeout(() => startPollingFallback(true), config.poll_delay);
-                } else {
-                     // Beim ersten Poll keine Klarheit, aber Player existiert. Wiederhole mit kürzerem Timeout
-                     pollingIntervalTimer = setTimeout(() => startPollingFallback(true), 500); 
-                }
-            }
-            
-        } catch (error) {
-            console.error("[POLL FEHLER] Fehler beim Abrufen des Player-Status:", error);
-            // Bei Fehler warten und erneut versuchen
-            pollingIntervalTimer = setTimeout(() => startPollingFallback(true), config.poll_delay * 2); 
-        }
-    };
-    
-    // ########### 4. Status-Änderungs-Listener (Erfolg) ###########
-    playbackStateListener = (state) => {
-        if (state && state.track_window.current_track.uri === gameState.currentTrack.uri) {
-            if (!state.paused && state.position > 0) {
-                
-                // 🛑 KRITISCH: Polling-Prozess sofort beenden, wenn das Event eintrifft.
-                if (fallbackPlayTimer) clearTimeout(fallbackPlayTimer);
-                if (pollingIntervalTimer) clearTimeout(pollingIntervalTimer); 
-                fallbackPlayTimer = null;
-                pollingIntervalTimer = null;
-                console.log("[PLAYBACK EVENT] Spotify Event empfangen. Polling/Warte-Timer gestoppt.");
-
-                spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                playbackStateListener = null;
-
-                console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
-                // Runde über die zentrale Funktion starten mit der vollen Dauer
-                startRoundTimers(state.position, false); 
-            }
-        }
-    };
+    // Prüft, ob der Player existiert, bevor der Listener hinzugefügt wird
     if (spotifyPlayer) {
         spotifyPlayer.addListener('player_state_changed', playbackStateListener);
     }
 
-    // ########### 5. Initialer Polling-Start-Warte-Timer ###########
-    // Wir warten 'poll_delay' auf das Spotify Event, bevor wir das Polling starten.
-    if (!gameState.isSpeedRound && config && config.poll_delay) {
-        const initialWait = config.poll_delay; 
-        
-        fallbackPlayTimer = setTimeout(() => {
-            console.warn(`[FALLBACK INIT] Spotify PLAY-Rückmeldung nach ${initialWait}ms nicht erhalten. Starte Polling-Fallback.`);
-            fallbackPlayTimer = null; 
-            
-            // Startet den eigentlichen Polling-Prozess
-            startPollingFallback(false);
-            
-        }, initialWait);
-    }
-    // ########### ENDE: Initialer Polling-Start ###########
-
-    // ########### 6. Web-API Playback Call ###########
-    // Merke: Der Play-Befehl wird hier GESENDET, die Reaktion (Event/Polling) steuert den Ablauf.
+    // ########### Verwende die Web-API, um die Wiedergabe zu initiieren ###########
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
@@ -1216,24 +1126,26 @@ async function playTrackSnippet() {
             position_ms: randomStartPosition
         }),
         headers: { 'Authorization': `Bearer ${accessToken}` }
-    }).then(async response => { 
+    }).then(async response => { // <-- [NEU] 'async' hinzugefügt, damit wir 'await' verwenden können
         if (!response.ok) {
             console.error("Fehler beim Abspielen des Tracks (Web API):", response.status, response.statusText);
             
-            // WICHTIG: Warte- und Polling-Timer stoppen bei API-Fehler
-            if (fallbackPlayTimer) clearTimeout(fallbackPlayTimer);
-            if (pollingIntervalTimer) clearTimeout(pollingIntervalTimer);
-            fallbackPlayTimer = null;
-            pollingIntervalTimer = null;
-            
+            // --- [NEU] START: Fehlerbehandlung für 403/404 ---
             const status = response.status;
+            // 403 (Forbidden) = Oft Ländersperre
+            // 404 (Not Found) = Track existiert nicht ODER Device ist weg
             if (status === 403 || status === 404) {
                 console.warn(`Track nicht abspielbar (Status ${status}). Versuche, einen neuen Track zu laden...`);
+                
+                // Rufe die neue Hilfsfunktion auf (siehe meine vorige Antwort)
                 await handleTrackPlaybackError(playbackStateListener);
+                // WICHTIG: Hier abbrechen, damit der alte Alert-Code nicht ausgeführt wird
                 return; 
             }
+            // --- [NEU] ENDE: Fehlerbehandlung für 403/404 ---
 
-            // ... (Restliche Fehlerbehandlung) ...
+            
+            // (Dein alter Fallback-Code für andere Fehler)
             if (spotifyPlayer) {
                 spotifyPlayer.activateElement().catch(e => console.warn("Re-Aktivierung nach Fehler fehlgeschlagen:", e));
             }
@@ -1241,26 +1153,28 @@ async function playTrackSnippet() {
             alert("Konnte den Song nicht abspielen. Möglicherweise ist Spotify auf keinem aktiven Gerät.");
             logoButton.classList.remove('inactive');
             logoButton.classList.add('logo-pulsing');
-            
-            // Bereinige den Listener
+            // Bereinige den Listener, wenn der Fetch fehlschlägt
             if (playbackStateListener) {
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                 playbackStateListener = null;
             }
-            // --- ENDE RESTLICHE FEHLERBEHANDLUNG ---
-
         } else {
-            console.log("Spotify Playback-Befehl erfolgreich gesendet.");
-        }
-    }).catch(error => {
+            // ERFOLG! Der API-Aufruf war 'ok'.
+
+            // --- [NEU] START: Zähler und Button-Logik hierher verschoben ---
+            // Erst HIER den Versuch zählen, da der Song-Start erfolgreich getriggert wurde.
+            gameState.attemptsMade++;
+
+            // Zeige den Reveal-Button nach dem ersten erfolgreichen Abspielversuch
+            if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
+                revealButton.classList.remove('hidden');
+                revealButton.classList.remove('no-interaction');
+            }
+            // --- [NEU] ENDE: Zähler und Button-Logik ---
+		}
+	}).catch(error => {
+        // (Dieser Block bleibt 1:1 so, wie er in deinem Original war)
         console.error("Netzwerkfehler beim Abspielen des Tracks:", error);
-        
-        // WICHTIG: Warte- und Polling-Timer stoppen bei Netzwerkfehler
-        if (fallbackPlayTimer) clearTimeout(fallbackPlayTimer);
-        if (pollingIntervalTimer) clearTimeout(pollingIntervalTimer);
-        fallbackPlayTimer = null;
-        pollingIntervalTimer = null;
-        
         alert("an error has occurred, a new track is being loaded");
         logoButton.classList.remove('inactive');
         logoButton.classList.add('logo-pulsing');
@@ -1270,7 +1184,7 @@ async function playTrackSnippet() {
         }
     });
 }
-	
+
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
         clearTimeout(gameState.speedRoundTimeout);
