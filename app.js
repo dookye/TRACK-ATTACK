@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // KORREKTUR: Wenn downlink undefined/0 ist (oft bei schnellem WLAN/LAN), setze auf 100 Mbit/s
         const downlink = connection.downlink || 100; // Mbit/s
         
-        const SLOW_4G_THRESHOLD = 1; // Mbit/s
+        const SLOW_4G_THRESHOLD = 2; // Mbit/s
         
         console.log(`[NETWORK] Verbindungstyp: ${effectiveType}, Downlink: ${downlink} Mbit/s`);
         
