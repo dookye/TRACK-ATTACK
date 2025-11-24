@@ -190,13 +190,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
         
-   /**     // 🛑 NEU: Spielstart blockieren, wenn Verbindung zu langsam ist
+        // 🛑 NEU: Spielstart blockieren, wenn Verbindung zu langsam ist
         if (gameState.isConnectionSlow) {
             console.warn("Spielstart blockiert: Verbindung zu langsam.");
             // Der Button wurde bereits in checkConnectionSpeed deaktiviert und die Meldung angezeigt.
             return; 
         }
-*/
+
 		
         gameScreen.classList.remove('hidden');
 
@@ -348,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
             startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
             
-        /**    // 💡 NEU: Starte den Verbindungs-Check!
+            // 💡 NEU: Starte den Verbindungs-Check!
             checkConnectionSpeed(); 
 
             // HIER WIRD DER TIMEOUT EINGEFÜGT! 
@@ -357,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.addEventListener('resize', checkOrientation);
                 checkOrientation(); // Initial die Orientierung prüfen -> ruft startGameAfterOrientation auf
             }, 500); // 500 Millisekunden (0.5 Sekunden) Verzögerung
-*/
+
 			
         }).catch(error => {
             console.error("Fehler beim Abrufen des Access Tokens:", error);
@@ -441,11 +441,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ANFANG ----------------
-/**
+/*
  * Prüft die geschätzte effektive Verbindungsgeschwindigkeit des Benutzers
  * und blockiert das Spiel, falls die Verbindung zu langsam ist.
  */
-/** function checkConnectionSpeed() {
+ function checkConnectionSpeed() {
     // Prüfen, ob die Network Information API verfügbar ist
     if ('connection' in navigator) {
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // KORREKTUR: Wenn downlink undefined/0 ist (oft bei schnellem WLAN/LAN), setze auf 100 Mbit/s
         const downlink = connection.downlink || 100; // Mbit/s
         
-        const SLOW_4G_THRESHOLD = 5; // Mbit/s
+        const SLOW_4G_THRESHOLD = 1; // Mbit/s
         
         console.log(`[NETWORK] Verbindungstyp: ${effectiveType}, Downlink: ${downlink} Mbit/s`);
         
@@ -502,7 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.isConnectionSlow = false;
     }
 }
-	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ---------------- */
+	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ---------------- 
 
     // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
     function renderPreselectionGenres() {
