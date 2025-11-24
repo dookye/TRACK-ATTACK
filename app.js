@@ -190,13 +190,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
         
-        // 🛑 NEU: Spielstart blockieren, wenn Verbindung zu langsam ist
+   /**     // 🛑 NEU: Spielstart blockieren, wenn Verbindung zu langsam ist
         if (gameState.isConnectionSlow) {
             console.warn("Spielstart blockiert: Verbindung zu langsam.");
             // Der Button wurde bereits in checkConnectionSpeed deaktiviert und die Meldung angezeigt.
             return; 
         }
-
+*/
+		
         gameScreen.classList.remove('hidden');
 
         // NEU: Sound für das einfliegende Logo abspielen
@@ -347,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
             startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
             
-            // 💡 NEU: Starte den Verbindungs-Check!
+        /**    // 💡 NEU: Starte den Verbindungs-Check!
             checkConnectionSpeed(); 
 
             // HIER WIRD DER TIMEOUT EINGEFÜGT! 
@@ -356,7 +357,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.addEventListener('resize', checkOrientation);
                 checkOrientation(); // Initial die Orientierung prüfen -> ruft startGameAfterOrientation auf
             }, 500); // 500 Millisekunden (0.5 Sekunden) Verzögerung
-
+*/
+			
         }).catch(error => {
             console.error("Fehler beim Abrufen des Access Tokens:", error);
             alert("Anmeldung bei Spotify fehlgeschlagen. Bitte versuchen Sie es erneut.");
@@ -443,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * Prüft die geschätzte effektive Verbindungsgeschwindigkeit des Benutzers
  * und blockiert das Spiel, falls die Verbindung zu langsam ist.
  */
-function checkConnectionSpeed() {
+/** function checkConnectionSpeed() {
     // Prüfen, ob die Network Information API verfügbar ist
     if ('connection' in navigator) {
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
@@ -500,7 +502,7 @@ function checkConnectionSpeed() {
         gameState.isConnectionSlow = false;
     }
 }
-	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ----------------
+	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ---------------- */
 
     // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
     function renderPreselectionGenres() {
