@@ -897,7 +897,7 @@ body, html {
 #toast-notification {
     /* Positionierung: Unten zentriert */
     position: fixed;
-    top: 10px;
+    top: 5px;
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap; /* Verhindert Zeilenumbrüche */
@@ -942,7 +942,7 @@ body, html {
 #network-toast {
     /* Positionierung: Unten zentriert */
     position: fixed;
-    top: 10px; /* Startposition (versteckt) */
+    top: 5px; /* Startposition (versteckt) */
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap; 
@@ -951,11 +951,11 @@ body, html {
     color: white;
     font-size: 15px;
     font-weight: bold;
-    padding: 14px 20px;
+    /* padding: 14px 20px;
     border-radius: 8px;
-    /* Verwenden Sie eine Warnfarbe, ähnlich #ffc107, aber leicht transparent */
+    --- Verwenden Sie eine Warnfarbe, ähnlich #ffc107, aber leicht transparent
     background-color: rgba(255, 165, 0, 0.9); 
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); */
     
     /* Standardmäßig versteckt */
     opacity: 0;
@@ -963,7 +963,7 @@ body, html {
     
     /* Animation */
     transition: opacity 0.5s, visibility 0.5s, top 0.5s;
-    z-index: 9999; 
+    z-index: 10001; 
 }
 
 /* Klasse, die per JS hinzugefügt wird, um das Netzwerk-Toast anzuzeigen */
@@ -971,5 +971,5 @@ body, html {
     opacity: 1;
     visibility: visible;
     /* Dies ist die neue, tiefere Position (z.B. 50px tiefer als 60px) */
-    top: 110px; 
+    top: 30px; 
 }
