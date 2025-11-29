@@ -1,598 +1,616 @@
 // TRACK ATTACK
 
+// ----------------------------------------------------------------------
+// GLOBALE VARIABLE FÜR ANIMATIONS-STEUERUNG
+// ----------------------------------------------------------------------
+let isInitialFlyInDone = false; 
+let connectionMonitorInterval = null; // 💡 NEU: Für das 60-Sekunden-Monitoring
 
 // --- API Endpunkte --- NEU HINZUGEFÜGT
 const API_ENDPOINTS = {
-    SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
-    SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
-    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+    SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
+    SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
+    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/$${playlistId}/tracks`,
+    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`,
 	SPOTIFY_PLAYER_TRANSFER: 'https://api.spotify.com/v1/me/player',
 	SPOTIFY_PLAYER_STATE: 'https://api.spotify.com/v1/me/player'
 };
 
 
 // ----------------------------------------------------------------------
-// GLOBALE VARIABLE FÜR ANIMATIONS-STEUERUNG
-// ----------------------------------------------------------------------
-let isInitialFlyInDone = false; 
-
-// ----------------------------------------------------------------------
 // FUNKTION: Wird aufgerufen, sobald die Fly-in Animation abgeschlossen ist
 // ----------------------------------------------------------------------
 function handleFlyInEnd() {
-    const logoButton = document.getElementById('logo-button');
-    if (isInitialFlyInDone) return; 
+    const logoButton = document.getElementById('logo-button');
+    if (isInitialFlyInDone) return; 
 
-    // 1. Die Fly-in Klasse entfernen, damit sie nie wieder startet
-    logoButton.classList.remove('initial-fly-in');
-    isInitialFlyInDone = true;
+    // 1. Die Fly-in Klasse entfernen, damit sie nie wieder startet
+    logoButton.classList.remove('initial-fly-in');
+    isInitialFlyInDone = true;
 
-    // 2. Button aktivieren und Pulsing starten
-    logoButton.classList.remove('inactive'); 
-    logoButton.classList.add('logo-pulsing');
+    // 2. Button aktivieren und Pulsing starten
+    logoButton.classList.remove('inactive'); 
+    logoButton.classList.add('logo-pulsing');
 
-    // 3. Den Event Listener für das Animationsende entfernen
-    logoButton.removeEventListener('animationend', handleFlyInEnd);
-    
-    // WICHTIG: Der Klick-Listener wird zentral in startGameAfterOrientation verwaltet!
+    // 3. Den Event Listener für das Animationsende entfernen
+    logoButton.removeEventListener('animationend', handleFlyInEnd);
+    
+    // WICHTIG: Der Klick-Listener wird zentral in startGameAfterOrientation verwaltet!
 }
 
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- DOM-Elemente ---
-    const appContainer = document.getElementById('app-container');
-    const loginScreen = document.getElementById('login-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const rotateDeviceOverlay = document.getElementById('rotate-device-overlay');
-    // logoButton ist im Scope definiert
-    const logoButton = document.getElementById('logo-button');
-    const diceContainer = document.getElementById('dice-container');
-    const diceAnimation = document.getElementById('dice-animation');
-    const diceSelection = document.getElementById('dice-selection');
-    const genreContainer = document.getElementById('genre-container');
-    const revealButton = document.getElementById('reveal-button');
-    const revealContainer = document.getElementById('reveal-container');
-    const scoreScreen = document.getElementById('score-screen');
-    const speedRoundTextDisplay = document.getElementById('speed-round-text-display');
-    const speedRoundTimer = document.getElementById('speed-round-timer');
-    const countdownDisplay = document.getElementById('countdown-display');
-    const trackAlbum = document.getElementById('track-album');
-    const trackYear = document.getElementById('track-year');
-    const correctButton = document.getElementById('correct-button');
-    const wrongButton = document.getElementById('wrong-button');
+    // --- DOM-Elemente ---
+    const appContainer = document.getElementById('app-container');
+    const loginScreen = document.getElementById('login-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const rotateDeviceOverlay = document.getElementById('rotate-device-overlay');
+    // logoButton ist im Scope definiert
+    const logoButton = document.getElementById('logo-button');
+    const diceContainer = document.getElementById('dice-container');
+    const diceAnimation = document.getElementById('dice-animation');
+    const diceSelection = document.getElementById('dice-selection');
+    const genreContainer = document.getElementById('genre-container');
+    const revealButton = document.getElementById('reveal-button');
+    const revealContainer = document.getElementById('reveal-container');
+    const scoreScreen = document.getElementById('score-screen');
+    const speedRoundTextDisplay = document.getElementById('speed-round-text-display');
+    const speedRoundTimer = document.getElementById('speed-round-timer');
+    const countdownDisplay = document.getElementById('countdown-display');
+    const trackAlbum = document.getElementById('track-album');
+    const trackYear = document.getElementById('track-year');
+    const correctButton = document.getElementById('correct-button');
+    const wrongButton = document.getElementById('wrong-button');
 	const tokenTimer = document.getElementById('token-timer');
 	const gameFooter = document.getElementById('game-footer');
+    // 💡 NEU: Elemente für das unabhängige Netzwerk-Toast
+    const networkToast = document.getElementById('network-toast');
+    // networkToastMessage wird nicht benötigt, da der Text statisch ist
+
+    // NEU: Konstante für das EINE digitale Würfelbild
+    const digitalDiceArea = document.getElementById('digital-dice-area');
+    const digitalDiceMainImage = document.getElementById('digital-dice-main-image');
+
+    // NEU: DOM-Elemente für die Start-Genre-Auswahl
+    const startGenreSelectionContainer = document.getElementById('start-genre-selection-container');
+    const allGenresScrollbox = document.getElementById('all-genres-scrollbox');
 
 
-    // NEU: Konstante für das EINE digitale Würfelbild
-    const digitalDiceArea = document.getElementById('digital-dice-area');
-    const digitalDiceMainImage = document.getElementById('digital-dice-main-image');
+    const digitalDiceImages = {
+        1: 'assets/digi-1.png',
+        2: 'assets/digi-2.png',
+        3: 'assets/digi-3.png',
+        4: 'assets/digi-4.png',
+        5: 'assets/digi-5.png',
+        7: 'assets/digi-ta.png'
+    };
 
-    // NEU: DOM-Elemente für die Start-Genre-Auswahl
-    const startGenreSelectionContainer = document.getElementById('start-genre-selection-container');
-    const allGenresScrollbox = document.getElementById('all-genres-scrollbox');
+    // Pfad zur digitalen Animation und dem Standard-Startbild
+    const digitalDiceAnimationGif = 'assets/digi-ani.gif';
+    const digitalDiceStartImage = 'assets/digi-ta.png'; // Das Bild, das standardmäßig angezeigt wird
 
+    // Sounds
+    const digitalDiceSound = document.getElementById('digital-dice-sound');
+    const logoFlyInSound = document.getElementById('logo-fly-in-sound');
 
-    const digitalDiceImages = {
-        1: 'assets/digi-1.png',
-        2: 'assets/digi-2.png',
-        3: 'assets/digi-3.png',
-        4: 'assets/digi-4.png',
-        5: 'assets/digi-5.png',
-        7: 'assets/digi-ta.png'
-    };
+    // --- Spotify-Parameter (Phase 1.1) ---
+    const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
+    const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
 
-    // Pfad zur digitalen Animation und dem Standard-Startbild
-    const digitalDiceAnimationGif = 'assets/digi-ani.gif';
-    const digitalDiceStartImage = 'assets/digi-ta.png'; // Das Bild, das standardmäßig angezeigt wird
-
-    // Sounds
-    const digitalDiceSound = document.getElementById('digital-dice-sound');
-    const logoFlyInSound = document.getElementById('logo-fly-in-sound');
-
-    // --- Spotify-Parameter (Phase 1.1) ---
-    const CLIENT_ID = "53257f6a1c144d3f929a60d691a0c6f6";
-    const REDIRECT_URI = "https://dookye.github.io/TRACK-ATTACK/";
-
-    // Konfiguration für jeden Würfelwert
-    const diceConfig = {
-    // 'poll_delay' ist die Wartezeit auf die Spotify Event-Meldung, bevor wir POLLEN.
-    1: { attempts: 1, duration: 7350, poll_delay: 1500 }, 
-    2: { attempts: 2, duration: 7350, poll_delay: 1500 }, 
-    3: { attempts: 3, duration: 7350, poll_delay: 1500 }, 
-    4: { attempts: 4, duration: 7350, poll_delay: 1500 }, 
-    5: { attempts: 5, duration: 7350, poll_delay: 1500 }, 
-    7: { attempts: 7, duration: 2350, poll_delay: 1500 } 
+    // Konfiguration für jeden Würfelwert
+    const diceConfig = {
+    // 'poll_delay' ist die Wartezeit auf die Spotify Event-Meldung, bevor wir POLLEN.
+    1: { attempts: 1, duration: 7350, poll_delay: 1500 }, 
+    2: { attempts: 2, duration: 7350, poll_delay: 1500 }, 
+    3: { attempts: 3, duration: 7350, poll_delay: 1500 }, 
+    4: { attempts: 4, duration: 7350, poll_delay: 1500 }, 
+    5: { attempts: 5, duration: 7350, poll_delay: 1500 }, 
+    7: { attempts: 7, duration: 2350, poll_delay: 1500 } 
 };
 
-    // --- Spielstatus-Variablen ---
-    let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
+    // --- Spielstatus-Variablen ---
+    let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 	let pollingIntervalTimer = null;
 	let fallbackPlayTimer = null;
-    let accessToken = null;
-    let deviceId = null;
-    let spotifyPlayer = null;
-    let gameState = {
-        player1Score: 0,
-        player2Score: 0,
-        currentPlayer: 1,
-        totalRounds: 20, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
-        currentRound: 0,
-        diceValue: 0,
-        attemptsMade: 0,
-        maxAttempts: 0,
-        trackDuration: 0,
-        currentTrack: null,
-        player1SpeedRound: Math.floor(Math.random() * 10) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
-        player2SpeedRound: Math.floor(Math.random() * 10) + 1,
-        isSpeedRound: false,
-        speedRoundTimeout: null,
-        countdownInterval: null,
-        spotifyPlayTimeout: null, // NEU: Timeout für das Pausieren des Songs
-        isSongPlaying: false, // NEU: Flag, ob Song gerade spielt
-        fadeInterval: null, // NEU: Für den Fade-In-Intervall
-        currentSongVolume: 0, // NEU: Aktuelle Lautstärke für Fade-In
-        diceAnimationTimeout: null, // NEU: Timeout für die Würfel-Animation
-        scoreScreenTimeout: null,
+    let accessToken = null;
+    let deviceId = null;
+    let spotifyPlayer = null;
+    let gameState = {
+        player1Score: 0,
+        player2Score: 0,
+        currentPlayer: 1,
+        totalRounds: 20, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        currentRound: 0,
+        diceValue: 0,
+        attemptsMade: 0,
+        maxAttempts: 0,
+        trackDuration: 0,
+        currentTrack: null,
+        player1SpeedRound: Math.floor(Math.random() * 10) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
+        player2SpeedRound: Math.floor(Math.random() * 10) + 1,
+        isSpeedRound: false,
+        speedRoundTimeout: null,
+        countdownInterval: null,
+        spotifyPlayTimeout: null, // NEU: Timeout für das Pausieren des Songs
+        isSongPlaying: false, // NEU: Flag, ob Song gerade spielt
+        fadeInterval: null, // NEU: Für den Fade-In-Intervall
+        currentSongVolume: 0, // NEU: Aktuelle Lautstärke für Fade-In
+        diceAnimationTimeout: null, // NEU: Timeout für die Würfel-Animation
+        scoreScreenTimeout: null,
 
-        // NEU: Array für die ausgewählten Genres auf der Startseite
-        selectedPlayableGenres: [],
-        isConnectionSlow: false, // 💡 NEU: Flagge für blockierten Spielstart
-    };
+        // NEU: Array für die ausgewählten Genres auf der Startseite
+        selectedPlayableGenres: [],
+        isConnectionSlow: false, // 💡 GEÄNDERT: Flagge steuert jetzt nur das Toast
+    };
 
-    // NEU: Zufälligen Startspieler festlegen
-    // Diese Zeile sollte NACH der gameState-Definition stehen,
-    // idealerweise in deiner initGame() Funktion oder dort, wo das Spiel gestartet wird.
-    gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2;
-    // Eine 50/50 Chance: Wenn Math.random() < 0.5, ist es Spieler 1, sonst Spieler 2.
+    // NEU: Zufälligen Startspieler festlegen
+    // Diese Zeile sollte NACH der gameState-Definition stehen,
+    // idealerweise in deiner initGame() Funktion oder dort, wo das Spiel gestartet wird.
+    gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2;
+    // Eine 50/50 Chance: Wenn Math.random() < 0.5, ist es Spieler 1, sonst Spieler 2.
 
-    console.log(`Zufälliger Startspieler ist Spieler ${gameState.currentPlayer}`);
+    console.log(`Zufälliger Startspieler ist Spieler ${gameState.currentPlayer}`);
 
-    // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
-    let lastGameScreenVisible = '';
+    // NEU: Variable zum Speichern des letzten sichtbaren Spiel-Screens
+    let lastGameScreenVisible = '';
 
-    const playlists = {
+    const playlists = {
 		'test': ['4EA0uV0i0c7RJNxWZpwcmM'],
-        'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
-        'die größten hits aller zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
-        'deutsch songs von früher bis heute': ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
-        'party hits': ['53r5W67KJNIeHWAhVOWPDr'],
-        'skate-punk': ['7qGvinYjBfVpl1FJFkzGqV', '77IXl4Gh7AZLyVLx66NkqV'],
-        'deutsch-punk': ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
-        'top 100 one hit wonders': ['1t1iRfYh9is6FH6hvn58lt'],
-        'girl- and boybands': ['11Q0O9t6MGGXrKFaeqRRwm'],
-        'deutsche disney-songs': ['6CdPoZsFja4LOrTYTvHrY5'],
-        'lagerfeuer klassiker': ['3TfJ6iMeqPXPLW8sxuQgcd'],
-        'rock songs': ['6QrVkClF1eJSjb9FDfqtJ8'],
-        rocklegenden: ['3sdqSseSnwb4A0RqP93SUH'],
-        'alte schlagerschoten': ['68SxsyVUJ1DEGByUcEMrr4', '7dmg14Fnm9stKYkU4IthAG'],
-        lovesongs: ['6oNsYDhN95gkENsdFcAwTh'],
-        'serien unserer kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
-        'deutscher hip hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
-        'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
-        'deutscher pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
-    };
+        'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
+        'die größten hits aller zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
+        'deutsch songs von früher bis heute': ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
+        'party hits': ['53r5W67KJNIeHWAhVOWPDr'],
+        'skate-punk': ['7qGvinYjBfVpl1FJFkzGqV', '77IXl4Gh7AZLyVLx66NkqV'],
+        'deutsch-punk': ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
+        'top 100 one hit wonders': ['1t1iRfYh9is6FH6hvn58lt'],
+        'girl- and boybands': ['11Q0O9t6MGGXrKFaeqRRwm'],
+        'deutsche disney-songs': ['6CdPoZsFja4LOrTYTvHrY5'],
+        'lagerfeuer klassiker': ['3TfJ6iMeqPXPLW8sxuQgcd'],
+        'rock songs': ['6QrVkClF1eJSjb9FDfqtJ8'],
+        rocklegenden: ['3sdqSseSnwb4A0RqP93SUH'],
+        'alte schlagerschoten': ['68SxsyVUJ1DEGByUcEMrr4', '7dmg14Fnm9stKYkU4IthAG'],
+        lovesongs: ['6oNsYDhN95gkENsdFcAwTh'],
+        'serien unserer kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
+        'deutscher hip hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
+        'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
+        'deutscher pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
+    };
 
-    //=======================================================================
-    // Phase 1: Setup, Authentifizierung & Initialisierung
-    //=======================================================================
+    //=======================================================================
+    // Phase 1: Setup, Authentifizierung & Initialisierung
+    //=======================================================================
 
-    // 1.4: Querformat-Prüfung
-    function checkOrientation() {
-        // Führe die Start-Logik nur aus, wenn der Token da ist und der GameScreen noch versteckt ist
-        if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
-            startGameAfterOrientation();
-        }
-    }
-    
-    // KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
-    function startGameAfterOrientation() {
-        
-        // 🛑 NEU: Spielstart blockieren, wenn Verbindung zu langsam ist
-        if (gameState.isConnectionSlow) {
-            console.warn("Spielstart blockiert: Verbindung zu langsam.");
-            // Der Button wurde bereits in checkConnectionSpeed deaktiviert und die Meldung angezeigt.
-            return; 
-        }
+    // 1.4: Querformat-Prüfung
+    function checkOrientation() {
+        // Führe die Start-Logik nur aus, wenn der Token da ist und der GameScreen noch versteckt ist
+        if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
+            startGameAfterOrientation();
+        }
+    }
+    
+    // KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
+    function startGameAfterOrientation() {
+        
+        // BLOCKIERUNGS-LOGIK ENTFERNT - Spiel läuft immer weiter
 
 		
-        gameScreen.classList.remove('hidden');
+        gameScreen.classList.remove('hidden');
 
-        // NEU: Sound für das einfliegende Logo abspielen
-        if (logoFlyInSound) {
-            logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
-            logoFlyInSound.volume = 0.3;
-            logoFlyInSound.play().catch(error => {
-                console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
-            });
-        }
-        
-        // WICHTIG: Den Click-Listener hinzufügen, BEVOR die Fly-in Logik startet!
-        // Der Listener wird beim Klick dank {once: true} wieder entfernt.
-        logoButton.removeEventListener('click', startGame); // Entferne Duplikate
-        logoButton.addEventListener('click', startGame, { once: true });
+        // NEU: Sound für das einfliegende Logo abspielen
+        if (logoFlyInSound) {
+            logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
+            logoFlyInSound.volume = 0.3;
+            logoFlyInSound.play().catch(error => {
+                console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
+            });
+        }
+        
+        // WICHTIG: Den Click-Listener hinzufügen, BEVOR die Fly-in Logik startet!
+        // Der Listener wird beim Klick dank {once: true} wieder entfernt.
+        logoButton.removeEventListener('click', startGame); // Entferne Duplikate
+        logoButton.addEventListener('click', startGame, { once: true });
 
 
-        if (!isInitialFlyInDone) {
-            // Beim ersten Start: Fly-in Animation auslösen
-            logoButton.classList.remove('hidden');
-            logoButton.classList.add('inactive'); // Inaktiv halten, bis Fly-in vorbei ist
-            
-            // Listener hinzufügen, der auf das Ende der Fly-in-Animation wartet
-            logoButton.removeEventListener('animationend', handleFlyInEnd); // Entferne Duplikate
-            logoButton.addEventListener('animationend', handleFlyInEnd);
-            
-            // Startet die Fly-in Animation
-            logoButton.classList.add('initial-fly-in');
+        if (!isInitialFlyInDone) {
+            // Beim ersten Start: Fly-in Animation auslösen
+            logoButton.classList.remove('hidden');
+            logoButton.classList.add('inactive'); // Inaktiv halten, bis Fly-in vorbei ist
+            
+            // Listener hinzufügen, der auf das Ende der Fly-in-Animation wartet
+            logoButton.removeEventListener('animationend', handleFlyInEnd); // Entferne Duplikate
+            logoButton.addEventListener('animationend', handleFlyInEnd);
+            
+            // Startet die Fly-in Animation
+            logoButton.classList.add('initial-fly-in');
 
-        } else {
-            // Wenn die Animation bereits gelaufen ist:
-            
-            // Standard: Nur Pulsing starten (ready for next round/click)
-            logoButton.classList.remove('hidden');
-            logoButton.classList.remove('inactive');
-            logoButton.classList.add('logo-pulsing');
-            
-            // NEU: Stelle den letzten Zustand wieder her, oder starte neu
-            if (lastGameScreenVisible === 'dice-container') {
-                // showDiceScreen(); 
-            } else if (lastGameScreenVisible === 'genre-container') {
-                // showGenreScreen(); 
-            } else if (lastGameScreenVisible === 'reveal-container') {
-                // showResolution(); 
-            }
-        }
+        } else {
+            // Wenn die Animation bereits gelaufen ist:
+            
+            // Standard: Nur Pulsing starten (ready for next round/click)
+            logoButton.classList.remove('hidden');
+            logoButton.classList.remove('inactive');
+            logoButton.classList.add('logo-pulsing');
+            
+            // NEU: Stelle den letzten Zustand wieder her, oder starte neu
+            if (lastGameScreenVisible === 'dice-container') {
+                // showDiceScreen(); 
+            } else if (lastGameScreenVisible === 'genre-container') {
+                // showGenreScreen(); 
+            } else if (lastGameScreenVisible === 'reveal-container') {
+                // showResolution(); 
+            }
+        }
 
-        // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
-        startGenreSelectionContainer.classList.remove('hidden');
-        // Genres nur beim ersten Start oder nach einem Reset neu rendern
-        if (allGenresScrollbox.children.length === 0) { // Vermeidet redundantes Rendern
-            renderPreselectionGenres();
-        }
-    }
+        // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
+        startGenreSelectionContainer.classList.remove('hidden');
+        // Genres nur beim ersten Start oder nach einem Reset neu rendern
+        if (allGenresScrollbox.children.length === 0) { // Vermeidet redundantes Rendern
+            renderPreselectionGenres();
+        }
+    }
 
-    function startTokenTimer() {
+    function startTokenTimer() {
 
 		gameFooter.classList.remove('hidden');
 		
-        const totalDuration = 60 * 60; // 60 Minuten in Sekunden
-        let timeLeft = totalDuration;
+        const totalDuration = 60 * 60; // 60 Minuten in Sekunden
+        let timeLeft = totalDuration;
 
-        tokenTimer.classList.remove('hidden');
+        tokenTimer.classList.remove('hidden');
 
-        // Countdown-Anzeige initialisieren
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            tokenTimer.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        // Countdown-Anzeige initialisieren
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            tokenTimer.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        updateTimerDisplay(); // Initialen Wert setzen
+
+        const timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimerDisplay();
+
+            // Timer stoppen, wenn 0 erreicht ist
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                tokenTimer.innerText = 'Token abgelaufen!';
+            }
+        }, 1000); // Jede Sekunde aktualisieren
+    }
+
+    // 1.2: PKCE-Flow Helferfunktionen
+    async function generateCodeChallenge(codeVerifier) {
+        const data = new TextEncoder().encode(codeVerifier);
+        const digest = await window.crypto.subtle.digest('SHA-256', data);
+        return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
+            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function generateRandomString(length) {
+        let text = '';
+        let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        for (let i = 0; i < length; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return text;
+    }
+
+    // 1.2: Login-Prozess starten
+    async function redirectToAuthCodeFlow() {
+        const verifier = generateRandomString(128);
+        const challenge = await generateCodeChallenge(verifier);
+        localStorage.setItem("verifier", verifier);
+        const params = new URLSearchParams();
+        params.append("client_id", CLIENT_ID);
+        params.append("response_type", "code");
+        params.append("redirect_uri", REDIRECT_URI);
+        params.append("scope", "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state");
+        params.append("code_challenge_method", "S256");
+        params.append("code_challenge", challenge);
+        document.location = `${API_ENDPOINTS.SPOTIFY_AUTH}?${params.toString()}`; // NEUE ZEILE
+    }
+
+    // 1.2: Access Token abrufen
+    async function getAccessToken(code) {
+        const verifier = localStorage.getItem("verifier");
+        const params = new URLSearchParams();
+        params.append("client_id", CLIENT_ID);
+        params.append("grant_type", "authorization_code");
+        params.append("code", code);
+        params.append("redirect_uri", REDIRECT_URI);
+        params.append("code_verifier", verifier);
+
+        const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, { // NEUE ZEILE
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params
+        });
+
+        const { access_token } = await result.json();
+        return access_token;
+    }
+
+    // 💡 NEUE FUNKTION: Startet das 60-Sekunden-Monitoring
+    function startConnectionMonitoring() {
+        if (connectionMonitorInterval) {
+            clearInterval(connectionMonitorInterval);
         }
-
-        updateTimerDisplay(); // Initialen Wert setzen
-
-        const timerInterval = setInterval(() => {
-            timeLeft--;
-            updateTimerDisplay();
-
-            // Timer stoppen, wenn 0 erreicht ist
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                tokenTimer.innerText = 'Token abgelaufen!';
-            }
-        }, 1000); // Jede Sekunde aktualisieren
+        
+        // Starte den Check alle 60 Sekunden (60000 Millisekunden)
+        connectionMonitorInterval = setInterval(checkConnectionSpeed, 60000);
+        
+        // Führe den Check sofort einmal aus
+        checkConnectionSpeed();
+        
+        console.log("Kontinuierliches Verbindungs-Monitoring gestartet (60s Intervall).");
     }
 
-    // 1.2: PKCE-Flow Helferfunktionen
-    async function generateCodeChallenge(codeVerifier) {
-        const data = new TextEncoder().encode(codeVerifier);
-        const digest = await window.crypto.subtle.digest('SHA-256', data);
-        return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
-            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
+    // Initialisierung nach dem Laden der Seite
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
 
-    function generateRandomString(length) {
-        let text = '';
-        let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (let i = 0; i < length; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
-    }
+    if (code) {
+        // Wir kommen von der Spotify-Weiterleitung zurück
+        window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
 
-    // 1.2: Login-Prozess starten
-    async function redirectToAuthCodeFlow() {
-        const verifier = generateRandomString(128);
-        const challenge = await generateCodeChallenge(verifier);
-        localStorage.setItem("verifier", verifier);
-        const params = new URLSearchParams();
-        params.append("client_id", CLIENT_ID);
-        params.append("response_type", "code");
-        params.append("redirect_uri", REDIRECT_URI);
-        params.append("scope", "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state");
-        params.append("code_challenge_method", "S256");
-        params.append("code_challenge", challenge);
-        document.location = `${API_ENDPOINTS.SPOTIFY_AUTH}?${params.toString()}`; // NEUE ZEILE
-    }
+        getAccessToken(code).then(token => {
+            accessToken = token; // Hier wird der Access Token gesetzt!
+            loginScreen.classList.add('hidden'); // Login-Screen ausblenden
+            startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
+            
+            // 💡 GEÄNDERT: Starte das kontinuierliche Monitoring
+            startConnectionMonitoring(); 
 
-    // 1.2: Access Token abrufen
-    async function getAccessToken(code) {
-        const verifier = localStorage.getItem("verifier");
-        const params = new URLSearchParams();
-        params.append("client_id", CLIENT_ID);
-        params.append("grant_type", "authorization_code");
-        params.append("code", code);
-        params.append("redirect_uri", REDIRECT_URI);
-        params.append("code_verifier", verifier);
-
-        const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, { // NEUE ZEILE
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params
-        });
-
-        const { access_token } = await result.json();
-        return access_token;
-    }
-
-    // Initialisierung nach dem Laden der Seite
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-
-    if (code) {
-        // Wir kommen von der Spotify-Weiterleitung zurück
-        window.history.pushState({}, '', REDIRECT_URI); // URL aufräumen
-
-        getAccessToken(code).then(token => {
-            accessToken = token; // Hier wird der Access Token gesetzt!
-            loginScreen.classList.add('hidden'); // Login-Screen ausblenden
-            startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
-            
-            // 💡 NEU: Starte den Verbindungs-Check!
-            checkConnectionSpeed(); 
-
-            // HIER WIRD DER TIMEOUT EINGEFÜGT! 
-            setTimeout(() => {
-                // Diese beiden Zeilen werden erst nach der Verzögerung ausgeführt
-                window.addEventListener('resize', checkOrientation);
-                checkOrientation(); // Initial die Orientierung prüfen -> ruft startGameAfterOrientation auf
-            }, 500); // 500 Millisekunden (0.5 Sekunden) Verzögerung
+            // HIER WIRD DER TIMEOUT EINGEFÜGT! 
+            setTimeout(() => {
+                // Diese beiden Zeilen werden erst nach der Verzögerung ausgeführt
+                window.addEventListener('resize', checkOrientation);
+                checkOrientation(); // Initial die Orientierung prüfen -> ruft startGameAfterOrientation auf
+            }, 500); // 500 Millisekunden (0.5 Sekunden) Verzögerung
 
 			
-        }).catch(error => {
-            console.error("Fehler beim Abrufen des Access Tokens:", error);
-            alert("Anmeldung bei Spotify fehlgeschlagen. Bitte versuchen Sie es erneut.");
-            // Zurück zum Login-Screen, falls Fehler
-            loginScreen.classList.remove('hidden');
-            // Stelle sicher, dass der 'login-button' Listener noch aktiv ist
-            document.getElementById('login-button').removeEventListener('click', redirectToAuthCodeFlow); // Duplizierte Listener vermeiden
-            document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
-        });
+        }).catch(error => {
+            console.error("Fehler beim Abrufen des Access Tokens:", error);
+            alert("Anmeldung bei Spotify fehlgeschlagen. Bitte versuchen Sie es erneut.");
+            // Zurück zum Login-Screen, falls Fehler
+            loginScreen.classList.remove('hidden');
+            // Stelle sicher, dass der 'login-button' Listener noch aktiv ist
+            document.getElementById('login-button').removeEventListener('click', redirectToAuthCodeFlow); // Duplizierte Listener vermeiden
+            document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+        });
 
-    } else {
-        // Standard-Ansicht (noch nicht von Spotify zurückgekommen)
-        loginScreen.classList.remove('hidden');
-        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
-    }
+    } else {
+        // Standard-Ansicht (noch nicht von Spotify zurückgekommen)
+        loginScreen.classList.remove('hidden');
+        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+    }
 
 // 1.3: Spotify Web Player SDK laden und initialisieren (MODIFIZIERT)
-    function initializePlayer() {
-        // ... (Die Funktion initializePlayer bleibt unverändert)
-        return new Promise((resolve, reject) => {
-            // Nur das SDK laden, wenn es noch nicht da ist
-            if (!window.Spotify) {
-                const script = document.createElement('script');
-                script.src = "https://sdk.scdn.co/spotify-player.js";
-                script.async = true;
-                document.body.appendChild(script);
-            }
+    function initializePlayer() {
+        // ... (Die Funktion initializePlayer bleibt unverändert)
+        return new Promise((resolve, reject) => {
+            // Nur das SDK laden, wenn es noch nicht da ist
+            if (!window.Spotify) {
+                const script = document.createElement('script');
+                script.src = "https://sdk.scdn.co/spotify-player.js";
+                script.async = true;
+                document.body.appendChild(script);
+            }
 
-            window.onSpotifyWebPlaybackSDKReady = () => {
-                // Nur einen neuen Player erstellen, wenn noch keiner existiert
-                if (spotifyPlayer) {
-                    // Wenn der Player schon existiert und verbunden ist, sofort auflösen
-                    if (deviceId) {
-                        resolve(deviceId);
-                    }
-                    return;
-                }
-                
-                spotifyPlayer = new Spotify.Player({
-                    name: 'TRACK ATTACK',
-                    getOAuthToken: cb => { cb(accessToken); }
-                });
+            window.onSpotifyWebPlaybackSDKReady = () => {
+                // Nur einen neuen Player erstellen, wenn noch keiner existiert
+                if (spotifyPlayer) {
+                    // Wenn der Player schon existiert und verbunden ist, sofort auflösen
+                    if (deviceId) {
+                        resolve(deviceId);
+                    }
+                    return;
+                }
+                
+                spotifyPlayer = new Spotify.Player({
+                    name: 'TRACK ATTACK',
+                    getOAuthToken: cb => { cb(accessToken); }
+                });
 
-                // Fehler-Listener
-                spotifyPlayer.addListener('initialization_error', ({ message }) => { 
-                    console.error('Initialization Error:', message);
-                    reject('Fehler bei der Initialisierung des Players.');
-                });
-                spotifyPlayer.addListener('authentication_error', ({ message }) => {
-                    console.error('Authentication Error:', message);
-                    reject('Fehler bei der Authentifizierung des Players.');
-                });
-                spotifyPlayer.addListener('account_error', ({ message }) => {
-                    console.error('Account Error:', message);
-                    reject('Account-Fehler: Spotify Premium wird benötigt.');
-                });
-                 spotifyPlayer.addListener('playback_error', ({ message }) => {
-                    console.error('Playback Error:', message);
-                    // Dies ist kein reject, da es oft temporär ist
-                });
+                // Fehler-Listener
+                spotifyPlayer.addListener('initialization_error', ({ message }) => { 
+                    console.error('Initialization Error:', message);
+                    reject('Fehler bei der Initialisierung des Players.');
+                });
+                spotifyPlayer.addListener('authentication_error', ({ message }) => {
+                    console.error('Authentication Error:', message);
+                    reject('Fehler bei der Authentifizierung des Players.');
+                });
+                spotifyPlayer.addListener('account_error', ({ message }) => {
+                    console.error('Account Error:', message);
+                    reject('Account-Fehler: Spotify Premium wird benötigt.');
+                });
+                 spotifyPlayer.addListener('playback_error', ({ message }) => {
+                    console.error('Playback Error:', message);
+                    // Dies ist kein reject, da es oft temporär ist
+                });
 
-                // Erfolgs-Listener
-                spotifyPlayer.addListener('ready', ({ device_id }) => {
-                    console.log('Ready with Device ID', device_id);
-                    deviceId = device_id;
-                    resolve(device_id); // Promise mit der deviceId auflösen
-                });
+                // Erfolgs-Listener
+                spotifyPlayer.addListener('ready', ({ device_id }) => {
+                    console.log('Ready with Device ID', device_id);
+                    deviceId = device_id;
+                    resolve(device_id); // Promise mit der deviceId auflösen
+                });
 
-                spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-                    console.log('Device ID has gone offline', device_id);
-                });
+                spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+                    console.log('Device ID has gone offline', device_id);
+                });
 
-                spotifyPlayer.connect().then(success => {
-                    if (!success) {
-                        reject('Der Spotify Player konnte nicht verbunden werden.');
-                    }
-                });
-            };
-        });
+                spotifyPlayer.connect().then(success => {
+                    if (!success) {
+                        reject('Der Spotify Player konnte nicht verbunden werden.');
+                    }
+                });
+            };
+        });
+    }
+
+// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ANFANG ----------------
+/**
+ * Prüft die geschätzte effektive Verbindungsgeschwindigkeit des Benutzers
+ * und zeigt einen unabhängigen Warn-Toast an, falls die Verbindung zu langsam ist.
+ * Der Spielverlauf wird NICHT blockiert.
+ */
+function checkConnectionSpeed() {
+    
+    // 💡 NEU: Das unabhängige Toast-Element abrufen
+    if (!networkToast) {
+         console.error("HTML-Element #network-toast fehlt.");
+         return;
     }
 
-	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ANFANG ----------------
-/*
- * Prüft die geschätzte effektive Verbindungsgeschwindigkeit des Benutzers
- * und blockiert das Spiel, falls die Verbindung zu langsam ist.
- */
- function checkConnectionSpeed() {
-    // Prüfen, ob die Network Information API verfügbar ist
+    // Prüfen, ob die Network Information API verfügbar ist 
+
+[Image of a diagram illustrating the Network Information API]
+
     if ('connection' in navigator) {
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
         
-        // --- Kritische Schwellenwerte ---
         const effectiveType = connection.effectiveType; 
-        
-        // KORREKTUR: Wenn downlink undefined/0 ist (oft bei schnellem WLAN/LAN), setze auf 100 Mbit/s
         const downlink = connection.downlink || 100; // Mbit/s
-        
-        const SLOW_4G_THRESHOLD = 1; // Mbit/s
-        
-        console.log(`[NETWORK] Verbindungstyp: ${effectiveType}, Downlink: ${downlink} Mbit/s`);
+        // Schwellenwert: 1 Mbit/s
+        const SLOW_THRESHOLD = 1; 
         
         let isTooSlow = false;
 
-        // --- Logik für isTooSlow ---
-        
+        // --- Prüflogik ---
         if (effectiveType === '3g' || effectiveType === '2g' || effectiveType === 'slow-2g') {
             isTooSlow = true; 
-        } else if (effectiveType === '4g' && downlink < SLOW_4G_THRESHOLD) {
-            isTooSlow = true; 
-        } else if (!effectiveType && downlink < SLOW_4G_THRESHOLD) {
-             isTooSlow = true;
+        } else if ((effectiveType === '4g' || !effectiveType) && downlink < SLOW_THRESHOLD) {
+             isTooSlow = true; 
         }
-        
-        // --- BLOCKIERUNGS-LOGIK ---
+
+        // --- DYNAMISCHE WARN-LOGIK (Kein Blocking) ---
         if (isTooSlow) {
             
-            const message = "faster network required to play (Wi-Fi/4G)";
-            
-            // 1. Toast dauerhaft anzeigen (1 Stunde)
-            showToast(message, 3600000); 
-
-            // 2. Spiel blockieren
-            gameState.isConnectionSlow = true; 
-            
-            // 3. Button deaktivieren und Pulsing entfernen
-            if (logoButton) {
-                logoButton.classList.remove('logo-pulsing');
-                logoButton.classList.add('inactive');
-                // Sicherstellen, dass der Klick-Listener entfernt wird, falls er schon da war
-                logoButton.removeEventListener('click', startGame); 
+            if (!gameState.isConnectionSlow) {
+                // Zustand speichern
+                gameState.isConnectionSlow = true; 
+                
+                // 💡 Aktion: Toast anzeigen
+                networkToast.classList.add('show');
+                
+                console.warn("[NETWORK] Warnung angezeigt: Verbindung zu langsam für präzise Snippet-Wiedergabe.");
             }
-            console.warn("Spiel blockiert: Die Verbindung ist zu langsam.");
             
         } else {
-             gameState.isConnectionSlow = false;
-             console.log("[NETWORK] Verbindung ist schnell genug.");
+            // Verbindung ist schnell genug
+            if (gameState.isConnectionSlow) {
+                
+                // Zustand zurücksetzen
+                gameState.isConnectionSlow = false;
+                
+                // 💡 Aktion: Toast entfernen
+                networkToast.classList.remove('show');
+                
+                console.log("[NETWORK] Verbindung schnell genug: Warnung entfernt.");
+            }
         }
     } else {
         console.warn("[NETWORK] Network Information API nicht verfügbar. Konnte die Verbindungsgeschwindigkeit nicht prüfen.");
-        // Im Zweifelsfall nicht blockieren, da keine Info verfügbar
-        gameState.isConnectionSlow = false;
+        gameState.isConnectionSlow = false; 
+        // Sicherstellen, dass der Toast versteckt ist, wenn die API fehlt
+        networkToast.classList.remove('show');
     }
 }
-	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ---------------- 
+// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ----------------
 
-    // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
-    function renderPreselectionGenres() {
-        // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
-        allGenresScrollbox.innerHTML = '';
-        const allAvailableGenres = Object.keys(playlists); 
+    // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
+    function renderPreselectionGenres() {
+        // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
+        allGenresScrollbox.innerHTML = '';
+        const allAvailableGenres = Object.keys(playlists); 
 
-        allAvailableGenres.forEach(genreName => {
-            const button = document.createElement('button');
-            button.classList.add('preselect-genre-button');
-            button.dataset.genre = genreName; 
-            button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
+        allAvailableGenres.forEach(genreName => {
+            const button = document.createElement('button');
+            button.classList.add('preselect-genre-button');
+            button.dataset.genre = genreName; 
+            button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
 
-            // Überprüfen, ob das Genre bereits ausgewählt ist
-            if (gameState.selectedPlayableGenres.includes(genreName)) {
-                button.classList.add('selected');
-            }
+            // Überprüfen, ob das Genre bereits ausgewählt ist
+            if (gameState.selectedPlayableGenres.includes(genreName)) {
+                button.classList.add('selected');
+            }
 
-            button.addEventListener('click', () => {
-                toggleGenreSelection(genreName, button);
-            });
-            allGenresScrollbox.appendChild(button);
-        });
-    }
+            button.addEventListener('click', () => {
+                toggleGenreSelection(genreName, button);
+            });
+            allGenresScrollbox.appendChild(button);
+        });
+    }
 
-    // --- NEU: Funktion: Genre in der Vorauswahl auswählen/abwählen ---
-    function toggleGenreSelection(genreName, buttonElement) {
-        const index = gameState.selectedPlayableGenres.indexOf(genreName);
+    // --- NEU: Funktion: Genre in der Vorauswahl auswählen/abwählen ---
+    function toggleGenreSelection(genreName, buttonElement) {
+        const index = gameState.selectedPlayableGenres.indexOf(genreName);
 
-        if (index > -1) {
-            gameState.selectedPlayableGenres.splice(index, 1);
-            buttonElement.classList.remove('selected');
-        } else {
-            gameState.selectedPlayableGenres.push(genreName);
-            buttonElement.classList.add('selected');
-        }
-        console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
-    }
+        if (index > -1) {
+            gameState.selectedPlayableGenres.splice(index, 1);
+            buttonElement.classList.remove('selected');
+        } else {
+            gameState.selectedPlayableGenres.push(genreName);
+            buttonElement.classList.add('selected');
+        }
+        console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
+    }
 
-    //=======================================================================
-    // Phase 2: Spielstart & UI-Grundlagen
-    //=======================================================================
+    //=======================================================================
+    // Phase 2: Spielstart & UI-Grundlagen
+    //=======================================================================
 
-    function triggerBounce(element) {
-        element.classList.remove('bounce');
-        void element.offsetWidth; // Trigger reflow
-        element.classList.add('bounce');
-    }
+    function triggerBounce(element) {
+        element.classList.remove('bounce');
+        void element.offsetWidth; // Trigger reflow
+        element.classList.add('bounce');
+    }
 
 // KORRIGIERT: startGame-Funktion (VERWENDET {once: true} VON startGameAfterOrientation)
-    async function startGame() {
+    async function startGame() {
 
-        logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
-        logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
+        logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
+        logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
 		triggerBounce(logoButton);
-        
-        // Player nur initialisieren, wenn wir noch keine deviceId haben.
-        if (!deviceId) {
-            try {
-                console.log("Initialisiere Spotify Player durch Benutzerklick...");
-                await initializePlayer();
-                console.log("Player erfolgreich initialisiert und verbunden.");
+        
+        // Player nur initialisieren, wenn wir noch keine deviceId haben.
+        if (!deviceId) {
+            try {
+                console.log("Initialisiere Spotify Player durch Benutzerklick...");
+                await initializePlayer();
+                console.log("Player erfolgreich initialisiert und verbunden.");
 
-                // --- WICHTIG: DER iOS-FIX ---
-                console.log("Versuche, den Player aufzuwecken (resume)...");
-                await spotifyPlayer.resume();
-                console.log("Player erfolgreich aufgeweckt.");
+                // --- WICHTIG: DER iOS-FIX ---
+                console.log("Versuche, den Player aufzuwecken (resume)...");
+                await spotifyPlayer.resume();
+                console.log("Player erfolgreich aufgeweckt.");
 
-            } catch (error) {
-                console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
-                alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
-                
-                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird,
-                // ABER {once: true} ihn bereits entfernt hat.
-                logoButton.addEventListener('click', startGame, { once: true }); 
-                logoButton.classList.remove('inactive');
-                logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
-                return; // Breche die Funktion ab, wenn es fehlschlägt.
-            }
-        }
-        
-        lastGameScreenVisible = 'logo-button';
-        startGenreSelectionContainer.classList.add('hidden');
+            } catch (error) {
+                console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
+                alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
+                
+                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird,
+                // ABER {once: true} ihn bereits entfernt hat.
+                logoButton.addEventListener('click', startGame, { once: true }); 
+                logoButton.classList.remove('inactive');
+                logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
+                return; // Breche die Funktion ab, wenn es fehlschlägt.
+            }
+        }
+        
+        lastGameScreenVisible = 'logo-button';
+        startGenreSelectionContainer.classList.add('hidden');
 
-        setTimeout(() => {
-            appContainer.style.backgroundColor = 'var(--player1-color)';
-            logoButton.classList.add('hidden');
-            showDiceScreen();
-        }, 800);
-    }
+        setTimeout(() => {
+            appContainer.style.backgroundColor = 'var(--player1-color)';
+            logoButton.classList.add('hidden');
+            showDiceScreen();
+        }, 800);
+    }
 
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
