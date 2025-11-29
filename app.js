@@ -1,21 +1,73 @@
 // TRACK ATTACK
 
-// ----------------------------------------------------------------------
-// GLOBALE VARIABLE FÜR ANIMATIONS-STEUERUNG
-// ----------------------------------------------------------------------
-let isInitialFlyInDone = false; 
-let connectionMonitorInterval = null; // 💡 NEU: Für das 60-Sekunden-Monitoring
-
 // --- API Endpunkte --- NEU HINZUGEFÜGT
 const API_ENDPOINTS = {
     SPOTIFY_AUTH: 'https://accounts.spotify.com/authorize',
     SPOTIFY_TOKEN: 'https://accounts.spotify.com/api/token',
-    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/$${playlistId}/tracks`,
-    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=$${deviceId}`,
+    SPOTIFY_PLAYLIST_TRACKS: (playlistId) => `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+    SPOTIFY_PLAYER_PLAY: (deviceId) => `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
 	SPOTIFY_PLAYER_TRANSFER: 'https://api.spotify.com/v1/me/player',
 	SPOTIFY_PLAYER_STATE: 'https://api.spotify.com/v1/me/player'
 };
 
+// ----------------------------------------------------------------------
+// GLOBALE HELFERFUNKTIONEN FÜR TOAST (Angepasst an HTML/CSS: #network-toast, Klasse .show)
+// ----------------------------------------------------------------------
+let currentToastTimeout = null;
+const TOAST_ID_NETWORK = 'network-toast'; // Ihre spezifische HTML-ID
+
+/**
+ * Zeigt die Toast-Nachricht unter Verwendung der CSS-Klasse 'show' an.
+ * @param {string} message - Die anzuzeigende Nachricht.
+ * @param {number} duration - Dauer in Millisekunden.
+ */
+function showToast(message, duration = 3000) {
+    let toast = document.getElementById(TOAST_ID_NETWORK);
+    let toastMessageSpan = document.getElementById('network-toast-message');
+
+    if (!toast || !toastMessageSpan) {
+        console.error("Toast-Elemente (network-toast oder network-toast-message) nicht im DOM gefunden.");
+        return;
+    }
+
+    if (currentToastTimeout) {
+        clearTimeout(currentToastTimeout);
+    }
+    
+    // Text in das Span-Element schreiben
+    toastMessageSpan.innerText = message;
+    
+    // Klasse 'show' hinzufügen, um die Animation auszulösen
+    toast.classList.add('show');
+    
+    // Setze neuen Timer, falls eine Dauer > 0 angegeben ist
+    if (duration > 0) {
+        currentToastTimeout = setTimeout(() => {
+            hideToast();
+        }, duration);
+    }
+}
+
+/**
+ * Blendet die Toast-Nachricht sofort aus.
+ */
+function hideToast() {
+    const toast = document.getElementById(TOAST_ID_NETWORK);
+    if (toast) {
+        // Klasse 'show' entfernen
+        toast.classList.remove('show');
+    }
+    if (currentToastTimeout) {
+        clearTimeout(currentToastTimeout);
+        currentToastTimeout = null;
+    }
+}
+
+
+// ----------------------------------------------------------------------
+// GLOBALE VARIABLE FÜR ANIMATIONS-STEUERUNG
+// ----------------------------------------------------------------------
+let isInitialFlyInDone = false; 
 
 // ----------------------------------------------------------------------
 // FUNKTION: Wird aufgerufen, sobald die Fly-in Animation abgeschlossen ist
@@ -64,9 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const wrongButton = document.getElementById('wrong-button');
 	const tokenTimer = document.getElementById('token-timer');
 	const gameFooter = document.getElementById('game-footer');
-    // 💡 NEU: Elemente für das unabhängige Netzwerk-Toast
-    const networkToast = document.getElementById('network-toast');
-    // networkToastMessage wird nicht benötigt, da der Text statisch ist
+
 
     // NEU: Konstante für das EINE digitale Würfelbild
     const digitalDiceArea = document.getElementById('digital-dice-area');
@@ -141,7 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // NEU: Array für die ausgewählten Genres auf der Startseite
         selectedPlayableGenres: [],
-        isConnectionSlow: false, // 💡 GEÄNDERT: Flagge steuert jetzt nur das Toast
+        isConnectionSlow: false, // Flagge für die Netzwerkverbindung. Wird NICHT mehr zum Blockieren verwendet.
+        connectionMonitorInterval: null, // NEU: Timer-Handle für den 60-Sekunden-Check
     };
 
     // NEU: Zufälligen Startspieler festlegen
@@ -192,9 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
         
-        // BLOCKIERUNGS-LOGIK ENTFERNT - Spiel läuft immer weiter
-
-		
+        // 🛑 Die Blockierungslogik wurde entfernt, das Spiel startet IMMER normal.
+        
         gameScreen.classList.remove('hidden');
 
         // NEU: Sound für das einfliegende Logo abspielen
@@ -250,23 +300,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+// NEU: Funktion: Startet den permanenten 60-Sekunden-Monitor für die Netzwerkgeschwindigkeit.
+    function startConnectionSpeedMonitor() {
+        // Führe den Check sofort einmal aus
+        checkConnectionSpeed();
+
+        // Starte den 60-Sekunden-Intervall. Alten Timer zuerst löschen.
+        if (gameState.connectionMonitorInterval) {
+            clearInterval(gameState.connectionMonitorInterval);
+        }
+
+        // 60000 Millisekunden = 60 Sekunden
+        gameState.connectionMonitorInterval = setInterval(checkConnectionSpeed, 60000);
+        console.log("[NETWORK] Verbindungsmonitor gestartet (Prüfung alle 60 Sekunden).");
+    }
+
     function startTokenTimer() {
 
 		gameFooter.classList.remove('hidden');
 		
-        const totalDuration = 60 * 60; // 60 Minuten in Sekunden
-        let timeLeft = totalDuration;
-
-        tokenTimer.classList.remove('hidden');
-
-        // Countdown-Anzeige initialisieren
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            tokenTimer.innerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        updateTimerDisplay(); // Initialen Wert setzen
+// ... (Rest Ihrer startTokenTimer Funktion)
 
         const timerInterval = setInterval(() => {
             timeLeft--;
@@ -281,71 +334,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 1.2: PKCE-Flow Helferfunktionen
-    async function generateCodeChallenge(codeVerifier) {
-        const data = new TextEncoder().encode(codeVerifier);
-        const digest = await window.crypto.subtle.digest('SHA-256', data);
-        return btoa(String.fromCharCode.apply(null, [...new Uint8Array(digest)]))
-            .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
+// ... (Rest Ihrer Authentifizierungsfunktionen)
 
-    function generateRandomString(length) {
-        let text = '';
-        let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (let i = 0; i < length; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
-    }
-
-    // 1.2: Login-Prozess starten
-    async function redirectToAuthCodeFlow() {
-        const verifier = generateRandomString(128);
-        const challenge = await generateCodeChallenge(verifier);
-        localStorage.setItem("verifier", verifier);
-        const params = new URLSearchParams();
-        params.append("client_id", CLIENT_ID);
-        params.append("response_type", "code");
-        params.append("redirect_uri", REDIRECT_URI);
-        params.append("scope", "streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state");
-        params.append("code_challenge_method", "S256");
-        params.append("code_challenge", challenge);
-        document.location = `${API_ENDPOINTS.SPOTIFY_AUTH}?${params.toString()}`; // NEUE ZEILE
-    }
-
-    // 1.2: Access Token abrufen
-    async function getAccessToken(code) {
-        const verifier = localStorage.getItem("verifier");
-        const params = new URLSearchParams();
-        params.append("client_id", CLIENT_ID);
-        params.append("grant_type", "authorization_code");
-        params.append("code", code);
-        params.append("redirect_uri", REDIRECT_URI);
-        params.append("code_verifier", verifier);
-
-        const result = await fetch(API_ENDPOINTS.SPOTIFY_TOKEN, { // NEUE ZEILE
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params
-        });
-
-        const { access_token } = await result.json();
-        return access_token;
-    }
-
-    // 💡 NEUE FUNKTION: Startet das 60-Sekunden-Monitoring
-    function startConnectionMonitoring() {
-        if (connectionMonitorInterval) {
-            clearInterval(connectionMonitorInterval);
-        }
-        
-        // Starte den Check alle 60 Sekunden (60000 Millisekunden)
-        connectionMonitorInterval = setInterval(checkConnectionSpeed, 60000);
-        
-        // Führe den Check sofort einmal aus
-        checkConnectionSpeed();
-        
-        console.log("Kontinuierliches Verbindungs-Monitoring gestartet (60s Intervall).");
-    }
+// ... (Rest Ihrer Authentifizierungsfunktionen)
 
     // Initialisierung nach dem Laden der Seite
     const params = new URLSearchParams(window.location.search);
@@ -360,8 +351,8 @@ document.addEventListener('DOMContentLoaded', () => {
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
             startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
             
-            // 💡 GEÄNDERT: Starte das kontinuierliche Monitoring
-            startConnectionMonitoring(); 
+            // 💡 NEU: Starte den permanenten Verbindungs-Monitor!
+            startConnectionSpeedMonitor(); 
 
             // HIER WIRD DER TIMEOUT EINGEFÜGT! 
             setTimeout(() => {
@@ -372,192 +363,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			
         }).catch(error => {
-            console.error("Fehler beim Abrufen des Access Tokens:", error);
-            alert("Anmeldung bei Spotify fehlgeschlagen. Bitte versuchen Sie es erneut.");
-            // Zurück zum Login-Screen, falls Fehler
-            loginScreen.classList.remove('hidden');
-            // Stelle sicher, dass der 'login-button' Listener noch aktiv ist
-            document.getElementById('login-button').removeEventListener('click', redirectToAuthCodeFlow); // Duplizierte Listener vermeiden
-            document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+// ... (Rest Ihrer Fehlerbehandlung)
         });
 
     } else {
-        // Standard-Ansicht (noch nicht von Spotify zurückgekommen)
-        loginScreen.classList.remove('hidden');
-        document.getElementById('login-button').addEventListener('click', redirectToAuthCodeFlow);
+// ... (Rest Ihrer Login-Logik)
     }
 
 // 1.3: Spotify Web Player SDK laden und initialisieren (MODIFIZIERT)
     function initializePlayer() {
-        // ... (Die Funktion initializePlayer bleibt unverändert)
-        return new Promise((resolve, reject) => {
-            // Nur das SDK laden, wenn es noch nicht da ist
-            if (!window.Spotify) {
-                const script = document.createElement('script');
-                script.src = "https://sdk.scdn.co/spotify-player.js";
-                script.async = true;
-                document.body.appendChild(script);
-            }
-
-            window.onSpotifyWebPlaybackSDKReady = () => {
-                // Nur einen neuen Player erstellen, wenn noch keiner existiert
-                if (spotifyPlayer) {
-                    // Wenn der Player schon existiert und verbunden ist, sofort auflösen
-                    if (deviceId) {
-                        resolve(deviceId);
-                    }
-                    return;
-                }
-                
-                spotifyPlayer = new Spotify.Player({
-                    name: 'TRACK ATTACK',
-                    getOAuthToken: cb => { cb(accessToken); }
-                });
-
-                // Fehler-Listener
-                spotifyPlayer.addListener('initialization_error', ({ message }) => { 
-                    console.error('Initialization Error:', message);
-                    reject('Fehler bei der Initialisierung des Players.');
-                });
-                spotifyPlayer.addListener('authentication_error', ({ message }) => {
-                    console.error('Authentication Error:', message);
-                    reject('Fehler bei der Authentifizierung des Players.');
-                });
-                spotifyPlayer.addListener('account_error', ({ message }) => {
-                    console.error('Account Error:', message);
-                    reject('Account-Fehler: Spotify Premium wird benötigt.');
-                });
-                 spotifyPlayer.addListener('playback_error', ({ message }) => {
-                    console.error('Playback Error:', message);
-                    // Dies ist kein reject, da es oft temporär ist
-                });
-
-                // Erfolgs-Listener
-                spotifyPlayer.addListener('ready', ({ device_id }) => {
-                    console.log('Ready with Device ID', device_id);
-                    deviceId = device_id;
-                    resolve(device_id); // Promise mit der deviceId auflösen
-                });
-
-                spotifyPlayer.addListener('not_ready', ({ device_id }) => {
-                    console.log('Device ID has gone offline', device_id);
-                });
-
-                spotifyPlayer.connect().then(success => {
-                    if (!success) {
-                        reject('Der Spotify Player konnte nicht verbunden werden.');
-                    }
-                });
-            };
-        });
+// ... (Rest Ihrer initializePlayer Funktion)
     }
 
-// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ANFANG ----------------
-/**
- * Prüft die geschätzte effektive Verbindungsgeschwindigkeit des Benutzers
- * und zeigt einen unabhängigen Warn-Toast an, falls die Verbindung zu langsam ist.
- * Der Spielverlauf wird NICHT blockiert.
- */
-function checkConnectionSpeed() {
-    
-    // 💡 NEU: Das unabhängige Toast-Element abrufen
-    if (!networkToast) {
-         console.error("HTML-Element #network-toast fehlt.");
-         return;
-    }
+	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ANFANG ----------------
+/*
+ * Prüft die geschätzte effektive Verbindungsgeschwindigkeit des Benutzers
+ * und zeigt eine Toast-Nachricht an, falls die Verbindung zu langsam ist.
+ * Blockiert das Spiel NICHT.
+ */
+ function checkConnectionSpeed() {
+    // Prüfen, ob die Network Information API verfügbar ist
+    if ('connection' in navigator) {
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        
+        // --- Kritische Schwellenwerte ---
+        const effectiveType = connection.effectiveType; 
+        
+        // KORREKTUR: Wenn downlink undefined/0 ist (oft bei schnellem WLAN/LAN), setze auf 100 Mbit/s
+        const downlink = connection.downlink || 100; // Mbit/s
+        
+        const SLOW_4G_THRESHOLD = 1; // Mbit/s
+        
+        console.log(`[NETWORK] Verbindungstyp: ${effectiveType}, Downlink: ${downlink} Mbit/s`);
+        
+        let isTooSlow = false;
 
-    // Prüfen, ob die Network Information API verfügbar ist 
+        // --- Logik für isTooSlow ---
+        
+        if (effectiveType === '3g' || effectiveType === '2g' || effectiveType === 'slow-2g') {
+            isTooSlow = true; 
+        } else if (effectiveType === '4g' && downlink < SLOW_4G_THRESHOLD) {
+            isTooSlow = true; 
+        } else if (!effectiveType && downlink < SLOW_4G_THRESHOLD) {
+             isTooSlow = true;
+        }
+        
+        // --- TOAST-LOGIK (Keine Spiel-Blockierung) ---
+        if (isTooSlow) {
+            const message = "Faster network required to play (Wi-Fi/4G).";
+            
+            // Toast dauerhaft anzeigen (1 Stunde, wird durch den nächsten Check erneuert oder ausgeblendet)
+            showToast(message, 3600000); 
+            console.warn("[NETWORK] Warnung: Die Verbindung ist zu langsam. Toast angezeigt.");
+            
+        } else {
+            // Verbindung schnell genug: Toast ausblenden
+            hideToast();
+            console.log("[NETWORK] Verbindung ist schnell genug. Toast ausgeblendet.");
+        }
 
-[Image of a diagram illustrating the Network Information API]
+        // Setze das Flag, aber ohne Spiel-Blockierung
+        gameState.isConnectionSlow = isTooSlow; 
 
-    if ('connection' in navigator) {
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        
-        const effectiveType = connection.effectiveType; 
-        const downlink = connection.downlink || 100; // Mbit/s
-        // Schwellenwert: 1 Mbit/s
-        const SLOW_THRESHOLD = 1; 
-        
-        let isTooSlow = false;
-
-        // --- Prüflogik ---
-        if (effectiveType === '3g' || effectiveType === '2g' || effectiveType === 'slow-2g') {
-            isTooSlow = true; 
-        } else if ((effectiveType === '4g' || !effectiveType) && downlink < SLOW_THRESHOLD) {
-             isTooSlow = true; 
-        }
-
-        // --- DYNAMISCHE WARN-LOGIK (Kein Blocking) ---
-        if (isTooSlow) {
-            
-            if (!gameState.isConnectionSlow) {
-                // Zustand speichern
-                gameState.isConnectionSlow = true; 
-                
-                // 💡 Aktion: Toast anzeigen
-                networkToast.classList.add('show');
-                
-                console.warn("[NETWORK] Warnung angezeigt: Verbindung zu langsam für präzise Snippet-Wiedergabe.");
-            }
-            
-        } else {
-            // Verbindung ist schnell genug
-            if (gameState.isConnectionSlow) {
-                
-                // Zustand zurücksetzen
-                gameState.isConnectionSlow = false;
-                
-                // 💡 Aktion: Toast entfernen
-                networkToast.classList.remove('show');
-                
-                console.log("[NETWORK] Verbindung schnell genug: Warnung entfernt.");
-            }
-        }
-    } else {
-        console.warn("[NETWORK] Network Information API nicht verfügbar. Konnte die Verbindungsgeschwindigkeit nicht prüfen.");
-        gameState.isConnectionSlow = false; 
-        // Sicherstellen, dass der Toast versteckt ist, wenn die API fehlt
-        networkToast.classList.remove('show');
-    }
+    } else {
+        console.warn("[NETWORK] Network Information API nicht verfügbar. Konnte die Verbindungsgeschwindigkeit nicht prüfen.");
+        // Im Zweifelsfall nicht blockieren und kein Toast anzeigen
+        gameState.isConnectionSlow = false;
+        hideToast();
+    }
 }
-// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ----------------
+	// --- NETZWERK - GESCHWINDIGKEITS - ABFRAGE - ENDE ---------------- 
 
     // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
     function renderPreselectionGenres() {
-        // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
-        allGenresScrollbox.innerHTML = '';
-        const allAvailableGenres = Object.keys(playlists); 
-
-        allAvailableGenres.forEach(genreName => {
-            const button = document.createElement('button');
-            button.classList.add('preselect-genre-button');
-            button.dataset.genre = genreName; 
-            button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
-
-            // Überprüfen, ob das Genre bereits ausgewählt ist
-            if (gameState.selectedPlayableGenres.includes(genreName)) {
-                button.classList.add('selected');
-            }
-
-            button.addEventListener('click', () => {
-                toggleGenreSelection(genreName, button);
-            });
-            allGenresScrollbox.appendChild(button);
-        });
+// ... (Rest Ihrer renderPreselectionGenres Funktion)
     }
 
     // --- NEU: Funktion: Genre in der Vorauswahl auswählen/abwählen ---
     function toggleGenreSelection(genreName, buttonElement) {
-        const index = gameState.selectedPlayableGenres.indexOf(genreName);
-
-        if (index > -1) {
-            gameState.selectedPlayableGenres.splice(index, 1);
-            buttonElement.classList.remove('selected');
-        } else {
-            gameState.selectedPlayableGenres.push(genreName);
-            buttonElement.classList.add('selected');
-        }
-        console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
+// ... (Rest Ihrer toggleGenreSelection Funktion)
     }
 
     //=======================================================================
@@ -565,9 +449,7 @@ function checkConnectionSpeed() {
     //=======================================================================
 
     function triggerBounce(element) {
-        element.classList.remove('bounce');
-        void element.offsetWidth; // Trigger reflow
-        element.classList.add('bounce');
+// ... (Rest Ihrer triggerBounce Funktion)
     }
 
 // KORRIGIERT: startGame-Funktion (VERWENDET {once: true} VON startGameAfterOrientation)
@@ -576,45 +458,13 @@ function checkConnectionSpeed() {
         logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
         logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
 		triggerBounce(logoButton);
-        
-        // Player nur initialisieren, wenn wir noch keine deviceId haben.
-        if (!deviceId) {
-            try {
-                console.log("Initialisiere Spotify Player durch Benutzerklick...");
-                await initializePlayer();
-                console.log("Player erfolgreich initialisiert und verbunden.");
-
-                // --- WICHTIG: DER iOS-FIX ---
-                console.log("Versuche, den Player aufzuwecken (resume)...");
-                await spotifyPlayer.resume();
-                console.log("Player erfolgreich aufgeweckt.");
-
-            } catch (error) {
-                console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
-                alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
-                
-                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird,
-                // ABER {once: true} ihn bereits entfernt hat.
-                logoButton.addEventListener('click', startGame, { once: true }); 
-                logoButton.classList.remove('inactive');
-                logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
-                return; // Breche die Funktion ab, wenn es fehlschlägt.
-            }
-        }
-        
-        lastGameScreenVisible = 'logo-button';
-        startGenreSelectionContainer.classList.add('hidden');
-
-        setTimeout(() => {
-            appContainer.style.backgroundColor = 'var(--player1-color)';
-            logoButton.classList.add('hidden');
-            showDiceScreen();
+// ... (Rest Ihrer startGame Funktion)
         }, 800);
     }
 
-    //=======================================================================
-    // Phase 3: Würfel- & Genre-Auswahl
-    //=======================================================================
+    //=======================================================================
+    // Phase 3: Würfel- & Genre-Auswahl
+    //=======================================================================
 
     // NEU: Funktion, die die Aktionen nach der Würfelanimation ausführt
     function handleDiceAnimationEnd() {
