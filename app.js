@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ÄNDERUNG: NETZWERK - GESCHWINDIGKEITS - ABFRAGE (NEU) ----------------
    async function checkConnectionSpeed() {
     // 🚨 WICHTIG: Diesen Pfad auf eine 1MB-Testdatei auf Ihrem Server anpassen
-    const TEST_FILE_URL = 'https://github.com/dookye/TRACK-ATTACK/tree/main/dummy/dummy.bin'; 
+    const TEST_FILE_URL = 'dummy/dummy.bin'; 
     
     const FILE_SIZE_MB = 1.0; 
     
