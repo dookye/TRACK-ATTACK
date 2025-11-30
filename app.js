@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginScreen = document.getElementById('login-screen');
     const gameScreen = document.getElementById('game-screen');
     const rotateDeviceOverlay = document.getElementById('rotate-device-overlay');
-    // logoButton ist im Scope definiert
     const logoButton = document.getElementById('logo-button');
     const diceContainer = document.getElementById('dice-container');
     const diceAnimation = document.getElementById('dice-animation');
@@ -108,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 };
 
     // --- Spielstatus-Variablen ---
-    let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
+    let playbackStateListener = null;  // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 	let pollingIntervalTimer = null;
 	let fallbackPlayTimer = null;
     let accessToken = null;
@@ -118,15 +117,15 @@ document.addEventListener('DOMContentLoaded', () => {
         player1Score: 0,
         player2Score: 0,
         currentPlayer: 1,
-        totalRounds: 4, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        totalRounds: 20, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
         maxAttempts: 0,
         trackDuration: 0,
         currentTrack: null,
-        player1SpeedRound: Math.floor(Math.random() * 2) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
-        player2SpeedRound: Math.floor(Math.random() * 2) + 1,
+        player1SpeedRound: Math.floor(Math.random() * 10) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
+        player2SpeedRound: Math.floor(Math.random() * 10) + 1,
         isSpeedRound: false,
         speedRoundTimeout: null,
         countdownInterval: null,
@@ -139,8 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // NEU: Array für die ausgewählten Genres auf der Startseite
         selectedPlayableGenres: [],
-        // --- ÄNDERUNG: Neue Variable für das Netzwerk-Intervall ---
-        networkCheckInterval: null, 
     };
 
     // NEU: Zufälligen Startspieler festlegen
@@ -184,29 +181,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkOrientation() {
         // Führe die Start-Logik nur aus, wenn der Token da ist und der GameScreen noch versteckt ist
         if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
-            startGameAfterOrientation();
+             startGameAfterOrientation();
         }
     }
     
-    // --- ÄNDERUNG: Funktion startet nun das Netzwerk-Intervall ---
+    // KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
     function startGameAfterOrientation() {
-        
-        // 1. Initialer Netzwerk-Check (ohne Blockierung)
-        checkConnectionSpeed();
-
-        // 2. Intervall starten: Alle 60 Sekunden (60000ms) prüfen
-        if (!gameState.networkCheckInterval) {
-            gameState.networkCheckInterval = setInterval(checkConnectionSpeed, 60000);
-        }
-        
-        // HINWEIS: Spielstart wird NICHT blockiert, Spiel läuft weiter
-     
         gameScreen.classList.remove('hidden');
 
         // NEU: Sound für das einfliegende Logo abspielen
         if (logoFlyInSound) {
             logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
-            logoFlyInSound.volume = 0.3;
+            logoFlyInSound.volume = 0.3; 
             logoFlyInSound.play().catch(error => {
                 console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
             });
@@ -350,15 +336,14 @@ document.addEventListener('DOMContentLoaded', () => {
             accessToken = token; // Hier wird der Access Token gesetzt!
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
             startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
-            
-           
+
+            // HIER WIRD DER TIMEOUT EINGEFÜGT! 
             setTimeout(() => {
                 // Diese beiden Zeilen werden erst nach der Verzögerung ausgeführt
                 window.addEventListener('resize', checkOrientation);
                 checkOrientation(); // Initial die Orientierung prüfen -> ruft startGameAfterOrientation auf
             }, 500); // 500 Millisekunden (0.5 Sekunden) Verzögerung
 
-			
         }).catch(error => {
             console.error("Fehler beim Abrufen des Access Tokens:", error);
             alert("Anmeldung bei Spotify fehlgeschlagen. Bitte versuchen Sie es erneut.");
@@ -440,54 +425,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- ÄNDERUNG: NETZWERK - GESCHWINDIGKEITS - ABFRAGE (NEU) ----------------
-    function checkConnectionSpeed() {
-        // Falls die API nicht unterstützt wird, brechen wir lautlos ab
-        if (!('connection' in navigator)) {
-            return; 
-        }
-
-        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        
-        // Downlink in Mbit/s (Fallback auf 10, wenn unbekannt)
-        const downlink = connection.downlink || 10; 
-        const effectiveType = connection.effectiveType;
-        const SLOW_THRESHOLD = 2.0; // 1 Mbit/s
-
-        // DOM-Elemente
-        const networkToast = document.getElementById('network-toast');
-        const networkMessageSpan = document.getElementById('network-toast-message');
-
-        let isTooSlow = false;
-
-        // Prüf-Logik
-        if (effectiveType === 'slow-2g' || effectiveType === '2g' || effectiveType === '3g') {
-            isTooSlow = true;
-        } else if (downlink < SLOW_THRESHOLD) {
-            isTooSlow = true;
-        }
-
-        // Anzeige-Logik (Blockiert das Spiel NICHT)
-        if (isTooSlow) {
-            // 1. Nachricht setzen (Dynamisch anpassbar)
-            if (networkMessageSpan) {
-                networkMessageSpan.innerText = "Faster network required to play (Wi-Fi/4G).";
-            }
-
-            // 2. Toast einblenden
-            if (networkToast && !networkToast.classList.contains('show')) {
-                networkToast.classList.add('show');
-                console.warn(`[NETWORK] Verbindung langsam (${downlink} Mbit/s). Warnung angezeigt.`);
-            }
-        } else {
-            // 3. Toast ausblenden
-            if (networkToast && networkToast.classList.contains('show')) {
-                networkToast.classList.remove('show');
-                console.log(`[NETWORK] Verbindung erholt (${downlink} Mbit/s). Warnung ausgeblendet.`);
-            }
-        }
-    }
-    // --- NETZWERK - ENDE ---------------- 
     // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
     function renderPreselectionGenres() {
         // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
