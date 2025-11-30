@@ -450,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SCHWELLENWERT-EINSTELLUNG ---
     // Hier stellen Sie ein, ab welcher echten Geschwindigkeit (Mbit/s) die Warnung erscheinen soll.
     // 1.0 Mbit/s ist oft ein guter Startpunkt für Streaming-Anwendungen.
-    const SLOW_THRESHOLD_MBIT = 1.0; 
+    const SLOW_THRESHOLD_MBIT = 20.0; 
     // ---------------------------------
 
     const startTime = performance.now();
