@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginScreen = document.getElementById('login-screen');
     const gameScreen = document.getElementById('game-screen');
     const rotateDeviceOverlay = document.getElementById('rotate-device-overlay');
+    // logoButton ist im Scope definiert
     const logoButton = document.getElementById('logo-button');
     const diceContainer = document.getElementById('dice-container');
     const diceAnimation = document.getElementById('dice-animation');
@@ -107,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
 };
 
     // --- Spielstatus-Variablen ---
-    let playbackStateListener = null;  // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
+    let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 	let pollingIntervalTimer = null;
 	let fallbackPlayTimer = null;
     let accessToken = null;
@@ -138,6 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // NEU: Array für die ausgewählten Genres auf der Startseite
         selectedPlayableGenres: [],
+        // --- ÄNDERUNG: Neue Variable für das Netzwerk-Intervall ---
+        networkCheckInterval: null, 
     };
 
     // NEU: Zufälligen Startspieler festlegen
@@ -181,18 +184,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkOrientation() {
         // Führe die Start-Logik nur aus, wenn der Token da ist und der GameScreen noch versteckt ist
         if (accessToken && gameScreen.classList.contains('hidden') && loginScreen.classList.contains('hidden')) {
-             startGameAfterOrientation();
+            startGameAfterOrientation();
         }
     }
     
-    // KORRIGIERT: Funktion, die nach korrekter Orientierung das Spiel startet
+    // --- ÄNDERUNG: Funktion startet nun das Netzwerk-Intervall ---
     function startGameAfterOrientation() {
+        
+        // 1. Initialer Netzwerk-Check (ohne Blockierung)
+        checkConnectionSpeed();
+
+        // 2. Intervall starten: Alle 60 Sekunden (60000ms) prüfen
+        if (!gameState.networkCheckInterval) {
+            gameState.networkCheckInterval = setInterval(checkConnectionSpeed, 60000);
+        }
+        
+        // HINWEIS: Spielstart wird NICHT blockiert, Spiel läuft weiter
+     
         gameScreen.classList.remove('hidden');
 
         // NEU: Sound für das einfliegende Logo abspielen
         if (logoFlyInSound) {
             logoFlyInSound.currentTime = 0; // Setzt den Sound auf den Anfang zurück
-            logoFlyInSound.volume = 0.3; 
+            logoFlyInSound.volume = 0.3;
             logoFlyInSound.play().catch(error => {
                 console.warn("Autoplay für Logo-Sound blockiert oder Fehler:", error);
             });
@@ -336,14 +350,15 @@ document.addEventListener('DOMContentLoaded', () => {
             accessToken = token; // Hier wird der Access Token gesetzt!
             loginScreen.classList.add('hidden'); // Login-Screen ausblenden
             startTokenTimer(); // start des timer für Access Token 60min zur visualisierung
-
-            // HIER WIRD DER TIMEOUT EINGEFÜGT! 
+            
+           
             setTimeout(() => {
                 // Diese beiden Zeilen werden erst nach der Verzögerung ausgeführt
                 window.addEventListener('resize', checkOrientation);
                 checkOrientation(); // Initial die Orientierung prüfen -> ruft startGameAfterOrientation auf
             }, 500); // 500 Millisekunden (0.5 Sekunden) Verzögerung
 
+			
         }).catch(error => {
             console.error("Fehler beim Abrufen des Access Tokens:", error);
             alert("Anmeldung bei Spotify fehlgeschlagen. Bitte versuchen Sie es erneut.");
@@ -425,7 +440,82 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NEU: Funktion: Genres für die Vorauswahl rendern ---
+    // --- ÄNDERUNG: NETZWERK - GESCHWINDIGKEITS - ABFRAGE (NEU) ----------------
+   async function checkConnectionSpeed() {
+    // 🚨 WICHTIG: Diesen Pfad auf eine 1MB-Testdatei auf Ihrem Server anpassen
+    const TEST_FILE_URL = 'https://github.com/dookye/TRACK-ATTACK/tree/main/dummy/dummy.bin'; 
+    
+    const FILE_SIZE_MB = 1.0; 
+    
+    // --- SCHWELLENWERT-EINSTELLUNG ---
+    // Hier stellen Sie ein, ab welcher echten Geschwindigkeit (Mbit/s) die Warnung erscheinen soll.
+    // 1.0 Mbit/s ist oft ein guter Startpunkt für Streaming-Anwendungen.
+    const SLOW_THRESHOLD_MBIT = 1.0; 
+    // ---------------------------------
+
+    const startTime = performance.now();
+    let isTooSlow = false;
+    let speedKbit = 'N/A';
+    
+    // 1. Datei herunterladen und Caching verhindern
+    try {
+        const cacheBusterURL = `${TEST_FILE_URL}?r=${Math.random()}`;
+        
+        const response = await fetch(cacheBusterURL, { cache: 'no-store' });
+        
+        if (!response.ok) throw new Error("Testdatei nicht verfügbar oder Server-Fehler.");
+        
+        // Lesen des Streams, um sicherzustellen, dass die gesamte Datei heruntergeladen wird
+        // Wenn die Datei sehr groß ist, response.text() durch response.blob() ersetzen
+        await response.text(); 
+        
+    } catch (error) {
+        console.error("Geschwindigkeitstest konnte nicht durchgeführt werden:", error.message);
+        // Bei einem Fehler (z.B. Server nicht erreichbar) die Warnung anzeigen
+        isTooSlow = true;
+        speedKbit = 'Failed';
+        
+    } finally {
+        const endTime = performance.now();
+        const durationSeconds = (endTime - startTime) / 1000;
+
+        // 2. Geschwindigkeit nur berechnen, wenn kein Fehler aufgetreten ist
+        if (speedKbit !== 'Failed') {
+            // (MB * 8) / Sekunden = Mbit/s
+            const speedMbit = (FILE_SIZE_MB * 8) / durationSeconds;
+            // Auf 2 Nachkommastellen runden
+            speedKbit = (Math.round(speedMbit * 100) / 100).toFixed(2); 
+            
+            // 3. Ergebnis bewerten
+            if (speedMbit < SLOW_THRESHOLD_MBIT) {
+                isTooSlow = true;
+            }
+        }
+        
+        // 4. Konsole-Eintrag mit gemessener Geschwindigkeit
+        console.log(`[REAL SPEED TEST] Gemessene Geschwindigkeit: ${speedKbit} Mbit/s.`);
+    }
+
+    // 5. Anzeige-Logik steuern
+    const networkToast = document.getElementById('network-toast');
+    const networkMessageSpan = document.getElementById('network-toast-message');
+
+    if (isTooSlow) {
+        if (networkMessageSpan) {
+            networkMessageSpan.innerText = `Network too slow (${speedKbit} Mbit/s). Needs > ${SLOW_THRESHOLD_MBIT} Mbit/s.`;
+        }
+        if (networkToast) {
+            networkToast.classList.add('show');
+        }
+    } else {
+        if (networkToast) {
+            networkToast.classList.remove('show');
+        }
+    }
+}
+    // --- NETZWERK - ENDE ---------------- 
+    
+	// --- NEU: Funktion: Genres für die Vorauswahl rendern ---
     function renderPreselectionGenres() {
         // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
         allGenresScrollbox.innerHTML = '';
