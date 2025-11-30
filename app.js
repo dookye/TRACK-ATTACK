@@ -502,7 +502,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (isTooSlow) {
         if (networkMessageSpan) {
-            networkMessageSpan.innerText = `Network too slow (${speedKbit} Mbit/s). Needs > ${SLOW_THRESHOLD_MBIT} Mbit/s.`;
+            // networkMessageSpan.innerText = `Network too slow (${speedKbit} Mbit/s). Needs > ${SLOW_THRESHOLD_MBIT} Mbit/s.`;
+			networkMessageSpan.innerText = `Network too slow (${speedKbit} Mbit/s). this could lead to errors`;
         }
         if (networkToast) {
             networkToast.classList.add('show');
