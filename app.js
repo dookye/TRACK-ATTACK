@@ -194,10 +194,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Initialer Netzwerk-Check (ohne Blockierung)
         checkConnectionSpeed();
 
+		// einmaliger Netzwerkspeedcheck am anfang
+		if (gameState.networkCheckInterval) {
+           clearInterval(gameState.networkCheckInterval);
+           gameState.networkCheckInterval = null;
+        }
+		
+/**  ------------- funktion für einen Netzwerkspeedcheck - prüfintervall -------------------
         // 2. Intervall starten: Alle 60 Sekunden (60000ms) prüfen
         if (!gameState.networkCheckInterval) {
             gameState.networkCheckInterval = setInterval(checkConnectionSpeed, 60000);
         }
+*/
         
         // HINWEIS: Spielstart wird NICHT blockiert, Spiel läuft weiter
      
