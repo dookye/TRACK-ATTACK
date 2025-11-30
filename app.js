@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Downlink in Mbit/s (Fallback auf 10, wenn unbekannt)
         const downlink = connection.downlink || 10; 
         const effectiveType = connection.effectiveType;
-        const SLOW_THRESHOLD = 3.0; // 1 Mbit/s
+        const SLOW_THRESHOLD = 1.5; // 1 Mbit/s
 
         // DOM-Elemente
         const networkToast = document.getElementById('network-toast');
