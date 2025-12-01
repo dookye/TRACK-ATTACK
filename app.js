@@ -1558,7 +1558,6 @@ async function playSongForResolution() {
     }
 
     // ------------------------mit verzögerung zur Auflösung:.............................................
-    // ------------------------mit verzögerung zur Auflösung:.............................................
     revealButton.addEventListener('click', async () => {
         // Blende den Button sofort aus, um Doppelklicks zu vermeiden
         revealButton.classList.add('no-interaction');
