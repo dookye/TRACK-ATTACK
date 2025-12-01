@@ -1163,6 +1163,12 @@ async function playTrackSnippet() {
      * @param {number} [stopDuration] - Optional: Spezifische Dauer des Stopp-Timers.
      */
     const startRoundTimers = (statePosition, isFallback = false, stopDuration = desiredDuration) => { 
+
+		// 1. Initialen Warte-Timer stoppen (sehr wichtig!)
+        if (fallbackPlayTimer) {
+            clearTimeout(fallbackPlayTimer);
+            fallbackPlayTimer = null;
+       }
         
         // <<< NEUE LOGIK HIER >>>: IMMER den Polling-Interval stoppen, wenn die Wiedergabe bestätigt ist
         if (pollingIntervalTimer) {
