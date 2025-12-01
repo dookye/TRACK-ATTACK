@@ -109,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Spielstatus-Variablen ---
     let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
-    let resolutionStateListener = null; // Variable, um den Listener für die Auflösungs-Wiedergabe zu speichern.
 	let pollingIntervalTimer = null;
 	let fallbackPlayTimer = null;
     let accessToken = null;
@@ -1451,119 +1450,83 @@ async function playTrackSnippet() {
         playSongForResolution();
     }
 
-    // NEU: Funktion zum Abspielen des Songs bei Auflösung und pausieren bei trackende, wenn man ihn zu ende hört.
-async function playSongForResolution() {
-    if (!gameState.currentTrack || !deviceId) {
-        console.warn("Kein Track oder Gerät verfügbar, kann Song nicht abspielen.");
-        return;
-    }
-    
-    // <<< NEU: Alten Listener bereinigen, falls vorhanden >>>
-    if (resolutionStateListener) {
-        spotifyPlayer.removeListener('player_state_changed', resolutionStateListener);
-        resolutionStateListener = null;
-    }
-    
-    const currentTrackURI = gameState.currentTrack.uri; // URI des Tracks speichern
-    const startPositionMs = 30 * 1000;
-    const targetVolume = 80;
-    const fadeDuration = 3000;
-    const fadeStep = 5;
-    const intervalTime = fadeDuration / (targetVolume / fadeStep);
-
-    // ########### Auflösungs-Stop-Listener ###########
-    resolutionStateListener = (state) => {
-        if (!state || !spotifyPlayer) return;
-
-        const isCurrentTrackPlaying = state.track_window.current_track.uri === currentTrackURI && !state.paused;
-        
-        // Bedingung für das Track-Ende:
-        // Der Player ist pausiert UND der gesuchte Track ist NICHT mehr der aktuelle Track (er wurde übersprungen/beendet).
-        // ODER: Der Player ist NICHT pausiert, aber es wird ein ANDERER Track als der gesuchte gespielt (Race Condition).
-        if ((state.paused && state.track_window.current_track.uri !== currentTrackURI) || 
-            (state.track_window.current_track.uri !== currentTrackURI && !state.paused)) {
-
-            // 1. Player pausieren (falls er bereits den nächsten Song spielt)
-            spotifyPlayer.pause().catch(e => console.error("Fehler beim Pausieren des Players:", e));
-            
-            // 2. Listener entfernen und bereinigen
-            spotifyPlayer.removeListener('player_state_changed', resolutionStateListener);
-            resolutionStateListener = null;
-            
-            // 3. Status bereinigen
-            clearInterval(gameState.fadeInterval);
-            gameState.isSongPlaying = false;
-            console.log("[RESOLUTION STOP] Auflösungs-Song ist beendet oder nächster Song wurde gestartet und gestoppt.");
-            
-        } else if (state.paused && state.position === 0) {
-            // Alternative Prüfung: Pausiert und Position 0 (kann auch das Ende signalisieren, falls keine Queue folgt)
-            spotifyPlayer.removeListener('player_state_changed', resolutionStateListener);
-            resolutionStateListener = null;
-            clearInterval(gameState.fadeInterval);
-            gameState.isSongPlaying = false;
-            console.log("[RESOLUTION STOP] Auflösungs-Song beendet (Position 0).");
+    // NEU: Funktion zum Abspielen des Songs bei Auflösung
+    async function playSongForResolution() {
+        if (!gameState.currentTrack || !deviceId) {
+            console.warn("Kein Track oder Gerät verfügbar, kann Song nicht abspielen.");
+            return;
         }
-    };
-    // <<< GEÄNDERT: Listener-Registrierung verzögern, um alte Events zu ignorieren >>>
-    // Wir warten 300ms. Das ist genug Zeit, damit Spotify die Events der vorherigen Runde (Polling-Erfolg)
-    // "abfeuern" kann, bevor der neue Listener aktiv wird.
-    setTimeout(() => {
-        if (spotifyPlayer && resolutionStateListener) {
-             spotifyPlayer.addListener('player_state_changed', resolutionStateListener);
-             console.log("[RESOLUTION] Resolution Listener erfolgreich nach 300ms registriert.");
-        }
-    }, 300);
-    // ########### ENDE: Auflösungs-Stop-Listener ###########
 
-    // Sicherstellen, dass die Lautstärke auf 0 gesetzt ist... (Rest des Codes bleibt gleich)
-    spotifyPlayer.setVolume(0).then(() => {
-        gameState.currentSongVolume = 0; 
+        const startPositionMs = 30 * 1000; // 30 Sekunden in Millisekunden
+        const targetVolume = 80; // Ziel-Lautstärke in %
+        const fadeDuration = 3000; // Fade-In Dauer in Millisekunden (z.B. 3 Sekunden)
+        const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
+        const intervalTime = fadeDuration / (targetVolume / fadeStep); // Intervallzeit für jeden Schritt
 
-        // Song bei Sekunde 30 starten
-        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
-            method: 'PUT',
-            body: JSON.stringify({
-                uris: [currentTrackURI],
-                position_ms: startPositionMs
-            }),
-            headers: { 'Authorization': `Bearer ${accessToken}` }
-        }).then(response => {
-            if (!response.ok) {
-                console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
-                // Bei Fehler auch den Listener entfernen
-                if (resolutionStateListener) {
-                    spotifyPlayer.removeListener('player_state_changed', resolutionStateListener);
-                    resolutionStateListener = null;
+        // Sicherstellen, dass die Lautstärke auf 0 gesetzt ist, bevor wir starten
+        spotifyPlayer.setVolume(0).then(() => {
+            gameState.currentSongVolume = 0; // Setze interne Volume auf 0
+
+            // Song bei Sekunde 30 starten
+            fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
+                method: 'PUT',
+                body: JSON.stringify({
+                    uris: [gameState.currentTrack.uri],
+                    position_ms: startPositionMs
+                }),
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            }).then(response => {
+                if (!response.ok) {
+                    console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
+                    return;
                 }
-                return;
-            }
-            gameState.isSongPlaying = true; 
+                gameState.isSongPlaying = true; // Song spielt jetzt
 
-            // Starte Fade-In
-            gameState.fadeInterval = setInterval(() => {
-                if (gameState.currentSongVolume < targetVolume) {
-                    gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
-                    spotifyPlayer.setVolume(gameState.currentSongVolume / 100); 
-                } else {
-                    clearInterval(gameState.fadeInterval); 
+                // Starte Fade-In
+                gameState.fadeInterval = setInterval(() => {
+                    if (gameState.currentSongVolume < targetVolume) {
+                        gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
+                        spotifyPlayer.setVolume(gameState.currentSongVolume / 100); // Spotify Volume erwartet 0.0 bis 1.0
+                    } else {
+                        clearInterval(gameState.fadeInterval); // Fade-In beendet
+                    }
+                }, intervalTime); // Intervall für den Fade-In
+
+                // Optional: Timer, um den Song am Ende zu pausieren, falls nicht geklickt wird
+                // Dies ist nicht unbedingt nötig, da Spotify den Track automatisch beendet.
+                // Wenn der Track sehr lang ist und du ihn explizit pausieren willst:
+                 const remainingTime = gameState.currentTrack.duration_ms - startPositionMs;
+                 gameState.spotifyPlayTimeout = setTimeout(() => {
+                    if (gameState.isSongPlaying && spotifyPlayer) {
+                        spotifyPlayer.pause();
+                        gameState.isSongPlaying = false;
+                    }
+                 }, remainingTime + 1000); // Kleine Pufferzeit
+
+				// #################### NEUE LOGIK FÜR SONG-STOP, wenn bis zum ende gehört wird ####################
+            gameState.spotifyPlayTimeout = setTimeout(async () => {
+                console.log(`[RESOLUTION TIMER] Starte Fade-Out nach ${effectiveDelay}ms...`);
+                
+                // Zuerst sanft ausfaden
+                await fadeAudioOut();
+
+                // Dann den Player stoppen
+                if (gameState.isSongPlaying && spotifyPlayer) {
+                    spotifyPlayer.pause();
+                    gameState.isSongPlaying = false;
+                    console.log("[RESOLUTION TIMER] Song erfolgreich via Timeout und Fade-Out gestoppt.");
                 }
-            }, intervalTime);
-
+            }, effectiveDelay);
+            // #################### ENDE NEUE SONG-STOP LOGIK ####################
+            
+			
+			}).catch(error => {
+                console.error("Netzwerkfehler beim Starten des Songs für Auflösung:", error);
+            });
         }).catch(error => {
-            console.error("Netzwerkfehler beim Starten des Songs für Auflösung:", error);
-            if (resolutionStateListener) {
-                spotifyPlayer.removeListener('player_state_changed', resolutionStateListener);
-                resolutionStateListener = null;
-            }
+            console.error("Fehler beim Setzen der Initiallautstärke auf 0:", error);
         });
-    }).catch(error => {
-        console.error("Fehler beim Setzen der Initiallautstärke auf 0:", error);
-        if (resolutionStateListener) {
-            spotifyPlayer.removeListener('player_state_changed', resolutionStateListener);
-            resolutionStateListener = null;
-        }
-    });
-}
+    }
 
     // NEU: Funktion für Fade-Out
     function fadeAudioOut() {
