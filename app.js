@@ -1163,16 +1163,15 @@ async function playTrackSnippet() {
      * @param {number} [stopDuration] - Optional: Spezifische Dauer des Stopp-Timers.
      */
     const startRoundTimers = (statePosition, isFallback = false, stopDuration = desiredDuration) => { 
-
-		// 1. Initialen Warte-Timer stoppen (sehr wichtig!)
+        
+        // <<< NEU / GEÄNDERT >>>: Zentralisierte Timer-Bereinigung, falls die Funktion über den Event-Listener
+        // aufgerufen wird, bevor der Fallback-Timer (fallbackPlayTimer) feuert.
         if (fallbackPlayTimer) {
             clearTimeout(fallbackPlayTimer);
             fallbackPlayTimer = null;
-       }
-        
-        // <<< NEUE LOGIK HIER >>>: IMMER den Polling-Interval stoppen, wenn die Wiedergabe bestätigt ist
+        }
         if (pollingIntervalTimer) {
-            clearInterval(pollingIntervalTimer);
+            clearTimeout(pollingIntervalTimer);
             pollingIntervalTimer = null;
         }
 
@@ -1186,20 +1185,7 @@ async function playTrackSnippet() {
         }
 
         if (gameState.isSpeedRound) {
-            // Wenn Speed-Round, sofort alle Timeouts bereinigen und Countdown starten
-            if (gameState.spotifyPlayTimeout) {
-                clearTimeout(gameState.spotifyPlayTimeout);
-                gameState.spotifyPlayTimeout = null;
-            }
-            // Zuerst die UI-Container aktivieren, damit der Timer gefüllt werden kann
-            if (speedRoundTimer) speedRoundTimer.classList.remove('hidden');
-            // if (speedRoundTextDisplay) speedRoundTextDisplay.classList.remove('hidden');
-            if (appContainer) appContainer.classList.add('speed-round-active'); 
-            if (correctButton) correctButton.classList.add('inactive'); // Buttons ausblenden
-            if (wrongButton) wrongButton.classList.add('inactive');     // Buttons ausblenden
-            
             startVisualSpeedRoundCountdown(); // Muss global definiert sein!
-            
         } else {
             // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
             gameState.spotifyPlayTimeout = setTimeout(() => {
@@ -1257,32 +1243,29 @@ async function playTrackSnippet() {
                 // FALLBACK ERFOLG: Song spielt!
                 console.log("[POLL ERFOLG] Player spielt den korrekten Track. Übernehme Kontrolle.");
 
-                // 1. Player Listener entfernen (falls er später doch kommt)
+                // <<< NEU / GEÄNDERT >>>: Listener entfernen und auf null setzen, um das verzögerte Spotify Event
+                // zu blockieren und eine doppelte Ausführung von startRoundTimers zu verhindern.
                 if (playbackStateListener) {
                     spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
                     playbackStateListener = null;
                 }
-                
-                // 2. WICHTIG: Fallback-Timer stoppen (falls noch aktiv)
-                if (fallbackPlayTimer) clearTimeout(fallbackPlayTimer);
-                fallbackPlayTimer = null;
-
 
                 const position = state.progress_ms; // Tatsächliche Abspielposition
+                const timeElapsed = position - randomStartPosition; // Vergangene Zeit seit dem befohlenen Startpunkt
                 
-                // <<< NEUE LOGIK HIER >>>: Bei Speed Round volle 10s spielen lassen
                 let stopDuration;
+
+                // <<< NEU / GEÄNDERT >>>: Dauer-Berechnung für Speed Round und Normalmodus
                 if (gameState.isSpeedRound) {
-                    // Ignoriere die berechnete Zeit, da startRoundTimers den 10-Sekunden-Timer selbst startet
+                     // In der Speed Round wird der Stop-Timer nicht gesetzt, aber wir geben eine Dauer für das Logging/Konsistenz.
                     stopDuration = 10000; 
                 } else {
                     // Berechnung der Restzeit für Normalmodus
-                    const timeElapsed = position - randomStartPosition; // Vergangene Zeit seit dem befohlenen Startpunkt
-                    let remainingTime = desiredDuration - timeElapsed;
-                    stopDuration = Math.max(0, remainingTime); // Zeit kann nicht negativ sein
+                    stopDuration = desiredDuration - timeElapsed;
+                    stopDuration = Math.max(0, stopDuration); // Zeit kann nicht negativ sein
                 }
 
-                // 3. Start Round Timers mit der berechneten Restzeit / Dauer
+                // 2. Start Round Timers mit der berechneten Restzeit/Dauer
                 startRoundTimers(position, true, stopDuration); 
                 
             } else {
@@ -1305,13 +1288,13 @@ async function playTrackSnippet() {
     
     // ########### 4. Status-Änderungs-Listener (Erfolg) ###########
     playbackStateListener = (state) => {
-
-		// 🛑 KRITISCHE NEUERUNG: Prüfe, ob der Listener bereits vom Fallback entfernt wurde.
+        // <<< NEU / GEÄNDERT >>>: Prüfen, ob der Listener bereits vom Fallback entfernt wurde.
+        // Dies verhindert eine doppelte Ausführung bei Race Conditions.
         if (!playbackStateListener) {
             console.warn("[EVENT BLOCKIERT] Event ignoriert, da Listener-Variable NULL (Fallback aktiv).");
             return;
         }
-		
+        
         if (state && state.track_window.current_track.uri === gameState.currentTrack.uri) {
             if (!state.paused && state.position > 0) {
                 
@@ -1323,7 +1306,7 @@ async function playTrackSnippet() {
                 console.log("[PLAYBACK EVENT] Spotify Event empfangen. Polling/Warte-Timer gestoppt.");
 
                 spotifyPlayer.removeListener('player_state_changed', playbackStateListener);
-                playbackStateListener = null;
+                playbackStateListener = null; // Wichtig: auf null setzen, um Fallback-Aktionen zu blockieren
 
                 console.log(`[START] Wiedergabe hat bei Position: ${state.position}ms begonnen.`);
                 // Runde über die zentrale Funktion starten mit der vollen Dauer
@@ -1337,7 +1320,6 @@ async function playTrackSnippet() {
 
     // ########### 5. Initialer Polling-Start-Warte-Timer ###########
     // Wir warten 'poll_delay' auf das Spotify Event, bevor wir das Polling starten.
-    // DIESER SCHRITT MUSS FÜR DIE SPEED ROUND ÜBERSPRUNGEN WERDEN!
     if (!gameState.isSpeedRound && config && config.poll_delay) {
         const initialWait = config.poll_delay; 
         
@@ -1350,20 +1332,23 @@ async function playTrackSnippet() {
             
         }, initialWait);
     } 
-    // <<< NEUE LOGIK HIER >>>: Wenn Speed Round, Polling SOFORT starten (oder nach kürzerer Zeit)
+    // <<< NEU / GEÄNDERT >>>: Logik für Speed Round (kürzere Wartezeit)
     else if (gameState.isSpeedRound && config && config.poll_delay) {
-        // Starte den Fallback nach einer kurzen Wartezeit, da der Player das Event hier oft verpasst
-        const speedRoundWait = 500; // Z.B. 500ms
+        const speedRoundWait = 500; // Kurze Wartezeit (z.B. 500ms)
+        
         fallbackPlayTimer = setTimeout(() => {
-             console.warn(`[FALLBACK INIT] Speed Round: Spotify PLAY-Rückmeldung nach ${speedRoundWait}ms nicht erhalten. Starte Polling-Fallback.`);
-             fallbackPlayTimer = null; 
-             startPollingFallback(false);
+            console.warn(`[FALLBACK INIT] Speed Round: Spotify PLAY-Rückmeldung nach ${speedRoundWait}ms nicht erhalten. Starte Polling-Fallback.`);
+            fallbackPlayTimer = null; 
+            
+            // Startet den eigentlichen Polling-Prozess
+            startPollingFallback(false);
+            
         }, speedRoundWait);
     }
     // ########### ENDE: Initialer Polling-Start ###########
 
     // ########### 6. Web-API Playback Call ###########
-    // ... (Bleibt unverändert) ...
+    // Merke: Der Play-Befehl wird hier GESENDET, die Reaktion (Event/Polling) steuert den Ablauf.
     fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
         method: 'PUT',
         body: JSON.stringify({
