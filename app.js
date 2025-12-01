@@ -1187,7 +1187,7 @@ async function playTrackSnippet() {
             }
             // Zuerst die UI-Container aktivieren, damit der Timer gefüllt werden kann
             if (speedRoundTimer) speedRoundTimer.classList.remove('hidden');
-            if (speedRoundTextDisplay) speedRoundTextDisplay.classList.remove('hidden');
+            // if (speedRoundTextDisplay) speedRoundTextDisplay.classList.remove('hidden');
             if (appContainer) appContainer.classList.add('speed-round-active'); 
             if (correctButton) correctButton.classList.add('inactive'); // Buttons ausblenden
             if (wrongButton) wrongButton.classList.add('inactive');     // Buttons ausblenden
