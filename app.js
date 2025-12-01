@@ -118,15 +118,15 @@ document.addEventListener('DOMContentLoaded', () => {
         player1Score: 0,
         player2Score: 0,
         currentPlayer: 1,
-        totalRounds: 4, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        totalRounds: 2, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
         maxAttempts: 0,
         trackDuration: 0,
         currentTrack: null,
-        player1SpeedRound: Math.floor(Math.random() * 2) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
-        player2SpeedRound: Math.floor(Math.random() * 2) + 1,
+        player1SpeedRound: Math.floor(Math.random() * 1) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
+        player2SpeedRound: Math.floor(Math.random() * 1) + 1,
         isSpeedRound: false,
         speedRoundTimeout: null,
         countdownInterval: null,
