@@ -1559,6 +1559,7 @@ async function playTrackSnippet() {
     }
 
     // ------------------------mit verzögerung zur Auflösung:.............................................
+    // ------------------------mit verzögerung zur Auflösung:.............................................
     revealButton.addEventListener('click', async () => {
         // Blende den Button sofort aus, um Doppelklicks zu vermeiden
         revealButton.classList.add('no-interaction');
@@ -1582,6 +1583,8 @@ async function playTrackSnippet() {
     });
     // ---------------------------verzögerung ende----------------------------------------------------
 
+    // ... (bestehender Code vor handleFeedback) ...
+
     function handleFeedback(isCorrect) {
         correctButton.classList.add('no-interaction');
         wrongButton.classList.add('no-interaction');
@@ -1589,18 +1592,6 @@ async function playTrackSnippet() {
         // NEU: Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
         fadeAudioOut().then(() => {
             // Dieser Code wird ausgeführt, NACHDEM der Fade-Out beendet ist
-            if (gameState.isSongPlaying && spotifyPlayer) {
-                spotifyPlayer.pause();
-                gameState.isSongPlaying = false;
-            }
-
-			// <<< NEU / GEÄNDERT >>>: Listener bei Feedback bereinigen!
-            if (resolutionStateListener) {
-                spotifyPlayer.removeListener('player_state_changed', resolutionStateListener);
-                resolutionStateListener = null;
-                console.log("[CLEANUP] Auflösungs-Listener nach Feedback entfernt.");
-            }
-        
             if (gameState.isSongPlaying && spotifyPlayer) {
                 spotifyPlayer.pause();
                 gameState.isSongPlaying = false;
@@ -1660,6 +1651,7 @@ async function playTrackSnippet() {
                 }); // <--- HIER endet der .then()-Block für displayPointsAnimation
         }); // <--- HIER endet der .then()-Block für fadeAudioOut
     }
+
 
     // NEU: Funktion zur Anzeige der animierten Punkte
     function displayPointsAnimation(points, player) {
