@@ -1054,7 +1054,7 @@ async function handleTrackPlaybackError(listenerToRemove) {
         lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
 
-// ################################################################### paytrack snippet
+// ################################################################### payTrackSnippet
 
 async function playTrackSnippet() {
     // ########### 1. Vorbereitung und Checks ###########
@@ -1162,45 +1162,52 @@ async function playTrackSnippet() {
      * @param {boolean} isFallback - Wurde die Funktion vom Fallback-Timer/Polling aufgerufen?
      * @param {number} [stopDuration] - Optional: Spezifische Dauer des Stopp-Timers.
      */
-    const startRoundTimers = (statePosition, isFallback = false, stopDuration = desiredDuration) => { 
-        // Den Versuch ZENTRAL an dieser Stelle ZÄHLEN
-        gameState.attemptsMade++; 
+const startRoundTimers = (statePosition, isFallback = false, stopDuration = desiredDuration) => { 
+    gameState.attemptsMade++; 
+    
+    // --- NEUE SPEED-ROUND LOGIK ---
+    if (gameState.isSpeedRound) {
         
-        // Reveal-Button anzeigen (nur im Normalmodus beim ersten Versuch)
-        if (gameState.attemptsMade === 1 && !gameState.isSpeedRound) {
+        // Stoppt den Snippet-Timer, da die Speed-Round beginnt (spielt 10s am Stück)
+        if (gameState.spotifyPlayTimeout) { 
+            clearTimeout(gameState.spotifyPlayTimeout);
+            gameState.spotifyPlayTimeout = null;
+        }
+        
+        // Startet den visuellen 10-Sekunden-Countdown und aktiviert die Buttons
+        startVisualSpeedRoundCountdown(); 
+
+        // Das Spotify Playback sollte hier für die volle Länge des Tracks laufen,
+        // oder zumindest 10 Sekunden ab dem Startpunkt, um den visuellen Timer zu unterstützen.
+        
+    } else {
+        // --- NORMALE RUNDEN LOGIK ---
+        if (gameState.attemptsMade === 1) {
             revealButton.classList.remove('hidden');
             revealButton.classList.remove('no-interaction');
         }
 
-        if (gameState.isSpeedRound) {
-            startVisualSpeedRoundCountdown(); // Muss global definiert sein!
-        } else {
-            // Normalmodus: Starte den (ungenauen) Timer, der den Song stoppt.
-            gameState.spotifyPlayTimeout = setTimeout(() => {
-                spotifyPlayer.pause();
-                gameState.isSongPlaying = false;
+        gameState.spotifyPlayTimeout = setTimeout(() => {
+            spotifyPlayer.pause();
+            gameState.isSongPlaying = false;
 
-                if (gameState.attemptsMade < gameState.maxAttempts) {
-                    logoButton.classList.remove('inactive');
-                    logoButton.classList.add('logo-pulsing');
-                }
+            if (gameState.attemptsMade < gameState.maxAttempts) {
+                logoButton.classList.remove('inactive');
+                logoButton.classList.add('logo-pulsing');
+            }
 
-                // Logging
-                if (!isFallback) {
-                    spotifyPlayer.getCurrentState().then(finalState => {
-                        const finalPosition = finalState ? finalState.position : 'N/A';
-                        console.log(`[STOP] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
-                        if (finalState) {
-                            const actualDuration = finalPosition - statePosition; 
-                            console.log(`[ERGEBNIS] Tatsächliche Abspieldauer: ${actualDuration}ms.`);
-                        }
-                    });
-                } else {
-                     console.log("[STOP] Wiedergabe gestoppt nach Polling (Dauer: " + stopDuration + "ms).");
-                }
-            }, stopDuration);
-        }
-    };
+            // ... Konsole-Logs ...
+            if (!isFallback) {
+                spotifyPlayer.getCurrentState().then(finalState => {
+                    const finalPosition = finalState ? finalState.position : 'N/A';
+                    console.log(`[STOP] Wiedergabe gestoppt bei Position: ${finalPosition}ms.`);
+                });
+            } else {
+                console.log("[STOP] Wiedergabe gestoppt nach Polling (Dauer: " + stopDuration + "ms).");
+            }
+        }, stopDuration);
+    }
+};
 
     // ########### 3. Polling Fallback Funktion ###########
     const startPollingFallback = async (isRetry = false) => {
@@ -1802,7 +1809,7 @@ async function playTrackSnippet() {
     }
 
     //=======================================================================
-    // Phase 6: Sonderfunktion "Speed-Round"
+    // Phase 6: Sonderfunktion "Speed-Round" (ATTACK THE TRACK)
     //=======================================================================
 
     function showSpeedRoundAnimation() {
@@ -1816,39 +1823,78 @@ async function playTrackSnippet() {
     }
 
     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
-    function startVisualSpeedRoundCountdown() {
-        let timeLeft = 10; // Startwert des Countdowns
-        countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
+function startVisualSpeedRoundCountdown() {
+    // Falls ein alter Timeout oder Interval läuft, stoppen
+    if (gameState.speedRoundTimeout) clearTimeout(gameState.speedRoundTimeout);
+    if (gameState.countdownInterval) clearInterval(gameState.countdownInterval);
 
-        // Timer für die automatische Auflösung nach 10 Sekunden
-        gameState.speedRoundTimeout = setTimeout(() => {
-            showResolution(); // Auflösung nach 10 Sekunden
-        }, 10000);
+    // --- NEUE/ERWEITERTE UI-STEUERUNG (Speed Round) ---
+    
+    // Die Buttons zum Bewerten sind sofort aktiv, sobald der Track läuft
+    correctButton.classList.remove('inactive');
+    wrongButton.classList.remove('inactive');
+    
+    // UI-Elemente für die Speed Round sichtbar machen
+    speedRoundTextDisplay.classList.remove('hidden');
+    speedRoundTimer.classList.remove('hidden');
+    appContainer.classList.add('speed-round-active'); 
+    
+    // HINWEIS: countdownDisplay wird nur für die animierte Zahl verwendet. 
+    // Der Haupt-Timer-Text für 10 Sekunden wird im speedRoundTimer.innerText gesetzt.
+    
+    // --- BESTEHENDE COUNTDOWN LOGIK (AN DAS ZIEL ANGEPASST) ---
+    
+    let timeLeft = 10; // Startwert des Countdowns
+    countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden (optional, wenn gewünscht)
 
-        // Sofort die erste Zahl anzeigen und animieren
-        countdownDisplay.innerText = timeLeft;
-        countdownDisplay.classList.remove('countdown-animated');
-        void countdownDisplay.offsetWidth; // Reflow
-        countdownDisplay.classList.add('countdown-animated');
+    // Timer für die automatische Auflösung nach 10 Sekunden
+    gameState.speedRoundTimeout = setTimeout(() => {
+        // Stoppt den Spotify-Player, falls er noch läuft, bevor die Auflösung kommt
+        if (spotifyPlayer) spotifyPlayer.pause(); 
+        gameState.isSongPlaying = false;
+        
+        // Timer und Countdown bereinigen
+        clearInterval(gameState.countdownInterval); 
+        countdownDisplay.classList.add('hidden'); 
+        countdownDisplay.innerText = ''; 
+        
+        // Speed Round UI bereinigen
+        appContainer.classList.remove('speed-round-active');
+        speedRoundTextDisplay.classList.add('hidden');
+        speedRoundTimer.classList.add('hidden');
+        
+        showResolution(); // Auflösung nach 10 Sekunden (Timeout-Fall)
+    }, 10000);
 
-        // Interval für den visuellen Countdown jede Sekunde
-        gameState.countdownInterval = setInterval(() => {
-            timeLeft--; // Zahl verringern
+    // Initialen Timer (Anzeige: 10) setzen und animieren
+    speedRoundTimer.innerText = timeLeft; // Wichtig: Den Speed-Round-Timer setzen
+    countdownDisplay.innerText = timeLeft; // Optional: Countdown-Display für Animation
+    countdownDisplay.classList.remove('countdown-animated');
+    void countdownDisplay.offsetWidth;
+    countdownDisplay.classList.add('countdown-animated');
 
-            if (timeLeft >= 0) { // Solange die Zahl 0 oder größer ist
-                countdownDisplay.innerText = timeLeft; // Zahl aktualisieren
-                countdownDisplay.classList.remove('countdown-animated'); // Animation entfernen
-                void countdownDisplay.offsetWidth; // Reflow erzwingen
-                countdownDisplay.classList.add('countdown-animated'); // Animation hinzufügen
-            }
 
-            if (timeLeft < 0) { // Wenn Countdown abgelaufen ist (nach 0)
-                clearInterval(gameState.countdownInterval); // Interval stoppen
-                countdownDisplay.classList.add('hidden'); // Countdown ausblenden
-                countdownDisplay.innerText = ''; // Inhalt leeren
-                // showResolution wird bereits durch speedRoundTimeout ausgelöst
-            }
-        }, 1000); // Jede Sekunde aktualisieren
-    }
+    // Interval für den visuellen Countdown jede Sekunde
+    gameState.countdownInterval = setInterval(() => {
+        timeLeft--; // Zahl verringern
+        
+        if (timeLeft >= 0) {
+            speedRoundTimer.innerText = timeLeft; // Haupt-Timer aktualisieren
+            countdownDisplay.innerText = timeLeft; // Optional: Countdown-Display aktualisieren
 
+            // Animation auslösen
+            countdownDisplay.classList.remove('countdown-animated');
+            void countdownDisplay.offsetWidth; 
+            countdownDisplay.classList.add('countdown-animated');
+        }
+
+        if (timeLeft < 0) { 
+            clearInterval(gameState.countdownInterval); 
+            countdownDisplay.classList.add('hidden'); 
+            countdownDisplay.innerText = ''; 
+            // showResolution() wird durch speedRoundTimeout ausgelöst
+        }
+    }, 1000); 
+}
+	
 }); // Ende DOMContentLoaded
