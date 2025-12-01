@@ -1162,7 +1162,13 @@ async function playTrackSnippet() {
      * @param {boolean} isFallback - Wurde die Funktion vom Fallback-Timer/Polling aufgerufen?
      * @param {number} [stopDuration] - Optional: Spezifische Dauer des Stopp-Timers.
      */
-const startRoundTimers = (statePosition, isFallback = false, stopDuration = desiredDuration) => { 
+const startRoundTimers = (statePosition, isFallback = false, stopDuration = desiredDuration) => {
+
+	// LÖSUNG #2: Hier den Polling-Interval stoppen, WENN er in diesen Zweig kommt.
+    if (gameState.pollingIntervalTimer) {
+        clearInterval(gameState.pollingIntervalTimer);
+        gameState.pollingIntervalTimer = null;
+    }
     gameState.attemptsMade++; 
     
     // --- NEUE SPEED-ROUND LOGIK ---
