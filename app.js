@@ -1834,16 +1834,17 @@ function startVisualSpeedRoundCountdown() {
         return; 
     }
 
-    // --- 2. Initialer UI-Zustand (Buttons & SpeedRound UI) ---
+    // --- 2. Initialer UI-Zustand ---
     // Buttons sind inaktiv, da der Countdown läuft
     correctButton.classList.add('inactive');
     wrongButton.classList.add('inactive');
     
-    speedRoundTextDisplay.classList.remove('hidden');
+    // speedRoundTextDisplay WIRD NICHT MEHR EINGEBLENDET, da showSpeedRoundAnimation das erledigt.
+    // Wir blenden nur den Timer-Container ein und aktivieren den Haupt-UI-Zustand.
     speedRoundTimer.classList.remove('hidden');
     appContainer.classList.add('speed-round-active'); 
     
-    // Countdown Display für Animation einblenden (optional)
+    // Countdown Display für Animation einblenden
     if (countdownDisplay) countdownDisplay.classList.remove('hidden'); 
 
     // --- 3. Haupt-Timeout: Stoppen des Songs & Aktivieren der Buttons ---
@@ -1851,7 +1852,7 @@ function startVisualSpeedRoundCountdown() {
 
     gameState.speedRoundTimeout = setTimeout(() => {
         
-        // 1. WICHTIG: Spotify Player stoppen
+        // 1. Spotify Player stoppen
         if (spotifyPlayer) spotifyPlayer.pause().catch(e => console.warn("Pause failed:", e)); 
         gameState.isSongPlaying = false;
         
@@ -1860,18 +1861,16 @@ function startVisualSpeedRoundCountdown() {
         
         // 3. Speed Round UI bereinigen
         appContainer.classList.remove('speed-round-active');
+        // speedRoundTextDisplay MUSS HIER AUSGEBLENDET WERDEN, da showSpeedRoundAnimation es nicht macht!
         speedRoundTextDisplay.classList.add('hidden');
         speedRoundTimer.classList.add('hidden');
 
         // 4. LÖSUNG #1: Rate-Buttons erscheinen LASSEN
-        // Die Buttons MÜSSEN JETZT aktiviert werden.
         correctButton.classList.remove('inactive');
         wrongButton.classList.remove('inactive');
         
         // Der Countdown-Display muss hier definitiv ausgeblendet werden
         if (countdownDisplay) countdownDisplay.classList.add('hidden');
-        
-        // showResolution wird NICHT aufgerufen, da wir auf den Klick warten
         
     }, 10000); // <-- Exakt 10 Sekunden
 
