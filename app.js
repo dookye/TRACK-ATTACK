@@ -1299,6 +1299,13 @@ async function playTrackSnippet() {
     
     // ########### 4. Status-Änderungs-Listener (Erfolg) ###########
     playbackStateListener = (state) => {
+
+		// 🛑 KRITISCHE NEUERUNG: Prüfe, ob der Listener bereits vom Fallback entfernt wurde.
+        if (!playbackStateListener) {
+            console.warn("[EVENT BLOCKIERT] Event ignoriert, da Listener-Variable NULL (Fallback aktiv).");
+            return;
+        }
+		
         if (state && state.track_window.current_track.uri === gameState.currentTrack.uri) {
             if (!state.paused && state.position > 0) {
                 
