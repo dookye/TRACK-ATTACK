@@ -1814,8 +1814,7 @@ const startRoundTimers = (statePosition, isFallback = false, stopDuration = desi
         renderPreselectionGenres(); // Und die Buttons neu rendern
     }
 
-    //=======================================================================
-    // Phase 6: Sonderfunktion "Speed-Round" (ATTACK THE TRACK)
+    // Phase 6: Sonderfunktion "Speed-Round"
     //=======================================================================
 
     function showSpeedRoundAnimation() {
@@ -1824,92 +1823,46 @@ const startRoundTimers = (statePosition, isFallback = false, stopDuration = desi
             setTimeout(() => {
                 speedRoundTextDisplay.classList.add('hidden'); // Und hier
                 resolve();
-            }, 3500);
+            }, 3500);    //=======================================================================
+
         });
     }
 
     // NEU / ÜBERARBEITET: startVisualSpeedRoundCountdown
-function startVisualSpeedRoundCountdown() {
-    
-    // --- 1. Sicherheits-Checks und Clearing ---
-    if (gameState.speedRoundTimeout) clearTimeout(gameState.speedRoundTimeout);
-    if (gameState.countdownInterval) clearInterval(gameState.countdownInterval);
+    function startVisualSpeedRoundCountdown() {
+        let timeLeft = 10; // Startwert des Countdowns
+        countdownDisplay.classList.remove('hidden'); // Countdown-Anzeige einblenden
 
-    if (!speedRoundTextDisplay || !speedRoundTimer || !appContainer || !correctButton || !wrongButton) {
-        console.error("FATAL: DOM-Elemente für die Speed Round fehlen.");
-        return; 
-    }
+        // Timer für die automatische Auflösung nach 10 Sekunden
+        gameState.speedRoundTimeout = setTimeout(() => {
+            showResolution(); // Auflösung nach 10 Sekunden
+        }, 10000);
 
-    // --- 2. Initialer UI-Zustand ---
-    // Buttons sind inaktiv, da der Countdown läuft
-    correctButton.classList.add('inactive');
-    wrongButton.classList.add('inactive');
-    
-    // speedRoundTextDisplay WIRD NICHT MEHR EINGEBLENDET, da showSpeedRoundAnimation das erledigt.
-    // Wir blenden nur den Timer-Container ein und aktivieren den Haupt-UI-Zustand.
-    speedRoundTimer.classList.remove('hidden');
-    appContainer.classList.add('speed-round-active'); 
-    
-    // Countdown Display für Animation einblenden
-    if (countdownDisplay) countdownDisplay.classList.remove('hidden'); 
-
-    // --- 3. Haupt-Timeout: Stoppen des Songs & Aktivieren der Buttons ---
-    let timeLeft = 10; 
-
-    gameState.speedRoundTimeout = setTimeout(() => {
-        
-        // 1. Spotify Player stoppen
-        if (spotifyPlayer) spotifyPlayer.pause().catch(e => console.warn("Pause failed:", e)); 
-        gameState.isSongPlaying = false;
-        
-        // 2. Timer und UI bereinigen
-        clearInterval(gameState.countdownInterval); 
-        
-        // 3. Speed Round UI bereinigen
-        appContainer.classList.remove('speed-round-active');
-        // speedRoundTextDisplay MUSS HIER AUSGEBLENDET WERDEN, da showSpeedRoundAnimation es nicht macht!
-        speedRoundTextDisplay.classList.add('hidden');
-        speedRoundTimer.classList.add('hidden');
-
-        // 4. LÖSUNG #1: Rate-Buttons erscheinen LASSEN
-        correctButton.classList.remove('inactive');
-        wrongButton.classList.remove('inactive');
-        
-        // Der Countdown-Display muss hier definitiv ausgeblendet werden
-        if (countdownDisplay) countdownDisplay.classList.add('hidden');
-        
-    }, 10000); // <-- Exakt 10 Sekunden
-
-    // --- 4. Visueller Sekunden-Interval ---
-    speedRoundTimer.innerText = timeLeft; 
-    if (countdownDisplay) {
-        countdownDisplay.innerText = timeLeft; 
-        // Start-Animation
+        // Sofort die erste Zahl anzeigen und animieren
+        countdownDisplay.innerText = timeLeft;
         countdownDisplay.classList.remove('countdown-animated');
-        void countdownDisplay.offsetWidth;
+        void countdownDisplay.offsetWidth; // Reflow
         countdownDisplay.classList.add('countdown-animated');
+
+        // Interval für den visuellen Countdown jede Sekunde
+        gameState.countdownInterval = setInterval(() => {
+            timeLeft--; // Zahl verringern
+
+            if (timeLeft >= 0) { // Solange die Zahl 0 oder größer ist
+                countdownDisplay.innerText = timeLeft; // Zahl aktualisieren
+                countdownDisplay.classList.remove('countdown-animated'); // Animation entfernen
+                void countdownDisplay.offsetWidth; // Reflow erzwingen
+                countdownDisplay.classList.add('countdown-animated'); // Animation hinzufügen
+            }
+
+            if (timeLeft < 0) { // Wenn Countdown abgelaufen ist (nach 0)
+                clearInterval(gameState.countdownInterval); // Interval stoppen
+                countdownDisplay.classList.add('hidden'); // Countdown ausblenden
+                countdownDisplay.innerText = ''; // Inhalt leeren
+                // showResolution wird bereits durch speedRoundTimeout ausgelöst
+            }
+        }, 1000); // Jede Sekunde aktualisieren
     }
 
-    gameState.countdownInterval = setInterval(() => {
-        timeLeft--; 
-        
-        if (timeLeft >= 0) {
-            speedRoundTimer.innerText = timeLeft; 
-            
-            if (countdownDisplay) {
-                countdownDisplay.innerText = timeLeft; 
-                // Animation für jede Zahl
-                countdownDisplay.classList.remove('countdown-animated');
-                void countdownDisplay.offsetWidth; 
-                countdownDisplay.classList.add('countdown-animated');
-            }
-        }
-
-        if (timeLeft < 0) { 
-            clearInterval(gameState.countdownInterval); 
-            // Der Rest wird durch gameState.speedRoundTimeout erledigt
-        }
-    }, 1000); 
-}
 	
 }); // Ende DOMContentLoaded
