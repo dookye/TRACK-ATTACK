@@ -1504,9 +1504,15 @@ async function playSongForResolution() {
             console.log("[RESOLUTION STOP] Auflösungs-Song beendet (Position 0).");
         }
     };
-    if (spotifyPlayer) {
-        spotifyPlayer.addListener('player_state_changed', resolutionStateListener);
-    }
+    // <<< GEÄNDERT: Listener-Registrierung verzögern, um alte Events zu ignorieren >>>
+    // Wir warten 300ms. Das ist genug Zeit, damit Spotify die Events der vorherigen Runde (Polling-Erfolg)
+    // "abfeuern" kann, bevor der neue Listener aktiv wird.
+    setTimeout(() => {
+        if (spotifyPlayer && resolutionStateListener) {
+             spotifyPlayer.addListener('player_state_changed', resolutionStateListener);
+             console.log("[RESOLUTION] Resolution Listener erfolgreich nach 300ms registriert.");
+        }
+    }, 300);
     // ########### ENDE: Auflösungs-Stop-Listener ###########
 
     // Sicherstellen, dass die Lautstärke auf 0 gesetzt ist... (Rest des Codes bleibt gleich)
