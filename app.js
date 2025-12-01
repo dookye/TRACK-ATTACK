@@ -1451,63 +1451,64 @@ async function playTrackSnippet() {
     }
 
     // NEU: Funktion zum Abspielen des Songs bei Auflösung
-    async function playSongForResolution() {
-        if (!gameState.currentTrack || !deviceId) {
-            console.warn("Kein Track oder Gerät verfügbar, kann Song nicht abspielen.");
-            return;
-        }
+async function playSongForResolution() {
+    if (!gameState.currentTrack || !deviceId) {
+        console.warn("Kein Track oder Gerät verfügbar, kann Song nicht abspielen.");
+        return;
+    }
 
-        const startPositionMs = 30 * 1000; // 30 Sekunden in Millisekunden
-        const targetVolume = 80; // Ziel-Lautstärke in %
-        const fadeDuration = 3000; // Fade-In Dauer in Millisekunden (z.B. 3 Sekunden)
-        const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
-        const intervalTime = fadeDuration / (targetVolume / fadeStep); // Intervallzeit für jeden Schritt
+    const startPositionMs = 30 * 1000; // 30 Sekunden in Millisekunden
+    const targetVolume = 80; // Ziel-Lautstärke in %
+    const fadeDuration = 3000; // Fade-In Dauer in Millisekunden (z.B. 3 Sekunden)
+    const fadeStep = 5; // Schrittweite für die Lautstärkeanpassung
+    const intervalTime = fadeDuration / (targetVolume / fadeStep); // Intervallzeit für jeden Schritt
 
-        // Sicherstellen, dass die Lautstärke auf 0 gesetzt ist, bevor wir starten
-        spotifyPlayer.setVolume(0).then(() => {
-            gameState.currentSongVolume = 0; // Setze interne Volume auf 0
+    // #################### NEU: BERECHNUNG DER ZEITEN ####################
+    const remainingTime = gameState.currentTrack.duration_ms - startPositionMs;
+    const fadeOutDurationMs = 1500; // Passt zur Dauer in fadeAudioOut()
+    // Subtrahiere die Fade-Out-Dauer und füge einen kleinen Puffer hinzu, damit der Fade-Out VOR dem Song-Ende startet.
+    const PADDING_MS = 500;
+    const timerDelay = remainingTime - fadeOutDurationMs - PADDING_MS; 
+    
+    // Stelle sicher, dass die Verzögerung mindestens 100ms beträgt (oder der Rest des Songs)
+    const effectiveDelay = Math.max(100, timerDelay); 
+    // #################### ENDE: BERECHNUNG DER ZEITEN ####################
 
-            // Song bei Sekunde 30 starten
-            fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), { // NEUE ZEILE
-                method: 'PUT',
-                body: JSON.stringify({
-                    uris: [gameState.currentTrack.uri],
-                    position_ms: startPositionMs
-                }),
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            }).then(response => {
-                if (!response.ok) {
-                    console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
-                    return;
+    // Sicherstellen, dass die Lautstärke auf 0 gesetzt ist, bevor wir starten
+    spotifyPlayer.setVolume(0).then(() => {
+        gameState.currentSongVolume = 0; // Setze interne Volume auf 0
+
+        // Song bei Sekunde 30 starten
+        fetch(API_ENDPOINTS.SPOTIFY_PLAYER_PLAY(deviceId), {
+            method: 'PUT',
+            body: JSON.stringify({
+                uris: [gameState.currentTrack.uri],
+                position_ms: startPositionMs
+            }),
+            headers: { 'Authorization': `Bearer ${accessToken}` }
+        }).then(response => {
+            if (!response.ok) {
+                console.error("Fehler beim Starten des Songs für Auflösung:", response.status, response.statusText);
+                return;
+            }
+            gameState.isSongPlaying = true; // Song spielt jetzt
+
+            // Starte Fade-In
+            gameState.fadeInterval = setInterval(() => {
+                if (gameState.currentSongVolume < targetVolume) {
+                    gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
+                    spotifyPlayer.setVolume(gameState.currentSongVolume / 100); // Spotify Volume erwartet 0.0 bis 1.0
+                } else {
+                    clearInterval(gameState.fadeInterval); // Fade-In beendet
                 }
-                gameState.isSongPlaying = true; // Song spielt jetzt
+            }, intervalTime); // Intervall für den Fade-In
 
-                // Starte Fade-In
-                gameState.fadeInterval = setInterval(() => {
-                    if (gameState.currentSongVolume < targetVolume) {
-                        gameState.currentSongVolume = Math.min(gameState.currentSongVolume + fadeStep, targetVolume);
-                        spotifyPlayer.setVolume(gameState.currentSongVolume / 100); // Spotify Volume erwartet 0.0 bis 1.0
-                    } else {
-                        clearInterval(gameState.fadeInterval); // Fade-In beendet
-                    }
-                }, intervalTime); // Intervall für den Fade-In
-
-                // Optional: Timer, um den Song am Ende zu pausieren, falls nicht geklickt wird
-                // Dies ist nicht unbedingt nötig, da Spotify den Track automatisch beendet.
-                // Wenn der Track sehr lang ist und du ihn explizit pausieren willst:
-                 const remainingTime = gameState.currentTrack.duration_ms - startPositionMs;
-                 gameState.spotifyPlayTimeout = setTimeout(() => {
-                    if (gameState.isSongPlaying && spotifyPlayer) {
-                        spotifyPlayer.pause();
-                        gameState.isSongPlaying = false;
-                    }
-                 }, remainingTime + 1000); // Kleine Pufferzeit
-
-				// #################### NEUE LOGIK FÜR SONG-STOP, wenn bis zum ende gehört wird ####################
+            // #################### KORRIGIERTE LOGIK FÜR SONG-STOP ####################
+            // Der Timer wird so gesetzt, dass er das Fade-Out startet, BEVOR der Song zu Ende ist.
             gameState.spotifyPlayTimeout = setTimeout(async () => {
                 console.log(`[RESOLUTION TIMER] Starte Fade-Out nach ${effectiveDelay}ms...`);
                 
-                // Zuerst sanft ausfaden
+                // Zuerst sanft ausfaden (stoppt den Fade-In-Interval automatisch)
                 await fadeAudioOut();
 
                 // Dann den Player stoppen
@@ -1517,17 +1518,15 @@ async function playTrackSnippet() {
                     console.log("[RESOLUTION TIMER] Song erfolgreich via Timeout und Fade-Out gestoppt.");
                 }
             }, effectiveDelay);
-            // #################### ENDE NEUE SONG-STOP LOGIK ####################
+            // #################### ENDE KORRIGIERTE SONG-STOP LOGIK ####################
             
-			
-			}).catch(error => {
-                console.error("Netzwerkfehler beim Starten des Songs für Auflösung:", error);
-            });
         }).catch(error => {
-            console.error("Fehler beim Setzen der Initiallautstärke auf 0:", error);
+            console.error("Netzwerkfehler beim Starten des Songs für Auflösung:", error);
         });
-    }
-
+    }).catch(error => {
+        console.error("Fehler beim Setzen der Initiallautstärke auf 0:", error);
+    });
+}
     // NEU: Funktion für Fade-Out
     function fadeAudioOut() {
         return new Promise(resolve => {
