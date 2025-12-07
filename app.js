@@ -1076,7 +1076,7 @@ function handleTrackiTackiClick() {
         trackiTackiButton.addEventListener('click', playTrackSnippet); 
         
         // Füge eine Klasse hinzu, um den Play-Zustand des Buttons zu signalisieren
-         trackiTackiButton.classList.add('inactive');
+        // trackiTackiButton.classList.add('inactive');
 
     }
     // HINWEIS: Der zweite Klick führt direkt playTrackSnippet() aus, da der Listener oben neu gesetzt wurde.
@@ -1114,7 +1114,7 @@ function handleTrackiTackiClick() {
             // 1. Initialen Zustand zurücksetzen
             gameState.isTrackiTackiActive = false;
             trackiTackiButton.classList.add('hidden');
-            trackiTackiButton.classList.remove('active-play-button', 'player1-shadow', 'player2-shadow');
+            trackiTackiButton.classList.remove('active-play-button', 'logo-pulsing', 'player1-shadow', 'player2-shadow');
             // Entferne potenziell vorhandene Listener
             trackiTackiButton.removeEventListener('click', playTrackSnippet);
             trackiTackiButton.removeEventListener('click', handleTrackiTackiClick);
@@ -1135,6 +1135,7 @@ function handleTrackiTackiClick() {
 
                 // 3. Button anzeigen und Klick-Listener für die Aktivierung hinzufügen
                 trackiTackiButton.classList.remove('hidden');
+				trackiTackiButton.classList.add('logo-pulsing');
                 trackiTackiButton.addEventListener('click', handleTrackiTackiClick);
             }
         }
