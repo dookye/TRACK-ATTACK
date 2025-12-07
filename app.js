@@ -451,9 +451,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ÄNDERUNG: NETZWERK - GESCHWINDIGKEITS - ABFRAGE (NEU) ----------------
    async function checkConnectionSpeed() {
     // 🚨 WICHTIG: Diesen Pfad auf eine 1MB-Testdatei auf Ihrem Server anpassen
-    const TEST_FILE_URL = 'dummy/dummy.bin'; 
+    const TEST_FILE_URL = 'dummy/dummy2mb.bin'; 
     
-    const FILE_SIZE_MB = 1.0; 
+    const FILE_SIZE_MB = 2.0; 
     
     // --- SCHWELLENWERT-EINSTELLUNG ---
     // Hier stellen Sie ein, ab welcher echten Geschwindigkeit (Mbit/s) die Warnung erscheinen soll.
