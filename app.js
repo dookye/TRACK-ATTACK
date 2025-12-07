@@ -1112,7 +1112,7 @@ function handleTrackiTackiClick() {
             // 1. Initialen Zustand zurücksetzen
             gameState.isTrackiTackiActive = false;
             trackiTackiButton.classList.add('hidden');
-            trackiTackiButton.classList.remove('active-play-button', 'is-playing-song', 'player1-shadow', 'player2-shadow');
+            trackiTackiButton.classList.remove('active-play-button', 'player1-shadow', 'player2-shadow');
             // Entferne potenziell vorhandene Listener
             trackiTackiButton.removeEventListener('click', playTrackSnippet);
             trackiTackiButton.removeEventListener('click', handleTrackiTackiClick);
@@ -1167,7 +1167,6 @@ async function playTrackSnippet() {
         
         // ⭐️ KORRIGIERT: Im TT-Modus den TT-Button inaktiv setzen, aber SICHTBAR lassen ⭐️
         if (trackiTackiButton) {
-            trackiTackiButton.classList.remove('is-playing-song'); // Klasse entfernen
             trackiTackiButton.classList.add('inactive'); // Inaktiv (verschwommen/grau) setzen
         }
     } else {
