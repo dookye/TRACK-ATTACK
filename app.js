@@ -1037,27 +1037,68 @@ async function handleTrackPlaybackError(listenerToRemove) {
 }
 
 
-    async function prepareAndShowRateScreen(genre) {
-		// Speichere das ausgewählte Genre im globalen State.
-        // Das brauchen wir, um bei einem Fehler einen neuen Track aus DEMSELBEN Genre zu laden.
-        gameState.currentGenre = genre;
-        gameState.currentTrack = await getTrack(genre);
-		// WICHTIG: Prüfen, ob getTrack() erfolgreich war, bevor wir weitermachen
-        if (!gameState.currentTrack) {
-            console.warn("prepareAndShowRateScreen: getTrack hat 'null' zurückgegeben. Breche ab.");
-            // getTrack() sollte in diesem Fall bereits showGenreScreen() aufgerufen haben.
-            return; 
-        }
-        console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
-
-        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-		logoButton.classList.add('logo-pulsing');
-        logoButton.removeEventListener('click', playTrackSnippet);
-        logoButton.addEventListener('click', playTrackSnippet);
-
-        // Speichere den Zustand: Raten-Bildschirm
-        lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
+async function prepareAndShowRateScreen(genre) {
+    // Speichere das ausgewählte Genre im globalen State.
+    gameState.currentGenre = genre;
+    gameState.currentTrack = await getTrack(genre);
+    
+    // WICHTIG: Prüfen, ob getTrack() erfolgreich war
+    if (!gameState.currentTrack) {
+        console.warn("prepareAndShowRateScreen: getTrack hat 'null' zurückgegeben. Breche ab.");
+        return; 
     }
+    console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
+
+    // --- UI-RESET & BASIS-SETUP ---
+    // Stelle sicher, dass der Trackitacki-Button zu Beginn jeder Runde versteckt ist
+    trackiTackiButton.classList.add('hidden');
+    logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+    
+    logoButton.removeEventListener('click', playTrackSnippet);
+    logoButton.addEventListener('click', playTrackSnippet);
+
+    // Entferne alte Event Listener, falls vorhanden, und füge sie neu hinzu (sicherer ist aber meist ein externer Reset)
+    // trackiTackiButton.removeEventListener('click', handleInterventionAttempt);
+    // trackiTackiButton.addEventListener('click', handleInterventionAttempt);
+    // -----------------------------
+
+
+    // *************************************************************
+    // 🚀 HIER KOMMT DIE SPEED-ROUND / TRACKITACKI LOGIK
+    // *************************************************************
+    
+    // Annahme: Die Speed-Round-Prüfung wurde VOR dem Aufruf dieser Funktion gemacht
+    // (z.B. in handleDiceSelection) und gameState.isSpeedRound ist gesetzt.
+
+    if (gameState.isSpeedRound) {
+        // 1. Visuelle Anzeige der Speed-Round
+        speedRoundTextDisplay.classList.remove('hidden'); 
+        
+        // 2. Logo-Button des aktiven Spielers deaktivieren (wartet auf Intervention des Gegners)
+        logoButton.classList.add('inactive'); 
+        logoButton.classList.remove('logo-pulsing'); // Kein Pulsieren, da nicht bereit
+
+        // 3. Trackitacki-Button anzeigen
+        trackiTackiButton.classList.remove('hidden');
+        
+        // 4. Farbe des Gegners für den Schatten vorbereiten
+        const intervener = gameState.currentPlayer === 1 ? 2 : 1;
+        trackiTackiButton.style.setProperty('--player-intervener-color', `var(--player${intervener}-color)`);
+        
+    } else {
+        // Normale Runde: Logo-Button ist sofort klickbar
+        logoButton.classList.remove('inactive');
+        logoButton.classList.add('logo-pulsing');
+        
+        // Reveal Button anzeigen (für normale Runden)
+        revealButton.classList.remove('hidden');
+        revealButton.classList.remove('no-interaction'); 
+    }
+    // *************************************************************
+
+    // Speichere den Zustand: Raten-Bildschirm
+    lastGameScreenVisible = 'reveal-container'; 
+}
 
 // ################################################################### payTrackSnippet
 
