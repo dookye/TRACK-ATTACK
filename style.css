@@ -223,14 +223,7 @@ body, html {
     50% { transform: translate(-50%, -50%) scale(1.1); }
 }
 
-/*
 .logo-pulsing {
-    ---- Verwendet die existierenden Keyframes 'bounce' ----
-    animation: pulsing-bounce 4s infinite ease-in-out;
-}
-*/
-
-.logo-pulsing, #tracki-tacki-button.logo-pulsing {
     animation: pulsing-bounce 4s infinite ease-in-out;
 }
 
@@ -880,6 +873,10 @@ body, html {
 }
 #tracki-tacki-button.player2-shadow {
     box-shadow: 30px 30px 30px 30px var(--player2-color); 
+}
+
+#tracki-tacki-button.logo-pulsing {
+    animation: pulsing-bounce 4s infinite ease-in-out;
 }
 
 #tracki-tacki-button.inactive {
