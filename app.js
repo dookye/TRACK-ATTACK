@@ -79,12 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const POINTS_TRACKITACKI_CORRECT = -15; // Punkte, die der AKTIVE Spieler verliert, wenn der Gegner im Tracki-Tacki-Modus richtig rät
     const POINTS_TRACKITACKI_WRONG = 0;      // Punkte bei falscher Antwort im Tracki-Tacki-Modus
 	
-    const gameState = {
-    // ...
-    isSpeedRound: false,
-    isTrackiTackiActive: false, // Wichtig!
-    // ...
-};
 
     const digitalDiceImages = {
         1: 'assets/digi-1.png',
@@ -139,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         player1SpeedRound: Math.floor(Math.random() * 10) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
         player2SpeedRound: Math.floor(Math.random() * 10) + 1,
         isSpeedRound: false,
+        isTrackiTackiActive: false, // Wichtig!
         speedRoundTimeout: null,
         countdownInterval: null,
         spotifyPlayTimeout: null, // NEU: Timeout für das Pausieren des Songs
