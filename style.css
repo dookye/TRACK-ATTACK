@@ -866,14 +866,31 @@ body, html {
     transform: translate(-50%, -50%); 
 }
 
-/* NEU: Klasse für Spieler-Schatten (Punkt 6) - Muss über JS zugewiesen werden! */
-/* Beispiel-Klassen, die Sie im JS setzen: */
+#tracki-tacki-button.player1-shadow {
+    filter: 
+        /* 1. Harte, definierte Kante (wie ein Spread Radius) */
+        drop-shadow(0 0 1px 1px rgba(0, 123, 255, 0.9)), 
+        /* 2. Weicher, breiter Schein (Glow) */
+        drop-shadow(0 0 40px rgba(0, 123, 255, 0.7)); 
+}
+
+#tracki-tacki-button.player2-shadow {
+    filter: 
+        /* 1. Harte, definierte Kante (Spread) */
+        drop-shadow(0 0 1px 1px rgba(232, 62, 140, 0.9)), 
+        /* 2. Weicher, breiter Schein (Glow) */
+        drop-shadow(0 0 40px rgba(232, 62, 140, 0.7)); 
+}
+
+/*
 #tracki-tacki-button.player1-shadow {
     filter: drop-shadow(0 0 100px var(--player1-color)); 
 }
+
 #tracki-tacki-button.player2-shadow {
     filter: drop-shadow(0 0 100px var(--player2-color)); 
 }
+*/
 
 .tracki-tacki-button.logo-pulsing {
     animation: pulsing-bounce 4s infinite ease-in-out;
