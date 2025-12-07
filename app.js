@@ -75,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const allGenresScrollbox = document.getElementById('all-genres-scrollbox');
 
 	// Globale Konstanten für Punkte (Zentralisierung der Werte)
-    const POINTS_NORMAL_CORRECT_SPEED = 15; // Punkte bei korrekter Antwort in Speed Round (ohne Tracki-Tacki)
+    const POINTS_SPEEDROUND_CORRECT = 15; // Punkte bei korrekter Antwort in Speed Round (ohne Tracki-Tacki)
+	const POINTS_SPEEDROUND_WRONG = 0;
     const POINTS_TRACKITACKI_CORRECT = -15; // Punkte, die der AKTIVE Spieler verliert, wenn der Gegner im Tracki-Tacki-Modus richtig rät
     const POINTS_TRACKITACKI_WRONG = 0;      // Punkte bei falscher Antwort im Tracki-Tacki-Modus
 	
@@ -1744,7 +1745,7 @@ async function playSongForResolution() {
                     pointsAwarded = POINTS_TRACKITACKI_CORRECT; 
                 } else if (gameState.isSpeedRound) {
                     // Normale Speed Round: Feste Punkte
-                    pointsAwarded = POINTS_NORMAL_CORRECT_SPEED;
+                    pointsAwarded = POINTS_SPEEDRROUN_CORRECT;
                 } else {
                     // Normalrunde: Würfelwert abzüglich Abzüge.
                     pointsAwarded = Math.max(1, gameState.maxScore - (gameState.attemptsMade - 1));
@@ -1755,7 +1756,7 @@ async function playSongForResolution() {
                     pointsAwarded = POINTS_TRACKITACKI_WRONG;
                 } else {
                     // Normale Runde oder normale Speed Round: Falsche Antwort gibt 0 Punkte.
-                    pointsAwarded = 0;
+                    pointsAwarded = POINT_SPEEDROND_WRONG;
                 }
             }
             
