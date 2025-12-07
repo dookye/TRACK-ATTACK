@@ -1745,7 +1745,7 @@ async function playSongForResolution() {
                     pointsAwarded = POINTS_TRACKITACKI_CORRECT; 
                 } else if (gameState.isSpeedRound) {
                     // Normale Speed Round: Feste Punkte
-                    pointsAwarded = POINTS_SPEEDRROUN_CORRECT;
+                    pointsAwarded = POINTS_SPEEDROUND_CORRECT;
                 } else {
                     // Normalrunde: Würfelwert abzüglich Abzüge.
                     pointsAwarded = Math.max(1, gameState.maxScore - (gameState.attemptsMade - 1));
@@ -1756,7 +1756,7 @@ async function playSongForResolution() {
                     pointsAwarded = POINTS_TRACKITACKI_WRONG;
                 } else {
                     // Normale Runde oder normale Speed Round: Falsche Antwort gibt 0 Punkte.
-                    pointsAwarded = POINT_SPEEDROND_WRONG;
+                    pointsAwarded = POINT_SPEEDROUND_WRONG;
                 }
             }
             
