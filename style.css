@@ -974,6 +974,35 @@ body, html {
     top: 30px; 
 }
 
+/* TRACKI-TACKI-BUTTON ----------------------------
+/* Beispiel-CSS für den Trackitacki-Button */
+#tracki-tacki-button {
+    position: absolute;
+    top: 0; /* Startet am oberen Rand des Containers */
+    left: 50%;
+    transform: translate(-50%, -50%); /* Zentriert horizontal und zieht es halb nach oben */
+    width: 150px; /* Oder passende Größe */
+    height: 150px; /* Oder passende Größe */
+    cursor: pointer;
+    z-index: 100; /* Muss über dem logoButton liegen */
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Animation für das Herunterfallen */
+}
+
+/* Zustand, wenn der Button herunterfällt und nun als Play-Button dient */
+#tracki-tacki-button.active-intervention {
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1.1); /* Größer in der Mitte */
+    /* Hier könnten Sie einen Schatteneffekt für die Spielerfarbe hinzufügen */
+    box-shadow: 0 0 20px 5px var(--player-intervener-color);
+    z-index: 101; /* Über dem Logo */
+}
+
+/* Die inactive Klasse muss verhindern, dass darauf geklickt wird */
+#tracki-tacki-button.inactive {
+    pointer-events: none;
+}
+/* TRACKI-TACKI-BUTTON ---- EMDE ----------------------------
+
 /* SPEED-CHECK anzeige zum testen ...*/
 #speed-display {
     /* Positionierung in der oberen rechten Ecke */
