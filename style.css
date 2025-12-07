@@ -986,7 +986,6 @@ body, html {
     padding: 8px 12px;
     
     /* Hintergrund und Text */
-    background-color: rgba(31, 41, 55, 0.8); /* Dunkelgrau, leicht transparent */
     color: white;
     font-family: monospace; /* Monospace für technische Daten */
     font-size: 0.75rem; /* Etwa 12px */
