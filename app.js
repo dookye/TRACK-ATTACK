@@ -1606,10 +1606,10 @@ async function playSongForResolution() {
 
             let pointsAwarded = 0; // NEU: Variable für die vergebenen Punkte
 
-			// ⭐️ NEU: LOGIK FÜR FALSCHE ANTWORT IN DER SPEED ROUND  -  MINUS PUNKTE ⭐️
+			// ⭐️ NEU: LOGIK FÜR FALSCHE ANTWORT IN DER SPEED ROUND  -  mit möglichen MINUS PUNKTEN ⭐️
             if (!isCorrect && gameState.isSpeedRound) {
-                // Bei Speed Round UND falscher Antwort: -15 Punkte
-                pointsAwarded = -15; 
+                // Bei Speed Round UND falscher Antwort: z.b -15 Punkte, momentan aber 0
+                pointsAwarded = 0; // hier punkte die für klick auf falsch vergeben werden sollen angeben. z.b. -15
 
                 // Punkte sofort zum aktuellen Spieler addieren (subtrahieren)
                 if (gameState.currentPlayer === 1) {
@@ -1621,7 +1621,7 @@ async function playSongForResolution() {
             // Wichtig: Wenn falsch und KEINE Speed Round, bleiben pointsAwarded 0.
             // Der Code geht dann zur Animation, die "+0" anzeigt.
             }
-            // ⭐️ ENDE DER NEUEN FALSCHE ANTWORT LOGIK IN DER SPEED ROUND  -  MISNUS PUNKTE⭐️
+            // ⭐️ ENDE DER NEUEN FALSCHE ANTWORT LOGIK IN DER SPEED ROUND  -  mit möglichen MISNUS PUNKTEN⭐️
 
             if (isCorrect) {
                 // 5.1: Punkte berechnen und speichern
