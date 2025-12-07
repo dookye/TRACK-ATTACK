@@ -1742,7 +1742,7 @@ if (isCorrect) {
         pointsAwarded = POINTS_TRACKITACKI_CORRECT; 
     } else if (gameState.isSpeedRound) {
         // Normale Speed Round, korrekte Antwort
-        pointsAwarded = POINTS_NORMAL_CORRECT_SPEED;
+        pointsAwarded = POINTS_SPEEDROUND_CORRECT;
     } else {
         // Normale Runde, korrekte Antwort
         pointsAwarded = POINTS_NORMAL_CORRECT; 
