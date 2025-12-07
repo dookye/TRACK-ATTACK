@@ -1135,7 +1135,7 @@ function handleTrackiTackiClick() {
 
                 // 3. Button anzeigen und Klick-Listener für die Aktivierung hinzufügen
                 trackiTackiButton.classList.remove('hidden');
-				trackiTackiButton.classList.add('logo-pulsing');
+				// trackiTackiButton.classList.add('logo-pulsing');
                 trackiTackiButton.addEventListener('click', handleTrackiTackiClick);
             }
         }
@@ -1171,12 +1171,14 @@ async function playTrackSnippet() {
         // ⭐️ KORRIGIERT: Im TT-Modus den TT-Button inaktiv setzen, aber SICHTBAR lassen ⭐️
         if (trackiTackiButton) {
             trackiTackiButton.classList.add('inactive'); // Inaktiv (verschwommen/grau) setzen
+			trackiTackiButton.classList.remove('logo-pulsing');
         }
     } else {
         // Song-Start kam vom Logo-Button (Normalmodus oder erster Versuch Speed Round)
         triggerBounce(logoButton);
         logoButton.classList.add('inactive');
         logoButton.classList.remove('logo-pulsing');
+		trackiTackiButton.classList.add('hidden');
     }
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
