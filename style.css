@@ -871,10 +871,10 @@ body, html {
 /* NEU: Klasse für Spieler-Schatten (Punkt 6) - Muss über JS zugewiesen werden! */
 /* Beispiel-Klassen, die Sie im JS setzen: */
 #tracki-tacki-button.player1-shadow {
-    box-shadow: 0 0 20px 8px var(--player1-color); 
+    box-shadow: 30px 30px 30px 30px var(--player1-color); 
 }
 #tracki-tacki-button.player2-shadow {
-    box-shadow: 0 0 20px 8px var(--player2-color); 
+    box-shadow: 30px 30px 30px 30px var(--player2-color); 
 }
 
 /* -------------------- FOOTER POSITIONIERUNG -------------------- */
