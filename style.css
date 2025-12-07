@@ -258,11 +258,6 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-#logo-button.inactive {
-    filter: blur(5px);
-    pointer-events: none;
-}
-
 /* Würfel Container */
 #dice-container {
     display: flex;
@@ -1087,6 +1082,12 @@ body, html {
     }
 }
 /* TRACKI-TACKI-BUTTON ---- EMDE ----------------------------
+
+#logo-button.inactive,
+#tracki-tacki-button.inactive {
+    filter: blur(5px);
+    pointer-events: none;
+}
 
 /* SPEED-CHECK anzeige zum testen ...*/
 #speed-display {
