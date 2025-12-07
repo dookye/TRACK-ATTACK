@@ -1068,6 +1068,7 @@ function handleTrackiTackiClick() {
         logoButton.removeEventListener('click', playTrackSnippet);
         
         // 3. Tracki-Tacki-Button in die Mitte bewegen (Animation in CSS definiert)
+		trackiTackiButton.classList.remove('inactive');
         trackiTackiButton.classList.add('active-play-button');
 		// trackiTackiButton.classList.add('logo-pulsing');
 		
