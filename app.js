@@ -499,6 +499,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 isTooSlow = true;
             }
         }
+
+// VISEUELLE SPEED-CHECK ANZEIGE ...zum testen ---- ZEIGT DEN GENESSENEN WERT IM HTML OBJEKT AN.
+        document.getElementById('speed-display-value').textContent = speedKbit + ' Mbit/s';
         
         // 4. Konsole-Eintrag mit gemessener Geschwindigkeit
         console.log(`[REAL SPEED TEST] Gemessene Geschwindigkeit: ${speedKbit} Mbit/s.`);
