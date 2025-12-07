@@ -1733,32 +1733,32 @@ async function playSongForResolution() {
                 gameState.isSongPlaying = false;
             }
 
-            let pointsAwarded = 0; // Variable für die vergebenen Punkte
+let pointsAwarded;
 
-            // =========================================================================================
-			// ⭐️ NEUE PUNKTE-LOGIK UNTER BERÜCKSICHTIGUNG VON TRACKI-TACKI ⭐️
-            // =========================================================================================
-
-            if (isCorrect) {
-                if (gameState.isTrackiTackiActive) {
-                    // 🚨 Tracki-Tacki aktiv: Gegner hat richtig geraten. Aktiver Spieler erhält MINUS-Punkte.
-                    pointsAwarded = POINTS_TRACKITACKI_CORRECT; 
-                } else if (gameState.isSpeedRound) {
-                    // Normale Speed Round: Feste Punkte
-                    pointsAwarded = POINTS_SPEEDROUND_CORRECT;
-                } else {
-                    // Normalrunde: Würfelwert abzüglich Abzüge.
-                    pointsAwarded = Math.max(1, gameState.maxScore - (gameState.attemptsMade - 1));
-                }
-            } else { // (!isCorrect)
-                if (gameState.isTrackiTackiActive) {
-                    // Tracki-Tacki aktiv: Gegner hat falsch geraten. Aktiver Spieler erhält 0 Punkte.
-                    pointsAwarded = POINTS_TRACKITACKI_WRONG;
-                } else {
-                    // Normale Runde oder normale Speed Round: Falsche Antwort gibt 0 Punkte.
-                    pointsAwarded = POINTS_SPEEDROUND_WRONG;
-                }
-            }
+if (isCorrect) {
+    if (gameState.isTrackiTackiActive) {
+        // ⭐️ KORREKTUR: Tracki-Tacki aktiv & richtige Antwort (des Gegners). 
+        // Punkteabzug wird zugewiesen (-15).
+        pointsAwarded = POINTS_TRACKITACKI_CORRECT; 
+    } else if (gameState.isSpeedRound) {
+        // Normale Speed Round, korrekte Antwort
+        pointsAwarded = POINTS_NORMAL_CORRECT_SPEED;
+    } else {
+        // Normale Runde, korrekte Antwort
+        pointsAwarded = POINTS_NORMAL_CORRECT; 
+    }
+} else { // (!isCorrect)
+    if (gameState.isTrackiTackiActive) {
+        // Tracki-Tacki aktiv & falsche Antwort
+        pointsAwarded = POINTS_TRACKITACKI_WRONG;
+    } else if (gameState.isSpeedRound) {
+        // Normale Speed Round & falsche Antwort (unsere vorherige Korrektur)
+        pointsAwarded = POINTS_SPEEDROUND_WRONG; 
+    } else {
+        // Normale Runde, falsche Antwort
+        pointsAwarded = 0;
+    }
+}
             
             // 5.2: Punkte zum aktuellen Spieler addieren (funktioniert auch für Minus-Punkte)
 			if (gameState.currentPlayer === 1) {
