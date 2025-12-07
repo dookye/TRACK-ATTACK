@@ -836,6 +836,47 @@ body, html {
     text-align: center;
 }
 
+/* ---- tracki tacki -----
+/* --- NEU: Tracki-Tacki-Button Basis-Styles (Punkt 1, 2, 6) --- */
+#tracki-tacki-button {
+    /* Positionierung: Oben, mittig, halb versteckt */
+    position: absolute;
+    top: 0; 
+    left: 50%;
+    /* Verschiebt den Button um die Hälfte seiner eigenen Höhe/Breite nach oben/links */
+    transform: translate(-50%, -50%); 
+    
+    /* Größe: Wie Logo-Button */
+    width: 200px;
+    height: auto;
+    cursor: pointer;
+    z-index: 110;
+    
+    /* Übergänge: Für flüssige Bewegungen und Zustandswechsel (Gleiten in die Mitte) */
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
+    
+    /* Schatten: Basis-Schatten. Die Farbe muss per JS als Klasse gesetzt werden. */
+    box-shadow: 0 0 15px 5px rgba(0, 0, 0, 0.5); 
+    border-radius: 50%; /* Optional: Wenn es ein rundes Icon ist */
+}
+
+/* NEU: Zustand nach dem 1. Klick (zentriert, aktiv) (Punkt 3) */
+#tracki-tacki-button.active-play-button {
+    top: 50%; /* Wechselt von 0% auf 50% (Gleiten in die Mitte) */
+    left: 50%;
+    transform: translate(-50%, -50%); 
+    box-shadow: none; /* Entfernt den statischen Schatten, wenn das Pulsing startet */
+}
+
+/* NEU: Klasse für Spieler-Schatten (Punkt 6) - Muss über JS zugewiesen werden! */
+/* Beispiel-Klassen, die Sie im JS setzen: */
+#tracki-tacki-button.player1-shadow {
+    box-shadow: 0 0 20px 8px var(--player1-color); 
+}
+#tracki-tacki-button.player2-shadow {
+    box-shadow: 0 0 20px 8px var(--player2-color); 
+}
+
 /* -------------------- FOOTER POSITIONIERUNG -------------------- */
 
 #game-footer {
