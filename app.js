@@ -1745,7 +1745,7 @@ if (isCorrect) {
         pointsAwarded = POINTS_SPEEDROUND_CORRECT;
     } else {
         // Normale Runde, korrekte Antwort
-        pointsAwarded = POINTS_NORMAL_CORRECT; 
+        pointsAwarded = Math.max(1, gameState.maxScore - (gameState.attemptsMade - 1)); 
     }
 } else { // (!isCorrect)
     if (gameState.isTrackiTackiActive) {
