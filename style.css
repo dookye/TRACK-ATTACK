@@ -856,7 +856,7 @@ body, html {
     
     /* Schatten: Basis-Schatten. Die Farbe muss per JS als Klasse gesetzt werden. */
   /*  box-shadow: 30px 30px 30pxpx 30pxpx rgba(0, 0, 0, 0.5); */
-    border-radius: 50%; /* Optional: Wenn es ein rundes Icon ist */
+   /* border-radius: 50%; --- Optional: Wenn es ein rundes Icon ist */
 }
 
 /* NEU: Zustand nach dem 1. Klick (zentriert, aktiv) (Punkt 3) */
@@ -869,10 +869,10 @@ body, html {
 /* NEU: Klasse für Spieler-Schatten (Punkt 6) - Muss über JS zugewiesen werden! */
 /* Beispiel-Klassen, die Sie im JS setzen: */
 #tracki-tacki-button.player1-shadow {
-    filter: drop-shadow(0 0 40px var(--player1-color)); 
+    filter: drop-shadow(0 0 100px var(--player1-color)); 
 }
 #tracki-tacki-button.player2-shadow {
-    filter: drop-shadow(0 0 40px var(--player2-color)); 
+    filter: drop-shadow(0 0 100px var(--player2-color)); 
 }
 
 .tracki-tacki-button.logo-pulsing {
