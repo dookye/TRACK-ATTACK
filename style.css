@@ -991,26 +991,5 @@ body, html {
     font-family: monospace; /* Monospace für technische Daten */
     font-size: 0.75rem; /* Etwa 12px */
     line-height: 1;
-
-    /* Styling */
-    border-bottom-left-radius: 8px; /* Abgerundete Ecke unten links */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Farbkontrolle für den dynamischen Wert */
-#speed-display-value {
-    font-weight: bold;
-    color: #fcd34d; /* Standardmäßig gelb (wie Tailwind yellow-400) */
-}
-
-/* Optional: Farbanpassung basierend auf Geschw. (Muss per JS/Klasse gesteuert werden) */
-.speed-good {
-    color: #4ade80; /* Grün */
-}
-.speed-okay {
-    color: #fcd34d; /* Gelb */
-}
-.speed-slow {
-    color: #f87171; /* Rot */
 }
 */ SPEED-CHECK ende.....*/
