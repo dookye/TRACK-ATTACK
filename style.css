@@ -866,7 +866,7 @@ body, html {
     transform: translate(-50%, -50%); 
 }
 
-#tracki-tacki-button.player1-shadow {
+#tracki-tacki-button.player2-shadow {
     filter: 
         /* 1. Harte, definierte Kante (wie ein Spread Radius) */
         drop-shadow(0 0 1px 1px rgba(0, 123, 255, 0.9)), 
@@ -874,7 +874,7 @@ body, html {
         drop-shadow(0 0 40px rgba(0, 123, 255, 0.7)); 
 }
 
-#tracki-tacki-button.player2-shadow {
+#tracki-tacki-button.player1-shadow {
     filter: 
         /* 1. Harte, definierte Kante (Spread) */
         drop-shadow(0 0 1px 1px rgba(232, 62, 140, 0.9)), 
