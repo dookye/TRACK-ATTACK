@@ -1003,8 +1003,7 @@ body, html {
     z-index: 1000; 
     
     /* Größe des Logo-Buttons annehmen, hier 25vmin */
-    width: 25vmin; 
-    height: 25vmin; 
+    width: 200px;  
     border-radius: 50%;
     
     /* Center horizontal */
@@ -1015,10 +1014,9 @@ body, html {
     top: 0%;
     /* transform verschiebt das Element um die HÄLFTE seiner Höhe nach UNTEN */
     /* Dadurch ragt nur die untere Hälfte des Buttons in den Bildschirm hinein */
-    transform: translate(-50%, calc(-50% + 12.5vmin)); /* 12.5vmin ist die Hälfte von 25vmin */
+    transform: translate(-50%, calc(-50% + 100px)); /* 12.5vmin ist die Hälfte von 25vmin */
     
     /* Styling und Sichtbarkeit */
-    background-color: var(--white-transparent-strong); /* Etwas Farbe, um ihn sichtbar zu machen */
     border: none;
     opacity: 0; 
     pointer-events: none;
@@ -1037,7 +1035,7 @@ body, html {
     font-size: 8vmin;
     color: var(--black); 
     display: block;
-    line-height: 25vmin; /* Gleiche Höhe wie der Button für vertikale Zentrierung */
+    line-height: 200px; /* Gleiche Höhe wie der Button für vertikale Zentrierung */
     text-align: center;
 }
 
