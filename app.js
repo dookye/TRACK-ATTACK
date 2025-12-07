@@ -65,8 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	const tokenTimer = document.getElementById('token-timer');
 	const gameFooter = document.getElementById('game-footer');
 
-	// NEU: Trackitacki-Button
-    const trackiTackiButton = document.getElementById('tracki-tacki-button');
 
     // NEU: Konstante für das EINE digitale Würfelbild
     const digitalDiceArea = document.getElementById('digital-dice-area');
@@ -120,15 +118,15 @@ document.addEventListener('DOMContentLoaded', () => {
         player1Score: 0,
         player2Score: 0,
         currentPlayer: 1,
-        totalRounds: 6, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
+        totalRounds: 20, // wert auf 20 setzen, wenn jeder spieler 10 runden spielt
         currentRound: 0,
         diceValue: 0,
         attemptsMade: 0,
         maxAttempts: 0,
         trackDuration: 0,
         currentTrack: null,
-        player1SpeedRound: Math.floor(Math.random() * 3) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
-        player2SpeedRound: Math.floor(Math.random() * 3) + 1,
+        player1SpeedRound: Math.floor(Math.random() * 10) + 1, // wert auf 10 heisst speedround wird zwischen 1 und 10 stattfinden
+        player2SpeedRound: Math.floor(Math.random() * 10) + 1,
         isSpeedRound: false,
         speedRoundTimeout: null,
         countdownInterval: null,
@@ -1037,68 +1035,27 @@ async function handleTrackPlaybackError(listenerToRemove) {
 }
 
 
-async function prepareAndShowRateScreen(genre) {
-    // Speichere das ausgewählte Genre im globalen State.
-    gameState.currentGenre = genre;
-    gameState.currentTrack = await getTrack(genre);
-    
-    // WICHTIG: Prüfen, ob getTrack() erfolgreich war
-    if (!gameState.currentTrack) {
-        console.warn("prepareAndShowRateScreen: getTrack hat 'null' zurückgegeben. Breche ab.");
-        return; 
+    async function prepareAndShowRateScreen(genre) {
+		// Speichere das ausgewählte Genre im globalen State.
+        // Das brauchen wir, um bei einem Fehler einen neuen Track aus DEMSELBEN Genre zu laden.
+        gameState.currentGenre = genre;
+        gameState.currentTrack = await getTrack(genre);
+		// WICHTIG: Prüfen, ob getTrack() erfolgreich war, bevor wir weitermachen
+        if (!gameState.currentTrack) {
+            console.warn("prepareAndShowRateScreen: getTrack hat 'null' zurückgegeben. Breche ab.");
+            // getTrack() sollte in diesem Fall bereits showGenreScreen() aufgerufen haben.
+            return; 
+        }
+        console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
+
+        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+		logoButton.classList.add('logo-pulsing');
+        logoButton.removeEventListener('click', playTrackSnippet);
+        logoButton.addEventListener('click', playTrackSnippet);
+
+        // Speichere den Zustand: Raten-Bildschirm
+        lastGameScreenVisible = 'reveal-container'; // Obwohl es der Rate-Bildschirm ist, steht reveal-container für die Auflösung
     }
-    console.log("Selected Track:", gameState.currentTrack.name); // Zum Debuggen
-
-    // --- UI-RESET & BASIS-SETUP ---
-    // Stelle sicher, dass der Trackitacki-Button zu Beginn jeder Runde versteckt ist
-    trackiTackiButton.classList.add('hidden');
-    logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-    
-    logoButton.removeEventListener('click', playTrackSnippet);
-    logoButton.addEventListener('click', playTrackSnippet);
-
-    // Entferne alte Event Listener, falls vorhanden, und füge sie neu hinzu (sicherer ist aber meist ein externer Reset)
-    // trackiTackiButton.removeEventListener('click', handleInterventionAttempt);
-    // trackiTackiButton.addEventListener('click', handleInterventionAttempt);
-    // -----------------------------
-
-
-    // *************************************************************
-    // 🚀 HIER KOMMT DIE SPEED-ROUND / TRACKITACKI LOGIK
-    // *************************************************************
-    
-    // Annahme: Die Speed-Round-Prüfung wurde VOR dem Aufruf dieser Funktion gemacht
-    // (z.B. in handleDiceSelection) und gameState.isSpeedRound ist gesetzt.
-
-    if (gameState.isSpeedRound) {
-        // 1. Visuelle Anzeige der Speed-Round
-        speedRoundTextDisplay.classList.remove('hidden'); 
-        
-        // 2. Logo-Button des aktiven Spielers deaktivieren (wartet auf Intervention des Gegners)
-        logoButton.classList.add('inactive'); 
-        logoButton.classList.remove('logo-pulsing'); // Kein Pulsieren, da nicht bereit
-
-        // 3. Trackitacki-Button anzeigen
-        trackiTackiButton.classList.remove('hidden');
-        
-        // 4. Farbe des Gegners für den Schatten vorbereiten
-        const intervener = gameState.currentPlayer === 1 ? 2 : 1;
-        trackiTackiButton.style.setProperty('--player-intervener-color', `var(--player${intervener}-color)`);
-        
-    } else {
-        // Normale Runde: Logo-Button ist sofort klickbar
-        logoButton.classList.remove('inactive');
-        logoButton.classList.add('logo-pulsing');
-        
-        // Reveal Button anzeigen (für normale Runden)
-        revealButton.classList.remove('hidden');
-        revealButton.classList.remove('no-interaction'); 
-    }
-    // *************************************************************
-
-    // Speichere den Zustand: Raten-Bildschirm
-    lastGameScreenVisible = 'reveal-container'; 
-}
 
 // ################################################################### payTrackSnippet
 
@@ -1119,17 +1076,9 @@ async function playTrackSnippet() {
         return;
     }
 
-    // *************** AKTUALISIERTE LOGIK mit trackitacki ***************
-    triggerBounce(logoButton);
-    logoButton.classList.add('inactive');
-    logoButton.classList.remove('logo-pulsing');
-    
-    // NEU: Wenn SpeedRound aktiv und KEINE Intervention stattfand (d.h. Logo-Button wurde geklickt), verstecke Trackitacki.
-    if (isSpeedRound && !gameState.isSpeedRoundIntervention) {
-        trackiTackiButton.classList.add('hidden');
-        trackiTackiButton.classList.remove('active-intervention');
-    }
-    // *************** ENDE AKTUALISIERTE LOGIK mit trackitacki ***************
+    triggerBounce(logoButton);
+    logoButton.classList.add('inactive');
+    logoButton.classList.remove('logo-pulsing');
 
     const trackDurationMs = gameState.currentTrack.duration_ms;
     // const desiredDuration = gameState.trackDuration;
@@ -1244,14 +1193,6 @@ async function playTrackSnippet() {
             revealButton.classList.remove('hidden');
             revealButton.classList.remove('no-interaction');
         }
-
-		// *************** AKTUALISIERTE LOGIK mit trackitacki ***************
-        // Nach dem Start der Wiedergabe (egal ob Logo oder Trackitacki) muss der Trackitacki-Button ausgeblendet werden
-        if (isSpeedRound) {
-            trackiTackiButton.classList.add('hidden');
-            trackiTackiButton.classList.remove('active-intervention');
-        }
-        // *************** ENDE AKTUALISIERTE LOGIK mit trackitacki ***************
 
         if (isSpeedRound) {
             startVisualSpeedRoundCountdown(); // Muss global definiert sein!
@@ -1478,38 +1419,6 @@ async function playTrackSnippet() {
         }
     });
 }
-
-	// ################################################################### Trackitacki Intervention Logik
-
-    trackiTackiButton.addEventListener('click', () => {
-        // Prüft, ob SpeedRound aktiv ist UND der Logo-Button (aktiver Spieler) noch nicht geklickt wurde
-        if (gameState.isSpeedRound && logoButton.classList.contains('inactive')) {
-            
-            // 1. Zustand speichern: Intervention ist aktiv
-            gameState.isSpeedRoundIntervention = true;
-            // Speichere den eingreifenden Spieler (der Gegner des aktiven Spielers)
-            gameState.intervenerPlayer = gameState.currentPlayer === 1 ? 2 : 1;
-            
-            console.log(`[Trackitacki] Spieler ${gameState.intervenerPlayer} greift ein und rät für Spieler ${gameState.currentPlayer}!`);
-
-            // 2. Visuelle Animation (Herunterfallen)
-            trackiTackiButton.classList.add('active-intervention');
-            
-            // 3. Logik-Reset und Start des Songs
-            logoButton.classList.add('no-interaction'); // Logo-Button endgültig inaktiv setzen
-            
-            // Das Spiel wird immer noch über den aktiven Spieler (gameState.currentPlayer) gesteuert.
-            // Der Button wird nur optisch in die Mitte bewegt.
-            
-            // Verzögere den Song-Start für die Animation
-            setTimeout(() => {
-                // Führe die normale Wiedergabe-Logik aus (sie stoppt den Timer und startet den Countdown)
-                playTrackSnippet(); 
-                // Den Trackitacki-Button selbst inaktiv machen (kann nicht erneut geklickt werden)
-                trackiTackiButton.classList.add('inactive');
-            }, 600); 
-        }
-    });
 	
     function showResolution() {
         // Alle Timer und Intervalle der Speed-Round stoppen
@@ -1518,11 +1427,6 @@ async function playTrackSnippet() {
         clearTimeout(gameState.spotifyPlayTimeout); // Auch den Song-Pause-Timer stoppen
         clearInterval(gameState.fadeInterval); // WICHTIG: Fade-In-Intervall stoppen
 
-		// *************** AKTUALISIERTE LOGIK ***************
-        // Trackitacki-Button bei Auflösung ausblenden
-        trackiTackiButton.classList.add('hidden', 'inactive');
-        trackiTackiButton.classList.remove('active-intervention');
-        // *************** ENDE AKTUALISIERTE LOGIK ***************
 
         // Spotify Player pausieren, falls noch aktiv
         if (gameState.isSongPlaying && spotifyPlayer) {
@@ -1692,11 +1596,6 @@ async function playSongForResolution() {
         correctButton.classList.add('no-interaction');
         wrongButton.classList.add('no-interaction');
 
-		// *************** AKTUALISIERTE LOGIK ***************
-        // Entferne den aktiven Status vom Trackitacki, falls er als Play-Button diente
-        trackiTackiButton.classList.remove('active-intervention');
-        // *************** ENDE AKTUALISIERTE LOGIK ***************
-
         // NEU: Starte den Fade-Out, bevor der Rest der Logik ausgeführt wird
         fadeAudioOut().then(() => {
             // Dieser Code wird ausgeführt, NACHDEM der Fade-Out beendet ist
@@ -1724,38 +1623,27 @@ async function playSongForResolution() {
             }
             // ⭐️ ENDE DER NEUEN FALSCHE ANTWORT LOGIK IN DER SPEED ROUND  -  MISNUS PUNKTE⭐️
 
-// ⭐️ PUNKTEBERECHNUNG START ⭐️
-            if (isCorrect) {
-                if (gameState.isSpeedRoundIntervention) {
-                    // NEU: Interventions-Logik - Gegner rät richtig, aktiver Spieler erhält -15
-                    pointsAwarded = -15; 
-                } else if (gameState.isSpeedRound) {
-                    // Speed Round (normal)
-                    pointsAwarded = gameState.maxScore; 
-                } else {
-                    // Normalrunde
-                    pointsAwarded = Math.max(1, gameState.maxScore - (gameState.attemptsMade - 1)); 
-                }
-            } else {
+            if (isCorrect) {
+                // 5.1: Punkte berechnen und speichern
+                // - alte zeile-> pointsAwarded = Math.max(1, gameState.diceValue - (gameState.attemptsMade - 1)); // Punkte berechnen
+				
+				// ⭐️ START DER NEUEN SPEED ROUND PUNKTEBERECHNUNG  --  PUNKTE ÄNDERN IN DER async function handleGenreSelection ZEILE 746⭐️
                 if (gameState.isSpeedRound) {
-                    if (gameState.isSpeedRoundIntervention) {
-                        // NEU: Interventions-Logik - Gegner rät falsch, aktiver Spieler erhält 0
-                        pointsAwarded = 0; 
-                    } else {
-                        // Speed Round (normal) - Falsch: -15 Punkte
-                        pointsAwarded = -15;
-                    }
+                    // Speed Round: Punkte sind der feste Wert (15), keine Abzüge.
+                    pointsAwarded = gameState.maxScore; 
+                } else {
+                    // Normalrunde: Punkte sind Würfelwert (maxScore/diceValue) abzüglich Abzüge.
+                    // Wir verwenden hier die neue Variable maxScore (die dem diceValue entspricht).
+                    pointsAwarded = Math.max(1, gameState.maxScore - (gameState.attemptsMade - 1)); 
                 }
-                // Normalrunde - Falsch: pointsAwarded bleibt 0.
+                // ⭐️ ENDE DER NEUEN PUNKTEBERECHNUNG ⭐️
+                
+				if (gameState.currentPlayer === 1) {
+                    gameState.player1Score += pointsAwarded;
+                } else {
+                    gameState.player2Score += pointsAwarded;
+                }
             }
-            // ⭐️ PUNKTEBERECHNUNG ENDE ⭐️
-
-            // Punkte (positiv oder negativ) dem AKTUELLEN Spieler zuordnen
-			if (gameState.currentPlayer === 1) {
-                gameState.player1Score += pointsAwarded;
-            } else {
-                gameState.player2Score += pointsAwarded;
-            }
 
             // NEU: Animation der vergebenen Punkte anzeigen
             displayPointsAnimation(pointsAwarded, gameState.currentPlayer)
@@ -1846,17 +1734,6 @@ async function playSongForResolution() {
         diceContainer.classList.add('hidden');
         revealButton.classList.add('hidden'); // Stellen Sie sicher, dass der Reveal-Button versteckt ist
         speedRoundTextDisplay.classList.add('hidden'); // Stellen Sie sicher, dass der speedRoundTextDisplay versteckt ist
-
-		// *************** AKTUALISIERTE LOGIK ***************
-        // Trackitacki-Button bereinigen und verstecken
-        trackiTackiButton.classList.add('hidden', 'inactive');
-        trackiTackiButton.classList.remove('active-intervention');
-        trackiTackiButton.style.removeProperty('--player-intervener-color');
-        
-        // Interventions-Zustand zurücksetzen
-        gameState.isSpeedRoundIntervention = false;
-        gameState.intervenerPlayer = 0; 
-        // *************** ENDE AKTUALISIERTE LOGIK ***************
 
         // Setze die Interaktivität der Antwort-Buttons zurück
         correctButton.classList.remove('no-interaction');
