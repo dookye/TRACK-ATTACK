@@ -993,39 +993,100 @@ body, html {
 }
 
 /* TRACKI-TACKI-BUTTON ----------------------------
+/* #################################################################### */
+/* TRACKI-TACKI BUTTON STYLES & STARTPOSITION */
+/* #################################################################### */
+
 #tracki-tacki-button {
-    /* Ausgangsposition: Oben mittig, halb ins Bild ragend */
+    /* Muss über dem Logo-Button liegen */
     position: absolute;
-    top: -50px; /* Die Hälfte der Button-Höhe, um halb ins Bild zu ragen */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px; /* Beispielgröße */
-    height: 100px; /* Beispielgröße */
+    z-index: 1000; 
+    
+    /* Größe des Logo-Buttons annehmen, hier 25vmin */
+    width: 25vmin; 
+    height: 25vmin; 
     border-radius: 50%;
-    background-image: url('trackitacki.png'); /* Ihr Bild */
-    background-size: cover;
-    cursor: pointer;
-    z-index: 1000; /* Sicherstellen, dass er über allem liegt */
-    transition: top 0.5s ease-in-out, box-shadow 0.3s ease-out; /* Animation für Verschiebung und Schatten */
+    
+    /* Center horizontal */
+    left: 50%;
+    
+    /* ⭐️ NEU/KORRIGIERT: Startposition (halb im Bild) ⭐️ */
+    /* top: 0% positioniert den oberen Rand an den Bildschirmrand */
+    top: 0%;
+    /* transform verschiebt das Element um die HÄLFTE seiner Höhe nach UNTEN */
+    /* Dadurch ragt nur die untere Hälfte des Buttons in den Bildschirm hinein */
+    transform: translate(-50%, calc(-50% + 12.5vmin)); /* 12.5vmin ist die Hälfte von 25vmin */
+    
+    /* Styling und Sichtbarkeit */
+    background-color: var(--white-transparent-strong); /* Etwas Farbe, um ihn sichtbar zu machen */
+    border: none;
+    opacity: 0; 
+    pointer-events: none;
+    transition: all 0.5s ease-in-out; 
 }
 
-/* Schattenfarbe des Gegners */
+/* Zustand, wenn der Button im Modus sichtbar ist (bevor er geklickt wird) */
+#tracki-tacki-button:not(.hidden) {
+    opacity: 1; /* Sichtbar */
+    pointer-events: auto; /* Klicks erlauben */
+}
+
+/* Darstellung des Inhalts im Button */
+#tracki-tacki-button::before {
+    content: 'T!'; 
+    font-size: 8vmin;
+    color: var(--black); 
+    display: block;
+    line-height: 25vmin; /* Gleiche Höhe wie der Button für vertikale Zentrierung */
+    text-align: center;
+}
+
+/* #################################################################### */
+/* GEGNER-SCHATTEN */
+/* #################################################################### */
+
+/* Aktiver Spieler ist P2, Button ist für P1 (Gegner) */
 #tracki-tacki-button.player1-shadow {
-    box-shadow: 0 0 20px var(--player1-color);
+    box-shadow: 0 0 10px var(--punktefarbe-player1), 0 0 25px var(--punktefarbe-player1);
 }
+
+/* Aktiver Spieler ist P1, Button ist für P2 (Gegner) */
 #tracki-tacki-button.player2-shadow {
-    box-shadow: 0 0 20px var(--player2-color);
+    box-shadow: 0 0 10px var(--punktefarbe-player2), 0 0 25px var(--punktefarbe-player2);
 }
 
-/* Aktiver Zustand (nach dem ersten Klick: In der Mitte, um den Logo-Button zu verdecken) */
+/* #################################################################### */
+/* ANIMATION: ZUR BILDSCHIRMMITTE FLIEGEN */
+/* #################################################################### */
+
+/* Zielposition: Komplett in der Mitte */
 #tracki-tacki-button.active-play-button {
-    top: 50%; /* Oder der genaue Mittelpunkt des Logo-Buttons */
-    transform: translate(-50%, -50%); /* Zentriert ihn perfekt */
+    /* ⭐️ KORRIGIERT: Zielposition (Komplett zentriert) ⭐️ */
+    top: 50%;
+    left: 50%;
+    /* transform: translate(-50%, -50%) zentriert das Element perfekt, unabhängig von der Größe */
+    transform: translate(-50%, -50%); 
+
+    /* Animation für das Fliegen (kann kürzer sein) */
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    
+    /* Optional: Größe oder Farbe leicht ändern, wenn er als Play-Button fungiert */
+    width: 25vmin; 
+    height: 25vmin;
+    background-color: var(--white); /* z.B. weiß, um als Play-Button hervorzustechen */
+    
+    /* Pulsieren, wenn er als Play-Button bereit ist */
+    animation: tracki-pulsing 1s infinite alternate;
 }
 
-/* Versteck-Klasse */
-#tracki-tacki-button.hidden {
-    display: none !important;
+@keyframes tracki-pulsing {
+    from {
+        /* Hier sollte der transform-Wert der Zielposition beibehalten werden */
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1.05);
+    }
 }
 /* TRACKI-TACKI-BUTTON ---- EMDE ----------------------------
 
