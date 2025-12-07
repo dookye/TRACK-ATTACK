@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rotateDeviceOverlay = document.getElementById('rotate-device-overlay');
     // logoButton ist im Scope definiert
     const logoButton = document.getElementById('logo-button');
-	const TrackiTackiButton = document.getElementById('tracki-tacki-button');
+	const trackiTackiButton = document.getElementById('tracki-tacki-button');
     const diceContainer = document.getElementById('dice-container');
     const diceAnimation = document.getElementById('dice-animation');
     const diceSelection = document.getElementById('dice-selection');
