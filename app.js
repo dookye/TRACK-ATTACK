@@ -1075,7 +1075,7 @@ function handleTrackiTackiClick() {
         trackiTackiButton.addEventListener('click', playTrackSnippet); 
         
         // Füge eine Klasse hinzu, um den Play-Zustand des Buttons zu signalisieren
-        trackiTackiButton.classList.add('is-playing-song');
+        trackiTackiButton.classList.add('inactive');
 
     }
     // HINWEIS: Der zweite Klick führt direkt playTrackSnippet() aus, da der Listener oben neu gesetzt wurde.
