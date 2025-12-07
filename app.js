@@ -1558,10 +1558,10 @@ async function playTrackSnippet() {
         
         // NEU: Tracki-Tacki Button verstecken und Modus zurücksetzen
 //        gameState.isTrackiTackiActive = false;
-//        const trackiTackiButton = document.getElementById('tracki-tacki-button');
-//        if (trackiTackiButton) {
-//            trackiTackiButton.classList.add('hidden');
-//        }
+        const trackiTackiButton = document.getElementById('tracki-tacki-button');
+        if (trackiTackiButton) {
+            trackiTackiButton.classList.add('hidden');
+        }
 
         // UI-Elemente ausblenden
         countdownDisplay.classList.add('hidden');
