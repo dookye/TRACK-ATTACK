@@ -1068,14 +1068,15 @@ function handleTrackiTackiClick() {
         logoButton.removeEventListener('click', playTrackSnippet);
         
         // 3. Tracki-Tacki-Button in die Mitte bewegen (Animation in CSS definiert)
-        trackiTackiButton.classList.add('active-play-button');
-
+        // trackiTackiButton.classList.add('active-play-button');
+		trackiTackiButton.classList.add('logo-pulsing');
+		
         // 4. Den Tracki-Tacki-Button als Play-Button fungieren lassen
         trackiTackiButton.removeEventListener('click', handleTrackiTackiClick); // Entferne den ersten Listener
         trackiTackiButton.addEventListener('click', playTrackSnippet); 
         
         // Füge eine Klasse hinzu, um den Play-Zustand des Buttons zu signalisieren
-        trackiTackiButton.classList.add('logo-pulsing');
+        // trackiTackiButton.classList.add('logo-pulsing');
 
     }
     // HINWEIS: Der zweite Klick führt direkt playTrackSnippet() aus, da der Listener oben neu gesetzt wurde.
