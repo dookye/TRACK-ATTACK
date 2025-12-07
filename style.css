@@ -993,31 +993,39 @@ body, html {
 }
 
 /* TRACKI-TACKI-BUTTON ----------------------------
-/* Beispiel-CSS für den Trackitacki-Button */
 #tracki-tacki-button {
+    /* Ausgangsposition: Oben mittig, halb ins Bild ragend */
     position: absolute;
-    top: 0; /* Startet am oberen Rand des Containers */
+    top: -50px; /* Die Hälfte der Button-Höhe, um halb ins Bild zu ragen */
     left: 50%;
-    transform: translate(-50%, -50%); /* Zentriert horizontal und zieht es halb nach oben */
-    width: 150px; /* Oder passende Größe */
-    height: 150px; /* Oder passende Größe */
+    transform: translateX(-50%);
+    width: 100px; /* Beispielgröße */
+    height: 100px; /* Beispielgröße */
+    border-radius: 50%;
+    background-image: url('trackitacki.png'); /* Ihr Bild */
+    background-size: cover;
     cursor: pointer;
-    z-index: 111; /* Muss über dem logoButton liegen */
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Animation für das Herunterfallen */
+    z-index: 1000; /* Sicherstellen, dass er über allem liegt */
+    transition: top 0.5s ease-in-out, box-shadow 0.3s ease-out; /* Animation für Verschiebung und Schatten */
 }
 
-/* Zustand, wenn der Button herunterfällt und nun als Play-Button dient */
-#tracki-tacki-button.active-intervention {
-    top: 50%;
-    transform: translate(-50%, -50%) scale(1.1); /* Größer in der Mitte */
-    /* Hier könnten Sie einen Schatteneffekt für die Spielerfarbe hinzufügen */
-    box-shadow: 0 0 20px 5px var(--player-intervener-color);
-    z-index: 112; /* Über dem Logo */
+/* Schattenfarbe des Gegners */
+#tracki-tacki-button.player1-shadow {
+    box-shadow: 0 0 20px var(--player1-color);
+}
+#tracki-tacki-button.player2-shadow {
+    box-shadow: 0 0 20px var(--player2-color);
 }
 
-/* Die inactive Klasse muss verhindern, dass darauf geklickt wird */
-#tracki-tacki-button.inactive {
-    pointer-events: none;
+/* Aktiver Zustand (nach dem ersten Klick: In der Mitte, um den Logo-Button zu verdecken) */
+#tracki-tacki-button.active-play-button {
+    top: 50%; /* Oder der genaue Mittelpunkt des Logo-Buttons */
+    transform: translate(-50%, -50%); /* Zentriert ihn perfekt */
+}
+
+/* Versteck-Klasse */
+#tracki-tacki-button.hidden {
+    display: none !important;
 }
 /* TRACKI-TACKI-BUTTON ---- EMDE ----------------------------
 
