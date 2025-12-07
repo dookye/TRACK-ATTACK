@@ -1756,7 +1756,7 @@ async function playSongForResolution() {
                     pointsAwarded = POINTS_TRACKITACKI_WRONG;
                 } else {
                     // Normale Runde oder normale Speed Round: Falsche Antwort gibt 0 Punkte.
-                    pointsAwarded = POINT_SPEEDROUND_WRONG;
+                    pointsAwarded = POINTS_SPEEDROUND_WRONG;
                 }
             }
             
