@@ -74,8 +74,6 @@ body, html {
     user-drag: none;         /* Standard */
 
     touch-action: pan-x pan-y; /* Erlaubt Panning/Scrolling. Auf 'none' setzen, um alles zu blockieren. */
-    /* Alternative für touch-action: */
-    /* touch-action: none; */ /* Blockiert ALLE Touch-Gesten (Panning, Zoom, etc.). SEHR VORSICHTIG ANWENDEN! */
 }
 
 #app-container {
@@ -84,6 +82,23 @@ body, html {
     position: relative;
     overflow: hidden;
     transition: background-color var(--transition-speed) ease-in-out;
+}
+
+/* WICHTIG: Korrigiere/Erweitere #game-screen */
+#game-screen {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    
+    /* 💥 NEU: KRITISCH FÜR DEN TRACKITACKI-BUTTON 💥 */
+    overflow: hidden; 
+    /* Versteckt den oberen Teil des Trackitacki-Buttons, wenn er bei top: 0 und translate(-50%) ist. */
 }
 
 .screen {
@@ -96,6 +111,7 @@ body, html {
     position: absolute;
     top: 0;
     left: 0;
+    overflow: hidden;
 }
 
 #login-screen {
@@ -117,21 +133,6 @@ body, html {
 .hidden {
     display: none !important;
 }
-
-/* Overlay für Hochformat & Vollbild */
-/* .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--black);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.5em;
-} */
 
 /* Stil für das Logo auf dem Login-Screen */
 #login-logo {
@@ -191,6 +192,56 @@ body, html {
     box-sizing: border-box;
 }
 
+/* --- NEU: Tracki-Tacki-Button Basis-Styles (Punkt 1, 2, 6) --- */
+#tracki-tacki-button {
+    /* Positionierung: Oben, mittig, halb versteckt */
+    position: absolute;
+    top: 0; 
+    left: 50%;
+    /* Verschiebt den Button um die Hälfte seiner eigenen Höhe/Breite nach oben/links */
+    transform: translate(-50%, -50%); 
+    
+    /* Größe: Wie Logo-Button */
+    width: 200px;
+    height: auto;
+    cursor: pointer;
+    z-index: 110;
+    
+    /* Übergänge: Für flüssige Bewegungen und Zustandswechsel (Gleiten in die Mitte) */
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
+    
+    /* Schatten: Basis-Schatten. Die Farbe muss per JS als Klasse gesetzt werden. */
+    box-shadow: 0 0 15px 5px rgba(0, 0, 0, 0.5); 
+    border-radius: 50%; /* Optional: Wenn es ein rundes Icon ist */
+}
+
+/* NEU: Zustand nach dem 1. Klick (zentriert, aktiv) (Punkt 3) */
+#tracki-tacki-button.active-play-button {
+    top: 50%; /* Wechselt von 0% auf 50% (Gleiten in die Mitte) */
+    left: 50%;
+    transform: translate(-50%, -50%); 
+    box-shadow: none; /* Entfernt den statischen Schatten, wenn das Pulsing startet */
+}
+
+/* NEU: Klasse für Spieler-Schatten (Punkt 6) - Muss über JS zugewiesen werden! */
+/* Beispiel-Klassen, die Sie im JS setzen: */
+#tracki-tacki-button.player1-shadow {
+    box-shadow: 0 0 20px 8px var(--player1-color); 
+}
+#tracki-tacki-button.player2-shadow {
+    box-shadow: 0 0 20px 8px var(--player2-color); 
+}
+
+/* --- ERWEITERT: Inaktivitäts-Zustand (Punkt 5) --- */
+#logo-button.inactive,
+#tracki-tacki-button.inactive { 
+    filter: blur(5px); 
+    pointer-events: none; /* Macht den Button unklickbar */
+    opacity: 0.5; /* Stellt sicher, dass der Button leicht transparent wird */
+    transition: all 0.3s ease; 
+    animation: none !important; /* Stoppt das Pulsing */
+}
+
 .initial-fly-in {
     animation: fly-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
                 bounce-end 0.3s 0.6s ease-out forwards;
@@ -223,7 +274,9 @@ body, html {
     50% { transform: translate(-50%, -50%) scale(1.1); }
 }
 
-.logo-pulsing {
+.logo-pulsing,
+#tracki-tacki-button.logo-pulsing /* 🎯 Punkt 4: TT-Button pulsiert */
+{
     /* Verwendet die existierenden Keyframes 'bounce' */
     animation: pulsing-bounce 4s infinite ease-in-out;
 }
@@ -240,10 +293,6 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-#logo-button.inactive {
-    filter: blur(5px);
-    pointer-events: none;
-}
 
 /* Würfel Container */
 #dice-container {
@@ -338,7 +387,7 @@ body, html {
 .no-interaction {
     pointer-events: none; /* Verhindert alle Maus- und Klick-Events */
     opacity: 0.8;
-    cursor: default;       /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
+    cursor: default;        /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
 }
 
 .random-blink {
@@ -582,7 +631,7 @@ body, html {
 }
 
 @keyframes points-fade-in-zoom {
-  0% {
+ 0% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.5); /* Start kleiner und transparent */
   }
@@ -645,7 +694,7 @@ body, html {
 /* ------------------------------------------------------------------ */
 
 @media screen and (min-width: 769px), /* Ab 769px (Desktop) */
-       screen and (orientation: landscape) /* ODER im Querformat auf jedem Gerät */
+        screen and (orientation: landscape) /* ODER im Querformat auf jedem Gerät */
 {
     /* *** NEU: Würfel-Auswahl im Querformat (nebeneinander) *** */
     #dice-selection {
@@ -717,7 +766,7 @@ body, html {
     background-position: bottom left; 
     
     /* Setzen Sie die Größe des Containers auf die Abmessungen Ihres PNGs/gewünschten Bereichs. */
-    width: 150px;  /* Beispielgröße, bitte an Ihr PNG anpassen! */
+    width: 150px; /* Beispielgröße, bitte an Ihr PNG anpassen! */
     height: 150px; /* Beispielgröße, bitte an Ihr PNG anpassen! */
     
     z-index: 50; 
@@ -732,9 +781,9 @@ body, html {
     position: absolute; 
     /* Diese Werte müssen manuell angepasst werden, damit das Icon auf dem PNG an der richtigen Stelle liegt. */
     bottom: 20px; /* Beispiel: 20px von unten */
-    left: 20px;  /* Beispiel: 20px von links */
+    left: 20px; /* Beispiel: 20px von links */
 
-    width: 50px;         
+    width: 50px;        
     height: 50px;
     cursor: pointer;
     border-radius: 10px; 
