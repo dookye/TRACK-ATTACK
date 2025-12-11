@@ -1084,11 +1084,6 @@ function handleTrackiTackiClick() {
 
 
     async function prepareAndShowRateScreen(genre) {
-		const trackiTackiButton = document.getElementById('tracki-tacki-button');
-if (trackiTackiButton) {
-    trackiTackiButton.className = ''; // Hard Reset: Entfernt ALLE Klassen
-    trackiTackiButton.classList.add('hidden'); // Versteckt ihn sofort
-}
 		// Speichere das ausgewählte Genre im globalen State.
         // Das brauchen wir, um bei einem Fehler einen neuen Track aus DEMSELBEN Genre zu laden.
         gameState.currentGenre = genre;
@@ -1115,9 +1110,14 @@ if (trackiTackiButton) {
         const trackiTackiButton = document.getElementById('tracki-tacki-button');
         if (trackiTackiButton) {
 
+
+    trackiTackiButton.className = ''; // Hard Reset: Entfernt ALLE Klassen
+    trackiTackiButton.classList.add('hidden'); // Versteckt ihn sofort
+
+
             // 1. Initialen Zustand zurücksetzen
             gameState.isTrackiTackiActive = false;
-            trackiTackiButton.classList.add('hidden');
+         //   trackiTackiButton.classList.add('hidden');
             trackiTackiButton.classList.remove('active-play-button', 'logo-pulsing', 'player1-shadow', 'player2-shadow', 'inaktive');
             // Entferne potenziell vorhandene Listener
             trackiTackiButton.removeEventListener('click', playTrackSnippet);
