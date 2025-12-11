@@ -76,10 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const allGenresScrollbox = document.getElementById('all-genres-scrollbox');
 
 	// Globale Konstanten für Punkte (Zentralisierung der Werte)
-    const POINTS_SPEEDROUND_CORRECT = 14; // Punkte bei korrekter Antwort in Speed Round (ohne Tracki-Tacki)
+    const POINTS_SPEEDROUND_CORRECT = 15; // Punkte bei korrekter Antwort in Speed Round (ohne Tracki-Tacki)
 	const POINTS_SPEEDROUND_WRONG = 0;
     const POINTS_TRACKITACKI_CORRECT = -15; // Punkte, die der AKTIVE Spieler verliert, wenn der Gegner im Tracki-Tacki-Modus richtig rät
-    const POINTS_TRACKITACKI_WRONG = 0;      // Punkte bei falscher Antwort im Tracki-Tacki-Modus
+    const POINTS_TRACKITACKI_WRONG = 15;      // Punkte bei falscher Antwort im Tracki-Tacki-Modus
 	
 
     const digitalDiceImages = {
