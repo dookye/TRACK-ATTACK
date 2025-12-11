@@ -844,8 +844,6 @@ body, html {
     left: 50%;
     /* Verschiebt den Button um die Hälfte seiner eigenen Höhe/Breite nach oben/links */
     transform: translate(-50%, -50%); 
-    
-    /* Größe: Wie Logo-Button */
     width: 300px;
     height: auto;
     cursor: pointer;
@@ -866,31 +864,13 @@ body, html {
     transform: translate(-50%, -50%); 
 }
 
-#tracki-tacki-button.player2-shadow {
-    filter: 
-        /* 1. Harte, definierte Kante (wie ein Spread Radius) */
-        drop-shadow(0 0 1px 1px rgba(0, 123, 255, 0.9)), 
-        /* 2. Weicher, breiter Schein (Glow) */
-        drop-shadow(0 0 40px rgba(0, 123, 255, 0.7)); 
-}
-
+/* NEU: Klasse für Spieler-Schatten (Glow) */
 #tracki-tacki-button.player1-shadow {
-    filter: 
-        /* 1. Harte, definierte Kante (Spread) */
-        drop-shadow(0 0 1px 1px rgba(232, 62, 140, 0.9)), 
-        /* 2. Weicher, breiter Schein (Glow) */
-        drop-shadow(0 0 40px rgba(232, 62, 140, 0.7)); 
+    box-shadow: 0 0 15px 10px var(--player1-color); /* <-- KORREKTUR: Glow-Syntax */
 }
-
-/*
-#tracki-tacki-button.player1-shadow {
-    filter: drop-shadow(0 0 100px var(--player1-color)); 
-}
-
 #tracki-tacki-button.player2-shadow {
-    filter: drop-shadow(0 0 100px var(--player2-color)); 
+    box-shadow: 0 0 15px 10px var(--player2-color); /* <-- KORREKTUR: Glow-Syntax */
 }
-*/
 
 .tracki-tacki-button.logo-pulsing {
     animation: pulsing-bounce 4s infinite ease-in-out;
