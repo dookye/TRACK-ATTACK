@@ -1070,15 +1070,13 @@ function handleTrackiTackiClick() {
         // 3. Tracki-Tacki-Button in die Mitte bewegen (Animation in CSS definiert)
 		trackiTackiButton.classList.remove('inactive');
         trackiTackiButton.classList.add('active-play-button');
-		// trackiTackiButton.classList.add('logo-pulsing');
-		
+        
+        // ⭐️ KORREKTUR: Pulsing starten, wenn Button in der Mitte ist ⭐️
+		trackiTackiButton.classList.add('logo-pulsing'); // <--- Jetzt wird die Pulsing-Klasse hier hinzugefügt!
+        
         // 4. Den Tracki-Tacki-Button als Play-Button fungieren lassen
         trackiTackiButton.removeEventListener('click', handleTrackiTackiClick); // Entferne den ersten Listener
         trackiTackiButton.addEventListener('click', playTrackSnippet); 
-        
-        // Füge eine Klasse hinzu, um den Play-Zustand des Buttons zu signalisieren
-        // trackiTackiButton.classList.add('inactive');
-
     }
     // HINWEIS: Der zweite Klick führt direkt playTrackSnippet() aus, da der Listener oben neu gesetzt wurde.
 }
