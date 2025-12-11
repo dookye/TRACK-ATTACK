@@ -1084,6 +1084,11 @@ function handleTrackiTackiClick() {
 
 
     async function prepareAndShowRateScreen(genre) {
+		const trackiTackiButton = document.getElementById('tracki-tacki-button');
+if (trackiTackiButton) {
+    trackiTackiButton.className = ''; // Hard Reset: Entfernt ALLE Klassen
+    trackiTackiButton.classList.add('hidden'); // Versteckt ihn sofort
+}
 		// Speichere das ausgewählte Genre im globalen State.
         // Das brauchen wir, um bei einem Fehler einen neuen Track aus DEMSELBEN Genre zu laden.
         gameState.currentGenre = genre;
