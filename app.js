@@ -1110,16 +1110,14 @@ function handleTrackiTackiClick() {
         const trackiTackiButton = document.getElementById('tracki-tacki-button');
         if (trackiTackiButton) {
 
-
-    trackiTackiButton.className = ''; // Hard Reset: Entfernt ALLE Klassen
-    trackiTackiButton.classList.add('hidden'); // Versteckt ihn sofort
-
-
-            // 1. Initialen Zustand zurücksetzen
+			// 💥 1. HARD RESET: Entfernt ALLE Klassen (Sauberer Start garantiert)
+            trackiTackiButton.className = ''; 
+            trackiTackiButton.classList.add('hidden'); // Versteckt ihn sofort
+           
+			// 2. Initialen Zustand zurücksetzen
             gameState.isTrackiTackiActive = false;
-         //   trackiTackiButton.classList.add('hidden');
-            trackiTackiButton.classList.remove('active-play-button', 'logo-pulsing', 'player1-shadow', 'player2-shadow', 'inaktive');
-            // Entferne potenziell vorhandene Listener
+            
+			// 3.Entferne potenziell vorhandene Listener
             trackiTackiButton.removeEventListener('click', playTrackSnippet);
             trackiTackiButton.removeEventListener('click', handleTrackiTackiClick);
 
@@ -1128,7 +1126,7 @@ function handleTrackiTackiClick() {
                 // Den Gegner (den inaktiven Spieler) bestimmen
                 const opponentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
                 
-                // 2. Schattenfarbe des Gegners setzen
+                // 4. Schattenfarbe des Gegners setzen
                 if (opponentPlayer === 1) {
                     trackiTackiButton.classList.add('player1-shadow');
                     trackiTackiButton.classList.remove('player2-shadow');
@@ -1137,13 +1135,11 @@ function handleTrackiTackiClick() {
                     trackiTackiButton.classList.remove('player1-shadow');
                 }
 
-                // 3. Button anzeigen und Klick-Listener für die Aktivierung hinzufügen
+                // 5. Button anzeigen und Klick-Listener für die Aktivierung hinzufügen
                 trackiTackiButton.classList.remove('hidden');
-				// trackiTackiButton.classList.add('logo-pulsing');
                 trackiTackiButton.addEventListener('click', handleTrackiTackiClick);
             }
         }
-        // ====================================================================
     }
 
 // ################################################################### playTrackSnippet
