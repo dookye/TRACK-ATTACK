@@ -1787,7 +1787,7 @@ let pointsAwarded = 0;
             const trackiTackiButton = document.getElementById('tracki-tacki-button');
             if (trackiTackiButton) {
                 trackiTackiButton.classList.add('hidden');
-                trackiTackiButton.classList.remove('active-play-button', 'is-playing-song');
+                trackiTackiButton.classList.remove('active-play-button', 'inaktive', 'is-playing-song');
                 // Listener entfernen, damit er beim nächsten prepareAndShowRateScreen sauber neu gesetzt wird
                 trackiTackiButton.removeEventListener('click', playTrackSnippet);
                 trackiTackiButton.removeEventListener('click', handleTrackiTackiClick); 
