@@ -264,13 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // showResolution(); 
             }
         }
-
-        // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
-        startGenreSelectionContainer.classList.remove('hidden');
-        // Genres nur beim ersten Start oder nach einem Reset neu rendern
-        if (allGenresScrollbox.children.length === 0) { // Vermeidet redundantes Rendern
-            renderPreselectionGenres();
-        }
     }
 
     function startTokenTimer() {
@@ -535,7 +528,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 }
     // --- NETZWERK - ENDE ---------------- 
+
+function startSetTheStage() {
+    const stsDisplay = document.getElementById('set-the-stage-display');
     
+    // 1. Bild-DIV anzeigen (löst die CSS-Animation zoom-fade-in aus)
+    stsDisplay.classList.remove('hidden');
+
+    // 2. Sound abspielen (optional, falls du einen "Impact"-Sound willst)
+    // if (speedRoundSound) speedRoundSound.play(); 
+
+    // 3. Warten, bis die Animation vorbei ist
+    stsDisplay.addEventListener('animationend', () => {
+        stsDisplay.classList.add('hidden'); // Bild wieder weg
+        
+        // 4. Jetzt erst die Genre-Auswahl zeigen
+        startGenreSelectionContainer.classList.remove('hidden');
+        if (allGenresScrollbox.children.length === 0) {
+            renderPreselectionGenres();
+        }
+    }, { once: true });
+}
+	
 	// --- NEU: Funktion: Genres für die Vorauswahl rendern ---
     function renderPreselectionGenres() {
         // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
@@ -622,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             appContainer.style.backgroundColor = 'var(--player1-color)';
             logoButton.classList.add('hidden');
-            showDiceScreen();
+            startSetTheStage();
         }, 800);
     }
 
