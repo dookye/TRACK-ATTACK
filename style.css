@@ -853,8 +853,8 @@ body, html {
     transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
     
     /* Schatten: Basis-Schatten. Die Farbe muss per JS als Klasse gesetzt werden. */
-  /*  box-shadow: 30px 30px 30pxpx 30pxpx rgba(0, 0, 0, 0.5); */
-    border-radius: 50%; --- Optional: Wenn es ein rundes Icon ist */
+    box-shadow: 30px 30px 30pxpx 30pxpx rgba(0, 0, 0, 0.5); 
+    border-radius: 50%; /* --- Optional: Wenn es ein rundes Icon ist */
 }
 
 /* NEU: Zustand nach dem 1. Klick (zentriert, aktiv) (Punkt 3) */
