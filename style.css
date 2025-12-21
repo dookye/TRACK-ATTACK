@@ -514,6 +514,7 @@ body, html {
 }
 
 #speed-round-text-display {
+    /* Deine bestehenden Layout-Styles */
     position: absolute;
     top: 50%;
     left: 50%;
@@ -526,40 +527,43 @@ body, html {
     z-index: 20;
     pointer-events: none;
 
-    /* Wir nutzen 'linear' für die Animation, damit das Zittern nicht abgebremst wird */
-    animation: attack-vibration-zoom 4s linear forwards;
+    /* Animation: Wir nutzen 'linear', damit das Zittern gleichmäßig schnell bleibt */
+    animation: attackthetrack-fade-in 4s linear forwards;
     opacity: 0;
 }
 
-@keyframes attack-vibration-zoom {
-    /* 0% - 10%: Schnelles Einblenden und Start-Vibration */
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(0deg); filter: brightness(1); }
-    5% { opacity: 1; transform: translate(-52%, -48%) scale(0.3) rotate(2deg); filter: brightness(1.5); }
-    10% { transform: translate(-48%, -52%) scale(0.4) rotate(-2deg); filter: brightness(1); }
+@keyframes attackthetrack-fade-in {
+    /* 0% - Start: Heftiges Zittern & Zoom beginnt */
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    5% { transform: translate(-53%, -47%) scale(0.65); opacity: 1; }
+    10% { transform: translate(-47%, -53%) scale(0.8); }
+    15% { transform: translate(-52.5%, -50%) scale(0.9); }
     
-    /* 15% - 40%: Das Bild wächst, während es extrem nervös zittert */
-    15% { transform: translate(-51%, -51%) scale(0.5) rotate(1.5deg); }
-    20% { transform: translate(-49%, -49%) scale(0.6) rotate(-1.5deg); filter: brightness(1.3); }
-    25% { transform: translate(-52%, -50%) scale(0.65) rotate(2deg); }
-    30% { transform: translate(-48%, -50%) scale(0.7) rotate(-2deg); filter: brightness(1); }
-    35% { transform: translate(-50%, -52%) scale(0.75) rotate(1deg); }
-    40% { transform: translate(-50%, -48%) scale(0.8) rotate(-1deg); }
-
-    /* 45% - 70%: Maximale Energie in der Mitte der Animation */
-    45% { transform: translate(-51.5%, -48.5%) scale(0.85) rotate(2.5deg); filter: brightness(1.4); }
-    50% { transform: translate(-48.5%, -51.5%) scale(0.9) rotate(-2.5deg); }
-    55% { transform: translate(-52%, -51%) scale(0.93) rotate(1.5deg); }
-    60% { transform: translate(-48%, -49%) scale(0.96) rotate(-1.5deg); filter: brightness(1); }
-    65% { transform: translate(-51%, -52%) scale(1) rotate(2deg); }
-    70% { transform: translate(-49%, -48%) scale(1.03) rotate(-2deg); }
-
-    /* 75% - 100%: Letztes Aufbäumen und Ausfaden */
-    75% { transform: translate(-51%, -49%) scale(1.06) rotate(1deg); filter: brightness(1.2); }
-    80% { opacity: 1; transform: translate(-49%, -51%) scale(1.1) rotate(-1deg); }
-    85% { transform: translate(-50.5%, -50.5%) scale(1.15) rotate(0.5deg); }
-    90% { opacity: 0.7; transform: translate(-49.5%, -49.5%) scale(1.2) rotate(-0.5deg); filter: brightness(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3) rotate(0deg); }
+    /* 20% - Maximale Größe erreicht (deine 1.1 Scale), Zittern wird leicht schwächer */
+    20% { transform: translate(-47.5%, -50%) scale(1.1); opacity: 1; }
+    25% { transform: translate(-51.5%, -48.5%) scale(1.09); }
+    30% { transform: translate(-48.5%, -51.5%) scale(1.08); }
+    35% { transform: translate(-51%, -51%) scale(1.07); }
+    
+    /* 40% - Übergang: Zittern wird deutlich dezenter */
+    40% { transform: translate(-49%, -49%) scale(1.06); }
+    45% { transform: translate(-50.8%, -49.2%) scale(1.05); }
+    50% { transform: translate(-49.2%, -50.8%) scale(1.04); }
+    55% { transform: translate(-50.5%, -50.5%) scale(1.03); }
+    
+    /* 60% - Fast ruhig */
+    60% { transform: translate(-49.5%, -49.5%) scale(1.02); }
+    65% { transform: translate(-50.3%, -49.7%) scale(1.01); }
+    70% { transform: translate(-49.7%, -50.3%) scale(1.005); }
+    75% { transform: translate(-50.1%, -49.9%) scale(1); }
+    
+    /* 80% - Zittern STOPPT: Deine Basis-Werte (Scale 1, Opacity 1) */
+    80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    
+    /* 100% - Sanftes Ausblenden (letzte 20%) */
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
 }
+
 /* --- Bild für Hochformat (Portrait) --- */
 @media screen and (orientation: portrait) {
     #speed-round-text-display {
