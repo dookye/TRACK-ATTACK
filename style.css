@@ -866,10 +866,10 @@ body, html {
 
 /* NEU: Klasse für Spieler-Schatten (Glow) */
 #tracki-tacki-button.player1-shadow {
-    box-shadow: 0 0 150px 100px var(--player1-color); /* <-- KORREKTUR: Glow-Syntax */
+    box-shadow: 0 0 150px 150px var(--player1-color); /* <-- KORREKTUR: Glow-Syntax */
 }
 #tracki-tacki-button.player2-shadow {
-    box-shadow: 0 0 15px 10px var(--player2-color); /* <-- KORREKTUR: Glow-Syntax */
+    box-shadow: 0 0 150px 150px var(--player2-color); /* <-- KORREKTUR: Glow-Syntax */
 }
 
 .tracki-tacki-button.logo-pulsing {
