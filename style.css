@@ -513,6 +513,27 @@ body, html {
     align-items: center;
 }
 
+#set-the-stage-display {
+    /* Deine bestehenden Layout-Styles */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    height: 90vh;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    z-index: 20;
+    pointer-events: none;
+
+    /* Animation: Wir nutzen 'linear', damit das Zittern gleichmäßig schnell bleibt */
+    /* animation: attackthetrack-fade-in 4s linear forwards; */
+    
+    animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
+    opacity: 0;
+}
+
 #speed-round-text-display {
     /* Deine bestehenden Layout-Styles */
     position: absolute;
@@ -565,6 +586,20 @@ body, html {
     /* --- PHASE 3: SANFTES FINALE (80% - 100%) --- */
     /* Stillstand, leichtes Kleiner-Werden auf scale 1.0 und Fade-Out */
     100% { transform: translate(-50%, -50%) scale(1.0) rotate(0deg); opacity: 0; }
+}
+
+/* --- Bild für Hochformat (Portrait) --- */
+@media screen and (orientation: portrait) {
+    #set-the-stage-display {
+        background-image: url('assets/s-t-s.png');
+    }
+}
+
+/* --- Bild für Querformat (Landscape) --- */
+@media screen and (orientation: landscape) {
+    #set-the-stage-display {
+        background-image: url('assets/s-t-s-quer.png');
+    }
 }
 
 /* --- Bild für Hochformat (Portrait) --- */
