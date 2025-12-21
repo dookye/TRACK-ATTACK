@@ -587,7 +587,7 @@ confirmBtn.addEventListener('click', () => {
     
     setTimeout(() => {
         startGenreSelectionContainer.classList.add('hidden');
-        showDiceScreen(); // Wechsel zum nächsten Screen
+        showPlayerTurnScreen(); // Wechsel zum nächsten Screen
     }, 200);
 });
 
@@ -643,47 +643,52 @@ function toggleGenreSelection(genreName, buttonElement) {
         element.classList.add('bounce');
     }
 
-// KORRIGIERT: startGame-Funktion (VERWENDET {once: true} VON startGameAfterOrientation)
-    async function startGame() {
-
-        logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
-        logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
-		triggerBounce(logoButton);
-        
-        // Player nur initialisieren, wenn wir noch keine deviceId haben.
-        if (!deviceId) {
-            try {
-                console.log("Initialisiere Spotify Player durch Benutzerklick...");
-                await initializePlayer();
-                console.log("Player erfolgreich initialisiert und verbunden.");
-
-                // --- WICHTIG: DER iOS-FIX ---
-                console.log("Versuche, den Player aufzuwecken (resume)...");
-                await spotifyPlayer.resume();
-                console.log("Player erfolgreich aufgeweckt.");
-
-            } catch (error) {
-                console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
-                alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
-                
-                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird,
-                // ABER {once: true} ihn bereits entfernt hat.
-                logoButton.addEventListener('click', startGame, { once: true }); 
-                logoButton.classList.remove('inactive');
-                logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
-                return; // Breche die Funktion ab, wenn es fehlschlägt.
-            }
+async function startGame() {
+    logoButton.classList.add('inactive'); 
+    logoButton.classList.remove('logo-pulsing'); 
+    triggerBounce(logoButton);
+    
+    if (!deviceId) {
+        try {
+            await initializePlayer();
+            await spotifyPlayer.resume();
+        } catch (error) {
+            console.error(error);
+            return;
         }
-        
-        lastGameScreenVisible = 'logo-button';
-        startGenreSelectionContainer.classList.add('hidden');
-
-        setTimeout(() => {
-            appContainer.style.backgroundColor = 'var(--player1-color)';
-            logoButton.classList.add('hidden');
-            startSetTheStage();
-        }, 800);
     }
+    
+    lastGameScreenVisible = 'logo-button';
+
+    setTimeout(() => {
+        // HIER: Hintergrundfarbe-Änderung entfernt!
+        logoButton.classList.add('hidden');
+        startSetTheStage(); 
+    }, 800);
+}
+
+	function showPlayerTurnScreen() {
+    const turnDisplay = document.getElementById('player-turn-display');
+    const currentPlayer = gameState.currentPlayer; // "player1" oder "player2"
+    
+    // 1. Hintergrundfarbe basierend auf dem Spieler setzen
+    const playerColor = currentPlayer === 'player1' ? 'var(--player1-color)' : 'var(--player2-color)';
+    appContainer.style.backgroundColor = playerColor;
+
+    // 2. Das richtige Bild setzen (Beispiel: blue-up.png für Player 1)
+    const imageName = currentPlayer === 'player1' ? 'blue-up.png' : 'pink-up.png';
+    turnDisplay.style.backgroundImage = `url('assets/${imageName}')`;
+
+    // 3. Screen anzeigen (nutzt wieder die zoom-fade-in Animation)
+    turnDisplay.classList.remove('hidden');
+
+    turnDisplay.addEventListener('animationend', () => {
+        turnDisplay.classList.add('hidden');
+        
+        // 4. Erst jetzt zum Würfel-Screen wechseln
+        showDiceScreen();
+    }, { once: true });
+}
 
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
