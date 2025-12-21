@@ -568,10 +568,23 @@ body, html {
     background-size: contain;
     z-index: 20;
     pointer-events: none;
+    animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
+    opacity: 0;
+}
 
-    /* Animation: Wir nutzen 'linear', damit das Zittern gleichmäßig schnell bleibt */
-    /* animation: attackthetrack-fade-in 4s linear forwards; */
-    
+#player-turn-display {
+    /* Deine bestehenden Layout-Styles */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    height: 90vh;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    z-index: 20;
+    pointer-events: none;    
     animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
     opacity: 0;
 }
@@ -592,8 +605,8 @@ body, html {
 
     /* Animation: Wir nutzen 'linear', damit das Zittern gleichmäßig schnell bleibt */
     /* animation: attackthetrack-fade-in 4s linear forwards; */
-    
-    animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
+    animation: attackthetrack-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
+    /* animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
     opacity: 0;
 }
 
@@ -642,6 +655,22 @@ body, html {
     #set-the-stage-display {
         background-image: url('assets/s-t-s-quer.png');
     }
+}
+
+/* --- LOGIK FÜR BLAU --- */
+@media screen and (orientation: portrait) {
+    .blue-turn { background-image: url('assets/blue-up.png'); }
+}
+@media screen and (orientation: landscape) {
+    .blue-turn { background-image: url('assets/blue-up-quer.png'); }
+}
+
+/* --- LOGIK FÜR PINK --- */
+@media screen and (orientation: portrait) {
+    .pink-turn { background-image: url('assets/pink-up.png'); }
+}
+@media screen and (orientation: landscape) {
+    .pink-turn { background-image: url('assets/pink-up-quer.png'); }
 }
 
 /* --- Bild für Hochformat (Portrait) --- */
