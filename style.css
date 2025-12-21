@@ -561,11 +561,11 @@ body, html {
     /* Animation wird über JavaScript hinzugefügt/entfernt, damit sie jedes Mal neu startet */
 }
 
-@media screen and (max-width: 768px) {
+/* @media screen and (max-width: 768px) {
     #countdown-display {
         font-size: 40vmin; /* schriftgrösse für Punkteanimation und Speedround-Countdown im Portrait -- 40 (v) im verhältnis zum (min) kleineren rand */
     }
-}
+} */
 
 /* Klasse für die Animation, die wir per JS hinzufügen und entfernen */
 .countdown-animated {
