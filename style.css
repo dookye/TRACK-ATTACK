@@ -844,7 +844,7 @@ body, html {
     left: 50%;
     /* Verschiebt den Button um die Hälfte seiner eigenen Höhe/Breite nach oben/links */
     transform: translate(-50%, -48%); 
-    width: 300px;
+    width: 200px;
     height: auto;
     cursor: pointer;
     z-index: 110;
