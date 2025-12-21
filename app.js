@@ -77,9 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Globale Konstanten für Punkte bei Speedround (attack the track) - (Zentralisierung der Werte)
     const POINTS_SPEEDROUND_CORRECT = 15; // Punkte bei korrekter Antwort in Speed Round (ohne Tracki-Tacki)
-	const POINTS_SPEEDROUND_WRONG = 0;
-    const POINTS_TRACKITACKI_CORRECT = -15; // Punkte, die der AKTIVE Spieler verliert, wenn der Gegner im Tracki-Tacki-Modus richtig rät
-    const POINTS_TRACKITACKI_WRONG = 15;      // Punkte bei falscher Antwort im Tracki-Tacki-Modus
+	const POINTS_SPEEDROUND_WRONG = 0;  // Punkt bei falscher Antwort in Speedround (ohne Tracki-Tacki)
+    const POINTS_TRACKITACKI_CORRECT = -15; // Punkte, die der AKTIVE Spieler VERLIERT (minus zeichen vorweg), wenn der Gegner im Tracki-Tacki-Modus RICHTIG rät
+    const POINTS_TRACKITACKI_WRONG = 15;      // Punkte, die der AKTIVE Spieler BEKOMMT, wenn der Gegner im Tracki-Tacki-Modus FALSCH rät
 	
 
     const digitalDiceImages = {
