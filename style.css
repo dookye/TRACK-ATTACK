@@ -528,7 +528,9 @@ body, html {
     pointer-events: none;
 
     /* Animation: Wir nutzen 'linear', damit das Zittern gleichmäßig schnell bleibt */
-    animation: zoom-fade-in 4s linear forwards;
+    /* animation: attackthetrack-fade-in 4s linear forwards; */
+    
+    animation: zoom-fade-in 3.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     opacity: 0;
 }
 
@@ -613,11 +615,32 @@ body, html {
 }
 
 /* Amnimation für Zwischenscreens */
-@keyframes zoom-fade-in {
+/* @keyframes zoom-fade-in {
     0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
     20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
     80% { transform: translate(-50%, -50%) scale(1); }
     100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+} */
+
+@keyframes zoom-fade-in {
+    0% { 
+        transform: translate(-50%, -50%) scale(0.3); 
+        opacity: 0; 
+    }
+    /* Bei 15% ist das Bild bereits voll da und leicht "überdehnt" durch das Bezier */
+    15% { 
+        opacity: 1; 
+    }
+    /* Bis 80% zieht es sich ganz sachte auf scale(1) zusammen */
+    80% { 
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1; 
+    }
+    /* Die letzten 20% gleitet es sachte weg */
+    100% { 
+        transform: translate(-50%, -50%) scale(0.8); 
+        opacity: 0; 
+    }
 }
 
 @keyframes points-fade-in-zoom {
