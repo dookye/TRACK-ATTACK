@@ -112,7 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
     4: { attempts: 4, duration: 7350, poll_delay: 1500 }, 
     5: { attempts: 5, duration: 7350, poll_delay: 1500 }, 
     7: { attempts: 7, duration: 2350, poll_delay: 1500 } 
-};
+    };
+    
+	// Buttons Genre-Vorabwahl
+	const selectAllBtn = document.getElementById('select-all-genres-btn');
+    const confirmBtn = document.getElementById('confirm-genre-selection-btn');
 
     // --- Spielstatus-Variablen ---
     let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
@@ -550,44 +554,85 @@ function startSetTheStage() {
     }, { once: true });
 }
 	
-	// --- NEU: Funktion: Genres für die Vorauswahl rendern ---
-    function renderPreselectionGenres() {
-        // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
-        allGenresScrollbox.innerHTML = '';
-        const allAvailableGenres = Object.keys(playlists); 
-
-        allAvailableGenres.forEach(genreName => {
-            const button = document.createElement('button');
-            button.classList.add('preselect-genre-button');
-            button.dataset.genre = genreName; 
-            button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
-
-            // Überprüfen, ob das Genre bereits ausgewählt ist
-            if (gameState.selectedPlayableGenres.includes(genreName)) {
-                button.classList.add('selected');
-            }
-
-            button.addEventListener('click', () => {
-                toggleGenreSelection(genreName, button);
-            });
-            allGenresScrollbox.appendChild(button);
-        });
+// --- Funktion: Prüfen, ob genug Genres gewählt sind (Hilfsfunktion) ---
+function updateConfirmButtonState() {
+    const count = gameState.selectedPlayableGenres.length;
+    if (count >= 3) {
+        confirmBtn.disabled = false;
+        confirmBtn.classList.add('active'); // Optional für Styling
+    } else {
+        confirmBtn.disabled = true;
+        confirmBtn.classList.remove('active');
     }
+}
 
-    // --- NEU: Funktion: Genre in der Vorauswahl auswählen/abwählen ---
-    function toggleGenreSelection(genreName, buttonElement) {
-        const index = gameState.selectedPlayableGenres.indexOf(genreName);
+// --- NEU: Event Listener für die Steuerungs-Buttons ---
 
-        if (index > -1) {
-            gameState.selectedPlayableGenres.splice(index, 1);
-            buttonElement.classList.remove('selected');
-        } else {
-            gameState.selectedPlayableGenres.push(genreName);
-            buttonElement.classList.add('selected');
+// SELECT ALL Logik
+selectAllBtn.addEventListener('click', () => {
+    const allAvailableGenres = Object.keys(playlists);
+    // Array füllen
+    gameState.selectedPlayableGenres = [...allAvailableGenres];
+    // Alle Buttons visuell selektieren
+    document.querySelectorAll('.preselect-genre-button').forEach(btn => {
+        btn.classList.add('selected');
+    });
+    updateConfirmButtonState();
+});
+
+// LOCK IT IN Logik
+confirmBtn.addEventListener('click', () => {
+    // Kurzer Bounce-Effekt beim Klicken
+    triggerBounce(confirmBtn);
+    
+    setTimeout(() => {
+        startGenreSelectionContainer.classList.add('hidden');
+        showDiceScreen(); // Wechsel zum nächsten Screen
+    }, 200);
+});
+
+// --- Deine angepasste Render-Funktion ---
+function renderPreselectionGenres() {
+    allGenresScrollbox.innerHTML = '';
+    const allAvailableGenres = Object.keys(playlists); 
+
+    allAvailableGenres.forEach(genreName => {
+        const button = document.createElement('button');
+        button.classList.add('preselect-genre-button');
+        button.dataset.genre = genreName; 
+        button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
+
+        if (gameState.selectedPlayableGenres.includes(genreName)) {
+            button.classList.add('selected');
         }
-        console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
-    }
 
+        button.addEventListener('click', () => {
+            toggleGenreSelection(genreName, button);
+        });
+        allGenresScrollbox.appendChild(button);
+    });
+    
+    // Initialen Status des "Lock it in" Buttons prüfen
+    updateConfirmButtonState();
+}
+
+// --- Deine angepasste Toggle-Funktion ---
+function toggleGenreSelection(genreName, buttonElement) {
+    const index = gameState.selectedPlayableGenres.indexOf(genreName);
+
+    if (index > -1) {
+        gameState.selectedPlayableGenres.splice(index, 1);
+        buttonElement.classList.remove('selected');
+    } else {
+        gameState.selectedPlayableGenres.push(genreName);
+        buttonElement.classList.add('selected');
+    }
+    
+    // Nach jedem Klick prüfen, ob die "3-Genres-Regel" erfüllt ist
+    updateConfirmButtonState();
+    console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
+}
+	
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
     //=======================================================================
