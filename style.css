@@ -513,30 +513,37 @@ body, html {
     align-items: center;
 }
 
-/* Speed-Round (Phase 6) */
-/* NEU: Styling für das Wort "SPEED-ROUND" */
 #speed-round-text-display {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 10vw; /* Beispiel: Deutlich größer als normal, aber kleiner als 20vw */
-    font-weight: bold;
-    color: var(--white);
-    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    z-index: 20; /* Liegt unter dem Countdown, aber über dem Spielbildschirm */
-    animation: zoom-fade-in 4s forwards; /* Die Animation bleibt hier */
-    white-space: nowrap; /* Verhindert Zeilenumbruch bei langen Texten */
+    
+    /* Größe: 90% des Bildschirms */
+    width: 90vw;
+    height: 90vh; 
+    
+    /* Bild-Einstellungen */
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain; /* Sorgt dafür, dass das Bild innerhalb der 90% bleibt */
+    
+    z-index: 20;
+    animation: zoom-fade-in 4s forwards;
+    pointer-events: none; /* Klicks gehen durch das Bild hindurch zum Button */
 }
 
-/* --- Media Query für mobile Geräte --- */
-/* Dies wird auf Bildschirmen mit einer Breite von 768px oder weniger angewendet */
-@media screen and (max-width: 768px) {
+/* --- Bild für Hochformat (Portrait) --- */
+@media screen and (orientation: portrait) {
     #speed-round-text-display {
-        font-size: 10vw; /* Anpassung für Handys, verringert die Schriftgröße */
-        line-height: 1.2; /* Sorgt dafür, dass der Text eng beieinander steht, falls er umbricht */
-        padding: 0 10px; /* Fügt links und rechts etwas Platz hinzu */
-        box-sizing: border-box; /* Stellt sicher, dass das Padding die Gesamtbreite nicht erhöht */
+        background-image: url('assets/a-t-t.png');
+    }
+}
+
+/* --- Bild für Querformat (Landscape) --- */
+@media screen and (orientation: landscape) {
+    #speed-round-text-display {
+        background-image: url('assets/a-t-t-quer.png');
     }
 }
 
