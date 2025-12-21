@@ -530,7 +530,7 @@ body, html {
     /* Animation: Wir nutzen 'linear', damit das Zittern gleichmäßig schnell bleibt */
     /* animation: attackthetrack-fade-in 4s linear forwards; */
     
-    animation: zoom-fade-in 3.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
     opacity: 0;
 }
 
@@ -623,22 +623,27 @@ body, html {
 } */
 
 @keyframes zoom-fade-in {
+    /* 0% bis 10%: Der "Abschuss" der Konfettikanone */
     0% { 
-        transform: translate(-50%, -50%) scale(0.3); 
+        transform: translate(-50%, -50%) scale(0.1); 
         opacity: 0; 
+        filter: brightness(2); /* Kurzer Lichtblitz beim Start */
     }
-    /* Bei 15% ist das Bild bereits voll da und leicht "überdehnt" durch das Bezier */
-    15% { 
+    10% { 
+        transform: translate(-50%, -50%) scale(1.15); /* Schießt über das Ziel hinaus */
         opacity: 1; 
+        filter: brightness(1);
     }
-    /* Bis 80% zieht es sich ganz sachte auf scale(1) zusammen */
+    
+    /* 10% bis 80%: Das "Rieseln" - ganz langsame Bewegung */
     80% { 
         transform: translate(-50%, -50%) scale(1); 
         opacity: 1; 
     }
-    /* Die letzten 20% gleitet es sachte weg */
+    
+    /* 80% bis 100%: Sanftes Verschwinden */
     100% { 
-        transform: translate(-50%, -50%) scale(0.8); 
+        transform: translate(-50%, -50%) scale(0.95); 
         opacity: 0; 
     }
 }
