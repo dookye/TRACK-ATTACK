@@ -39,7 +39,7 @@ button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button
 
 /* Grundlegende Stile & Variablen */
 :root {
-    --player1-color: #007bff; /* Blau */
+    --player1-color: #1197d0; /* Blau (alt #007bff*/
     --player2-color: #e83e8c; /* Pink */
     --punktefarbe-player1: #fff; /* weiss */
     --punktefarbe-player2: #fff; /* weiss */
