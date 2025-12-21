@@ -899,10 +899,11 @@ body, html {
 }
 
 /* Die Animation skaliert jetzt nur das Bild, nicht den Container mit dem Schatten */
-@keyframes pulsing-bounce {
+
+/* @keyframes pulsing-bounce {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
-}
+} */
 
 /* -------------------- FOOTER POSITIONIERUNG -------------------- */
 
