@@ -842,68 +842,51 @@ body, html {
     text-align: center;
 }
 
-/* ---- tracki tacki Container ----- */
+/* ---- tracki tacki -----
+/* --- NEU: Tracki-Tacki-Button Basis-Styles (Punkt 1, 2, 6) --- */
 #tracki-tacki-button {
-    /* Positionierung & Gleit-Logik */
+    /* Positionierung: Oben, mittig, halb versteckt */
     position: absolute;
     top: 0; 
     left: 50%;
+    /* Verschiebt den Button um die Hälfte seiner eigenen Höhe/Breite nach oben/links */
     transform: translate(-50%, -48%); 
-    width: 200px; /* Breite des Buttons */
-    height: 200px;
-    z-index: 110;
+    width: 200px;
+    height: auto;
     cursor: pointer;
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    z-index: 110;
     
-    /* WICHTIG: Kein Schatten hier im Basis-Zustand, 
-       damit er nicht oben am Bildschirmrand leuchtet */
-    border-radius: 50%;
+    /* Übergänge: Für flüssige Bewegungen und Zustandswechsel (Gleiten in die Mitte) */
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
+    
+    /* Schatten: Basis-Schatten. Die Farbe muss per JS als Klasse gesetzt werden. */
+    /* box-shadow: 30px 30px 30pxpx 30pxpx rgba(0, 0, 0, 0.5); */
+    border-radius: 50%; /* --- Optional: Wenn es ein rundes Icon ist */
 }
 
-/* Das eigentliche Bild im Container */
-#tracki-tacki-button img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-    /* transition: filter 0.3s ease; */
-}
-
-/* Zustand nach dem 1. Klick (zentriert) */
+/* NEU: Zustand nach dem 1. Klick (zentriert, aktiv) (Punkt 3) */
 #tracki-tacki-button.active-play-button {
-    top: 50%;
+    top: 50%; /* Wechselt von 0% auf 50% (Gleiten in die Mitte) */
+    left: 50%;
     transform: translate(-50%, -50%); 
 }
 
-/* --- STATISCHER SCHATTEN (Glow) auf dem Container --- */
-/* Da der Container selbst nicht skaliert (kein transform: scale), 
-   bleibt der Schatten absolut ruhig. */
+/* NEU: Klasse für Spieler-Schatten (Glow) */
 #tracki-tacki-button.player1-shadow {
-    box-shadow: 0 0 120px 120px var(--player1-color);
+    box-shadow: 0 0 120px 120px var(--player1-color); /* <-- KORREKTUR: Glow-Syntax */
 }
 #tracki-tacki-button.player2-shadow {
-    box-shadow: 0 0 120px 120px var(--player2-color);
+    box-shadow: 0 0 120px 120px var(--player2-color); /* <-- KORREKTUR: Glow-Syntax */
 }
 
-/* --- PULSING: Nur das Bild im Inneren skaliert --- */
-#tracki-tacki-button.logo-pulsing img {
+.tracki-tacki-button.logo-pulsing {
     animation: pulsing-bounce 4s infinite ease-in-out;
 }
 
-/* Inaktiv-Zustand */
 #tracki-tacki-button.inactive {
+    filter: blur(5px);
     pointer-events: none;
 }
-#tracki-tacki-button.inactive img {
-    filter: blur(5px);
-}
-
-/* Die Animation skaliert jetzt nur das Bild, nicht den Container mit dem Schatten */
-
-/* @keyframes pulsing-bounce {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-} */
 
 /* -------------------- FOOTER POSITIONIERUNG -------------------- */
 
