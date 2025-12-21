@@ -843,7 +843,7 @@ body, html {
     top: 0; 
     left: 50%;
     /* Verschiebt den Button um die Hälfte seiner eigenen Höhe/Breite nach oben/links */
-    transform: translate(-50%, -20%); 
+    transform: translate(-50%, -50%); 
     width: 300px;
     height: auto;
     cursor: pointer;
@@ -853,7 +853,7 @@ body, html {
     transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
     
     /* Schatten: Basis-Schatten. Die Farbe muss per JS als Klasse gesetzt werden. */
-    box-shadow: 300px 300px 300px 300px rgba(0, 0, 0, 0.5); 
+    box-shadow: 30px 30px 30pxpx 30pxpx rgba(0, 0, 0, 0.5); 
     border-radius: 50%; /* --- Optional: Wenn es ein rundes Icon ist */
 }
 
@@ -866,7 +866,7 @@ body, html {
 
 /* NEU: Klasse für Spieler-Schatten (Glow) */
 #tracki-tacki-button.player1-shadow {
-    box-shadow: 0 0 15px 10px var(--player1-color); /* <-- KORREKTUR: Glow-Syntax */
+    box-shadow: 0 0 150px 100px var(--player1-color); /* <-- KORREKTUR: Glow-Syntax */
 }
 #tracki-tacki-button.player2-shadow {
     box-shadow: 0 0 15px 10px var(--player2-color); /* <-- KORREKTUR: Glow-Syntax */
