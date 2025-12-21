@@ -514,7 +514,7 @@ body, html {
 }
 
 #speed-round-text-display {
-    /* ... deine bestehenden Styles für Position, Größe, Hintergrundbild ... */
+    /* ... deine restlichen Styles (position, background, etc.) ... */
     
     position: absolute;
     top: 50%;
@@ -528,54 +528,27 @@ body, html {
     z-index: 20;
     pointer-events: none;
 
-    /* --- DIE NEUE ANIMATION --- */
-    /* Dauer: 2.5 Sekunden insgesamt. */
-    /* Timing: Ein spezielles "Bouncing"-Timing für den elastischen Aufprall */
-    animation: attack-impact 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    
-    /* Startzustand: Unsichtbar, damit es nicht kurz aufblitzt bevor die Ani startet */
-    opacity: 0; 
+    /* ZWEI ANIMATIONEN GLEICHZEITIG: */
+    /* 1. Deine alte Animation (hier beispielhaft 4s) */
+    /* 2. Das Zittern (sehr schnell, nur am Anfang für 0.8s) */
+    animation: 
+        zoom-fade-in 4s forwards, 
+        shake-vibration 0.8s linear;
 }
 
-/* --- DIE KEYFRAMES FÜR DEN KNALL --- */
-@keyframes attack-impact {
-    0% {
-        opacity: 0;
-        /* Startet winzig klein */
-        transform: translate(-50%, -50%) scale(0.2); 
-    }
-    10% {
-        opacity: 1;
-        /* DER KNALL: Extrem schnell viel zu groß werden (Overshoot) */
-        transform: translate(-50%, -50%) scale(1.5); 
-        /* FLASH-EFFEKT: Kurzzeitig extrem hell */
-        filter: brightness(2.5) contrast(1.2);
-    }
-    25% {
-        /* Zurückschnappen: Kleiner als normal (Recoil) */
-        transform: translate(-50%, -50%) scale(0.9); 
-        /* Helligkeit normalisiert sich schnell wieder */
-        filter: brightness(1) contrast(1);
-    }
-    40% {
-        /* Kleines Nachschwingen */
-        transform: translate(-50%, -50%) scale(1.05); 
-    }
-    55% {
-        /* Stabilisiert auf Endgröße */
-        transform: translate(-50%, -50%) scale(1); 
-        opacity: 1; /* Bleibt kurz sichtbar stehen */
-    }
-    80% {
-        /* Beginnt auszublenden */
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    100% {
-        /* Abgang: Blendet aus und zoomt dabei leicht weiter raus */
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(1.3); 
-    }
+/* zusatz FX bei Speedroun (attack the track) */
+@keyframes shake-vibration {
+    0% { transform: translate(-50%, -50%); }
+    10% { transform: translate(-51%, -49%) rotate(-1deg); }
+    20% { transform: translate(-49%, -51%) rotate(1deg); }
+    30% { transform: translate(-50.5%, -50.5%) rotate(0deg); }
+    40% { transform: translate(-49.5%, -49.5%) rotate(-0.5deg); }
+    50% { transform: translate(-51%, -50.5%) rotate(1deg); }
+    60% { transform: translate(-49%, -49%) rotate(-1deg); }
+    70% { transform: translate(-50.5%, -51%) rotate(0deg); }
+    80% { transform: translate(-49.5%, -50.5%) rotate(0.5deg); }
+    90% { transform: translate(-50.5%, -49.5%) rotate(-0.5deg); }
+    100% { transform: translate(-50%, -50%) rotate(0deg); }
 }
 
 /* --- Bild für Hochformat (Portrait) --- */
@@ -626,12 +599,12 @@ body, html {
 }
 
 /* Amnimation für Zwischenscreens */
-/* @keyframes zoom-fade-in {
+ @keyframes zoom-fade-in {
     0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
     20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
     80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-} */
+}
 
 @keyframes points-fade-in-zoom {
   0% {
