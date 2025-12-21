@@ -514,23 +514,68 @@ body, html {
 }
 
 #speed-round-text-display {
+    /* ... deine bestehenden Styles für Position, Größe, Hintergrundbild ... */
+    
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    
-    /* Größe: 90% des Bildschirms */
     width: 90vw;
-    height: 90vh; 
-    
-    /* Bild-Einstellungen */
+    height: 90vh;
     background-repeat: no-repeat;
     background-position: center;
-    background-size: contain; /* Sorgt dafür, dass das Bild innerhalb der 90% bleibt */
-    
+    background-size: contain;
     z-index: 20;
-    animation: zoom-fade-in 4s forwards;
-    pointer-events: none; /* Klicks gehen durch das Bild hindurch zum Button */
+    pointer-events: none;
+
+    /* --- DIE NEUE ANIMATION --- */
+    /* Dauer: 2.5 Sekunden insgesamt. */
+    /* Timing: Ein spezielles "Bouncing"-Timing für den elastischen Aufprall */
+    animation: attack-impact 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    
+    /* Startzustand: Unsichtbar, damit es nicht kurz aufblitzt bevor die Ani startet */
+    opacity: 0; 
+}
+
+/* --- DIE KEYFRAMES FÜR DEN KNALL --- */
+@keyframes attack-impact {
+    0% {
+        opacity: 0;
+        /* Startet winzig klein */
+        transform: translate(-50%, -50%) scale(0.2); 
+    }
+    10% {
+        opacity: 1;
+        /* DER KNALL: Extrem schnell viel zu groß werden (Overshoot) */
+        transform: translate(-50%, -50%) scale(1.5); 
+        /* FLASH-EFFEKT: Kurzzeitig extrem hell */
+        filter: brightness(2.5) contrast(1.2);
+    }
+    25% {
+        /* Zurückschnappen: Kleiner als normal (Recoil) */
+        transform: translate(-50%, -50%) scale(0.9); 
+        /* Helligkeit normalisiert sich schnell wieder */
+        filter: brightness(1) contrast(1);
+    }
+    40% {
+        /* Kleines Nachschwingen */
+        transform: translate(-50%, -50%) scale(1.05); 
+    }
+    55% {
+        /* Stabilisiert auf Endgröße */
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1; /* Bleibt kurz sichtbar stehen */
+    }
+    80% {
+        /* Beginnt auszublenden */
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        /* Abgang: Blendet aus und zoomt dabei leicht weiter raus */
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.3); 
+    }
 }
 
 /* --- Bild für Hochformat (Portrait) --- */
@@ -561,11 +606,11 @@ body, html {
     /* Animation wird über JavaScript hinzugefügt/entfernt, damit sie jedes Mal neu startet */
 }
 
-/* @media screen and (max-width: 768px) {
+@media screen and (max-width: 768px) {
     #countdown-display {
         font-size: 40vmin; /* schriftgrösse für Punkteanimation und Speedround-Countdown im Portrait -- 40 (v) im verhältnis zum (min) kleineren rand */
     }
-} */
+}
 
 /* Klasse für die Animation, die wir per JS hinzufügen und entfernen */
 .countdown-animated {
@@ -580,12 +625,13 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } /* Wieder kleiner werden und ausblenden */
 }
 
-@keyframes zoom-fade-in {
+/* Amnimation für Zwischenscreens */
+/* @keyframes zoom-fade-in {
     0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
     20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
     80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-}
+} */
 
 @keyframes points-fade-in-zoom {
   0% {
