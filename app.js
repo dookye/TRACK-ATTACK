@@ -112,11 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     4: { attempts: 4, duration: 7350, poll_delay: 1500 }, 
     5: { attempts: 5, duration: 7350, poll_delay: 1500 }, 
     7: { attempts: 7, duration: 2350, poll_delay: 1500 } 
-    };
-    
-	// Buttons Genre-Vorabwahl
-	const selectAllBtn = document.getElementById('select-all-genres-btn');
-    const confirmBtn = document.getElementById('confirm-genre-selection-btn');
+};
 
     // --- Spielstatus-Variablen ---
     let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
@@ -167,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastGameScreenVisible = '';
 
     const playlists = {
-		'test': ['4EA0uV0i0c7RJNxWZpwcmM'],
+		// 'test': ['4EA0uV0i0c7RJNxWZpwcmM'],
 		'90s everyone knows': ['32Rgd0gpGw4vvJtM3nlA55'],
         'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         'die größten hits aller zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
@@ -267,6 +263,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (lastGameScreenVisible === 'reveal-container') {
                 // showResolution(); 
             }
+        }
+
+        // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
+        startGenreSelectionContainer.classList.remove('hidden');
+        // Genres nur beim ersten Start oder nach einem Reset neu rendern
+        if (allGenresScrollbox.children.length === 0) { // Vermeidet redundantes Rendern
+            renderPreselectionGenres();
         }
     }
 
@@ -532,107 +535,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 }
     // --- NETZWERK - ENDE ---------------- 
-
-function startSetTheStage() {
-    const stsDisplay = document.getElementById('set-the-stage-display');
     
-    // 1. Bild-DIV anzeigen (löst die CSS-Animation zoom-fade-in aus)
-    stsDisplay.classList.remove('hidden');
+	// --- NEU: Funktion: Genres für die Vorauswahl rendern ---
+    function renderPreselectionGenres() {
+        // Zuerst sicherstellen, dass die Scrollbox leer ist, bevor neue Buttons hinzugefügt werden
+        allGenresScrollbox.innerHTML = '';
+        const allAvailableGenres = Object.keys(playlists); 
 
-    // 2. Sound abspielen (optional, falls du einen "Impact"-Sound willst)
-    // if (speedRoundSound) speedRoundSound.play(); 
+        allAvailableGenres.forEach(genreName => {
+            const button = document.createElement('button');
+            button.classList.add('preselect-genre-button');
+            button.dataset.genre = genreName; 
+            button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
 
-    // 3. Warten, bis die Animation vorbei ist
-    stsDisplay.addEventListener('animationend', () => {
-        stsDisplay.classList.add('hidden'); // Bild wieder weg
-        
-        // 4. Jetzt erst die Genre-Auswahl zeigen
-        startGenreSelectionContainer.classList.remove('hidden');
-        if (allGenresScrollbox.children.length === 0) {
-            renderPreselectionGenres();
-        }
-    }, { once: true });
-}
-	
-// --- Funktion: Prüfen, ob genug Genres gewählt sind (Hilfsfunktion) ---
-function updateConfirmButtonState() {
-    const count = gameState.selectedPlayableGenres.length;
-    if (count >= 3) {
-        confirmBtn.disabled = false;
-        confirmBtn.classList.add('active'); // Optional für Styling
-    } else {
-        confirmBtn.disabled = true;
-        confirmBtn.classList.remove('active');
-    }
-}
+            // Überprüfen, ob das Genre bereits ausgewählt ist
+            if (gameState.selectedPlayableGenres.includes(genreName)) {
+                button.classList.add('selected');
+            }
 
-// --- NEU: Event Listener für die Steuerungs-Buttons ---
-
-// SELECT ALL Logik
-selectAllBtn.addEventListener('click', () => {
-    const allAvailableGenres = Object.keys(playlists);
-    // Array füllen
-    gameState.selectedPlayableGenres = [...allAvailableGenres];
-    // Alle Buttons visuell selektieren
-    document.querySelectorAll('.preselect-genre-button').forEach(btn => {
-        btn.classList.add('selected');
-    });
-    updateConfirmButtonState();
-});
-
-// LOCK IT IN Logik
-confirmBtn.addEventListener('click', () => {
-    // Kurzer Bounce-Effekt beim Klicken
-    triggerBounce(confirmBtn);
-    
-    setTimeout(() => {
-        startGenreSelectionContainer.classList.add('hidden');
-        showPlayerTurnScreen(); // Wechsel zum nächsten Screen
-    }, 200);
-});
-
-// --- Deine angepasste Render-Funktion ---
-function renderPreselectionGenres() {
-    allGenresScrollbox.innerHTML = '';
-    const allAvailableGenres = Object.keys(playlists); 
-
-    allAvailableGenres.forEach(genreName => {
-        const button = document.createElement('button');
-        button.classList.add('preselect-genre-button');
-        button.dataset.genre = genreName; 
-        button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
-
-        if (gameState.selectedPlayableGenres.includes(genreName)) {
-            button.classList.add('selected');
-        }
-
-        button.addEventListener('click', () => {
-            toggleGenreSelection(genreName, button);
+            button.addEventListener('click', () => {
+                toggleGenreSelection(genreName, button);
+            });
+            allGenresScrollbox.appendChild(button);
         });
-        allGenresScrollbox.appendChild(button);
-    });
-    
-    // Initialen Status des "Lock it in" Buttons prüfen
-    updateConfirmButtonState();
-}
-
-// --- Deine angepasste Toggle-Funktion ---
-function toggleGenreSelection(genreName, buttonElement) {
-    const index = gameState.selectedPlayableGenres.indexOf(genreName);
-
-    if (index > -1) {
-        gameState.selectedPlayableGenres.splice(index, 1);
-        buttonElement.classList.remove('selected');
-    } else {
-        gameState.selectedPlayableGenres.push(genreName);
-        buttonElement.classList.add('selected');
     }
-    
-    // Nach jedem Klick prüfen, ob die "3-Genres-Regel" erfüllt ist
-    updateConfirmButtonState();
-    console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
-}
-	
+
+    // --- NEU: Funktion: Genre in der Vorauswahl auswählen/abwählen ---
+    function toggleGenreSelection(genreName, buttonElement) {
+        const index = gameState.selectedPlayableGenres.indexOf(genreName);
+
+        if (index > -1) {
+            gameState.selectedPlayableGenres.splice(index, 1);
+            buttonElement.classList.remove('selected');
+        } else {
+            gameState.selectedPlayableGenres.push(genreName);
+            buttonElement.classList.add('selected');
+        }
+        console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
+    }
+
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
     //=======================================================================
@@ -643,56 +584,47 @@ function toggleGenreSelection(genreName, buttonElement) {
         element.classList.add('bounce');
     }
 
-async function startGame() {
-    logoButton.classList.add('inactive'); 
-    logoButton.classList.remove('logo-pulsing'); 
-    triggerBounce(logoButton);
-    
-    if (!deviceId) {
-        try {
-            await initializePlayer();
-            await spotifyPlayer.resume();
-        } catch (error) {
-            console.error(error);
-            return;
+// KORRIGIERT: startGame-Funktion (VERWENDET {once: true} VON startGameAfterOrientation)
+    async function startGame() {
+
+        logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
+        logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
+		triggerBounce(logoButton);
+        
+        // Player nur initialisieren, wenn wir noch keine deviceId haben.
+        if (!deviceId) {
+            try {
+                console.log("Initialisiere Spotify Player durch Benutzerklick...");
+                await initializePlayer();
+                console.log("Player erfolgreich initialisiert und verbunden.");
+
+                // --- WICHTIG: DER iOS-FIX ---
+                console.log("Versuche, den Player aufzuwecken (resume)...");
+                await spotifyPlayer.resume();
+                console.log("Player erfolgreich aufgeweckt.");
+
+            } catch (error) {
+                console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
+                alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
+                
+                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird,
+                // ABER {once: true} ihn bereits entfernt hat.
+                logoButton.addEventListener('click', startGame, { once: true }); 
+                logoButton.classList.remove('inactive');
+                logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
+                return; // Breche die Funktion ab, wenn es fehlschlägt.
+            }
         }
-    }
-    
-    lastGameScreenVisible = 'logo-button';
+        
+        lastGameScreenVisible = 'logo-button';
+        startGenreSelectionContainer.classList.add('hidden');
 
-    setTimeout(() => {
-        // HIER: Hintergrundfarbe-Änderung entfernt!
-        logoButton.classList.add('hidden');
-        startSetTheStage(); 
-    }, 800);
-}
-
-function showPlayerTurnScreen() {
-    const turnDisplay = document.getElementById('player-turn-display');
-    const currentPlayer = gameState.currentPlayer; // Erwartet "player1" oder "player2"
-    
-    // 1. Hintergrundfarbe setzen
-    const playerColor = currentPlayer === 'player1' ? 'var(--player1-color)' : 'var(--player2-color)';
-    appContainer.style.backgroundColor = playerColor;
-
-    // 2. Klassen säubern und die richtige zuweisen
-    turnDisplay.classList.remove('blue-turn', 'pink-turn', 'hidden');
-    
-    if (currentPlayer === 'player1') {
-        turnDisplay.classList.add('blue-turn');
-    } else {
-        turnDisplay.classList.add('pink-turn');
-    }
-
-    // 3. Animation abwarten
-    turnDisplay.addEventListener('animationend', (e) => {
-        // Wir prüfen auf den Namen der Konfetti-Animation
-        if (e.animationName === 'zoom-fade-in') {
-            turnDisplay.classList.add('hidden');
+        setTimeout(() => {
+            appContainer.style.backgroundColor = 'var(--player1-color)';
+            logoButton.classList.add('hidden');
             showDiceScreen();
-        }
-    }, { once: true });
-}
+        }, 800);
+    }
 
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
