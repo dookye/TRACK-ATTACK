@@ -610,6 +610,32 @@ body, html {
     opacity: 0;
 }
 
+    @keyframes zoom-fade-in {
+    /* 0% bis 10%: Der "Abschuss" der Konfettikanone */
+    0% { 
+        transform: translate(-50%, -50%) scale(0.1); 
+        opacity: 0; 
+        filter: brightness(2); /* Kurzer Lichtblitz beim Start */
+    }
+    10% { 
+        transform: translate(-50%, -50%) scale(1.15); /* Schießt über das Ziel hinaus */
+        opacity: 1; 
+        filter: brightness(1);
+    }
+    
+    /* 10% bis 80%: Das "Rieseln" - ganz langsame Bewegung */
+    80% { 
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1; 
+    }
+    
+    /* 80% bis 100%: Sanftes Verschwinden */
+    100% { 
+        transform: translate(-50%, -50%) scale(0.95); 
+        opacity: 0; 
+    }
+}
+
 @keyframes attackthetrack-fade-in {
     /* --- PHASE 1: HEFTIGES START-CHAOS (0% - 20%) --- */
     0%   { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 0; }
@@ -727,32 +753,6 @@ body, html {
     80% { transform: translate(-50%, -50%) scale(1); }
     100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
 } */
-
-@keyframes zoom-fade-in {
-    /* 0% bis 10%: Der "Abschuss" der Konfettikanone */
-    0% { 
-        transform: translate(-50%, -50%) scale(0.1); 
-        opacity: 0; 
-        filter: brightness(2); /* Kurzer Lichtblitz beim Start */
-    }
-    10% { 
-        transform: translate(-50%, -50%) scale(1.15); /* Schießt über das Ziel hinaus */
-        opacity: 1; 
-        filter: brightness(1);
-    }
-    
-    /* 10% bis 80%: Das "Rieseln" - ganz langsame Bewegung */
-    80% { 
-        transform: translate(-50%, -50%) scale(1); 
-        opacity: 1; 
-    }
-    
-    /* 80% bis 100%: Sanftes Verschwinden */
-    100% { 
-        transform: translate(-50%, -50%) scale(0.95); 
-        opacity: 0; 
-    }
-}
 
 @keyframes points-fade-in-zoom {
   0% {
