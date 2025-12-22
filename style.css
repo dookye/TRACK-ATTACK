@@ -837,7 +837,7 @@ body, html {
 
 /* ------------- Genre-Startauswahl ------------------ */
 /* --- NEU: Basis-Stile für den Start-Genre-Container --- */
-#start-genre-selection-container {
+/* #start-genre-selection-container {
     position: absolute;
     left: 0; /* Links positioniert */
     top: 10%; 
@@ -858,6 +858,32 @@ body, html {
     -webkit-overflow-scrolling: touch; /* Flüssiges Scrollen auf iOS */
     scrollbar-width: none; /* Scrollbar verstecken (Firefox) */
     -ms-overflow-style: none; /* Scrollbar verstecken (IE/Edge) */
+} */
+
+#start-genre-selection-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Volle Bildschirmhöhe */
+    overflow: hidden;
+}
+
+.genre-controls-top {
+    flex-shrink: 0; /* Verhindert das Schrumpfen */
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+    background: rgba(0,0,0,0.5); /* Optional: Abhebung vom Hintergrund */
+    z-index: 10;
+}
+
+#all-genres-scrollbox {
+    flex-grow: 1;
+    overflow-y: auto; /* Scrollbar machen */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center; /* Mittige Ausrichtung der Buttons */
+    padding: 20px;
 }
 
 /* Für Webkit-Browser (Chrome, Safari) Scrollbar verstecken */
@@ -883,11 +909,11 @@ body, html {
     border-radius: 10px;
 }
 
-.preselect-genre-button:hover {
+/* .preselect-genre-button:hover {
     transform: scale(1.03);
     background-color: var(--white);
     color: var(--black);
-}
+} */
 
 /* Stil für ausgewählte Genre-Buttons */
 .preselect-genre-button.selected {
