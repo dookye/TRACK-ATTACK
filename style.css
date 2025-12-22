@@ -244,48 +244,6 @@ body, html {
     pointer-events: none;
 }
 
-#start-genre-selection-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    height: 100vh; /* Ganze Höhe */
-    padding: 20px 0; /* Abstand zum Rand oben/unten */
-    box-sizing: border-box;
-}
-
-#select-all-genres-btn, #confirm-genre-selection-btn {
-    padding: 15px 40px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-/* "Select All" oben */
-#select-all-genres-btn {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid white;
-}
-
-/* "Lock it in" unten */
-#confirm-genre-selection-btn {
-    background: #1DB954; /* Spotify-Grün */
-    color: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-
-/* Inaktiver Zustand */
-#confirm-genre-selection-btn:disabled {
-    background: #555;
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: scale(0.95);
-}
-
 /* Würfel Container */
 #dice-container {
     display: flex;
@@ -555,70 +513,6 @@ body, html {
     align-items: center;
 }
 
-#set-the-stage-display {
-    /* Deine bestehenden Layout-Styles */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90vw;
-    height: 90vh;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    z-index: 20;
-    pointer-events: none;
-    animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
-    opacity: 0;
-}
-
-/* --- Bild für Hochformat (Portrait) --- */
-@media screen and (orientation: portrait) {
-    #set-the-stage-display {
-        background-image: url('assets/s-t-s.png');
-    }
-}
-
-/* --- Bild für Querformat (Landscape) --- */
-@media screen and (orientation: landscape) {
-    #set-the-stage-display {
-        background-image: url('assets/s-t-s-quer.png');
-    }
-}
-
-#player-turn-display {
-    /* Deine bestehenden Layout-Styles */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90vw;
-    height: 90vh;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    z-index: 20;
-    pointer-events: none;    
-    animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
-    opacity: 0;
-}
-
-/* --- LOGIK FÜR BLAU --- */
-@media screen and (orientation: portrait) {
-    .blue-turn { background-image: url('assets/blue-up.png'); }
-}
-@media screen and (orientation: landscape) {
-    .blue-turn { background-image: url('assets/blue-up-quer.png'); }
-}
-
-/* --- LOGIK FÜR PINK --- */
-@media screen and (orientation: portrait) {
-    .pink-turn { background-image: url('assets/pink-up.png'); }
-}
-@media screen and (orientation: landscape) {
-    .pink-turn { background-image: url('assets/pink-up-quer.png'); }
-}
-
 #speed-round-text-display {
     /* Deine bestehenden Layout-Styles */
     position: absolute;
@@ -634,23 +528,10 @@ body, html {
     pointer-events: none;
 
     /* Animation: Wir nutzen 'linear', damit das Zittern gleichmäßig schnell bleibt */
-    animation: attackthetrack-fade-in 4s linear forwards; */
-    /* animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
+    /* animation: attackthetrack-fade-in 4s linear forwards; */
+    
+    animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
     opacity: 0;
-}
-
-    /* --- Bild für Hochformat (Portrait) --- */
-@media screen and (orientation: portrait) {
-    #speed-round-text-display {
-        background-image: url('assets/a-t-t.png');
-    }
-}
-
-/* --- Bild für Querformat (Landscape) --- */
-@media screen and (orientation: landscape) {
-    #speed-round-text-display {
-        background-image: url('assets/a-t-t-quer.png');
-    }
 }
 
 @keyframes attackthetrack-fade-in {
@@ -686,6 +567,20 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1.0) rotate(0deg); opacity: 0; }
 }
 
+/* --- Bild für Hochformat (Portrait) --- */
+@media screen and (orientation: portrait) {
+    #speed-round-text-display {
+        background-image: url('assets/a-t-t.png');
+    }
+}
+
+/* --- Bild für Querformat (Landscape) --- */
+@media screen and (orientation: landscape) {
+    #speed-round-text-display {
+        background-image: url('assets/a-t-t-quer.png');
+    }
+}
+
 /* Countdown-Anzeige (bleibt so groß und animiert) */
 #countdown-display {
     position: absolute;
@@ -719,7 +614,16 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } /* Wieder kleiner werden und ausblenden */
 }
 
-    @keyframes zoom-fade-in {
+/* Amnimation für Zwischenscreens */
+/* @keyframes zoom-fade-in {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    80% { transform: translate(-50%, -50%) scale(1); }
+    100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+} */
+
+/* ne andere animation für zwischenscreen */
+/* @keyframes zoom-fade-in {
     /* 0% bis 10%: Der "Abschuss" der Konfettikanone */
     0% { 
         transform: translate(-50%, -50%) scale(0.1); 
@@ -743,14 +647,6 @@ body, html {
         transform: translate(-50%, -50%) scale(0.95); 
         opacity: 0; 
     }
-}
-
-/* Amnimation für Zwischenscreens */
-/* @keyframes zoom-fade-in {
-    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-    20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-    80% { transform: translate(-50%, -50%) scale(1); }
-    100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
 } */
 
 @keyframes points-fade-in-zoom {
