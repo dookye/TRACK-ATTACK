@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // NEU: Zeige die Genre-Vorauswahl an und rendere die Buttons
-        // startGenreSelectionContainer.classList.remove('hidden');           ---------- kann entfernt werden
+        startGenreSelectionContainer.classList.remove('hidden');
         // Genres nur beim ersten Start oder nach einem Reset neu rendern
         if (allGenresScrollbox.children.length === 0) { // Vermeidet redundantes Rendern
             renderPreselectionGenres();
@@ -584,76 +584,48 @@ document.addEventListener('DOMContentLoaded', () => {
         element.classList.add('bounce');
     }
 
-function showGenreSelectionScreen() {
-    triggerBounce(logoButton);
-    
-    // Kleiner Delay für die Animation
-    setTimeout(() => {
-        logoButton.classList.add('hidden');
-        startGenreSelectionContainer.classList.remove('hidden');
+// KORRIGIERT: startGame-Funktion (VERWENDET {once: true} VON startGameAfterOrientation)
+    async function startGame() {
+
+        logoButton.classList.add('inactive'); // Button wird unklickbar/inaktiv
+        logoButton.classList.remove('logo-pulsing'); // Pulsing stoppen
+		triggerBounce(logoButton);
         
-        // Initialer Check, falls schon Genres (z.B. durch Speicherstand) gewählt sind
-        updateSetTheStageButtonState(); 
-    }, 400);
-}
+        // Player nur initialisieren, wenn wir noch keine deviceId haben.
+        if (!deviceId) {
+            try {
+                console.log("Initialisiere Spotify Player durch Benutzerklick...");
+                await initializePlayer();
+                console.log("Player erfolgreich initialisiert und verbunden.");
 
-	// --- Funktion: Genre auswählen/abwählen ---
-function toggleGenreSelection(genreName, buttonElement) {
-    const index = gameState.selectedPlayableGenres.indexOf(genreName);
+                // --- WICHTIG: DER iOS-FIX ---
+                console.log("Versuche, den Player aufzuwecken (resume)...");
+                await spotifyPlayer.resume();
+                console.log("Player erfolgreich aufgeweckt.");
 
-    if (index > -1) {
-        gameState.selectedPlayableGenres.splice(index, 1);
-        buttonElement.classList.remove('selected');
-    } else {
-        gameState.selectedPlayableGenres.push(genreName);
-        buttonElement.classList.add('selected');
-    }
-    
-    // Status des "Set the Stage" Buttons aktualisieren
-    updateSetTheStageButtonState();
-}
-
-// --- NEU: Button-Zustand prüfen ---
-function updateSetTheStageButtonState() {
-    const setStageBtn = document.getElementById('set-the-stage-button');
-    const minGenres = 3;
-    
-    if (gameState.selectedPlayableGenres.length >= minGenres) {
-        setStageBtn.disabled = false;
-        setStageBtn.classList.add('active-green'); // CSS Klasse für grünes Design
-        setStageBtn.classList.remove('disabled-gray');
-    } else {
-        setStageBtn.disabled = true;
-        setStageBtn.classList.remove('active-green');
-        setStageBtn.classList.add('disabled-gray');
-    }
-}
-
-	// Event Listener für den neuen Button (einmalig beim App-Start zuweisen)
-document.getElementById('set-the-stage-button').addEventListener('click', proceedToDiceScreen);
-
-async function proceedToDiceScreen() {
-    const setStageBtn = document.getElementById('set-the-stage-button');
-    setStageBtn.classList.add('loading'); // Optional: Feedback
-
-    // Player initialisieren (falls noch nicht geschehen)
-    if (!deviceId) {
-        try {
-            await initializePlayer();
-            await spotifyPlayer.resume();
-        } catch (error) {
-            console.error("Player Error:", error);
-            alert("Fehler beim Starten des Players.");
-            return;
+            } catch (error) {
+                console.error("Fehler bei der Player-Initialisierung oder beim Aufwecken:", error);
+                alert("Der Spotify Player konnte nicht gestartet werden. Bitte stelle sicher, dass du Spotify Premium hast und lade die Seite neu. Fehlermeldung: " + error);
+                
+                // Füge den Listener wieder hinzu, da die Funktion abgebrochen wird,
+                // ABER {once: true} ihn bereits entfernt hat.
+                logoButton.addEventListener('click', startGame, { once: true }); 
+                logoButton.classList.remove('inactive');
+                logoButton.classList.add('logo-pulsing'); // Pulsing wieder starten
+                return; // Breche die Funktion ab, wenn es fehlschlägt.
+            }
         }
+        
+        lastGameScreenVisible = 'logo-button';
+        startGenreSelectionContainer.classList.add('hidden');
+
+        setTimeout(() => {
+            appContainer.style.backgroundColor = 'var(--player1-color)';
+            logoButton.classList.add('hidden');
+            showDiceScreen();
+        }, 800);
     }
 
-    // Wechsel zum Würfel-Screen
-    startGenreSelectionContainer.classList.add('hidden');
-    appContainer.style.backgroundColor = 'var(--player1-color)';
-    showDiceScreen();
-}
-	
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
     //=======================================================================
