@@ -572,6 +572,20 @@ body, html {
     opacity: 0;
 }
 
+/* --- Bild für Hochformat (Portrait) --- */
+@media screen and (orientation: portrait) {
+    #set-the-stage-display {
+        background-image: url('assets/s-t-s.png');
+    }
+}
+
+/* --- Bild für Querformat (Landscape) --- */
+@media screen and (orientation: landscape) {
+    #set-the-stage-display {
+        background-image: url('assets/s-t-s-quer.png');
+    }
+}
+
 #player-turn-display {
     /* Deine bestehenden Layout-Styles */
     position: absolute;
@@ -587,6 +601,22 @@ body, html {
     pointer-events: none;    
     animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
     opacity: 0;
+}
+
+/* --- LOGIK FÜR BLAU --- */
+@media screen and (orientation: portrait) {
+    .blue-turn { background-image: url('assets/blue-up.png'); }
+}
+@media screen and (orientation: landscape) {
+    .blue-turn { background-image: url('assets/blue-up-quer.png'); }
+}
+
+/* --- LOGIK FÜR PINK --- */
+@media screen and (orientation: portrait) {
+    .pink-turn { background-image: url('assets/pink-up.png'); }
+}
+@media screen and (orientation: landscape) {
+    .pink-turn { background-image: url('assets/pink-up-quer.png'); }
 }
 
 #speed-round-text-display {
@@ -609,29 +639,17 @@ body, html {
     opacity: 0;
 }
 
-    @keyframes zoom-fade-in {
-    /* 0% bis 10%: Der "Abschuss" der Konfettikanone */
-    0% { 
-        transform: translate(-50%, -50%) scale(0.1); 
-        opacity: 0; 
-        filter: brightness(2); /* Kurzer Lichtblitz beim Start */
+    /* --- Bild für Hochformat (Portrait) --- */
+@media screen and (orientation: portrait) {
+    #speed-round-text-display {
+        background-image: url('assets/a-t-t.png');
     }
-    10% { 
-        transform: translate(-50%, -50%) scale(1.15); /* Schießt über das Ziel hinaus */
-        opacity: 1; 
-        filter: brightness(1);
-    }
-    
-    /* 10% bis 80%: Das "Rieseln" - ganz langsame Bewegung */
-    80% { 
-        transform: translate(-50%, -50%) scale(1); 
-        opacity: 1; 
-    }
-    
-    /* 80% bis 100%: Sanftes Verschwinden */
-    100% { 
-        transform: translate(-50%, -50%) scale(0.95); 
-        opacity: 0; 
+}
+
+/* --- Bild für Querformat (Landscape) --- */
+@media screen and (orientation: landscape) {
+    #speed-round-text-display {
+        background-image: url('assets/a-t-t-quer.png');
     }
 }
 
@@ -668,50 +686,6 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1.0) rotate(0deg); opacity: 0; }
 }
 
-/* --- Bild für Hochformat (Portrait) --- */
-@media screen and (orientation: portrait) {
-    #set-the-stage-display {
-        background-image: url('assets/s-t-s.png');
-    }
-}
-
-/* --- Bild für Querformat (Landscape) --- */
-@media screen and (orientation: landscape) {
-    #set-the-stage-display {
-        background-image: url('assets/s-t-s-quer.png');
-    }
-}
-
-/* --- LOGIK FÜR BLAU --- */
-@media screen and (orientation: portrait) {
-    .blue-turn { background-image: url('assets/blue-up.png'); }
-}
-@media screen and (orientation: landscape) {
-    .blue-turn { background-image: url('assets/blue-up-quer.png'); }
-}
-
-/* --- LOGIK FÜR PINK --- */
-@media screen and (orientation: portrait) {
-    .pink-turn { background-image: url('assets/pink-up.png'); }
-}
-@media screen and (orientation: landscape) {
-    .pink-turn { background-image: url('assets/pink-up-quer.png'); }
-}
-
-/* --- Bild für Hochformat (Portrait) --- */
-@media screen and (orientation: portrait) {
-    #speed-round-text-display {
-        background-image: url('assets/a-t-t.png');
-    }
-}
-
-/* --- Bild für Querformat (Landscape) --- */
-@media screen and (orientation: landscape) {
-    #speed-round-text-display {
-        background-image: url('assets/a-t-t-quer.png');
-    }
-}
-
 /* Countdown-Anzeige (bleibt so groß und animiert) */
 #countdown-display {
     position: absolute;
@@ -743,6 +717,32 @@ body, html {
     20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } /* Kurz größer werden und sichtbar */
     80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } /* Wieder kleiner werden und ausblenden */
+}
+
+    @keyframes zoom-fade-in {
+    /* 0% bis 10%: Der "Abschuss" der Konfettikanone */
+    0% { 
+        transform: translate(-50%, -50%) scale(0.1); 
+        opacity: 0; 
+        filter: brightness(2); /* Kurzer Lichtblitz beim Start */
+    }
+    10% { 
+        transform: translate(-50%, -50%) scale(1.15); /* Schießt über das Ziel hinaus */
+        opacity: 1; 
+        filter: brightness(1);
+    }
+    
+    /* 10% bis 80%: Das "Rieseln" - ganz langsame Bewegung */
+    80% { 
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1; 
+    }
+    
+    /* 80% bis 100%: Sanftes Verschwinden */
+    100% { 
+        transform: translate(-50%, -50%) scale(0.95); 
+        opacity: 0; 
+    }
 }
 
 /* Amnimation für Zwischenscreens */
