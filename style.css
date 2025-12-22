@@ -604,8 +604,7 @@ body, html {
     pointer-events: none;
 
     /* Animation: Wir nutzen 'linear', damit das Zittern gleichmäßig schnell bleibt */
-    /* animation: attackthetrack-fade-in 4s linear forwards; */
-    animation: attackthetrack-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
+    animation: attackthetrack-fade-in 4s linear forwards; */
     /* animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
     opacity: 0;
 }
