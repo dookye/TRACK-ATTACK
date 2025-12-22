@@ -532,27 +532,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 }
     // --- NETZWERK - ENDE ---------------- 
-
-function startSetTheStage() {
-    const stsDisplay = document.getElementById('set-the-stage-display');
-    
-    // 1. Bild-DIV anzeigen (löst die CSS-Animation zoom-fade-in aus)
-    stsDisplay.classList.remove('hidden');
-
-    // 2. Sound abspielen (optional, falls du einen "Impact"-Sound willst)
-    // if (speedRoundSound) speedRoundSound.play(); 
-
-    // 3. Warten, bis die Animation vorbei ist
-    stsDisplay.addEventListener('animationend', () => {
-        stsDisplay.classList.add('hidden'); // Bild wieder weg
-        
-        // 4. Jetzt erst die Genre-Auswahl zeigen
-        startGenreSelectionContainer.classList.remove('hidden');
-        if (allGenresScrollbox.children.length === 0) {
-            renderPreselectionGenres();
-        }
-    }, { once: true });
-}
 	
 // --- Funktion: Prüfen, ob genug Genres gewählt sind (Hilfsfunktion) ---
 function updateConfirmButtonState() {
@@ -587,7 +566,7 @@ confirmBtn.addEventListener('click', () => {
     
     setTimeout(() => {
         startGenreSelectionContainer.classList.add('hidden');
-        showPlayerTurnScreen(); // Wechsel zum nächsten Screen
+        showDiceScreen(); // Wechsel zum nächsten Screen
     }, 200);
 });
 
@@ -663,35 +642,8 @@ async function startGame() {
     setTimeout(() => {
         // HIER: Hintergrundfarbe-Änderung entfernt!
         logoButton.classList.add('hidden');
-        startSetTheStage(); 
+        renderPreselectionGenres(); 
     }, 800);
-}
-
-function showPlayerTurnScreen() {
-    const turnDisplay = document.getElementById('player-turn-display');
-    const currentPlayer = gameState.currentPlayer; // Erwartet "player1" oder "player2"
-    
-    // 1. Hintergrundfarbe setzen
-    const playerColor = currentPlayer === 'player1' ? 'var(--player1-color)' : 'var(--player2-color)';
-    appContainer.style.backgroundColor = playerColor;
-
-    // 2. Klassen säubern und die richtige zuweisen
-    turnDisplay.classList.remove('blue-turn', 'pink-turn', 'hidden');
-    
-    if (currentPlayer === 'player1') {
-        turnDisplay.classList.add('blue-turn');
-    } else {
-        turnDisplay.classList.add('pink-turn');
-    }
-
-    // 3. Animation abwarten
-    turnDisplay.addEventListener('animationend', (e) => {
-        // Wir prüfen auf den Namen der Konfetti-Animation
-        if (e.animationName === 'zoom-fade-in') {
-            turnDisplay.classList.add('hidden');
-            showDiceScreen();
-        }
-    }, { once: true });
 }
 
     //=======================================================================
