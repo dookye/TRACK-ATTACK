@@ -561,15 +561,33 @@ selectAllBtn.addEventListener('click', () => {
 
 // LOCK IT IN Logik
 confirmBtn.addEventListener('click', () => {
-    // Kurzer Bounce-Effekt beim Klicken
-    triggerBounce(confirmBtn);
-    
-    setTimeout(() => {
-        startGenreSelectionContainer.classList.add('hidden');
-        showDiceScreen(); // Wechsel zum nächsten Screen
-    }, 200);
+    if (gameState.selectedPlayableGenres.length >= 3) {
+        triggerBounce(confirmBtn);
+        
+        setTimeout(() => {
+            startGenreSelectionContainer.classList.add('hidden');
+            
+            // Setzt die Spielerfarbe und leitet dann automatisch 
+            // per 'animationend' zu showDiceScreen() weiter
+            showDiceScreen(); 
+        }, 200);
+    }
 });
 
+// Hilfsfunktion zum Prüfen der Button-Aktivierung
+function updateConfirmButtonState() {
+    const count = gameState.selectedPlayableGenres.length;
+    if (count >= 3) {
+        confirmBtn.disabled = false;
+        confirmBtn.classList.add('active');
+        confirmBtn.style.opacity = "1"; // Sicherstellen, dass er sichtbar ist
+    } else {
+        confirmBtn.disabled = true;
+        confirmBtn.classList.remove('active');
+        confirmBtn.style.opacity = "0.5";
+    }
+}
+	
 // --- Deine angepasste Render-Funktion ---
 function renderPreselectionGenres() {
     allGenresScrollbox.innerHTML = '';
@@ -630,6 +648,7 @@ async function startGame() {
     if (!deviceId) {
         try {
             await initializePlayer();
+            // Player kurz anspielen/pausieren um Interaktion zu registrieren
             await spotifyPlayer.resume();
         } catch (error) {
             console.error(error);
@@ -640,10 +659,41 @@ async function startGame() {
     lastGameScreenVisible = 'logo-button';
 
     setTimeout(() => {
-        // HIER: Hintergrundfarbe-Änderung entfernt!
         logoButton.classList.add('hidden');
-        renderPreselectionGenres(); 
+        
+        // DIREKTER WECHSEL zur Genre-Auswahl statt startSetTheStage()
+        startGenreSelectionContainer.classList.remove('hidden');
+        if (allGenresScrollbox.children.length === 0) {
+            renderPreselectionGenres();
+        }
     }, 800);
+}
+
+function showPlayerTurnScreen() {
+    const turnDisplay = document.getElementById('player-turn-display');
+    const currentPlayer = gameState.currentPlayer; // Erwartet "player1" oder "player2"
+    
+    // 1. Hintergrundfarbe setzen
+    const playerColor = currentPlayer === 'player1' ? 'var(--player1-color)' : 'var(--player2-color)';
+    appContainer.style.backgroundColor = playerColor;
+
+    // 2. Klassen säubern und die richtige zuweisen
+    turnDisplay.classList.remove('blue-turn', 'pink-turn', 'hidden');
+    
+    if (currentPlayer === 'player1') {
+        turnDisplay.classList.add('blue-turn');
+    } else {
+        turnDisplay.classList.add('pink-turn');
+    }
+
+    // 3. Animation abwarten
+    turnDisplay.addEventListener('animationend', (e) => {
+        // Wir prüfen auf den Namen der Konfetti-Animation
+        if (e.animationName === 'zoom-fade-in') {
+            turnDisplay.classList.add('hidden');
+            showDiceScreen();
+        }
+    }, { once: true });
 }
 
     //=======================================================================
