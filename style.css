@@ -623,7 +623,7 @@ body, html {
 } */
 
 /* ne andere animation für zwischenscreen */
-/* @keyframes zoom-fade-in {
+ @keyframes zoom-fade-in {
     /* 0% bis 10%: Der "Abschuss" der Konfettikanone */
     0% { 
         transform: translate(-50%, -50%) scale(0.1); 
@@ -647,7 +647,7 @@ body, html {
         transform: translate(-50%, -50%) scale(0.95); 
         opacity: 0; 
     }
-} */
+} 
 
 @keyframes points-fade-in-zoom {
   0% {
