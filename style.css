@@ -801,9 +801,6 @@ body, html {
 /* ------------- Genre-Startauswahl ------------------ */
 /* --- NEU: Basis-Stile für den Start-Genre-Container --- */
 
-
-
-
 #start-genre-selection-container {
     display: flex;
     flex-direction: column;
