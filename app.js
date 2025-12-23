@@ -117,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Buttons Genre-Vorabwahl
 	const selectAllBtn = document.getElementById('select-all-genres-btn');
     const confirmBtn = document.getElementById('confirm-genre-selection-btn');
+	const selectionList = document.getElementById('selectionList');
 
     // --- Spielstatus-Variablen ---
     let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
@@ -2120,9 +2121,10 @@ let pointsAwarded = 0;
       //  allGenresScrollbox.innerHTML = '';
 
 		// Falls dein Rad durch eine globale Variable gesteuert wird, setze sie zurück
-        isWheelActive = false; 
+        isWheelActive = false;
+		gameState.selectedPlayableGenres = [];
         // Falls das Rad das Spiel überlagert:
-        allGenresScrollbox.innerHTML = '';
+        selectionList.innerHTML = '';
 
         // Zurück zum Start (ohne Einflug-Animation)
         gameScreen.classList.remove('hidden');
