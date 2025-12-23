@@ -2092,6 +2092,7 @@ let pointsAwarded = 0;
 
 		if (startGenreSelectionContainer) {
         startGenreSelectionContainer.classList.add('hidden'); 
+		startGenreSelectionContainer.style.display = 'none';
         }
 
 		appContainer.style.backgroundColor = 'var(--black)';
