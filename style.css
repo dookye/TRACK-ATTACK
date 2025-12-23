@@ -801,76 +801,118 @@ body, html {
 /* ------------- Genre-Startauswahl ------------------ */
 /* --- NEU: Basis-Stile für den Start-Genre-Container --- */
 
+/* --- GENRE WHEEL SYSTEM --- */
+
+/* Der Hauptcontainer für die Auswahl */
 #start-genre-selection-container {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
-    height: 100vh; /* Volle Bildschirmhöhe 
-    overflow: hidden;
+    align-items: center;
+    background-color: #000000;
+    z-index: 50;
 }
 
-.genre-controls-top {
-    flex-shrink: 0; /* Verhindert das Schrumpfen */
+/* Der Bereich für die Buttons oben (Select All / Set the Stage) */
+.genre-header-controls {
+    height: 120px;
+    width: 100%;
     display: flex;
-    justify-content: space-around;
-    padding: 20px;
-    background: rgba(0,0,0,0.5); /* Optional: Abhebung vom Hintergrund */
-    z-index: 10;
-}
-
-#all-genres-scrollbox {
-    flex-grow: 1;
-    overflow-y: auto; /* Scrollbar machen */
-    display: flex;
-    flex-wrap: wrap;
     justify-content: center;
-    align-content: center; /* Mittige Ausrichtung der Buttons */
-    padding: 20px;
+    align-items: center;
+    gap: 20px;
+    z-index: 60;
+    background: linear-gradient(to bottom, #000 70%, transparent);
 }
 
-/* Für Webkit-Browser (Chrome, Safari) Scrollbar verstecken */
-#start-genre-selection-container::-webkit-scrollbar {
+/* Styling für deine Header-Buttons */
+#select-all-genres-btn, #confirmBtn {
+    padding: 12px 25px;
+    border-radius: 9999px;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+#select-all-genres-btn {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+}
+
+#confirmBtn {
+    background: white;
+    color: black;
+    border: 2px solid white;
+}
+
+/* Zustand für deaktivierten Button */
+#confirmBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: scale(0.95);
+}
+
+/* DER SCROLL-BEREICH */
+.scrolling-container {
+    width: 100%;
+    flex-grow: 1; /* Nimmt den restlichen Platz ein */
+    overflow-y: scroll;
+    position: relative;
+    -webkit-overflow-scrolling: touch; /* Flüssiges Scrollen auf iOS */
+}
+
+/* Versteckt die Scrollbar */
+.scrolling-container::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
     display: none;
 }
 
-/* --- NEU: Stile für die Genre-Buttons in der Vorauswahl --- */
-.preselect-genre-button {
-    background-color: var(--black); /* Hintergrundfarbe für "unausgewählt" */
-    margin-bottom: 30px; /* Abstand zwischen den Buttons */
-    transition: all 0.2s ease-in-out; /* Übergänge für visuelles Feedback */
-    width: 90%; /* Volle Breite im Container */
-    padding: 20px 30px;
-    text-align: center;
-    flex-shrink: 0; 
-    font-size: 1.2em;
+/* Die Liste innerhalb des Containers */
+#selectionList {
+    width: 100%;
+    position: relative;
+}
+
+/* Die einzelnen Genre-Einträge */
+.list-item {
+    position: absolute;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    will-change: transform, opacity;
+    pointer-events: auto;
     cursor: pointer;
-    border: 2px solid var(--white);
-    background: transparent;
-    color: var(--white);
-    transition: background-color 0.3s, color 0.3s;
-    border-radius: 10px;
 }
 
-/* .preselect-genre-button:hover {
-    transform: scale(1.03);
-    background-color: var(--white);
-    color: var(--black);
-} */
-
-/* Stil für ausgewählte Genre-Buttons */
-.preselect-genre-button.selected {
-    background-color: var(--white); /* Beispiel: Player1-Farbe für "ausgewählt" */
-    border-color: var(--black);
-    color: var(--black);
+/* Das visuelle Label (der "Button"-Look) */
+.genre-label {
+    padding: 10px 40px;
+    border-radius: 9999px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    display: inline-block;
+    white-space: nowrap;
 }
 
-/* Optional: Titel für die Sektion */
-#start-genre-selection-container h3 {
-    color: var(--white);
-    margin-bottom: 20px;
-    font-size: 1.4em;
-    text-align: center;
+/* SELECTED STATE: Wenn ein Genre angeklickt wurde */
+.list-item.selected .genre-label {
+    background-color: white;
+    color: black !important;
+    border-color: white;
+    font-weight: 900;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
 }
 
+/* Touch-Feedback */
+.list-item:active .genre-label {
+    transform: scale(0.9);
+    opacity: 0.7;
+}
 /* ---- tracki tacki -----
 /* --- NEU: Tracki-Tacki-Button Basis-Styles (Punkt 1, 2, 6) --- */
 #tracki-tacki-button {
