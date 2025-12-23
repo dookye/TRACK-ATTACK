@@ -1,45 +1,55 @@
-/* ================= GLOBAL RESET ================= */
+/* Globale Entfernung des Tap-Highlights und der Outline */
 * {
-    -webkit-tap-highlight-color: transparent;
-    outline: none;
+    -webkit-tap-highlight-color: transparent; /* Für WebKit-Browser (iOS Safari, Android Chrome) */
+    outline: none; /* Entfernt den Fokus-Rahmen */
 }
 
+/* Optional: Spezifisch für Buttons, falls das globale * nicht ausreicht oder unerwünschte Nebeneffekte hat */
 button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button {
     -webkit-tap-highlight-color: transparent;
     outline: none;
 }
 
-/* ================= BUTTON PRESS EFFECT ================= */
+/* Genereller Stil für interaktive Buttons für den Pulldown-Effekt */
+/* Betrifft AUFLÖSEN, RICHTIG, FALSCH und alle GENRE-BUTTONS */
+
+/* WICHTIG: Füge eine Transition hinzu, damit die Skalierung weich erfolgt */
+/* Dies kannst du entweder global für alle Buttons oder spezifisch tun */
+
+/* Beispiel für alle Buttons, die diesen Effekt haben sollen */
 .genre-button,
-#reveal-button,
-#correct-button,
-#wrong-button,
-.dice-option {
-    transition: transform 0.06s ease-out;
-    cursor: pointer;
+#reveal-button, /* AUFLÖSEN-Button */
+#correct-button, /* RICHTIG-Button */
+#wrong-button, /* FALSCH-Button */
+.dice-option /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
+{
+    transition: transform 0.06s ease-out; /* Kurze, sanfte Animation */
+    cursor: pointer; /* Zeigt an, dass das Element klickbar ist */
 }
 
+/* Der eigentliche Pulldown-Effekt beim Klicken */
 .genre-button:active,
 #reveal-button:active,
 #correct-button:active,
 #wrong-button:active,
-.dice-option:active {
-    transform: scale(0.95);
+.dice-option:active
+{
+    transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
 }
 
-/* ================= ROOT ================= */
+/* Grundlegende Stile & Variablen */
 :root {
-    --player1-color: #1197d0;
-    --player2-color: #e83e8c;
-    --punktefarbe-player1: #fff;
-    --punktefarbe-player2: #fff;
+    --player1-color: #1197d0; /* Blau (alt #007bff*/
+    --player2-color: #e83e8c; /* Pink */
+    --punktefarbe-player1: #fff; /* weiss */
+    --punktefarbe-player2: #fff; /* weiss */
     --black: #000;
     --white: #fff;
     --transition-speed: 0.8s;
 }
 
-/* ================= BODY ================= */
-html, body {
+/* Phase 1.1: Body & Seiten-Setup */
+body, html {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -51,95 +61,851 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    user-select: none;
+    text-align: center;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none;    /* Safari */
+    -khtml-user-select: none;     /* Konqueror HTML */
+    -moz-user-select: none;       /* Old versions of Firefox */
+    -ms-user-select: none;        /* Internet Explorer/Edge */
+    user-select: none;            /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+
+    -webkit-user-drag: none; /* Spezifisch für WebKit (Chrome, Safari, Edge auf iOS) */
+    -moz-user-drag: none;    /* Für Firefox */
+    user-drag: none;         /* Standard */
+
+    touch-action: pan-x pan-y; /* Erlaubt Panning/Scrolling. Auf 'none' setzen, um alles zu blockieren. */
+    /* Alternative für touch-action: */
+    /* touch-action: none; */ /* Blockiert ALLE Touch-Gesten (Panning, Zoom, etc.). SEHR VORSICHTIG ANWENDEN! */
 }
 
-/* ================= APP ================= */
 #app-container {
     width: 100%;
     height: 100%;
     position: relative;
     overflow: hidden;
+    transition: background-color var(--transition-speed) ease-in-out;
 }
 
 .screen {
     width: 100%;
     height: 100%;
-    position: absolute;
-    inset: 0;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#login-screen {
+    /* Deine bestehenden Styles, z.B. */
+    display: flex;
+    flex-direction: column; /* Wichtig, damit die Elemente untereinander stehen */
+    justify-content: center; /* center Zentriert vertikal, wenn genug Platz ist */
+    align-items: center; /* Zentriert horizontal */
+    text-align: center;
+    padding: 20px; /* Füge etwas Polsterung hinzu */
+    box-sizing: border-box; /* Stellt sicher, dass Padding zur Größe beiträgt */
+
+    /* Die wichtigen neuen Eigenschaften für Scrollbarkeit: */
+    height: 100vh; /* (100vh Nimmt die volle Viewport-Höhe ein) */
+    overflow-y: auto; /* Ermöglicht vertikales Scrollen, wenn Inhalt die Höhe übersteigt */
+    -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS */
 }
 
 .hidden {
     display: none !important;
 }
 
-/* ================= GENRE CONTAINER ================= */
-#genre-container {
+/* Overlay für Hochformat & Vollbild */
+/* .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--black);
+    z-index: 9999;
     display: flex;
-    flex-wrap: wrap;
     justify-content: center;
-    gap: 16px;
-    padding: 20px;
-    max-height: 95vh;
-    overflow-y: auto;
-    scrollbar-width: none;
+    align-items: center;
+    font-size: 1.5em;
+} */
+
+/* Stil für das Logo auf dem Login-Screen */
+#login-logo {
+    width: 250px; /* Passe die Breite an deine Bedürfnisse an */
+    height: auto;
+    margin-bottom: 10px; /* Abstand zum Text darunter */
 }
 
+.info-button {
+    display: inline-block; /* Ermöglicht Padding und Margin */
+    margin-top: 20px; /* Abstand nach oben */
+    cursor: pointer;
+    transition: transform 0.2s ease; /* Kleine Animation beim Hover */
+}
+
+.info-button:hover {
+    transform: scale(1.05); /* Beim Hover leicht größer werden */
+}
+
+.info-button img {
+    width: 50px; /* Größe deines Info-Icons, anpassen */
+    height: 50px;
+    display: block; /* Entfernt zusätzlichen Platz unter dem Bild */
+    margin-bottom: 20px;
+}
+
+/* Login-Button (Phase 1.1) */
+#login-button {
+    background-color: #1DB954;
+    color: var(--white);
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+#login-button img {
+    height: 24px;
+}
+
+/* Logo-Button & Animationen (Phase 1.4 & 2.1) */
+#logo-button {
+    width: 200px;
+    height: auto;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 110;
+    /* NEU: Stellt sicher, dass Schatten außerhalb des Bildes sichtbar ist */
+    box-sizing: border-box;
+}
+
+.initial-fly-in {
+    animation: fly-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
+                bounce-end 0.3s 0.6s ease-out forwards;
+}
+
+@keyframes fly-in {
+    0% {
+        /* Start: Groß und unsichtbar */
+        transform: translate(-50%, -50%) scale(12);
+        opacity: 0;
+    }
+    100% {
+        /* Ende: Normale Größe und sichtbar */
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.bounce {
+    animation: bounce 0.3s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@keyframes bounce-end {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.logo-pulsing {
+    animation: pulsing-bounce 4s infinite ease-in-out;
+}
+
+@keyframes pulsing-bounce {
+    /* 0% bis 10% (Die ersten 10% der 2 Sekunden) */
+    0% { transform: translate(-50%, -50%) scale(1); }
+    3% { transform: translate(-50%, -50%) scale(1.1); }
+    6% { transform: translate(-50%, -50%) scale(1); }
+
+    /* 11% bis 100% (Die restlichen 90% der 2 Sekunden) */
+    /* Das Logo bleibt in Ruhe (scale 1) */
+    7% { transform: translate(-50%, -50%) scale(1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+#logo-button.inactive {
+    filter: blur(5px);
+    pointer-events: none;
+}
+
+/* Würfel Container */
+#dice-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* gap: 20px; */
+}
+
+/* Würfel Auswahl (Die Würfel-Buttons selbst) */
+#dice-selection {
+    display: flex;
+    /* *** GEÄNDERT: Standard ist jetzt Hochformat (untereinander) *** */
+    flex-direction: column; 
+    justify-content: center;
+    align-items: center;
+    /* Erhöhten Abstand für bessere Bedienbarkeit auf Handys */
+    gap: 15px; /* Reduziert von 30px, da die Buttons jetzt vertikal angeordnet sind */ 
+}
+
+#dice-selection img:active {
+    transform: scale(0.95); /* Wird kleiner beim Klicken */
+}
+
+.dice-option {
+    width: 80px; /* Leicht reduziert, damit die vertikale Liste nicht zu dominant ist */
+    height: 80px; /* Setze feste Höhe für Einheitlichkeit */
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+#dice-animation {
+    width: 250px;
+}
+
+.dice-option:hover {
+    transform: scale(1.1);
+}
+
+#genre-container {
+    display: flex;
+    flex-wrap: wrap; /* Wichtig, damit die Buttons in die nächste Zeile umbrechen */
+    justify-content: center;
+    align-items: center;
+    gap: 15px; /* Abstand zwischen den Buttons */
+    padding: 20px;
+    
+    /* --- NEU/AKTUALISIERT: Für den scrollbaren Bereich --- */
+    max-height: 95vh; /* Maximale Höhe: 70% der Viewport-Höhe. 
+                         Du kannst diesen Wert anpassen (z.B. 60vh, 500px), 
+                         je nachdem, wie viel Platz du für andere Elemente lassen möchtest. */
+    overflow-y: auto; /* Erlaubt vertikales Scrollen, wenn der Inhalt die max-height überschreitet */
+    -webkit-overflow-scrolling: touch; /* Verbessert das Scroll-Verhalten auf iOS-Geräten */
+    
+    /* Optional: Scrollbar verstecken für einen saubereren Look */
+    scrollbar-width: none; /* Für Firefox */
+    -ms-overflow-style: none; /* Für Internet Explorer und Edge */
+}
+
+/* Optional: Für Webkit-Browser (Chrome, Safari) die Scrollbar verstecken */
 #genre-container::-webkit-scrollbar {
     display: none;
 }
 
-/* ===================================================== */
-/* 🔥 GENRE BUTTONS – JETZT IDENTISCH ZUR STARTAUSWAHL 🔥 */
-/* ===================================================== */
-
+/* Optional: Stil für einzelne Genre-Buttons */
 .genre-button {
+    /* Sicherstellen, dass die Buttons nicht zu klein werden, 
+       wenn viele da sind und flex-wrap aktiv ist */
+    flex-shrink: 0; 
+    min-width: 120px; /* Beispiel: Mindestbreite für jeden Button */
+    padding: 20px 30px;
+    font-size: 1.2em;
+    cursor: pointer;
+    border: 2px solid var(--white);
+    background: transparent;
+    color: var(--white);
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 10px;
+}
+
+.genre-button:hover:not(:disabled) {
+    transform: scale(1.03);
+    background-color: var(--white);
+    color: var(--black);
+}
+.genre-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* NEU: Klasse zur Deaktivierung der Buttons während der Animation */
+.no-interaction {
+    pointer-events: none; /* Verhindert alle Maus- und Klick-Events */
+    opacity: 0.8;
+    cursor: default;       /* Stellt sicher, dass der Cursor nicht auf "Pointer" wechselt */
+}
+
+.random-blink {
+    animation: blink 0.2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Rate-Bildschirm & Auflösung (Phase 4) */
+#reveal-button {
+    position: absolute;
+    bottom: 5%;
+    padding: 15px 40px;
+    font-size: 1.3em;
+    background-color: #1DB954;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+}
+
+/*
+ * Basis-Styles (für Querformat und Desktop)
+ */
+#reveal-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    
+    /* FIX 1: Verhindert horizontalen Überlauf des Haupt-Containers */
+    max-width: 98vw;
+    box-sizing: border-box;
+    padding: 0 5px; 
+}
+
+/*
+ * #track-info (Standard: Cover links, Text rechts)
+ */
+#track-info {
+    display: flex;
+    width: 100%; 
+    align-items: center;
+    gap: 20px;
+    background: rgba(0,0,0,0.5);
+    padding: 20px;
+    border-radius: 10px;
+    
+    /* Erlaubt dem Cover und dem Text, umzubrechen, falls nötig */
+    flex-wrap: wrap; 
+}
+
+/* Der namenlose <div>, der den Text umschließt. */
+#track-info > div {
+    flex-grow: 1; 
+    min-width: 0; /* Wichtig für Textumbruch in Flex-Containern */
+}
+
+#album-cover {
+    flex-shrink: 0; 
+    width: 150px;
+    height: 150px;
+}
+
+/* Textumbruch-Fix für lange Titel */
+#track-title, 
+#track-artist, 
+#track-album, 
+#track-year {
+    word-break: break-word;
+    text-align: left;
+    margin: 0;
+}
+
+#track-title {
+    font-size: 2em;
+    font-weight: bold;
+}
+
+#track-artist {
+    font-size: 1.2em;
+}
+
+#track-album {
+    font-size: 1em; 
+    margin-top: 5px; 
+    color: #bbb; 
+}
+
+#track-year {
+    font-size: 0.9em; 
+    color: #999; 
+}
+
+.spotify-content-badge {
+    display: block; 
+    margin-top: 5px;
+}
+
+.spotify-content-badge img {
+    width: 25px; 
+    height: 25px;
+    min-width: 21px; 
+    min-height: 21px;
+}
+
+/*
+ * RESPONSIVE ANPASSUNG: Hochformat (max. 600px Breite)
+ * Hier wird das Cover ÜBER dem Text platziert und alles zentriert.
+ */
+@media (max-width: 600px) {
+    #track-info {
+        /* Ändert die Anordnung zu vertikal */
+        flex-direction: column;
+        /* Zentriert das Cover (und den gesamten Textblock) */
+        align-items: center;
+    }
+    
+    /* Der Textblock nimmt die volle Breite ein und zentriert seinen Inhalt */
+    #track-info > div {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Stellt sicher, dass die einzelnen Textzeilen auch zentriert werden */
+    #track-title, 
+    #track-artist, 
+    #track-album, 
+    #track-year {
+        text-align: center;
+    }
+}
+
+#feedback-buttons button {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    margin: 0 10px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    min-width: 150px;
+}
+#correct-button { background-color: #28a745; color: white; }
+#wrong-button { background-color: #dc3545; color: white; }
+
+/* Punkte-Bildschirm (Phase 5) */
+#score-screen {
+    /* *** GEÄNDERT: Standard ist jetzt Hochformat (unten/oben) *** */
+    flex-direction: column; /* Elemente übereinander (Blau oben, Pink unten) */
+    background: linear-gradient(0deg, /* Gradient von unten (Pink) nach oben (Blau) */
+        var(--player2-color) 0%, 
+        var(--player2-color) 45%, 
+        var(--player1-color) 55%, 
+        var(--player1-color) 100%);
+    /* Höhe und Breite der Displays bleiben 50%, aber jetzt in der Höhe */
+}
+
+#player1-score-display, #player2-score-display {
+    width: 100%; /* Nehmen die volle Breite ein */
+    height: 50%; /* Teilen die Höhe des Score-Screens */
+    font-size: 30vmin;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+    /* Zusätzliche Zentrierung für den Text innerhalb der Hälften */
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+}
+
+#speed-round-text-display {
+    /* Deine bestehenden Layout-Styles */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    height: 90vh;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    z-index: 20;
+    pointer-events: none;    
+    animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
+    opacity: 0;
+}
+
+/* --- Bild für Hochformat (Portrait) --- */
+@media screen and (orientation: portrait) {
+    #speed-round-text-display {
+        background-image: url('assets/a-t-t.png');
+    }
+}
+
+/* --- Bild für Querformat (Landscape) --- */
+@media screen and (orientation: landscape) {
+    #speed-round-text-display {
+        background-image: url('assets/a-t-t-quer.png');
+    }
+}
+
+/* Countdown-Anzeige (bleibt so groß und animiert) */
+#countdown-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 40vmin; /* schriftgrösse für Punkteanimation und Speedround-Countdown in Landscape -- 40 (v) im verhältnis zum (min) kleineren rand */
+    font-weight: bold;
+    color: var(--white);
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Leichter Glow */
+    z-index: 120; /* Über den meisten anderen Elementen */
+    /* Animation wird über JavaScript hinzugefügt/entfernt, damit sie jedes Mal neu startet */
+}
+
+@media screen and (max-width: 768px) {
+    #countdown-display {
+        font-size: 40vmin; /* schriftgrösse für Punkteanimation und Speedround-Countdown im Portrait -- 40 (v) im verhältnis zum (min) kleineren rand */
+    }
+}
+
+/* Klasse für die Animation, die wir per JS hinzufügen und entfernen */
+.countdown-animated {
+    animation: countdown-pulse 1s ease-in-out forwards;
+}
+
+/* Angepasste Keyframes für den Countdown-Puls */
+@keyframes countdown-pulse {
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+    20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } /* Kurz größer werden und sichtbar */
+    80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } /* Wieder kleiner werden und ausblenden */
+}
+
+/* Amnimation für Zwischenscreens */
+/* @keyframes zoom-fade-in {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    80% { transform: translate(-50%, -50%) scale(1); }
+    100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+} */
+
+/* ne andere animation für zwischenscreen */
+@keyframes zoom-fade-in {
+    /* 0% bis 10%: Der "Abschuss" der Konfettikanone */
+    0% { 
+        transform: translate(-50%, -50%) scale(0.1); 
+        opacity: 0; 
+        filter: brightness(2); /* Kurzer Lichtblitz beim Start */
+    }
+    10% { 
+        transform: translate(-50%, -50%) scale(1.15); /* Schießt über das Ziel hinaus */
+        opacity: 1; 
+        filter: brightness(1);
+    }
+    
+    /* 10% bis 80%: Das "Rieseln" - ganz langsame Bewegung */
+    80% { 
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1; 
+    }
+    
+    /* 80% bis 100%: Sanftes Verschwinden */
+    100% { 
+        transform: translate(-50%, -50%) scale(0.95); 
+        opacity: 0; 
+    }
+}
+
+@keyframes points-fade-in-zoom {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5); /* Start kleiner und transparent */
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2); /* Endet normal groß und sichtbar */
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); /* Endet normal groß und sichtbar */
+  }
+}
+
+.points-pop-in {
+  animation: points-fade-in-zoom 1s ease-out forwards; /* Schnelle 0.3 Sekunden Einblendung */
+}
+
+/* *** NEU: Standard-Animation für Portrait (Flug nach OBEN) *** */
+@keyframes flyToCornerPlayer1 {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        top: 50%;
+        left: 50%; /* Startposition: Mitte des Bildschirms */
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2);
+        top: 1%; /* Fliegt nach oben */
+        left: 50%; /* Bleibt horizontal zentriert */
+    }
+}
+
+/* *** NEU: Standard-Animation für Portrait (Flug nach UNTEN) *** */
+@keyframes flyToCornerPlayer2 {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        top: 50%;
+        left: 50%; /* Startposition: Mitte des Bildschirms */
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2);
+        top: 99%; /* Fliegt nach unten */
+        left: 50%; /* Bleibt horizontal zentriert */
+    }
+}
+
+.fly-to-corner-player1 {
+    animation: flyToCornerPlayer1 0.4s ease-in forwards;
+}
+
+.fly-to-corner-player2 {
+    animation: flyToCornerPlayer2 0.4s ease-in forwards;
+}
+
+/* ------------------------------------------------------------------ */
+/* QUERFORMAT (LANDSCAPE) FÜR DESKTOP UND GEDREHTE GERÄTE */
+/* ------------------------------------------------------------------ */
+
+@media screen and (min-width: 769px), /* Ab 769px (Desktop) */
+       screen and (orientation: landscape) /* ODER im Querformat auf jedem Gerät */
+{
+    /* *** NEU: Würfel-Auswahl im Querformat (nebeneinander) *** */
+    #dice-selection {
+        flex-direction: row; /* Elemente nebeneinander */
+        gap: 30px; /* Ursprünglicher Abstand */
+    }
+    .dice-option {
+        width: 100px; /* Zurück zur größeren Größe */
+        height: auto;
+    }
+    
+    /* ... (Score-Screen Anpassungen von vorhin) ... */
+    #score-screen {
+        /* Zurück zur Querformat-Anordnung (links/rechts) */
+        flex-direction: row; 
+        background: linear-gradient(90deg, 
+            var(--player1-color) 0%, 
+            var(--player1-color) 45%, 
+            var(--player2-color) 55%, 
+            var(--player2-color) 100%);
+    }
+
+    /* *** NEU: Animationen für Querformat (Flug nach LINKS) *** */
+    @keyframes flyToCornerPlayer1 {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            top: 50%;
+            left: 50%; /* Startposition: Mitte des Bildschirms */
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.2);
+            top: 50%; /* Bleibt vertikal zentriert */
+            left: 1%; /* Fliegt nach links */
+        }
+    }
+
+    /* *** NEU: Animationen für Querformat (Flug nach RECHTS) *** */
+    @keyframes flyToCornerPlayer2 {
+        0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            top: 50%;
+            left: 50%; /* Startposition: Mitte des Bildschirms */
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.2);
+            top: 50%; /* Bleibt vertikal zentriert */
+            left: 99%; /* Fliegt nach rechts */
+        }
+    }
+    /* Die Klassen `.fly-to-corner-player1` und `.fly-to-corner-player2` rufen nun automatisch
+       die in diesem Scope definierten (überschriebenen) Keyframes auf. */
+}
+
+/* Container für den digitalen Würfel */
+#digital-dice-area {
+    position: absolute; 
+    bottom: 0px;        
+    left: 0px;          
+    display: block; /* Auf 'block' zurücksetzen, da das Icon nun absolut ist */
+    
+    /* Hintergrund und Größe des PNGs beibehalten */
+    background-image: url('assets/digi-dice-bg.png'); /* Pfad zu Ihrer PNG-Datei */
+    background-repeat: no-repeat;
+    background-size: contain; 
+    background-position: bottom left; 
+    
+    /* Setzen Sie die Größe des Containers auf die Abmessungen Ihres PNGs/gewünschten Bereichs. */
+    width: 150px;  /* Beispielgröße, bitte an Ihr PNG anpassen! */
+    height: 150px; /* Beispielgröße, bitte an Ihr PNG anpassen! */
+    
+    z-index: 50; 
+    
+    /* *** KRITISCH: Deaktiviert Klicks auf dem gesamten Hintergrund-Container *** */
+    pointer-events: none; 
+}
+
+/* Styling für das Würfel-Icon */
+.digital-dice-icon {
+    /* *** KRITISCH: Positionierung mittels 'absolute' und expliziten Werten *** */
+    position: absolute; 
+    /* Diese Werte müssen manuell angepasst werden, damit das Icon auf dem PNG an der richtigen Stelle liegt. */
+    bottom: 20px; /* Beispiel: 20px von unten */
+    left: 20px;  /* Beispiel: 20px von links */
+
+    width: 50px;         
+    height: 50px;
+    cursor: pointer;
+    border-radius: 10px; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, opacity 0.2s ease; 
+    z-index: 51; 
+    
+    /* *** KRITISCH: Aktiviert Klicks NUR auf diesem Element und seinen Kindern *** */
+    pointer-events: auto; 
+}
+
+.digital-dice-icon:hover {
+    transform: scale(1.05); /* Beim Hover leicht vergrößern */
+    opacity: 0.9;
+}
+
+/* Optional: Animation für den Button während des Würfelns (wenn es der digi-ani.gif ist) */
+/* Diese Klasse wird dynamisch hinzugefügt/entfernt, obwohl das GIF selbst animiert ist */
+/* Es könnte für einen visuellen Effekt um das GIF herum nützlich sein. */
+.digital-dice-icon.rolling {
+    animation: pulse-border 1s infinite alternate; /* Fügt einen pulsierenden Rahmen hinzu */
+}
+
+@keyframes pulse-border {
+    from {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    }
+    to {
+        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+    }
+}
+
+/* ------------- Genre-Startauswahl ------------------ */
+/* --- NEU: Basis-Stile für den Start-Genre-Container --- */
+
+/* --- GENRE WHEEL SYSTEM --- */
+
+/* Der Hauptcontainer für die Auswahl */
+#start-genre-selection-container {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #000000;
+    z-index: 50;
+}
+
+.genre-header-controls {
+    height: 140px;                 /* etwas mehr Raum */
+    padding-top: 25px;             /* 👈 DAS ist der wichtige Teil */
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;       /* Button sitzt nicht mehr mittig */
+    gap: 20px;
+    z-index: 60;
+    background: linear-gradient(to bottom, #000 70%, transparent);
+}
+
+#confirmBtn {
     padding: 14px 40px;
+    border-radius: 9999px;
+    font-weight: 900;
     font-size: 2rem;
+    line-height: 1;
+    transition: all 0.2s ease;
+    background: white;
+    color: black;
+    border: 2px solid white;
+}
+
+#confirmBtn {
+    background: white;
+    color: black;
+    border: 2px solid white;
+}
+
+/* Zustand für deaktivierten Button */
+#confirmBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: scale(0.95);
+}
+
+/* DER SCROLL-BEREICH */
+.scrolling-container {
+    width: 100%;
+    flex-grow: 1; /* Nimmt den restlichen Platz ein */
+    overflow-y: scroll;
+    position: relative;
+    -webkit-overflow-scrolling: touch; /* Flüssiges Scrollen auf iOS */
+}
+
+/* Versteckt die Scrollbar */
+.scrolling-container::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+    display: none;
+}
+
+/* Die Liste innerhalb des Containers */
+#selectionList {
+    width: 100%;
+    position: relative;
+}
+
+/* Die einzelnen Genre-Einträge */
+.list-item {
+    position: absolute;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    will-change: transform, opacity;
+    pointer-events: auto;
+    cursor: pointer;
+    /* transition: transform 0.2s ease, opacity 0.2s ease; */
+}
+
+.genre-label {
+    padding: 14px 40px;        /* 🔥 identisch */
+    font-size: 2rem;           /* 🔥 identisch */
     line-height: 1;
     font-weight: 700;
     border-radius: 9999px;
-
-    background: transparent;
-    color: white;
     border: 2px solid rgba(255, 255, 255, 0.2);
-
+    color: white;
     transition:
         background-color 0.25s ease,
         color 0.25s ease,
         border-color 0.25s ease,
         transform 0.15s ease;
-
+    display: inline-block;
     white-space: nowrap;
-    flex-shrink: 0;
 }
 
-/* Hover = Preview */
-.genre-button:hover:not(:disabled) {
-    background-color: white;
-    color: black;
-    border-color: white;
-    transform: scale(1.05);
-}
 
-/* Active Touch */
-.genre-button:active {
-    transform: scale(0.9);
-    opacity: 0.7;
-}
-
-/* Disabled */
-.genre-button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-/* OPTIONAL: falls du per JS "selected" setzt */
-.genre-button.selected {
+/* SELECTED STATE: Wenn ein Genre angeklickt wurde */
+.list-item.selected .genre-label {
     background-color: white;
     color: black !important;
     border-color: white;
@@ -147,58 +913,210 @@ html, body {
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
 }
 
-/* ================= REVEAL / FEEDBACK ================= */
-#reveal-button {
+/* Touch-Feedback */
+.list-item:active .genre-label {
+    transform: scale(0.9);
+    opacity: 0.7;
+}
+/* ---- tracki tacki -----
+/* --- NEU: Tracki-Tacki-Button Basis-Styles (Punkt 1, 2, 6) --- */
+#tracki-tacki-button {
+    /* Positionierung: Oben, mittig, halb versteckt */
     position: absolute;
-    bottom: 5%;
-    padding: 15px 40px;
-    font-size: 1.3em;
-    background-color: #1DB954;
-    border-radius: 50px;
-    border: none;
+    top: 0; 
+    left: 50%;
+    /* Verschiebt den Button um die Hälfte seiner eigenen Höhe/Breite nach oben/links */
+    transform: translate(-50%, -48%); 
+    width: 200px;
+    height: auto;
+    cursor: pointer;
+    z-index: 110;
+    
+    /* Übergänge: Für flüssige Bewegungen und Zustandswechsel (Gleiten in die Mitte) */
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
+    
+    /* Schatten: Basis-Schatten. Die Farbe muss per JS als Klasse gesetzt werden. */
+    /* box-shadow: 30px 30px 30pxpx 30pxpx rgba(0, 0, 0, 0.5); */
+    border-radius: 50%; /* --- Optional: Wenn es ein rundes Icon ist */
+}
+
+/* NEU: Zustand nach dem 1. Klick (zentriert, aktiv) (Punkt 3) */
+#tracki-tacki-button.active-play-button {
+    top: 50%; /* Wechselt von 0% auf 50% (Gleiten in die Mitte) */
+    left: 50%;
+    transform: translate(-50%, -50%); 
+}
+
+/* NEU: Klasse für Spieler-Schatten (Glow) */
+#tracki-tacki-button.player1-shadow {
+    box-shadow: 0 0 120px 120px var(--player1-color); /* <-- KORREKTUR: Glow-Syntax */
+}
+#tracki-tacki-button.player2-shadow {
+    box-shadow: 0 0 120px 120px var(--player2-color); /* <-- KORREKTUR: Glow-Syntax */
+}
+
+.tracki-tacki-button.logo-pulsing {
+    animation: pulsing-bounce 4s infinite ease-in-out;
+}
+
+#tracki-tacki-button.inactive {
+    filter: blur(5px);
+    pointer-events: none;
+}
+
+/* -------------------- FOOTER POSITIONIERUNG -------------------- */
+
+#game-footer {
+    /* Absolut positioniert unten rechts */
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    left: auto; 
+    
+    /* WICHTIG: Flexbox für die Anordnung nebeneinander */
+    display: flex;
+    flex-direction: row; /* Elemente in einer Reihe */
+    align-items: center;
+    gap: 15px; /* Abstand zwischen Branding und Timer */
+    
+    /* WICHTIG: Verhindert, dass die Elemente bei Platzmangel umbrechen und überlappen */
+    white-space: nowrap; 
+    
+    z-index: 1000; /* Sehr hoher Z-Index, um andere UI-Elemente zu überlagern */
+    
+    color: #ccc; 
+    font-size: 0.8em;
+    /* Optional zum Debuggen: background: rgba(255, 0, 0, 0.3); */
+}
+
+/* -------------------- STYLING FÜR DEN TIMER (KEINE POSITIONIERUNG!) -------------------- */
+#token-timer {
+    background-color: rgba(0, 0, 0, 0.7);
     color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    white-space: nowrap; 
 }
 
-/* ================= FEEDBACK ================= */
-#feedback-buttons button {
-    padding: 15px 30px;
-    font-size: 1.2em;
-    border-radius: 30px;
-    min-width: 150px;
-    border: none;
+/* -------------------- BRANDING STYLING -------------------- */
+#powered-by-spotify {
+    display: flex;
+    align-items: center;
+    text-decoration: none; 
+    color: inherit; 
+    /* NEIN: Keine weitere Positionierung nötig, Flexbox regelt es */
 }
 
-#correct-button { background: #28a745; color: white; }
-#wrong-button   { background: #dc3545; color: white; }
-
-/* ================= SPEED DISPLAY ================= */
-#speed-display {
-    position: fixed;
-    top: 0;
-    right: 0;
-    z-index: 9999;
-    padding: 8px 12px;
-    font-family: monospace;
-    font-size: 0.75rem;
-    color: white;
+#powered-by-spotify .branding-icon {
+    /* Mindestgröße des Icons */
+    width: 25px; 
+    height: 25px;
+    min-width: 21px; 
+    min-height: 21px;
+    margin-right: 5px; 
 }
 
-/* ================= TOASTS ================= */
-#toast-notification,
-#network-toast {
+/* ======================= */
+/* = TOAST-NOTIFICATION (Fehlermedungen) = */
+/* ======================= */
+
+#toast-notification {
+    /* Positionierung: Unten zentriert */
     position: fixed;
     top: 5px;
     left: 50%;
     transform: translateX(-50%);
+    white-space: nowrap; /* Verhindert Zeilenumbrüche */
+
+    /* Aussehen */
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    /* padding: 14px 20px;
+    border-radius: 8px;
+    background-color: #ffc107; --> Ein warnendes Gelb/Gold
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); */
+    
+    /* Standardmäßig versteckt */
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.5s, top 0.5s;
+    
+    /* Animation */
+    transition: opacity 0.5s, visibility 0.5s, top 0.5s;
+    /* transition: top 0.4s ease-out, opacity 0.4s ease-out; */
     z-index: 10000;
 }
 
-#toast-notification.show,
+/* Klasse, die per JS hinzugefügt wird, um den Toast anzuzeigen */
+#toast-notification.show {
+    opacity: 1;
+    visibility: visible;
+    top: 60px; /* Kommt leicht runter "gefahren" */
+}
+
+/* Klasse 'hidden' nur zur Sicherheit, falls du sie nutzt */
+#toast-notification.hidden {
+    opacity: 0;
+    visibility: hidden;
+    top: 10px;
+}
+
+/* ======================= */
+/* = NETZWERK-TOAST (Unabhängige Warnung) = */
+/* ======================= */
+
+#network-toast {
+    /* Positionierung: Unten zentriert */
+    position: fixed;
+    top: 5px; /* Startposition (versteckt) */
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap; 
+
+    /* Aussehen (passt sich Ihrem Stil an) */
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    /* padding: 14px 20px;
+    border-radius: 8px;
+    --- Verwenden Sie eine Warnfarbe, ähnlich #ffc107, aber leicht transparent
+    background-color: rgba(255, 165, 0, 0.9); 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); */
+    
+    /* Standardmäßig versteckt */
+    opacity: 0;
+    visibility: hidden;
+    
+    /* Animation */
+    transition: opacity 0.5s, visibility 0.5s, top 0.5s;
+    z-index: 10001; 
+}
+
+/* Klasse, die per JS hinzugefügt wird, um das Netzwerk-Toast anzuzeigen */
 #network-toast.show {
     opacity: 1;
     visibility: visible;
-    top: 60px;
+    /* Dies ist die neue, tiefere Position (z.B. 50px tiefer als 60px) */
+    top: 30px; 
 }
+
+/* SPEED-CHECK anzeige zum testen ...*/
+#speed-display {
+    /* Positionierung in der oberen rechten Ecke */
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 9999; /* Immer über anderem Inhalt */
+    
+    /* Layout und Padding */
+    padding: 8px 12px;
+    
+    /* Hintergrund und Text */
+    color: white;
+    font-family: monospace; /* Monospace für technische Daten */
+    font-size: 0.75rem; /* Etwa 12px */
+    line-height: 1;
+}
+/* SPEED-CHECK ende.....*/
