@@ -826,13 +826,16 @@ body, html {
     background: linear-gradient(to bottom, #000 70%, transparent);
 }
 
-/* Styling für den SET THE STAGE button */
 #confirmBtn {
-    padding: 12px 25px;
+    padding: 14px 40px;
     border-radius: 9999px;
-    font-weight: bold;
+    font-weight: 900;
     font-size: 2rem;
+    line-height: 1;
     transition: all 0.2s ease;
+    background: white;
+    color: black;
+    border: 2px solid white;
 }
 
 #confirmBtn {
@@ -880,18 +883,26 @@ body, html {
     will-change: transform, opacity;
     pointer-events: auto;
     cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-/* Das visuelle Label (der "Button"-Look) */
 .genre-label {
-    padding: 10px 40px;
+    padding: 14px 40px;        /* 🔥 identisch */
+    font-size: 2rem;           /* 🔥 identisch */
+    line-height: 1;
+    font-weight: 700;
     border-radius: 9999px;
     border: 2px solid rgba(255, 255, 255, 0.2);
     color: white;
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.15s ease;
     display: inline-block;
     white-space: nowrap;
 }
+
 
 /* SELECTED STATE: Wenn ein Genre angeklickt wurde */
 .list-item.selected .genre-label {
