@@ -814,8 +814,9 @@ body, html {
     z-index: 50;
 }
 
-/* Der Bereich für die Buttons oben (Select All / Set the Stage) */
+/* Der Bereich für den Buttons oben (Set the Stage) */
 .genre-header-controls {
+    top: 30px;
     height: 120px;
     width: 100%;
     display: flex;
