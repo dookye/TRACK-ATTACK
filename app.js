@@ -584,7 +584,7 @@ function setupGenreWheel() {
     selectionList.appendChild(fragment);
 
     // Abstand berechnen
-    itemHeight = window.innerHeight / 5; 
+    itemHeight = window.innerHeight / 7; 
     selectionList.style.height = `${genreNames.length * fullListMultiplier * itemHeight}px`;
 
     const items = selectionList.querySelectorAll('.list-item');
