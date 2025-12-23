@@ -2089,8 +2089,12 @@ let pointsAwarded = 0;
     function resetGame() {
         scoreScreen.classList.add('hidden');
 		revealContainer.classList.add('hidden');
-		startGenreSelectionContainer.classList.remove('hidden');
-        appContainer.style.backgroundColor = 'var(--black)';
+
+		if (startGenreSelectionContainer) {
+        startGenreSelectionContainer.classList.add('hidden'); 
+        }
+
+		appContainer.style.backgroundColor = 'var(--black)';
 
         // Spielstatus zurücksetzen
         gameState.player1Score = 0;
@@ -2110,14 +2114,20 @@ let pointsAwarded = 0;
         gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
 
         // NEU: Ausgewählte Genres zurücksetzen
-        gameState.selectedPlayableGenres = [];
+      //  gameState.selectedPlayableGenres = [];
         // Und die scrollbox leeren, damit sie beim nächsten startGameAfterOrientation() neu gefüllt wird
-        allGenresScrollbox.innerHTML = '';
+      //  allGenresScrollbox.innerHTML = '';
+
+		// Falls dein Rad durch eine globale Variable gesteuert wird, setze sie zurück
+        isWheelActive = false; 
+        // Falls das Rad das Spiel überlagert:
+        allGenresScrollbox.innerHTML = '';
 
         // Zurück zum Start (ohne Einflug-Animation)
         gameScreen.classList.remove('hidden');
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
 		logoButton.classList.add('logo-pulsing');
+		void logoButton.offsetWidth;
         logoButton.removeEventListener('click', startGame); // Sicherstellen, dass kein alter Listener hängt
         logoButton.addEventListener('click', startGame, { once: true }); // NEU: Listener hier neu setzen, da er ja einmalig ist
 
