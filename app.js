@@ -680,17 +680,6 @@ document.getElementById('confirmBtn').addEventListener('click', () => {
     showDiceScreen(); 
 });
 
-// Anpassung deiner startGame Funktion:
-// Tausche den Aufruf von renderPreselectionGenres() gegen setupWheel() aus.
-async function startGame() {
-    // ... dein bisheriger Code (logoButton Logik etc.) ...
-    setTimeout(() => {
-        logoButton.classList.add('hidden');
-        document.getElementById('start-genre-selection-container').classList.remove('hidden');
-        setupGenreWheel(); // <--- DAS RAD STARTEN
-    }, 800);
-}
-
 // Resize-Event hinzufügen
 window.addEventListener('resize', () => {
     if (!document.getElementById('start-genre-selection-container').classList.contains('hidden')) {
@@ -728,12 +717,8 @@ async function startGame() {
 
     setTimeout(() => {
         logoButton.classList.add('hidden');
-        
-        // DIREKTER WECHSEL zur Genre-Auswahl statt startSetTheStage()
-        startGenreSelectionContainer.classList.remove('hidden');
-        if (allGenresScrollbox.children.length === 0) {
-            renderPreselectionGenres();
-        }
+        document.getElementById('start-genre-selection-container').classList.remove('hidden');
+        setupGenreWheel(); // <--- DAS RAD STARTEN
     }, 800);
 }
 
