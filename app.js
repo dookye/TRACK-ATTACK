@@ -533,102 +533,153 @@ document.addEventListener('DOMContentLoaded', () => {
 }
     // --- NETZWERK - ENDE ---------------- 
 	
-// --- Funktion: Prüfen, ob genug Genres gewählt sind (Hilfsfunktion) ---
-function updateConfirmButtonState() {
-    const count = gameState.selectedPlayableGenres.length;
-    if (count >= 3) {
-        confirmBtn.disabled = false;
-        confirmBtn.classList.add('active'); // Optional für Styling
-    } else {
-        confirmBtn.disabled = true;
-        confirmBtn.classList.remove('active');
-    }
-}
+// =======================================================================
+// NEUE GLÜCKSRAD-LOGIK (INFINITY SCROLL)
+// =======================================================================
 
-// --- NEU: Event Listener für die Steuerungs-Buttons ---
+// Konfiguration für das Rad
+const WHEEL_CONFIG = {
+    itemHeight: 120,    // Höhe eines Items in Pixeln (muss mit CSS übereinstimmen)
+    multiplier: 10      // Wie oft die Liste geklont wird für den Endlos-Effekt
+};
 
-// SELECT ALL Logik
-selectAllBtn.addEventListener('click', () => {
-    const allAvailableGenres = Object.keys(playlists);
-    // Array füllen
-    gameState.selectedPlayableGenres = [...allAvailableGenres];
-    // Alle Buttons visuell selektieren
-    document.querySelectorAll('.preselect-genre-button').forEach(btn => {
-        btn.classList.add('selected');
-    });
-    updateConfirmButtonState();
-});
-
-// LOCK IT IN Logik
-confirmBtn.addEventListener('click', () => {
-    if (gameState.selectedPlayableGenres.length >= 3) {
-        triggerBounce(confirmBtn);
-        
-        setTimeout(() => {
-            startGenreSelectionContainer.classList.add('hidden');
-            
-            // Setzt die Spielerfarbe und leitet dann automatisch 
-            // per 'animationend' zu showDiceScreen() weiter
-            showDiceScreen(); 
-        }, 200);
-    }
-});
-
-// Hilfsfunktion zum Prüfen der Button-Aktivierung
+// --- Hilfsfunktion: Button-Status aktualisieren ---
 function updateConfirmButtonState() {
     const count = gameState.selectedPlayableGenres.length;
     if (count >= 3) {
         confirmBtn.disabled = false;
         confirmBtn.classList.add('active');
-        confirmBtn.style.opacity = "1"; // Sicherstellen, dass er sichtbar ist
+        confirmBtn.style.opacity = "1";
     } else {
         confirmBtn.disabled = true;
         confirmBtn.classList.remove('active');
         confirmBtn.style.opacity = "0.5";
     }
 }
-	
-// --- Deine angepasste Render-Funktion ---
+
+// --- Die neue Render-Funktion für das Glücksrad ---
 function renderPreselectionGenres() {
     allGenresScrollbox.innerHTML = '';
-    const allAvailableGenres = Object.keys(playlists); 
-
-    allAvailableGenres.forEach(genreName => {
-        const button = document.createElement('button');
-        button.classList.add('preselect-genre-button');
-        button.dataset.genre = genreName; 
-        button.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
-
-        if (gameState.selectedPlayableGenres.includes(genreName)) {
-            button.classList.add('selected');
-        }
-
-        button.addEventListener('click', () => {
-            toggleGenreSelection(genreName, button);
-        });
-        allGenresScrollbox.appendChild(button);
-    });
+    const allAvailableGenres = Object.keys(playlists);
     
-    // Initialen Status des "Lock it in" Buttons prüfen
+    // Wir erstellen einen Wrapper im Scrollbox-Container für das Layout
+    const wheelContent = document.createElement('div');
+    wheelContent.id = "wheel-content";
+    wheelContent.style.position = "relative";
+    wheelContent.style.width = "100%";
+    
+    // Endlos-Liste generieren
+    for (let i = 0; i < WHEEL_CONFIG.multiplier; i++) {
+        allAvailableGenres.forEach(genreName => {
+            const item = document.createElement('div');
+            item.classList.add('genre-wheel-item');
+            item.dataset.genre = genreName;
+            
+            // Text-Formatierung (wie in deinem Original)
+            item.innerText = genreName.split(/(?=[A-Z])/).join(' ').replace(/\b\w/g, char => char.toUpperCase());
+
+            item.addEventListener('click', () => {
+                toggleGenreSelection(genreName);
+            });
+            
+            wheelContent.appendChild(item);
+        });
+    }
+
+    allGenresScrollbox.appendChild(wheelContent);
+
+    // Event Listener für visuelle Effekte und Infinity-Scroll
+    allGenresScrollbox.addEventListener('scroll', handleWheelScroll);
+
+    // Initialen Scroll-Stand in die Mitte setzen für Endlos-Effekt
+    const startPos = (allAvailableGenres.length * (WHEEL_CONFIG.multiplier / 2)) * WHEEL_CONFIG.itemHeight;
+    allGenresScrollbox.scrollTop = startPos;
+
+    // Initiales Update der Optik
+    updateWheelVisuals();
     updateConfirmButtonState();
 }
 
-// --- Deine angepasste Toggle-Funktion ---
-function toggleGenreSelection(genreName, buttonElement) {
+// --- Infinity-Scroll & Visuelle Updates ---
+function handleWheelScroll() {
+    const currentScroll = allGenresScrollbox.scrollTop;
+    const totalGenresCount = Object.keys(playlists).length;
+    const contentHeight = totalGenresCount * WHEEL_CONFIG.itemHeight;
+
+    // Infinity-Jump Logic: Wenn wir am Rand der geklonten Liste sind, springen wir unauffällig in die Mitte
+    if (currentScroll < contentHeight) {
+        allGenresScrollbox.scrollTop = currentScroll + (contentHeight * (WHEEL_CONFIG.multiplier / 2));
+    } else if (currentScroll > contentHeight * (WHEEL_CONFIG.multiplier - 2)) {
+        allGenresScrollbox.scrollTop = currentScroll - (contentHeight * (WHEEL_CONFIG.multiplier / 2));
+    }
+
+    updateWheelVisuals();
+}
+
+// --- Skalierung und Opacity basierend auf Scroll-Position ---
+function updateWheelVisuals() {
+    const items = document.querySelectorAll('.genre-wheel-item');
+    const containerCenter = allGenresScrollbox.scrollTop + (allGenresScrollbox.clientHeight / 2);
+
+    items.forEach(item => {
+        const itemCenter = item.offsetTop + (WHEEL_CONFIG.itemHeight / 2);
+        const distance = Math.abs(containerCenter - itemCenter);
+        const maxDist = allGenresScrollbox.clientHeight / 2;
+        
+        // Normalisierte Entfernung zur Mitte (0 = Mitte, 1 = Rand)
+        const normalizedDist = Math.min(distance / maxDist, 1);
+        
+        // Berechnung von Scale und Opacity (Mitte ist groß und hell)
+        const scale = 1.3 - (normalizedDist * 0.5); // Von 1.3x zu 0.8x
+        const opacity = 1 - Math.pow(normalizedDist, 2); // Quadratischer Abfall für weicheren Übergang
+
+        item.style.transform = `scale(${scale})`;
+        item.style.opacity = opacity;
+
+        // Visuelles Feedback für Auswahl
+        const genre = item.dataset.genre;
+        if (gameState.selectedPlayableGenres.includes(genre)) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+// --- Überarbeitete Toggle-Funktion ---
+function toggleGenreSelection(genreName) {
     const index = gameState.selectedPlayableGenres.indexOf(genreName);
 
     if (index > -1) {
         gameState.selectedPlayableGenres.splice(index, 1);
-        buttonElement.classList.remove('selected');
     } else {
         gameState.selectedPlayableGenres.push(genreName);
-        buttonElement.classList.add('selected');
     }
     
-    // Nach jedem Klick prüfen, ob die "3-Genres-Regel" erfüllt ist
+    // Visuelle Aktualisierung aller Instanzen (da Genres mehrfach im Wheel sind)
+    updateWheelVisuals();
     updateConfirmButtonState();
-    console.log("Aktuell ausgewählte Genres:", gameState.selectedPlayableGenres);
+    console.log("Ausgewählte Genres:", gameState.selectedPlayableGenres);
 }
+
+// --- Event Listener für Buttons ---
+
+selectAllBtn.addEventListener('click', () => {
+    const allAvailableGenres = Object.keys(playlists);
+    gameState.selectedPlayableGenres = [...allAvailableGenres];
+    updateWheelVisuals();
+    updateConfirmButtonState();
+});
+
+confirmBtn.addEventListener('click', () => {
+    if (gameState.selectedPlayableGenres.length >= 3) {
+        triggerBounce(confirmBtn);
+        setTimeout(() => {
+            startGenreSelectionContainer.classList.add('hidden');
+            showDiceScreen(); 
+        }, 200);
+    }
+});
 	
     //=======================================================================
     // Phase 2: Spielstart & UI-Grundlagen
