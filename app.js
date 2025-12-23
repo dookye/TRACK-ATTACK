@@ -2127,6 +2127,13 @@ let pointsAwarded = 0;
         // Zurück zum Start (ohne Einflug-Animation)
         gameScreen.classList.remove('hidden');
         logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+
+		// TRICK: Setze display kurz auf none und dann wieder auf block
+    // Das zwingt JEDEN Browser dazu, das Element neu zu berechnen (Reflow-Ersatz)
+    logoButton.style.display = 'none';
+    void logoButton.offsetHeight; // Zugriff auf eine Layout-Eigenschaft
+    logoButton.style.display = 'block';
+		
 		logoButton.classList.add('logo-pulsing');
 		void logoButton.offsetWidth;
         logoButton.removeEventListener('click', startGame); // Sicherstellen, dass kein alter Listener hängt
