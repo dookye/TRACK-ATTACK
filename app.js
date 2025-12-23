@@ -669,33 +669,6 @@ async function startGame() {
     }, 800);
 }
 
-function showPlayerTurnScreen() {
-    const turnDisplay = document.getElementById('player-turn-display');
-    const currentPlayer = gameState.currentPlayer; // Erwartet "player1" oder "player2"
-    
-    // 1. Hintergrundfarbe setzen
-    const playerColor = currentPlayer === 'player1' ? 'var(--player1-color)' : 'var(--player2-color)';
-    appContainer.style.backgroundColor = playerColor;
-
-    // 2. Klassen säubern und die richtige zuweisen
-    turnDisplay.classList.remove('blue-turn', 'pink-turn', 'hidden');
-    
-    if (currentPlayer === 'player1') {
-        turnDisplay.classList.add('blue-turn');
-    } else {
-        turnDisplay.classList.add('pink-turn');
-    }
-
-    // 3. Animation abwarten
-    turnDisplay.addEventListener('animationend', (e) => {
-        // Wir prüfen auf den Namen der Konfetti-Animation
-        if (e.animationName === 'zoom-fade-in') {
-            turnDisplay.classList.add('hidden');
-            showDiceScreen();
-        }
-    }, { once: true });
-}
-
     //=======================================================================
     // Phase 3: Würfel- & Genre-Auswahl
     //=======================================================================
