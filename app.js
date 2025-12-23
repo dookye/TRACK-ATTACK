@@ -2088,6 +2088,8 @@ let pointsAwarded = 0;
     // AKTUALISIERT: resetGame-Funktion
     function resetGame() {
         scoreScreen.classList.add('hidden');
+		revealContainer.classList.add('hidden');
+		startGenreSelectionContainer.classList.remove('hidden');
         appContainer.style.backgroundColor = 'var(--black)';
 
         // Spielstatus zurücksetzen
@@ -2122,9 +2124,6 @@ let pointsAwarded = 0;
         // Setze den letzten sichtbaren Screen zurück, da das Spiel neu startet
         lastGameScreenVisible = '';
 
-        // NEU: Die Genre-Vorauswahl auf der Startseite wieder anzeigen und neu rendern
-        startGenreSelectionContainer.classList.remove('hidden');
-        renderPreselectionGenres(); // Und die Buttons neu rendern
     }
 
     // Phase 6: Sonderfunktion "Speed-Round"
