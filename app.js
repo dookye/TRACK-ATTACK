@@ -170,8 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		// 'test': ['4EA0uV0i0c7RJNxWZpwcmM'],
 		'90s everyone knows': ['32Rgd0gpGw4vvJtM3nlA55'],
         'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
-        'die größten hits aller zeiten': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
-        'deutsch songs von früher bis heute': ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
+        'GREATEST HITS of all time': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
+        'deutsch banger heute/gestern': ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
         'party hits': ['53r5W67KJNIeHWAhVOWPDr'],
         'skate-punk': ['7qGvinYjBfVpl1FJFkzGqV', '77IXl4Gh7AZLyVLx66NkqV'],
         'deutsch-punk': ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
@@ -185,8 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
         lovesongs: ['6oNsYDhN95gkENsdFcAwTh'],
         'serien unserer kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
         'deutscher hip hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
-        'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
-        'deutscher pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
+         //'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
+        'heimischer pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
     };
 
     //=======================================================================
