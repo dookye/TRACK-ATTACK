@@ -32,12 +32,20 @@
             <img src="assets/trackitacki.png" alt="Trackitacki!" id="tracki-tacki-button" class="hidden" />
 
             <div id="start-genre-selection-container" class="hidden">
-              <div class="genre-header-controls">
-                <button id="select-all-genres-btn">SELECT ALL</button>
-                <button id="confirm-genre-selection-btn" disabled>LOCK IT IN</button>
-              </div>
-                  <div id="all-genres-scrollbox">
-                  </div>
+                <div class="genre-header-controls">
+                  <button id="select-all-genres-btn">SELECT ALL</button>
+                    <div class="genre-selection-title">CHOOSE YOUR BATTLEGROUND</div>
+                  <button id="confirm-genre-selection-btn" disabled>LOCK IT IN</button>
+                </div>
+
+                <div class="wheel-wrapper">
+                   <div class="wheel-selection-indicator"></div>
+                   <div id="all-genres-scrollbox"></div>
+               </div>
+    
+               <div class="genre-instruction-footer">
+               SCROLL TO EXPLORE • TAP TO SELECT (MIN. 3)
+               </div>
             </div>
             
             <div id="countdown-display" class="hidden">
