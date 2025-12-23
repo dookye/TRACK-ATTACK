@@ -814,14 +814,13 @@ body, html {
     z-index: 50;
 }
 
-/* Der Bereich für den Buttons oben (Set the Stage) */
 .genre-header-controls {
-    top: 30px;
-    height: 120px;
+    height: 140px;                 /* etwas mehr Raum */
+    padding-top: 25px;             /* 👈 DAS ist der wichtige Teil */
     width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;       /* Button sitzt nicht mehr mittig */
     gap: 20px;
     z-index: 60;
     background: linear-gradient(to bottom, #000 70%, transparent);
