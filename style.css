@@ -1,22 +1,54 @@
-/* ========================================== */
-/* 1. GLOBALE STYLES & VARIABLEN              */
-/* ========================================== */
+/* Globale Entfernung des Tap-Highlights und der Outline */
+* {
+    -webkit-tap-highlight-color: transparent; /* Für WebKit-Browser (iOS Safari, Android Chrome) */
+    outline: none; /* Entfernt den Fokus-Rahmen */
+}
 
+/* Optional: Spezifisch für Buttons, falls das globale * nicht ausreicht oder unerwünschte Nebeneffekte hat */
+button, .genre-button, .dice-option, #login-button, #logo-button, #reveal-button {
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
+/* Genereller Stil für interaktive Buttons für den Pulldown-Effekt */
+/* Betrifft AUFLÖSEN, RICHTIG, FALSCH und alle GENRE-BUTTONS */
+
+/* WICHTIG: Füge eine Transition hinzu, damit die Skalierung weich erfolgt */
+/* Dies kannst du entweder global für alle Buttons oder spezifisch tun */
+
+/* Beispiel für alle Buttons, die diesen Effekt haben sollen */
+.genre-button,
+#reveal-button, /* AUFLÖSEN-Button */
+#correct-button, /* RICHTIG-Button */
+#wrong-button, /* FALSCH-Button */
+.dice-option /* Die Würfel-Bilder, wenn sie auch einen Click-Effekt haben sollen */
+{
+    transition: transform 0.06s ease-out; /* Kurze, sanfte Animation */
+    cursor: pointer; /* Zeigt an, dass das Element klickbar ist */
+}
+
+/* Der eigentliche Pulldown-Effekt beim Klicken */
+.genre-button:active,
+#reveal-button:active,
+#correct-button:active,
+#wrong-button:active,
+.dice-option:active
+{
+    transform: scale(0.95); /* Macht den Button 5% kleiner beim Klicken */
+}
+
+/* Grundlegende Stile & Variablen */
 :root {
-    --player1-color: #1197d0; /* Blau */
+    --player1-color: #1197d0; /* Blau (alt #007bff*/
     --player2-color: #e83e8c; /* Pink */
+    --punktefarbe-player1: #fff; /* weiss */
+    --punktefarbe-player2: #fff; /* weiss */
     --black: #000;
     --white: #fff;
-    --spotify-green: #1DB954;
     --transition-speed: 0.8s;
 }
 
-* {
-    -webkit-tap-highlight-color: transparent;
-    outline: none;
-    box-sizing: border-box;
-}
-
+/* Phase 1.1: Body & Seiten-Setup */
 body, html {
     margin: 0;
     padding: 0;
@@ -30,20 +62,26 @@ body, html {
     justify-content: center;
     align-items: center;
     text-align: center;
-    -webkit-touch-callout: none;
-    user-select: none;
-    touch-action: pan-x pan-y;
-}
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none;    /* Safari */
+    -khtml-user-select: none;      /* Konqueror HTML */
+    -moz-user-select: none;        /* Old versions of Firefox */
+    -ms-user-select: none;         /* Internet Explorer/Edge */
+    user-select: none;            /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
 
-/* ========================================== */
-/* 2. APP-STRUKTUR & SCREENS                  */
-/* ========================================== */
+    -webkit-user-drag: none; /* Spezifisch für WebKit (Chrome, Safari, Edge auf iOS) */
+    -moz-user-drag: none;    /* Für Firefox */
+    user-drag: none;         /* Standard */
+
+    touch-action: pan-x pan-y; /* Erlaubt Panning/Scrolling. Auf 'none' setzen, um alles zu blockieren. */
+}
 
 #app-container {
     width: 100%;
     height: 100%;
     position: relative;
     overflow: hidden;
+    transition: background-color var(--transition-speed) ease-in-out;
 }
 
 .screen {
@@ -58,65 +96,83 @@ body, html {
     left: 0;
 }
 
+#login-screen {
+    display: flex;
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    text-align: center;
+    padding: 20px; 
+    box-sizing: border-box; 
+    height: 100vh; 
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch; 
+}
+
 .hidden {
     display: none !important;
 }
 
-/* ========================================== */
-/* 3. LOGIN SCREEN                            */
-/* ========================================== */
-
-#login-screen {
-    padding: 20px;
-    height: 100vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+/* Stil für das Logo auf dem Login-Screen */
+#login-logo {
+    width: 250px; 
+    height: auto;
+    margin-bottom: 10px; 
 }
 
-#login-logo {
-    width: 250px;
-    height: auto;
-    margin-bottom: 10px;
+.info-button {
+    display: inline-block; 
+    margin-top: 20px; 
+    cursor: pointer;
+    transition: transform 0.2s ease; 
+}
+
+.info-button:hover {
+    transform: scale(1.05); 
 }
 
 .info-button img {
-    width: 50px;
+    width: 50px; 
     height: 50px;
+    display: block; 
     margin-bottom: 20px;
 }
 
+/* Login-Button (Phase 1.1) */
 #login-button {
-    background-color: var(--spotify-green);
+    background-color: #1DB954;
     color: var(--white);
     border: none;
     padding: 15px 30px;
     border-radius: 50px;
     font-size: 1em;
     font-weight: bold;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 15px;
-    cursor: pointer;
+    margin-top: 20px;
+}
+#login-button img {
+    height: 24px;
 }
 
-#login-button img { height: 24px; }
-
-/* ========================================== */
-/* 4. ANIMATIONEN (LOGO & CO)                 */
-/* ========================================== */
-
+/* Logo-Button & Animationen */
 #logo-button {
     width: 200px;
+    height: auto;
+    cursor: pointer;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 110;
+    box-sizing: border-box;
 }
 
 .initial-fly-in {
     animation: fly-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards,
-               bounce-end 0.3s 0.6s ease-out forwards;
+                bounce-end 0.3s 0.6s ease-out forwards;
 }
 
 @keyframes fly-in {
@@ -124,201 +180,138 @@ body, html {
     100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
+.bounce {
+    animation: bounce 0.3s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@keyframes bounce-end {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.logo-pulsing {
+    animation: pulsing-bounce 4s infinite ease-in-out;
+}
+
 @keyframes pulsing-bounce {
     0% { transform: translate(-50%, -50%) scale(1); }
     3% { transform: translate(-50%, -50%) scale(1.1); }
     6% { transform: translate(-50%, -50%) scale(1); }
+    7% { transform: translate(-50%, -50%) scale(1); }
     100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-.logo-pulsing { animation: pulsing-bounce 4s infinite ease-in-out; }
-
-/* ========================================== */
-/* 5. DAS NEUE GENRE-GLÜCKSRAD (VORAUSWAHL)   */
-/* ========================================== */
-
-#start-genre-selection-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100vh;
-    width: 100%;
-    background: radial-gradient(circle, #1a1a1a 0%, #000 100%);
-}
-
-.genre-header-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 40px 20px 20px 20px;
-    z-index: 20;
-}
-
-.genre-selection-title {
-    font-weight: bold;
-    font-size: 0.9em;
-    letter-spacing: 2px;
-    color: #555;
-}
-
-#select-all-genres-btn, #confirm-genre-selection-btn {
-    background: transparent;
-    border: 1px solid #444;
-    color: var(--white);
-    padding: 10px 15px;
-    border-radius: 5px;
-    font-size: 0.7em;
-    font-weight: bold;
-}
-
-#confirm-genre-selection-btn:not(:disabled) {
-    border-color: var(--spotify-green);
-    color: var(--spotify-green);
-}
-
-/* Wheel Layout */
-.wheel-wrapper {
-    position: relative;
-    flex-grow: 1;
-    width: 100%;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Der Fokus-Rahmen in der Mitte */
-.wheel-selection-indicator {
-    position: absolute;
-    width: 100%;
-    height: 80px;
-    border-top: 1px solid rgba(255,255,255,0.2);
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+#logo-button.inactive {
+    filter: blur(5px);
     pointer-events: none;
-    z-index: 5;
 }
 
-#all-genres-scrollbox {
-    width: 100%;
-    height: 100%;
-    overflow-y: scroll;
-    padding-top: 45vh; /* Padding damit erstes Item mittig startet */
-    padding-bottom: 45vh;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+/* Würfel Container */
+#dice-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
-
-#all-genres-scrollbox::-webkit-scrollbar { display: none; }
-
-/* Wheel Items */
-.preselect-genre-button {
-    width: 80%;
-    margin: 10px auto;
-    padding: 20px;
-    font-size: 1.5em;
-    font-weight: bold;
-    background: transparent;
-    border: 2px solid transparent;
-    color: #444;
-    transition: all 0.2s ease;
-    border-radius: 15px;
-    display: block;
-}
-
-/* Zustand: Ausgewählt */
-.preselect-genre-button.selected {
-    color: var(--white);
-    text-shadow: 0 0 15px rgba(255,255,255,0.5);
-}
-
-.genre-instruction-footer {
-    padding: 20px;
-    font-size: 0.7em;
-    color: #444;
-    letter-spacing: 1px;
-}
-
-/* ========================================== */
-/* 6. WÜRFEL-SYSTEM                           */
-/* ========================================== */
-
-#dice-container { display: flex; justify-content: center; align-items: center; }
 
 #dice-selection {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    flex-direction: column; 
+    justify-content: center;
+    align-items: center;
+    gap: 15px; 
+}
+
+#dice-selection img:active {
+    transform: scale(0.95);
 }
 
 .dice-option {
-    width: 80px;
-    height: 80px;
-    transition: transform 0.06s ease-out;
+    width: 80px; 
+    height: 80px; 
     cursor: pointer;
+    transition: transform 0.1s;
 }
 
-.dice-option:active { transform: scale(0.95); }
-
-/* Digitaler Würfel */
-#digital-dice-area {
-    position: absolute;
-    bottom: 0; left: 0;
-    width: 150px; height: 150px;
-    background-image: url('assets/digi-dice-bg.png');
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-position: bottom left;
-    z-index: 50;
-    pointer-events: none;
+#dice-animation {
+    width: 250px;
 }
 
-.digital-dice-icon {
-    position: absolute;
-    bottom: 20px; left: 20px;
-    width: 50px; height: 50px;
-    cursor: pointer;
-    pointer-events: auto;
-    z-index: 51;
+.dice-option:hover {
+    transform: scale(1.1);
 }
-
-/* ========================================== */
-/* 7. GAMEPLAY (REVEAL & FEEDBACK)            */
-/* ========================================== */
 
 #genre-container {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap; 
     justify-content: center;
-    gap: 15px;
+    align-items: center;
+    gap: 15px; 
     padding: 20px;
-    max-height: 95vh;
-    overflow-y: auto;
-    scrollbar-width: none;
+    max-height: 95vh; 
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch; 
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
+}
+
+#genre-container::-webkit-scrollbar {
+    display: none;
 }
 
 .genre-button {
-    min-width: 120px;
+    flex-shrink: 0; 
+    min-width: 120px; 
     padding: 20px 30px;
     font-size: 1.2em;
+    cursor: pointer;
     border: 2px solid var(--white);
     background: transparent;
     color: var(--white);
+    transition: background-color 0.3s, color 0.3s;
     border-radius: 10px;
-    transition: transform 0.06s ease-out;
 }
 
-.genre-button:active { transform: scale(0.95); }
+.genre-button:hover:not(:disabled) {
+    transform: scale(1.03);
+    background-color: var(--white);
+    color: var(--black);
+}
+.genre-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
+.no-interaction {
+    pointer-events: none; 
+    opacity: 0.8;
+    cursor: default;       
+}
+
+.random-blink {
+    animation: blink 0.2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Rate-Bildschirm & Auflösung */
 #reveal-button {
     position: absolute;
-    bottom: 10%;
+    bottom: 5%;
     padding: 15px 40px;
     font-size: 1.3em;
-    background-color: var(--spotify-green);
+    background-color: #1DB954;
     color: white;
     border: none;
     border-radius: 50px;
+    cursor: pointer;
 }
 
 #reveal-container {
@@ -327,22 +320,51 @@ body, html {
     align-items: center;
     gap: 30px;
     max-width: 98vw;
+    box-sizing: border-box;
+    padding: 0 5px; 
 }
 
 #track-info {
     display: flex;
-    width: 100%;
+    width: 100%; 
     align-items: center;
     gap: 20px;
     background: rgba(0,0,0,0.5);
     padding: 20px;
     border-radius: 10px;
-    flex-wrap: wrap;
+    flex-wrap: wrap; 
 }
 
-#album-cover { width: 150px; height: 150px; flex-shrink: 0; }
+#track-info > div {
+    flex-grow: 1; 
+    min-width: 0; 
+}
+
+#album-cover {
+    flex-shrink: 0; 
+    width: 150px;
+    height: 150px;
+}
+
+#track-title, #track-artist, #track-album, #track-year {
+    word-break: break-word;
+    text-align: left;
+    margin: 0;
+}
 
 #track-title { font-size: 2em; font-weight: bold; }
+#track-artist { font-size: 1.2em; }
+#track-album { font-size: 1em; margin-top: 5px; color: #bbb; }
+#track-year { font-size: 0.9em; color: #999; }
+
+.spotify-content-badge { display: block; margin-top: 5px; }
+.spotify-content-badge img { width: 25px; height: 25px; min-width: 21px; min-height: 21px; }
+
+@media (max-width: 600px) {
+    #track-info { flex-direction: column; align-items: center; }
+    #track-info > div { width: 100%; text-align: center; }
+    #track-title, #track-artist, #track-album, #track-year { text-align: center; }
+}
 
 #feedback-buttons button {
     padding: 15px 30px;
@@ -350,122 +372,214 @@ body, html {
     margin: 0 10px;
     border-radius: 30px;
     border: none;
+    cursor: pointer;
     min-width: 150px;
 }
-
 #correct-button { background-color: #28a745; color: white; }
 #wrong-button { background-color: #dc3545; color: white; }
 
-/* ========================================== */
-/* 8. SCORE SCREEN & COUNTDOWN                */
-/* ========================================== */
-
+/* Punkte-Bildschirm */
 #score-screen {
-    flex-direction: column;
-    background: linear-gradient(0deg, var(--player2-color) 45%, var(--player1-color) 55%);
+    flex-direction: column; 
+    background: linear-gradient(0deg, 
+        var(--player2-color) 0%, 
+        var(--player2-color) 45%, 
+        var(--player1-color) 55%, 
+        var(--player1-color) 100%);
 }
 
 #player1-score-display, #player2-score-display {
-    width: 100%; height: 50%;
+    width: 100%; 
+    height: 50%; 
     font-size: 30vmin;
     font-weight: bold;
     color: white;
-    display: flex; justify-content: center; align-items: center;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+}
+
+#speed-round-text-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    height: 90vh;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    z-index: 20;
+    pointer-events: none;    
+    animation: zoom-fade-in 3s cubic-bezier(0.15, 1.15, 0.3, 1) forwards;
+    opacity: 0;
+}
+
+@media screen and (orientation: portrait) {
+    #speed-round-text-display { background-image: url('assets/a-t-t.png'); }
+}
+@media screen and (orientation: landscape) {
+    #speed-round-text-display { background-image: url('assets/a-t-t-quer.png'); }
 }
 
 #countdown-display {
     position: absolute;
-    top: 50%; left: 50%;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 40vmin;
+    font-size: 40vmin; 
     font-weight: bold;
+    color: var(--white);
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     z-index: 120;
 }
 
-.countdown-animated { animation: countdown-pulse 1s ease-in-out forwards; }
-
-@keyframes countdown-pulse {
-    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-    20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+@keyframes zoom-fade-in {
+    0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; filter: brightness(2); }
+    10% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; filter: brightness(1); }
+    80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0; }
 }
 
-/* ========================================== */
-/* 9. TRACKI-TACKI & FOOTER                   */
-/* ========================================== */
+.points-pop-in { animation: points-fade-in-zoom 1s ease-out forwards; }
 
-#tracki-tacki-button {
-    position: absolute;
-    top: 0; left: 50%;
-    transform: translate(-50%, -48%);
-    width: 200px;
-    z-index: 110;
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+@keyframes flyToCornerPlayer1 {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); top: 50%; left: 50%; }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); top: 1%; left: 50%; }
+}
+@keyframes flyToCornerPlayer2 {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); top: 50%; left: 50%; }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); top: 99%; left: 50%; }
 }
 
-#tracki-tacki-button.active-play-button {
-    top: 50%;
-    transform: translate(-50%, -50%);
+.fly-to-corner-player1 { animation: flyToCornerPlayer1 0.4s ease-in forwards; }
+.fly-to-corner-player2 { animation: flyToCornerPlayer2 0.4s ease-in forwards; }
+
+@media screen and (min-width: 769px), screen and (orientation: landscape) {
+    #dice-selection { flex-direction: row; gap: 30px; }
+    .dice-option { width: 100px; height: auto; }
+    #score-screen {
+        flex-direction: row; 
+        background: linear-gradient(90deg, 
+            var(--player1-color) 0%, 
+            var(--player1-color) 45%, 
+            var(--player2-color) 55%, 
+            var(--player2-color) 100%);
+    }
+    @keyframes flyToCornerPlayer1 {
+        0% { opacity: 1; transform: translate(-50%, -50%) scale(1); top: 50%; left: 50%; }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); top: 50%; left: 1%; }
+    }
+    @keyframes flyToCornerPlayer2 {
+        0% { opacity: 1; transform: translate(-50%, -50%) scale(1); top: 50%; left: 50%; }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); top: 50%; left: 99%; }
+    }
 }
 
+#digital-dice-area {
+    position: absolute; bottom: 0px; left: 0px; display: block;
+    background-image: url('assets/digi-dice-bg.png');
+    background-repeat: no-repeat; background-size: contain; background-position: bottom left; 
+    width: 150px; height: 150px; z-index: 50; pointer-events: none; 
+}
+
+.digital-dice-icon {
+    position: absolute; bottom: 20px; left: 20px; width: 50px; height: 50px;
+    cursor: pointer; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, opacity 0.2s ease; z-index: 51; pointer-events: auto; 
+}
+
+#start-genre-selection-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.genre-controls-top { flex-shrink: 0; display: flex; justify-content: space-around; padding: 20px; background: rgba(0,0,0,0.5); z-index: 10; }
+#all-genres-scrollbox { flex-grow: 1; overflow-y: auto; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; padding: 20px; }
+.preselect-genre-button { background-color: var(--black); margin-bottom: 30px; width: 90%; padding: 20px 30px; font-size: 1.2em; cursor: pointer; border: 2px solid var(--white); border-radius: 10px; color: var(--white); }
+.preselect-genre-button.selected { background-color: var(--white); border-color: var(--black); color: var(--black); }
+
+#tracki-tacki-button { position: absolute; top: 0; left: 50%; transform: translate(-50%, -48%); width: 200px; cursor: pointer; z-index: 110; transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); border-radius: 50%; }
+#tracki-tacki-button.active-play-button { top: 50%; transform: translate(-50%, -50%); }
 #tracki-tacki-button.player1-shadow { box-shadow: 0 0 120px 120px var(--player1-color); }
 #tracki-tacki-button.player2-shadow { box-shadow: 0 0 120px 120px var(--player2-color); }
 
-#game-footer {
-    position: absolute;
-    bottom: 10px; right: 10px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    z-index: 1000;
-}
+#game-footer { position: absolute; bottom: 10px; right: 10px; display: flex; gap: 15px; z-index: 1000; color: #ccc; font-size: 0.8em; white-space: nowrap; }
+#token-timer { background-color: rgba(0, 0, 0, 0.7); color: white; padding: 5px 10px; border-radius: 5px; }
+#powered-by-spotify { display: flex; align-items: center; text-decoration: none; color: inherit; }
+#powered-by-spotify .branding-icon { width: 25px; height: 25px; margin-right: 5px; }
 
-#token-timer {
-    background: rgba(0,0,0,0.7);
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 14px;
-}
-
-/* ========================================== */
-/* 10. RESPONSIVE LANDSCAPE                   */
-/* ========================================== */
-
-@media screen and (orientation: landscape) {
-    #dice-selection { flex-direction: row; gap: 30px; }
-    #score-screen { flex-direction: row; background: linear-gradient(90deg, var(--player1-color) 45%, var(--player2-color) 55%); }
-    
-    #track-info { flex-direction: row; }
-}
-
-@media screen and (max-width: 600px) {
-    #track-info { flex-direction: column; text-align: center; }
-}
-
-/* ========================================== */
-/* 11. TOASTS & OVERLAYS                      */
-/* ========================================== */
-
-#toast-notification, #network-toast {
-    position: fixed;
-    top: 5px; left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-weight: bold;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.5s;
-    z-index: 10000;
-}
-
+#toast-notification { position: fixed; top: 5px; left: 50%; transform: translateX(-50%); opacity: 0; visibility: hidden; transition: all 0.5s; z-index: 10000; color: white; font-weight: bold; }
 #toast-notification.show { opacity: 1; visibility: visible; top: 60px; }
+
+#network-toast { position: fixed; top: 5px; left: 50%; transform: translateX(-50%); opacity: 0; visibility: hidden; transition: all 0.5s; z-index: 10001; color: white; font-weight: bold; }
 #network-toast.show { opacity: 1; visibility: visible; top: 30px; }
 
-#speed-display {
-    position: fixed;
-    top: 0; right: 0;
-    padding: 8px;
-    color: white;
-    font-family: monospace;
-    font-size: 0.75rem;
+#speed-display { position: fixed; top: 0; right: 0; z-index: 9999; padding: 8px 12px; color: white; font-family: monospace; font-size: 0.75rem; }
+
+/* ------------------------------------------------------------------ */
+/* --- NEU: GLÜCKSRAD STYLES (WHEEL OF FORTUNE) --- */
+/* ------------------------------------------------------------------ */
+
+#wheel-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#wheel-container {
+    position: relative;
+    width: 80vmin;   /* Nutzt 80% der kleinsten Bildschirmseite */
+    height: 80vmin;
+    max-width: 500px;
+    max-height: 500px;
+    margin: 20px auto;
+    perspective: 1000px;
+}
+
+#wheel-svg {
+    width: 100%;
+    height: 100%;
+    /* WICHTIG: Die Transition sorgt für das flüssige Drehen */
+    transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+}
+
+/* Der Zeiger oben am Rad */
+#wheel-pointer {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: auto;
+    z-index: 20;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+/* Optional: Ein Button in der Mitte des Rades */
+#wheel-center-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: var(--white);
+    border-radius: 50%;
+    border: 4px solid var(--black);
+    cursor: pointer;
+    z-index: 15;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Text-Stile innerhalb der Wheel-Segmente (falls SVG genutzt wird) */
+.wheel-text {
+    fill: white;
+    font-weight: bold;
+    font-size: 14px;
+    pointer-events: none;
 }
