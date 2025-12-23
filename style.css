@@ -883,7 +883,7 @@ body, html {
     will-change: transform, opacity;
     pointer-events: auto;
     cursor: pointer;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    /* transition: transform 0.2s ease, opacity 0.2s ease; */
 }
 
 .genre-label {
