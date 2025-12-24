@@ -185,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'Rock': ['6QrVkClF1eJSjb9FDfqtJ8'],
         'Rocklegenden': ['3sdqSseSnwb4A0RqP93SUH'],
         'Alte Schlagerschoten': ['68SxsyVUJ1DEGByUcEMrr4', '7dmg14Fnm9stKYkU4IthAG'],
+		'Hitzter Schlagerparty': ['0USUpphpG4nAuz9IUudfl9'],
         'Lovesongs': ['6oNsYDhN95gkENsdFcAwTh'],
         'Serien Unserer Kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
         'Deutscher Hip Hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
