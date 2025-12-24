@@ -118,9 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
 	const selectAllBtn = document.getElementById('select-all-genres-btn');
     const confirmBtn = document.getElementById('confirm-genre-selection-btn');
 	const selectionList = document.getElementById('selectionList');
+	const selectedTerms = new Set();
 
     // --- Spielstatus-Variablen ---
-	let selectedTerms = new Set();
     let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 	let pollingIntervalTimer = null;
 	let fallbackPlayTimer = null;
