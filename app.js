@@ -117,8 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Buttons Genre-Vorabwahl
 	const selectAllBtn = document.getElementById('select-all-genres-btn');
     const confirmBtn = document.getElementById('confirm-genre-selection-btn');
-	const selectionList = document.getElementById('selectionList');
-	const selectedTerms = new Set();
 
     // --- Spielstatus-Variablen ---
     let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
@@ -540,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Konfiguration für das Rad
 const fullListMultiplier = 3;
 let itemHeight = 0;
-// const selectedTerms = new Set(); // Wir nutzen ein Set für schnellere Logik --- steht jetzt in den globalen
+const selectedTerms = new Set(); // Wir nutzen ein Set für schnellere Logik
 
 // Hilfsfunktion: Update des Haupt-Buttons (SET THE STAGE)
 function updateConfirmBtnState() {
@@ -558,29 +556,25 @@ function setupGenreWheel() {
     const selectionList = document.getElementById('selectionList');
     const scrollContainer = document.querySelector('.scrolling-container');
     
-    if (!selectionList || !scrollContainer) return;
-
+    // Leere die Liste (wichtig bei Resize)
     selectionList.innerHTML = '';
     const fragment = document.createDocumentFragment();
     
+    // Nimm die Genres direkt aus deinem playlists-Objekt
     const genreNames = Object.keys(playlists);
     
-    // SICHERHEIT: Falls innerHeight 0 ist, nimm einen Standardwert
-    itemHeight = (window.innerHeight > 0) ? window.innerHeight / 7 : 100; 
-
     for (let i = 0; i < fullListMultiplier; i++) {
         genreNames.forEach((term) => {
             const div = document.createElement('div');
-            // Prüfe, ob das Set existiert
-            const isSelected = (typeof selectedTerms !== 'undefined' && selectedTerms.has(term));
+            const isSelected = selectedTerms.has(term);
             
-            // Nutze Standard-Klassen falls Tailwind-Klassen nicht greifen
-            div.className = `list-item flex items-center justify-center text-white font-bold w-full text-center ${isSelected ? 'selected' : ''}`;
-            div.style.position = 'absolute'; // Wichtig für die Positionierung!
+            div.className = `list-item absolute flex items-center justify-center text-white font-bold w-full text-center ${isSelected ? 'selected' : ''}`;
             div.dataset.term = term;
             
             const span = document.createElement('span');
-            span.className = `genre-label`; 
+            // Stil-Klasse aus deinem neuen Design
+            span.className = `genre-label text-4xl md:text-6xl`;
+            // Formatierung: Erster Buchstabe groß
             span.textContent = term.charAt(0).toUpperCase() + term.slice(1);
             
             div.appendChild(span);
@@ -589,29 +583,28 @@ function setupGenreWheel() {
     }
     selectionList.appendChild(fragment);
 
-    // Gesamthöhe setzen
-    const totalItems = genreNames.length * fullListMultiplier;
-    selectionList.style.height = `${totalItems * itemHeight}px`;
+    // Abstand berechnen
+    itemHeight = window.innerHeight / 7; 
+    selectionList.style.height = `${genreNames.length * fullListMultiplier * itemHeight}px`;
 
     const items = selectionList.querySelectorAll('.list-item');
     items.forEach((item, index) => {
         item.style.height = `${itemHeight}px`;
         item.style.top = `${itemHeight * index}px`;
-        item.style.display = 'flex'; // Sicherstellen, dass sie angezeigt werden
     });
     
     // Zur Mitte springen
     scrollContainer.scrollTop = itemHeight * genreNames.length;
-
-	// --- HIER EINFÜGEN ---
-    if (!window.wheelAnimated) {
-        scrollContainer.addEventListener('scroll', handleWheelScroll);
-        animateWheel(); // Startet die Opacity/Scale Berechnung
-        window.wheelAnimated = true;
-    }
     
-    updateWheelVisuals(); // Einmal sofort ausführen
+    // Animation & Scroll-Events starten (nur einmalig beim ersten Setup nötig)
+    if (!window.wheelInitialized) {
+        scrollContainer.addEventListener('scroll', handleWheelScroll);
+        animateWheel();
+        window.wheelInitialized = true;
+    }
+    updateConfirmBtnState();
 }
+
 // Visuelle Effekte beim Scrollen (Scale & Opacity)
 function updateWheelVisuals() {
     const scrollContainer = document.querySelector('.scrolling-container');
@@ -712,11 +705,11 @@ async function startGame() {
     if (!deviceId) {
         try {
             await initializePlayer();
-            // Falls der Player existiert, kurz anspielen für Browser-Autoplay-Policy
-            if(spotifyPlayer) await spotifyPlayer.resume();
+            // Player kurz anspielen/pausieren um Interaktion zu registrieren
+            await spotifyPlayer.resume();
         } catch (error) {
-            console.error("Fehler beim Starten:", error);
-            // Trotz Fehler weitermachen, falls deviceId bereits da war
+            console.error(error);
+            return;
         }
     }
     
@@ -724,14 +717,8 @@ async function startGame() {
 
     setTimeout(() => {
         logoButton.classList.add('hidden');
-        
-        // Sicherstellen, dass der Container sichtbar ist
-        if (startGenreSelectionContainer) {
-            startGenreSelectionContainer.classList.remove('hidden');
-            startGenreSelectionContainer.style.display = 'block'; // Force visible
-            setupGenreWheel(); // Rad befüllen und anzeigen
-			updateWheelVisuals();
-        }
+        document.getElementById('start-genre-selection-container').classList.remove('hidden');
+        setupGenreWheel(); // <--- DAS RAD STARTEN
     }, 800);
 }
 
@@ -2099,69 +2086,46 @@ let pointsAwarded = 0;
     }
 
     // AKTUALISIERT: resetGame-Funktion
-function resetGame() {
-    // 1. Screens bereinigen
-    scoreScreen.classList.add('hidden');
-    revealContainer.classList.add('hidden');
-    
-    // Wichtig: Falls display='none' gesetzt wurde, hier auf 'block' zurücksetzen
-    if (startGenreSelectionContainer) {
-        startGenreSelectionContainer.classList.add('hidden'); 
-        startGenreSelectionContainer.style.display = 'block'; // Zurück auf Standard
-    }
+    function resetGame() {
+        scoreScreen.classList.add('hidden');
+        appContainer.style.backgroundColor = 'var(--black)';
 
-    appContainer.style.backgroundColor = 'var(--black)';
+        // Spielstatus zurücksetzen
+        gameState.player1Score = 0;
+        gameState.player2Score = 0;
+        gameState.currentPlayer = 1;
+        gameState.currentRound = 0;
+        gameState.diceValue = 0; // Neu hinzugefügt
+        gameState.attemptsMade = 0; // Neu hinzugefügt
+        gameState.maxAttempts = 0; // Neu hinzugefügt
+        gameState.trackDuration = 0; // Neu hinzugefügt
+        gameState.currentTrack = null; // Neu hinzugefügt
+        gameState.isSpeedRound = false; // Neu hinzugefügt
+        gameState.isTrackiTackiActive = false; // ⭐️ NEU: Tracki-Tacki Modus zurücksetzen ⭐️
+        clearTimeout(gameState.speedRoundTimeout); // Neu hinzugefügt
 
-    // 2. Spielstatus zurücksetzen
-    gameState.player1Score = 0;
-    gameState.player2Score = 0;
-    gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2; // Zufälliger Startspieler
-    gameState.currentRound = 0;
-    gameState.diceValue = 0;
-    gameState.attemptsMade = 0;
-    gameState.maxAttempts = 0;
-    gameState.trackDuration = 0;
-    gameState.currentTrack = null;
-    gameState.isSpeedRound = false;
-    gameState.isTrackiTackiActive = false;
-    clearTimeout(gameState.speedRoundTimeout);
+        gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
+        gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
 
-    // Speedround-Ziele neu würfeln
-    gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
-    gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
+        // NEU: Ausgewählte Genres zurücksetzen
+        gameState.selectedPlayableGenres = [];
+        // Und die scrollbox leeren, damit sie beim nächsten startGameAfterOrientation() neu gefüllt wird
+        allGenresScrollbox.innerHTML = '';
 
-    // 3. Rad-Logik komplett zurücksetzen
-    selectedTerms.clear(); // Das Set für das Rad leeren
-    gameState.selectedPlayableGenres = [];
-    if (selectionList) {
-        selectionList.innerHTML = '';
-    }
-    
-    // Den Confirm-Button wieder sperren
-    const confirmBtn = document.getElementById('confirmBtn');
-    if (confirmBtn) {
-        confirmBtn.disabled = true;
-        confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    }
+        // Zurück zum Start (ohne Einflug-Animation)
+        gameScreen.classList.remove('hidden');
+        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+		logoButton.classList.add('logo-pulsing');
+        logoButton.removeEventListener('click', startGame); // Sicherstellen, dass kein alter Listener hängt
+        logoButton.addEventListener('click', startGame, { once: true }); // NEU: Listener hier neu setzen, da er ja einmalig ist
 
-    // 4. Logo-Button reaktivieren
-    gameScreen.classList.remove('hidden');
-    logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-    
-    // Reflow-Trick für die Sichtbarkeit
-    logoButton.style.display = 'none';
-    void logoButton.offsetHeight; 
-    logoButton.style.display = 'block';
-    
-    logoButton.classList.add('logo-pulsing');
-    
-    // Listener neu binden
-    logoButton.removeEventListener('click', startGame);
-    logoButton.addEventListener('click', startGame, { once: true });
+        // Setze den letzten sichtbaren Screen zurück, da das Spiel neu startet
+        lastGameScreenVisible = '';
 
-    lastGameScreenVisible = '';
-    console.log("Game Reset erfolgreich. Startspieler: " + gameState.currentPlayer);
-}
+        // NEU: Die Genre-Vorauswahl auf der Startseite wieder anzeigen und neu rendern
+        startGenreSelectionContainer.classList.remove('hidden');
+        renderPreselectionGenres(); // Und die Buttons neu rendern
+    }
 
     // Phase 6: Sonderfunktion "Speed-Round"
     //=======================================================================
