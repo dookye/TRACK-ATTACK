@@ -540,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Konfiguration für das Rad
 const fullListMultiplier = 3;
 let itemHeight = 0;
-const selectedTerms = new Set(); // Wir nutzen ein Set für schnellere Logik
+// const selectedTerms = new Set(); // Wir nutzen ein Set für schnellere Logik
 
 // Hilfsfunktion: Update des Haupt-Buttons (SET THE STAGE)
 function updateConfirmBtnState() {
