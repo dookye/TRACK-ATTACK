@@ -602,6 +602,13 @@ function setupGenreWheel() {
     
     // Zur Mitte springen
     scrollContainer.scrollTop = itemHeight * genreNames.length;
+
+	// --- HIER EINFÜGEN ---
+    if (!window.wheelAnimated) {
+        scrollContainer.addEventListener('scroll', handleWheelScroll);
+        animateWheel(); // Startet die Opacity/Scale Berechnung
+        window.wheelAnimated = true;
+    }
     
     updateWheelVisuals(); // Einmal sofort ausführen
 }
@@ -723,6 +730,7 @@ async function startGame() {
             startGenreSelectionContainer.classList.remove('hidden');
             startGenreSelectionContainer.style.display = 'block'; // Force visible
             setupGenreWheel(); // Rad befüllen und anzeigen
+			updateWheelVisuals();
         }
     }, 800);
 }
