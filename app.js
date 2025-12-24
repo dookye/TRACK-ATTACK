@@ -168,25 +168,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const playlists = {
 		// 'test': ['4EA0uV0i0c7RJNxWZpwcmM'],
-		'90s everyone knows': ['32Rgd0gpGw4vvJtM3nlA55'],
-        'pop hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
-        'GREATEST HITS of all time': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
-        'deutsch banger heute/gestern': ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
-        'party hits': ['53r5W67KJNIeHWAhVOWPDr'],
-        'skate-punk': ['7qGvinYjBfVpl1FJFkzGqV', '77IXl4Gh7AZLyVLx66NkqV'],
-        'deutsch-punk': ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
-        'top 100 one hit wonders': ['1t1iRfYh9is6FH6hvn58lt'],
-        'girl- and boybands': ['11Q0O9t6MGGXrKFaeqRRwm'],
-        'deutsche disney-songs': ['6CdPoZsFja4LOrTYTvHrY5'],
-        'lagerfeuer klassiker': ['3TfJ6iMeqPXPLW8sxuQgcd'],
-        'rock songs': ['6QrVkClF1eJSjb9FDfqtJ8'],
-        rocklegenden: ['3sdqSseSnwb4A0RqP93SUH'],
-        'alte schlagerschoten': ['68SxsyVUJ1DEGByUcEMrr4', '7dmg14Fnm9stKYkU4IthAG'],
-        lovesongs: ['6oNsYDhN95gkENsdFcAwTh'],
-        'serien unserer kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
-        'deutscher hip hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
+		'Es Weihnachtet Sehr': ['37i9dQZF1DX0Yxoavh5qJV', '1vfmWWB16iwcXaObjIJzY9', '3trI391h96HVB0fXGVL4YO'],
+		'90s Everyone Knows': ['32Rgd0gpGw4vvJtM3nlA55'],
+        'Pop Hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
+        'GREATEST HITS Of All Time': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
+		'Kannste Mitsingen :-)': ['2dsrnNIpBkKxl5so5prscL']
+        'Deutsch Banger Heute/Gestern': ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
+        'Party Hits': ['53r5W67KJNIeHWAhVOWPDr'],
+        'Skate-Punk': ['7qGvinYjBfVpl1FJFkzGqV', '77IXl4Gh7AZLyVLx66NkqV'],
+        'Deutsch-Punk': ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
+        'Top 100 One Hit Wonders': ['1t1iRfYh9is6FH6hvn58lt'],
+        'Girl- And Boybands': ['11Q0O9t6MGGXrKFaeqRRwm'],
+        'Deutsche Disney-Songs': ['6CdPoZsFja4LOrTYTvHrY5'],
+        'Lagerfeuer-Klassiker': ['3TfJ6iMeqPXPLW8sxuQgcd'],
+        'Rock': ['6QrVkClF1eJSjb9FDfqtJ8'],
+        'Rocklegenden': ['3sdqSseSnwb4A0RqP93SUH'],
+        'Alte Schlagerschoten': ['68SxsyVUJ1DEGByUcEMrr4', '7dmg14Fnm9stKYkU4IthAG'],
+        'Lovesongs': ['6oNsYDhN95gkENsdFcAwTh'],
+        'Serien Unserer Kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
+        'Deutscher Hip Hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
          //'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
-        'heimischer pop-sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
+        'Heimischer Pop-Sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
     };
 
     //=======================================================================
