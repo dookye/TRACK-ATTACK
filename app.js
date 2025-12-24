@@ -2086,46 +2086,49 @@ let pointsAwarded = 0;
     }
 
     // AKTUALISIERT: resetGame-Funktion
-    function resetGame() {
-        scoreScreen.classList.add('hidden');
-        appContainer.style.backgroundColor = 'var(--black)';
+function resetGame() {
+    scoreScreen.classList.add('hidden');
+    appContainer.style.backgroundColor = 'var(--black)';
 
-        // Spielstatus zurücksetzen
-        gameState.player1Score = 0;
-        gameState.player2Score = 0;
-        gameState.currentPlayer = 1;
-        gameState.currentRound = 0;
-        gameState.diceValue = 0; // Neu hinzugefügt
-        gameState.attemptsMade = 0; // Neu hinzugefügt
-        gameState.maxAttempts = 0; // Neu hinzugefügt
-        gameState.trackDuration = 0; // Neu hinzugefügt
-        gameState.currentTrack = null; // Neu hinzugefügt
-        gameState.isSpeedRound = false; // Neu hinzugefügt
-        gameState.isTrackiTackiActive = false; // ⭐️ NEU: Tracki-Tacki Modus zurücksetzen ⭐️
-        clearTimeout(gameState.speedRoundTimeout); // Neu hinzugefügt
+    // Spielstatus zurücksetzen
+    gameState.player1Score = 0;
+    gameState.player2Score = 0;
+    gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2; // Zufälliger Startspieler bei Neustart
+    gameState.currentRound = 0;
+    gameState.diceValue = 0;
+    gameState.attemptsMade = 0;
+    gameState.maxAttempts = 0;
+    gameState.trackDuration = 0;
+    gameState.currentTrack = null;
+    gameState.isSpeedRound = false;
+    gameState.isTrackiTackiActive = false;
+    clearTimeout(gameState.speedRoundTimeout);
+    if (gameState.countdownInterval) clearInterval(gameState.countdownInterval);
 
-        gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
-        gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
+    gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
+    gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
 
-        // NEU: Ausgewählte Genres zurücksetzen
-        gameState.selectedPlayableGenres = [];
-        // Und die scrollbox leeren, damit sie beim nächsten startGameAfterOrientation() neu gefüllt wird
-        allGenresScrollbox.innerHTML = '';
+    // Genres und Rad-Zustand zurücksetzen
+    gameState.selectedPlayableGenres = [];
+    selectedTerms.clear(); // WICHTIG: Das Set für das Endlos-Rad leeren
+    if (allGenresScrollbox) allGenresScrollbox.innerHTML = '';
 
-        // Zurück zum Start (ohne Einflug-Animation)
-        gameScreen.classList.remove('hidden');
-        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-		logoButton.classList.add('logo-pulsing');
-        logoButton.removeEventListener('click', startGame); // Sicherstellen, dass kein alter Listener hängt
-        logoButton.addEventListener('click', startGame, { once: true }); // NEU: Listener hier neu setzen, da er ja einmalig ist
+    // WICHTIG: Alle Game-Screens verstecken, nur das Logo zeigen
+    gameScreen.classList.remove('hidden');
+    document.getElementById('start-genre-selection-container').classList.add('hidden'); 
+    
+    // Logo-Button vorbereiten (ohne Fly-In)
+    logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+    logoButton.classList.add('logo-pulsing');
+    logoButton.style.pointerEvents = 'auto'; // Sicherstellen, dass Klicks gehen
 
-        // Setze den letzten sichtbaren Screen zurück, da das Spiel neu startet
-        lastGameScreenVisible = '';
+    // Listener neu setzen
+    logoButton.removeEventListener('click', startGame);
+    logoButton.addEventListener('click', startGame, { once: true });
 
-        // NEU: Die Genre-Vorauswahl auf der Startseite wieder anzeigen und neu rendern
-        startGenreSelectionContainer.classList.remove('hidden');
-        renderPreselectionGenres(); // Und die Buttons neu rendern
-    }
+    lastGameScreenVisible = '';
+    console.log("Game Reset durchgeführt. Startspieler: " + gameState.currentPlayer);
+}
 
     // Phase 6: Sonderfunktion "Speed-Round"
     //=======================================================================
