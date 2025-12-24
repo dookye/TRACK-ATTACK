@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'Pop Hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
         'GREATEST HITS Of All Time': ['2si7ChS6Y0hPBt4FsobXpg', '2y09fNnXHvoqc1WGHvbhkZ'],
 		'Kannste Mitsingen :-)': ['2dsrnNIpBkKxl5so5prscL'],
-        'Deutsch Banger Gestern/Heute': ['7h64UGKHGWM5ucefn99frR', '4ytdW13RHl5u9dbRWAgxSZ'],
+        'Deutsch Banger Gestern/Heute': ['7h64UGKHGWM5ucefn99frR', '2siI2ILJEPr88yibWLgQQl'],
         'Party Hits': ['53r5W67KJNIeHWAhVOWPDr'],
         'Skate-Punk': ['7qGvinYjBfVpl1FJFkzGqV', '77IXl4Gh7AZLyVLx66NkqV'],
         'Deutsch-Punk': ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
