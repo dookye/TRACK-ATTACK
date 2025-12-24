@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const selectAllBtn = document.getElementById('select-all-genres-btn');
     const confirmBtn = document.getElementById('confirm-genre-selection-btn');
 	const selectionList = document.getElementById('selectionList');
-	// const selectedTerms = new Set();
+	const selectedTerms = new Set();
 
     // --- Spielstatus-Variablen ---
     let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
@@ -540,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Konfiguration für das Rad
 const fullListMultiplier = 3;
 let itemHeight = 0;
-const selectedTerms = new Set(); // Wir nutzen ein Set für schnellere Logik
+// const selectedTerms = new Set(); // Wir nutzen ein Set für schnellere Logik --- steht jetzt in den globalen
 
 // Hilfsfunktion: Update des Haupt-Buttons (SET THE STAGE)
 function updateConfirmBtnState() {
