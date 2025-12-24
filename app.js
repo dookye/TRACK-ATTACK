@@ -558,25 +558,29 @@ function setupGenreWheel() {
     const selectionList = document.getElementById('selectionList');
     const scrollContainer = document.querySelector('.scrolling-container');
     
-    // Leere die Liste (wichtig bei Resize)
+    if (!selectionList || !scrollContainer) return;
+
     selectionList.innerHTML = '';
     const fragment = document.createDocumentFragment();
     
-    // Nimm die Genres direkt aus deinem playlists-Objekt
     const genreNames = Object.keys(playlists);
     
+    // SICHERHEIT: Falls innerHeight 0 ist, nimm einen Standardwert
+    itemHeight = (window.innerHeight > 0) ? window.innerHeight / 7 : 100; 
+
     for (let i = 0; i < fullListMultiplier; i++) {
         genreNames.forEach((term) => {
             const div = document.createElement('div');
-            const isSelected = selectedTerms.has(term);
+            // Prüfe, ob das Set existiert
+            const isSelected = (typeof selectedTerms !== 'undefined' && selectedTerms.has(term));
             
-            div.className = `list-item absolute flex items-center justify-center text-white font-bold w-full text-center ${isSelected ? 'selected' : ''}`;
+            // Nutze Standard-Klassen falls Tailwind-Klassen nicht greifen
+            div.className = `list-item flex items-center justify-center text-white font-bold w-full text-center ${isSelected ? 'selected' : ''}`;
+            div.style.position = 'absolute'; // Wichtig für die Positionierung!
             div.dataset.term = term;
             
             const span = document.createElement('span');
-            // Stil-Klasse aus deinem neuen Design
-            span.className = `genre-label text-4xl md:text-6xl`;
-            // Formatierung: Erster Buchstabe groß
+            span.className = `genre-label`; 
             span.textContent = term.charAt(0).toUpperCase() + term.slice(1);
             
             div.appendChild(span);
@@ -585,28 +589,22 @@ function setupGenreWheel() {
     }
     selectionList.appendChild(fragment);
 
-    // Abstand berechnen
-    itemHeight = window.innerHeight / 7; 
-    selectionList.style.height = `${genreNames.length * fullListMultiplier * itemHeight}px`;
+    // Gesamthöhe setzen
+    const totalItems = genreNames.length * fullListMultiplier;
+    selectionList.style.height = `${totalItems * itemHeight}px`;
 
     const items = selectionList.querySelectorAll('.list-item');
     items.forEach((item, index) => {
         item.style.height = `${itemHeight}px`;
         item.style.top = `${itemHeight * index}px`;
+        item.style.display = 'flex'; // Sicherstellen, dass sie angezeigt werden
     });
     
     // Zur Mitte springen
     scrollContainer.scrollTop = itemHeight * genreNames.length;
     
-    // Animation & Scroll-Events starten (nur einmalig beim ersten Setup nötig)
-    if (!window.wheelInitialized) {
-        scrollContainer.addEventListener('scroll', handleWheelScroll);
-        animateWheel();
-        window.wheelInitialized = true;
-    }
-    updateConfirmBtnState();
+    updateWheelVisuals(); // Einmal sofort ausführen
 }
-
 // Visuelle Effekte beim Scrollen (Scale & Opacity)
 function updateWheelVisuals() {
     const scrollContainer = document.querySelector('.scrolling-container');
