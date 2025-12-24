@@ -168,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const playlists = {
 		// 'test': ['4EA0uV0i0c7RJNxWZpwcmM'],
+		 //'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
 		'Es Weihnachtet Sehr': ['37i9dQZF1DX0Yxoavh5qJV', '1vfmWWB16iwcXaObjIJzY9', '3trI391h96HVB0fXGVL4YO'],
 		'90s Everyone Knows': ['32Rgd0gpGw4vvJtM3nlA55'],
         'Pop Hits 2000-2025': ['6mtYuOxzl58vSGnEDtZ9uB', '34NbomaTu7YuOYnky8nLXL'],
@@ -187,7 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'Lovesongs': ['6oNsYDhN95gkENsdFcAwTh'],
         'Serien Unserer Kindheit': ['1De2vLmWkrNE11JjrC8OTj', '2Gg5uCtOsdZ9UShBCp3Ekt'],
         'Deutscher Hip Hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
-         //'internationale rapsongs': ['0h8A0Qt4TD2cl74CrgldWj'],
         'Heimischer Pop-Sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
     };
 
