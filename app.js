@@ -120,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const selectionList = document.getElementById('selectionList');
 
     // --- Spielstatus-Variablen ---
+	let selectedTerms = new Set();
     let playbackStateListener = null; // Eine globale Variable, die den Verweis auf den Status-Änderungs-Listener enthält
 	let pollingIntervalTimer = null;
 	let fallbackPlayTimer = null;
@@ -706,11 +707,11 @@ async function startGame() {
     if (!deviceId) {
         try {
             await initializePlayer();
-            // Player kurz anspielen/pausieren um Interaktion zu registrieren
-            await spotifyPlayer.resume();
+            // Falls der Player existiert, kurz anspielen für Browser-Autoplay-Policy
+            if(spotifyPlayer) await spotifyPlayer.resume();
         } catch (error) {
-            console.error(error);
-            return;
+            console.error("Fehler beim Starten:", error);
+            // Trotz Fehler weitermachen, falls deviceId bereits da war
         }
     }
     
@@ -718,8 +719,13 @@ async function startGame() {
 
     setTimeout(() => {
         logoButton.classList.add('hidden');
-        document.getElementById('start-genre-selection-container').classList.remove('hidden');
-        setupGenreWheel(); // <--- DAS RAD STARTEN
+        
+        // Sicherstellen, dass der Container sichtbar ist
+        if (startGenreSelectionContainer) {
+            startGenreSelectionContainer.classList.remove('hidden');
+            startGenreSelectionContainer.style.display = 'block'; // Force visible
+            setupGenreWheel(); // Rad befüllen und anzeigen
+        }
     }, 800);
 }
 
@@ -2087,64 +2093,69 @@ let pointsAwarded = 0;
     }
 
     // AKTUALISIERT: resetGame-Funktion
-    function resetGame() {
-        scoreScreen.classList.add('hidden');
-		revealContainer.classList.add('hidden');
-
-		if (startGenreSelectionContainer) {
+function resetGame() {
+    // 1. Screens bereinigen
+    scoreScreen.classList.add('hidden');
+    revealContainer.classList.add('hidden');
+    
+    // Wichtig: Falls display='none' gesetzt wurde, hier auf 'block' zurücksetzen
+    if (startGenreSelectionContainer) {
         startGenreSelectionContainer.classList.add('hidden'); 
-		startGenreSelectionContainer.style.display = 'none';
-        }
+        startGenreSelectionContainer.style.display = 'block'; // Zurück auf Standard
+    }
 
-		appContainer.style.backgroundColor = 'var(--black)';
+    appContainer.style.backgroundColor = 'var(--black)';
 
-        // Spielstatus zurücksetzen
-        gameState.player1Score = 0;
-        gameState.player2Score = 0;
-        gameState.currentPlayer = 1;
-        gameState.currentRound = 0;
-        gameState.diceValue = 0; // Neu hinzugefügt
-        gameState.attemptsMade = 0; // Neu hinzugefügt
-        gameState.maxAttempts = 0; // Neu hinzugefügt
-        gameState.trackDuration = 0; // Neu hinzugefügt
-        gameState.currentTrack = null; // Neu hinzugefügt
-        gameState.isSpeedRound = false; // Neu hinzugefügt
-        gameState.isTrackiTackiActive = false; // ⭐️ NEU: Tracki-Tacki Modus zurücksetzen ⭐️
-        clearTimeout(gameState.speedRoundTimeout); // Neu hinzugefügt
+    // 2. Spielstatus zurücksetzen
+    gameState.player1Score = 0;
+    gameState.player2Score = 0;
+    gameState.currentPlayer = Math.random() < 0.5 ? 1 : 2; // Zufälliger Startspieler
+    gameState.currentRound = 0;
+    gameState.diceValue = 0;
+    gameState.attemptsMade = 0;
+    gameState.maxAttempts = 0;
+    gameState.trackDuration = 0;
+    gameState.currentTrack = null;
+    gameState.isSpeedRound = false;
+    gameState.isTrackiTackiActive = false;
+    clearTimeout(gameState.speedRoundTimeout);
 
-        gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
-        gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
+    // Speedround-Ziele neu würfeln
+    gameState.player1SpeedRound = Math.floor(Math.random() * 10) + 1;
+    gameState.player2SpeedRound = Math.floor(Math.random() * 10) + 1;
 
-        // NEU: Ausgewählte Genres zurücksetzen
-      //  gameState.selectedPlayableGenres = [];
-        // Und die scrollbox leeren, damit sie beim nächsten startGameAfterOrientation() neu gefüllt wird
-      //  allGenresScrollbox.innerHTML = '';
-
-		// Falls dein Rad durch eine globale Variable gesteuert wird, setze sie zurück
-        isWheelActive = false;
-		gameState.selectedPlayableGenres = [];
-        // Falls das Rad das Spiel überlagert:
+    // 3. Rad-Logik komplett zurücksetzen
+    selectedTerms.clear(); // Das Set für das Rad leeren
+    gameState.selectedPlayableGenres = [];
+    if (selectionList) {
         selectionList.innerHTML = '';
+    }
+    
+    // Den Confirm-Button wieder sperren
+    const confirmBtn = document.getElementById('confirmBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
 
-        // Zurück zum Start (ohne Einflug-Animation)
-        gameScreen.classList.remove('hidden');
-        logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
-
-		// TRICK: Setze display kurz auf none und dann wieder auf block
-    // Das zwingt JEDEN Browser dazu, das Element neu zu berechnen (Reflow-Ersatz)
+    // 4. Logo-Button reaktivieren
+    gameScreen.classList.remove('hidden');
+    logoButton.classList.remove('hidden', 'inactive', 'initial-fly-in');
+    
+    // Reflow-Trick für die Sichtbarkeit
     logoButton.style.display = 'none';
-    void logoButton.offsetHeight; // Zugriff auf eine Layout-Eigenschaft
+    void logoButton.offsetHeight; 
     logoButton.style.display = 'block';
-		
-		logoButton.classList.add('logo-pulsing');
-		void logoButton.offsetWidth;
-        logoButton.removeEventListener('click', startGame); // Sicherstellen, dass kein alter Listener hängt
-        logoButton.addEventListener('click', startGame, { once: true }); // NEU: Listener hier neu setzen, da er ja einmalig ist
+    
+    logoButton.classList.add('logo-pulsing');
+    
+    // Listener neu binden
+    logoButton.removeEventListener('click', startGame);
+    logoButton.addEventListener('click', startGame, { once: true });
 
-        // Setze den letzten sichtbaren Screen zurück, da das Spiel neu startet
-        lastGameScreenVisible = '';
-
-    }
+    lastGameScreenVisible = '';
+    console.log("Game Reset erfolgreich. Startspieler: " + gameState.currentPlayer);
+}
 
     // Phase 6: Sonderfunktion "Speed-Round"
     //=======================================================================
