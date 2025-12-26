@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		'Girl- And Boybands': ['11Q0O9t6MGGXrKFaeqRRwm'],
 		'Kannste Mitsingen :-)': ['2dsrnNIpBkKxl5so5prscL'],
 		'Deutscher Hip Hop': ['1bG3S6G5BmmgN08EBDfzE5', '54Ac6qneIdV0VEXewKyI3W'],
-        'Heimischer Pop-Sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o']
+        'Heimischer Pop-Sommer 2025': ['6Aq2xcWvFXBoExv64eGm5o'],
 			
         'Deutsch Banger Gestern/Heute': ['7h64UGKHGWM5ucefn99frR', '2siI2ILJEPr88yibWLgQQl'],
         'Alte Schlagerschoten': ['68SxsyVUJ1DEGByUcEMrr4', '7dmg14Fnm9stKYkU4IthAG'],
