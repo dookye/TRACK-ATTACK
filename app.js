@@ -200,6 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			
         'Skate-Punk': ['7qGvinYjBfVpl1FJFkzGqV', '77IXl4Gh7AZLyVLx66NkqV'],
         'Deutsch-Punk': ['3sQLh9hYyJQZ0qWrtJG1OO', '4iR7Xq1wP9GRbGLm2qFBYw'],
+		'Greatest Metal Of All Time': ['2KB2kUNfUtujzoYvW0lvyN'],
  
         'Rock': ['6QrVkClF1eJSjb9FDfqtJ8'],
         'Rocklegenden': ['3sdqSseSnwb4A0RqP93SUH'],
